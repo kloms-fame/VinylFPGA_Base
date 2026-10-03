@@ -1,0 +1,29 @@
+============================================================
+   Tang Dynasty, V6.2.168116
+   Copyright (c) 2012-2025 Anlogic Inc.
+   Executable = D:/Anlogic/TD_6.2.1_Engineer_6.2.168.116/bin/td.exe
+   Built at =   16:32:07 Jun 12 2025
+   Run by =     Renni
+   Run Date =   Sat Oct  3 18:19:21 2026
+
+   Run on =     RENNICK
+============================================================
+HDL-7201 CRITICAL-WARNING: overwrite current module 'sdram' in ../src/IP/sdram.v(14)
+HDL-7307 CRITICAL-WARNING: previous definition of design element module 'sdram' is here. This is because multiple modules(values) with the same name are defined. Please consider rewriting code in ../src/SD/sdram.v(12)
+HDL-5007 WARNING: concatenation with an unsized literal will be treated as 32 bits in ../src/include/sdr_init_ref.enc.v(47)
+HDL-5007 WARNING: concatenation with an unsized literal will be treated as 32 bits in ../src/include/sdr_wrrd.enc.v(283)
+HDL-8007 ERROR: cannot find port 'Clk' on this module in ../src/top_tf_hdmi_audio.v(275)
+HDL-8007 ERROR: cannot find port 'Clk_sft' on this module in ../src/top_tf_hdmi_audio.v(276)
+HDL-8007 ERROR: cannot find port 'Rst' on this module in ../src/top_tf_hdmi_audio.v(277)
+HDL-8007 ERROR: cannot find port 'Sdr_init_done' on this module in ../src/top_tf_hdmi_audio.v(278)
+HDL-8007 ERROR: cannot find port 'Sdr_init_ref_vld' on this module in ../src/top_tf_hdmi_audio.v(279)
+HDL-8007 ERROR: cannot find port 'Sdr_busy' on this module in ../src/top_tf_hdmi_audio.v(280)
+HDL-8007 ERROR: cannot find port 'App_wr_en' on this module in ../src/top_tf_hdmi_audio.v(281)
+HDL-8007 ERROR: cannot find port 'App_wr_addr' on this module in ../src/top_tf_hdmi_audio.v(282)
+HDL-8007 ERROR: cannot find port 'App_wr_dm' on this module in ../src/top_tf_hdmi_audio.v(283)
+HDL-8007 ERROR: cannot find port 'App_wr_din' on this module in ../src/top_tf_hdmi_audio.v(284)
+HDL-8007 ERROR: cannot find port 'App_rd_en' on this module in ../src/top_tf_hdmi_audio.v(285)
+HDL-8007 ERROR: cannot find port 'App_rd_addr' on this module in ../src/top_tf_hdmi_audio.v(286)
+HDL-8007 ERROR: cannot find port 'Sdr_rd_en' on this module in ../src/top_tf_hdmi_audio.v(287)
+HDL-8007 ERROR: cannot find port 'Sdr_rd_dout' on this module in ../src/top_tf_hdmi_audio.v(288)
+HDL-5007 WARNING: The file ../src/SD/sdram.v will not be compiled since it is not included by any other files. Set it as 'global include' if it should be compiled.

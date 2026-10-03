@@ -1,0 +1,41 @@
+第1课 IP 核与底层原语说明
+========================================
+
+本课文件夹内以下文件是安路 TD 生成的 IP 包装文件或使用器件硬原语的代码，
+直接把 .v 文件加入 TD 工程即可综合，不需要重新生成 IP：
+
+  IP\sys_pll.v          —— 系统PLL（输出给官方工程：SD卡/控制逻辑用时钟）
+  IP\video_pll.v        —— 视频PLL（25MHz像素时钟）
+  IP\PLL_HDMI_AUDIO.v   —— 音频PLL（I2S用的12.288MHz MCLK，官方例程三PLL之一）
+  IP\afifo_32_16_256.v  —— 异步FIFO（注意：文件内定义的模块名是
+                           rfifo_32_32_512，即"32位写、32位读、512深度"的
+                           读侧FIFO；文件名afifo_32_16_256是官方IP的名字）
+  IP\afifo_16_32_256.v  —— 异步FIFO（文件内定义的模块名是 wfifo_32_32_512，
+                           写侧FIFO；两个FIFO都被 SD\frame_read_write.v 实例化）
+  IP\sdram.v            —— SDRAM硬原语包装（实例化 EG_PHY_SDRAM_2M_32，
+                           32位数据位宽，配合 SD\sdram.v 控制器使用）
+
+如果要在 TD 里从零重建（不直接用 .v 包装文件），按以下参数新建：
+
+1. sys_pll（PLL IP）
+   - 输入参考时钟：50MHz（板上晶振经官方工程分频/直连，按官方 lab_ex5 配置）
+   - 输出：按官方 lab_ex5_i2s 工程的 sys_pll 配置（100MHz主控时钟等）
+2. video_pll（PLL IP）
+   - 输出 25MHz 像素时钟
+3. PLL_HDMI_AUDIO（PLL IP）
+   - 输出 12.288MHz 音频主时钟（I2S 64fs，48kHz）
+4. FIFO IP ×2（TD "异步FIFO"）
+   - 深度512、写位宽32、读位宽32，模块名分别为 rfifo_32_32_512 /
+     wfifo_32_32_512
+   - 最简单做法：直接把 IP\afifo_32_16_256.v 和 IP\afifo_16_32_256.v 加入
+     工程即可，无需新建
+
+注意：
+- EG_PHY_SDRAM_2M_32、EG_PHY_PLL、EG_LOGIC_BUFG、*_LOGIC_ODDR 是安路
+  EG4S20 器件的硬原语，TD 综合器自带，不需要学员生成。
+- hdmi1.4b_transmitter_core\hdmi_1_4b_transmitter_core_wrapper.enc.v 和
+  include\sdr_*.enc.v 是官方加密文件，原样加入工程即可。
+- SD\sdram.v 第10行 `include "../user_source/hdl_source/include/global_def.v"
+  沿用官方工程的相对路径；若单独把文件拷进新建工程后报"找不到
+  global_def.v"，把这一行改成 `include "../include/global_def.v"
+  （对应本文件夹的 include\global_def.v 位置）。
