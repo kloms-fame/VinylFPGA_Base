@@ -1,0 +1,57 @@
+# Python缓存（参考你给的模板）
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# 仿真波形文件
+*.vcd
+*.wlf
+*.fsdb
+*.shm
+
+# TD工具运行输出目录
+*_Runs/
+run/
+run_board/
+work/
+
+# 报告输出
+reports/
+reports/sim/
+reports/raw/
+
+# TD工程生成中间文件
+*.bit
+*.bin
+*.mcs
+*.hex
+*.prm
+*.log
+*.rpt
+*.txt.out
+
+# TD工程缓存、用户本地配置（每个人本地不一样，不要上传）
+*.tproj.user
+*.tproj.*.bak
+*.bak
+*.backup
+.DS_Store
+Thumbs.db
+
+# 工程临时文件、布局布线中间网表
+output/
+tmp/
+temp/
+*.jou
+*.history
+
+# 仿真编译输出
+sim_build/
+sim_out/
+
+# 编辑器临时文件
+*~
+.#*
+.vscode/.DS_Store
+.idea/
+.vscode/
