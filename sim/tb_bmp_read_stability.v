@@ -19,6 +19,11 @@ module tb_bmp_read_stability;
     localparam [2:0] SCEN_TRUNCATED   = 3'd4;
     localparam [2:0] SCEN_FASTSKIP    = 3'd5;
     localparam [2:0] SCEN_TIMEOUT     = 3'd6;
+    localparam [2:0] SCEN_LONG_SCAN   = 3'd7;
+
+    // 30 个空扇区 × 约 513 个时钟/扇区 ≈ 15,390 周期，已超过
+    // TIMEOUT_CYCLES=10,000。用于验证超时按"单个扇区"而非"整段扫描"计时。
+    localparam [31:0] LONG_SCAN_TARGET = 32'd30;
 
     reg        clk;
     reg        rst;
@@ -181,6 +186,12 @@ module tb_bmp_read_stability;
                 end
                 SCEN_TIMEOUT:
                     card_byte = bmp_byte(off, FILE_LEN, 54, 40, BMP_W, BMP_H, 1, 24, 0);
+                SCEN_LONG_SCAN: begin
+                    if (addr == LONG_SCAN_TARGET)
+                        card_byte = bmp_byte(off, FILE_LEN, 54, 40, BMP_W, BMP_H, 1, 24, 0);
+                    else
+                        card_byte = 8'h00;
+                end
                 default:
                     card_byte = 8'h00;
             endcase
@@ -447,6 +458,16 @@ module tb_bmp_read_stability;
         start_scan(32'd0, 32'd16, 3'd1);
         repeat (20000) @(posedge clk);
         check(seen_load_error && (captured_error == ERR_TIMEOUT), "scan timeout reports ERR_TIMEOUT");
+
+        // 10. A long multi-sector scan must not be killed by the per-operation
+        //     timeout.  The scan spends >TIMEOUT_CYCLES before reaching the
+        //     target sector; the fix resets the timer after every sector.
+        reset_dut();
+        scenario = SCEN_LONG_SCAN;
+        start_scan(32'd0, 32'd100, 3'd1);
+        wait_scan_done();
+        check((scan_found_total == 3'd1) && !seen_load_error,
+              "long multi-sector scan is not falsely timed out");
 
         if (fails == 0)
             $display("PASS: bmp_read stability tests completed");

@@ -206,11 +206,17 @@ always @(posedge clk or posedge rst) begin
 end
 
 // SD 读取软超时计数器：SCAN/LOAD_HDR/LOAD_DATA 三个阶段均受保护。
+// 注意：这是"单个扇区读取超时"，不是"整段扫描超时"。每成功读完一个扇区
+// 就重新计时，否则正常的多扇区扫描/加载会被误判超时（一张 640x480 BMP
+// 需要读约 1800 个扇区，整段耗时远超 500ms）。
 always @(posedge clk or posedge rst) begin
     if (rst) begin
         sd_timeout_cnt <= 32'd0;
     end else if ((state == ST_SCAN) || (state == ST_LOAD_HDR) || (state == ST_LOAD_DATA)) begin
-        sd_timeout_cnt <= sd_timeout_cnt + 32'd1;
+        if (sd_sec_read_end)
+            sd_timeout_cnt <= 32'd0;
+        else
+            sd_timeout_cnt <= sd_timeout_cnt + 32'd1;
     end else begin
         sd_timeout_cnt <= 32'd0;
     end
@@ -342,10 +348,14 @@ always @(posedge clk or posedge rst) begin
                         // 坏图快速跳过：仍是 BMP 签名但头校验失败时，按文件长度跳过整个文件；
                         // 非 BMP 数据仍只跳一个扇区。
                         if ((header_0 == "B") && (header_1 == "M")) begin
-                            if ((next_scan_sector_if_match > scan_max_sector) ||
-                                (next_scan_sector_if_match <= scan_sector)) begin
+                            if (next_scan_sector_if_match > scan_max_sector) begin
                                 scan_done <= 1'b1;
                                 state     <= ST_IDLE;
+                            end else if (next_scan_sector_if_match <= scan_sector) begin
+                                // file_len 异常（如伪造 BM 签名/文件长度回绕）导致无法前进时，
+                                // 退化为逐扇区扫描，避免直接结束扫描而漏掉后面的真图。
+                                sd_sec_read_addr <= next_scan_sector_if_miss;
+                                scan_sector      <= next_scan_sector_if_miss;
                             end else begin
                                 sd_sec_read_addr <= next_scan_sector_if_match;
                                 scan_sector      <= next_scan_sector_if_match;
