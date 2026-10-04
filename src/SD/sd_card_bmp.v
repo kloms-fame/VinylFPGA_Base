@@ -1,8 +1,8 @@
 // =============================================================================
 // File Name    : sd_card_bmp.v
 // Module Name  : sd_card_bmp
-// Project      : VinylFPGA (完赛优化系列 - 第三讲/第五讲/第六讲/第七讲)
-// Description  : 长短按复用、双向切换、自动轮播、稳定性恢复、FAT32文件读取
+// Project      : VinylFPGA (完赛优化系列 - 第三讲/第五讲/第六讲/第七讲/第八讲)
+// Description  : 长短按复用、双向切换、自动轮播、稳定性恢复、FAT32四bank预加载
 // =============================================================================
 
 module sd_card_bmp #(
@@ -26,8 +26,8 @@ module sd_card_bmp #(
     input  [15:0]               bmp_height,
     output reg                  display_valid,
     input                       write_finish_toggle,   // 来自 mem_clk 域的写完成翻转信号
-    output reg [1:0]            write_buf_idx,         // 显存写入缓冲区(0或1)
-    output reg [1:0]            disp_buf_idx,          // 显存显示缓冲区(0或1)
+    output reg [1:0]            write_buf_idx,         // 当前加载目标bank(0~3)
+    output reg [1:0]            disp_buf_idx,          // 当前显示bank(0~3)
     output                      write_req,
     input                       write_req_ack,
     output                      write_en,
@@ -71,14 +71,14 @@ module sd_card_bmp #(
     reg         first_image_committed;
     reg         scan_abort;
     reg         boot_failed;
-    reg [1:0]   boot_idx;
+    reg [2:0]   preload_idx;         // 后台预加载顺序：0~3，4表示全部处理完
 
     reg         auto_play_en;
     reg [31:0]  auto_cnt;
     reg [2:0]   img_found_count;
-    reg [1:0]   img_idx;             // 当前屏幕上显示呈现的图片编号(0~3)
-    reg [1:0]   load_idx;            // 正在向后台缓冲区加载的图片编号(0~3)
-    reg [1:0]   pending_buf_idx;     // 后台写入的目标缓冲区编号(0或1)
+    reg [1:0]   img_idx;             // 当前屏幕上显示的图片编号(0~3)
+    reg [1:0]   load_idx;            // 正在加载的图片编号(0~3)
+    reg [3:0]   image_ready;         // 四个bank加载完成标记，bit n对应PIC(n+1)
 
     // FAT32 扫描结果：每张有效图片对应的资源索引(0~3)，
     // 加载时交给 fat32_media_loader 选择 PICn.BMP 的簇号/大小。
@@ -90,14 +90,11 @@ module sd_card_bmp #(
     reg         next_req_pending;    // 下一张请求挂起标志（防连跳）
     reg         prev_req_pending;    // 上一张请求挂起标志（防连跳）
     reg         load_busy;
+    reg         load_is_preload;     // 当前加载是否由后台预加载发起
+    reg         load_for_display;    // 当前加载完成后是否切换显示
     reg         source_done_seen;
     reg         load_error_seen;
     reg [1:0]   retry_count;
-
-    // 稳定性时序优化：预计算"下一张候选首图"的索引与存在性，
-    // 避免 load_error 直接驱动 LUT 形成长组合路径。
-    reg [1:0]   boot_index_next;
-    reg         has_more_boot_r;
 
     // KEY2 长按检测逻辑寄存器
     reg [31:0]  long_press_cnt;
@@ -124,6 +121,7 @@ module sd_card_bmp #(
     assign auto_tick          = (auto_cnt >= (AUTO_PLAY_CYCLES - 1'b1));
     assign scan_done_eff      = scan_done | scan_abort;
 
+    // 四bank后，图片编号就是bank编号，切换时读地址索引直接使用img_idx。
     assign next_from_current  = next_index_limited(img_idx, img_found_count);
     assign prev_from_current  = prev_index_limited(img_idx, img_found_count);
 
@@ -173,17 +171,16 @@ module sd_card_bmp #(
         end
     endfunction
 
-    // 双缓冲轮转函数：写入非当前显示区
-    function [1:0] next_buf_lut;
-        input [1:0] cur_disp_buf;
-        input       valid_now;
+    // 四bank加载完成查询函数
+    function ready_lut;
+        input [1:0] idx;
         begin
-            if (!valid_now)
-                next_buf_lut = 2'd0;
-            else if (cur_disp_buf == 2'd0)
-                next_buf_lut = 2'd1;
-            else
-                next_buf_lut = 2'd0;
+            case (idx)
+                2'd0: ready_lut = image_ready[0];
+                2'd1: ready_lut = image_ready[1];
+                2'd2: ready_lut = image_ready[2];
+                default: ready_lut = image_ready[3];
+            endcase
         end
     endfunction
 
@@ -200,13 +197,13 @@ module sd_card_bmp #(
             first_image_committed <= 1'b0;
             scan_abort            <= 1'b0;
             boot_failed           <= 1'b0;
-            boot_idx              <= 2'd0;
+            preload_idx           <= 3'd0;
             auto_play_en          <= 1'b0;
             auto_cnt              <= 32'd0;
             img_found_count       <= 3'd0;
             img_idx               <= 2'd0;
             load_idx              <= 2'd0;
-            pending_buf_idx       <= 2'd0;
+            image_ready           <= 4'd0;
             write_buf_idx         <= 2'd0;
             disp_buf_idx          <= 2'd0;
             img_index0            <= 2'd0;
@@ -216,11 +213,11 @@ module sd_card_bmp #(
             next_req_pending      <= 1'b0;
             prev_req_pending      <= 1'b0;
             load_busy             <= 1'b0;
+            load_is_preload       <= 1'b0;
+            load_for_display      <= 1'b0;
             source_done_seen      <= 1'b0;
             load_error_seen       <= 1'b0;
             retry_count           <= 2'd0;
-            boot_index_next       <= 2'd0;
-            has_more_boot_r       <= 1'b0;
             display_valid         <= 1'b0;
             long_press_cnt        <= 32'd0;
             long_press_marked     <= 1'b0;
@@ -231,12 +228,6 @@ module sd_card_bmp #(
             wrfin_tgl_sync    <= {wrfin_tgl_sync[1:0], write_finish_toggle};
             key_auto_stable_d <= key_auto_stable;
 
-            // 首图候选预计算（每拍寄存，切断 load_error 的组合长路径）
-            // 第七讲扫描器要求 PIC1~PIC4 全部存在，并按 1~4 顺序报告；
-            // 因此显示序号与 FAT32 资源索引一致，不再走组合查表。
-            boot_index_next  <= boot_idx + 2'd1;
-            has_more_boot_r  <= (({1'b0, boot_idx} + 3'd1) < img_found_count);
-
             scan_start_pulse  <= 1'b0;
             load_start_pulse  <= 1'b0;
 
@@ -245,13 +236,13 @@ module sd_card_bmp #(
                 first_image_committed <= 1'b0;
                 scan_abort            <= 1'b0;
                 boot_failed           <= 1'b0;
-                boot_idx              <= 2'd0;
+                preload_idx           <= 3'd0;
                 auto_play_en          <= 1'b0;
                 auto_cnt              <= 32'd0;
                 img_found_count       <= 3'd0;
                 img_idx               <= 2'd0;
                 load_idx              <= 2'd0;
-                pending_buf_idx       <= 2'd0;
+                image_ready           <= 4'd0;
                 write_buf_idx         <= 2'd0;
                 disp_buf_idx          <= 2'd0;
                 img_index0            <= 2'd0;
@@ -261,11 +252,11 @@ module sd_card_bmp #(
                 next_req_pending      <= 1'b0;
                 prev_req_pending      <= 1'b0;
                 load_busy             <= 1'b0;
+                load_is_preload       <= 1'b0;
+                load_for_display      <= 1'b0;
                 source_done_seen      <= 1'b0;
                 load_error_seen       <= 1'b0;
                 retry_count           <= 2'd0;
-                boot_index_next       <= 2'd0;
-                has_more_boot_r       <= 1'b0;
                 display_valid         <= 1'b0;
                 long_press_cnt        <= 32'd0;
                 long_press_marked     <= 1'b0;
@@ -288,17 +279,26 @@ module sd_card_bmp #(
                 if (load_busy && bmp_ready && !load_error)
                     source_done_seen <= 1'b1;
 
-                // 3. SDRAM 写完成：双缓冲原子提交（消除场撕裂）
+                // 3. SDRAM 写完成：标记对应bank已加载；需要显示时切换读bank
                 if (load_busy && source_done_seen && write_finish_pulse && !load_error) begin
                     load_busy             <= 1'b0;
                     source_done_seen      <= 1'b0;
-                    disp_buf_idx          <= pending_buf_idx;
-                    img_idx               <= load_idx;
-                    display_valid         <= 1'b1;
+                    image_ready[load_idx] <= 1'b1;
                     first_image_committed <= 1'b1;
                     boot_failed           <= 1'b0;
                     load_error_seen       <= 1'b0;
                     retry_count           <= 2'd0;
+                    if (!display_valid || load_for_display) begin
+                        img_idx       <= load_idx;
+                        disp_buf_idx  <= load_idx;
+                        display_valid <= 1'b1;
+                    end
+                    if (load_is_preload) begin
+                        if (load_idx == 2'd3)
+                            preload_idx <= 3'd4;
+                        else
+                            preload_idx <= {1'b0, load_idx} + 3'd1;
+                    end
                 end
 
                 // 4. 数码管显示内容更新：已进入显示后呈现图片号 1~4，初始化期呈现底层状态码
@@ -315,19 +315,21 @@ module sd_card_bmp #(
                     first_image_committed <= 1'b0;
                     scan_abort            <= 1'b0;
                     boot_failed           <= 1'b0;
-                    boot_idx              <= 2'd0;
+                    preload_idx           <= 3'd0;
                     auto_play_en          <= 1'b0;
                     auto_cnt              <= 32'd0;
                     img_found_count       <= 3'd0;
                     img_idx               <= 2'd0;
                     load_idx              <= 2'd0;
-                    pending_buf_idx       <= 2'd0;
+                    image_ready           <= 4'd0;
                     write_buf_idx         <= 2'd0;
                     disp_buf_idx          <= 2'd0;
                     next_req_pending      <= 1'b0;
                     prev_req_pending      <= 1'b0;
                     display_valid         <= 1'b0;
                     load_busy             <= 1'b0;
+                    load_is_preload       <= 1'b0;
+                    load_for_display      <= 1'b0;
                     source_done_seen      <= 1'b0;
                     load_error_seen       <= 1'b0;
                     retry_count           <= 2'd0;
@@ -374,63 +376,87 @@ module sd_card_bmp #(
                         auto_cnt <= 32'd0;
                     end
 
-                    // ---- 图片加载仲裁调度逻辑 ----
-                    // 优先级 1：上电自动加载第一张图
-                    if (scan_done_eff && !first_image_committed && !boot_failed &&
-                        bmp_ready && !load_busy && (img_found_count != 3'd0)) begin
-                        load_idx         <= boot_idx;
-                        load_index       <= boot_idx;
-                        pending_buf_idx  <= 2'd0;
-                        write_buf_idx    <= 2'd0;
-                        load_start_pulse <= 1'b1;
-                        load_busy        <= 1'b1;
-                        source_done_seen <= 1'b0;
-                        load_error_seen  <= 1'b0;
-                        retry_count      <= 2'd0;
-                        next_req_pending <= 1'b0;
-                        prev_req_pending <= 1'b0;
-                        auto_cnt         <= 32'd0;
-                    end
-                    // 优先级 2：响应【下一张】请求（手动优先）
-                    else if (scan_done_eff && bmp_ready && display_valid && !load_busy && next_req_pending && (img_found_count != 3'd0)) begin
-                        load_idx         <= next_from_current;
-                        load_index       <= next_from_current;
-                        pending_buf_idx  <= next_buf_lut(disp_buf_idx, display_valid);
-                        write_buf_idx    <= next_buf_lut(disp_buf_idx, display_valid);
-                        load_start_pulse <= 1'b1;
-                        load_busy        <= 1'b1;
-                        source_done_seen <= 1'b0;
-                        load_error_seen  <= 1'b0;
-                        retry_count      <= 2'd0;
+                    // ---- 图片加载/切换仲裁调度逻辑 ----
+                    // 优先级1：手动下一张。已加载bank零延迟切换；未加载bank则加载后再切换。
+                    if (scan_done_eff && display_valid && !load_busy &&
+                        next_req_pending && (img_found_count != 3'd0)) begin
                         next_req_pending <= 1'b0;
                         auto_cnt         <= 32'd0;
+                        if (ready_lut(next_from_current)) begin
+                            img_idx      <= next_from_current;
+                            disp_buf_idx <= next_from_current;
+                        end else if (bmp_ready) begin
+                            load_idx         <= next_from_current;
+                            load_index       <= next_from_current;
+                            write_buf_idx    <= next_from_current;
+                            load_start_pulse <= 1'b1;
+                            load_busy        <= 1'b1;
+                            load_is_preload  <= 1'b0;
+                            load_for_display <= 1'b1;
+                            source_done_seen <= 1'b0;
+                            load_error_seen  <= 1'b0;
+                            retry_count      <= 2'd0;
+                        end
                     end
-                    // 优先级 3：响应【上一张】请求（手动优先）
-                    else if (scan_done_eff && bmp_ready && display_valid && !load_busy && prev_req_pending && (img_found_count != 3'd0)) begin
-                        load_idx         <= prev_from_current;
-                        load_index       <= prev_from_current;
-                        pending_buf_idx  <= next_buf_lut(disp_buf_idx, display_valid);
-                        write_buf_idx    <= next_buf_lut(disp_buf_idx, display_valid);
-                        load_start_pulse <= 1'b1;
-                        load_busy        <= 1'b1;
-                        source_done_seen <= 1'b0;
-                        load_error_seen  <= 1'b0;
-                        retry_count      <= 2'd0;
+                    // 优先级2：手动上一张（KEY2长按）。
+                    else if (scan_done_eff && display_valid && !load_busy &&
+                             prev_req_pending && (img_found_count != 3'd0)) begin
                         prev_req_pending <= 1'b0;
                         auto_cnt         <= 32'd0;
+                        if (ready_lut(prev_from_current)) begin
+                            img_idx      <= prev_from_current;
+                            disp_buf_idx <= prev_from_current;
+                        end else if (bmp_ready) begin
+                            load_idx         <= prev_from_current;
+                            load_index       <= prev_from_current;
+                            write_buf_idx    <= prev_from_current;
+                            load_start_pulse <= 1'b1;
+                            load_busy        <= 1'b1;
+                            load_is_preload  <= 1'b0;
+                            load_for_display <= 1'b1;
+                            source_done_seen <= 1'b0;
+                            load_error_seen  <= 1'b0;
+                            retry_count      <= 2'd0;
+                        end
                     end
-                    // 优先级 4：响应【自动轮播定时器】触发
-                    else if (scan_done_eff && bmp_ready && display_valid && !load_busy && auto_play_en && auto_tick && (img_found_count > 3'd1)) begin
-                        load_idx         <= next_from_current;
-                        load_index       <= next_from_current;
-                        pending_buf_idx  <= next_buf_lut(disp_buf_idx, display_valid);
-                        write_buf_idx    <= next_buf_lut(disp_buf_idx, display_valid);
-                        load_start_pulse <= 1'b1;
-                        load_busy        <= 1'b1;
-                        source_done_seen <= 1'b0;
-                        load_error_seen  <= 1'b0;
-                        retry_count      <= 2'd0;
-                        auto_cnt         <= 32'd0;
+                    // 优先级3：自动轮播。已加载bank直接切换，避免重新读卡。
+                    else if (scan_done_eff && display_valid && !load_busy &&
+                             auto_play_en && auto_tick && (img_found_count > 3'd1)) begin
+                        auto_cnt <= 32'd0;
+                        if (ready_lut(next_from_current)) begin
+                            img_idx      <= next_from_current;
+                            disp_buf_idx <= next_from_current;
+                        end else if (bmp_ready) begin
+                            load_idx         <= next_from_current;
+                            load_index       <= next_from_current;
+                            write_buf_idx    <= next_from_current;
+                            load_start_pulse <= 1'b1;
+                            load_busy        <= 1'b1;
+                            load_is_preload  <= 1'b0;
+                            load_for_display <= 1'b1;
+                            source_done_seen <= 1'b0;
+                            load_error_seen  <= 1'b0;
+                            retry_count      <= 2'd0;
+                        end
+                    end
+                    // 优先级4：后台顺序预加载四个bank。首图加载完成后立即显示，
+                    // 其余图片在后台装入各自固定bank，后续切换不再访问TF卡。
+                    else if (scan_done_eff && bmp_ready && !load_busy &&
+                             (preload_idx < img_found_count)) begin
+                        if (!ready_lut(preload_idx[1:0])) begin
+                            load_idx         <= preload_idx[1:0];
+                            load_index       <= preload_idx[1:0];
+                            write_buf_idx    <= preload_idx[1:0];
+                            load_start_pulse <= 1'b1;
+                            load_busy        <= 1'b1;
+                            load_is_preload  <= 1'b1;
+                            load_for_display <= 1'b0;
+                            source_done_seen <= 1'b0;
+                            load_error_seen  <= 1'b0;
+                            retry_count      <= 2'd0;
+                        end else begin
+                            preload_idx <= preload_idx + 3'd1;
+                        end
                     end
                 end
 
@@ -445,7 +471,10 @@ module sd_card_bmp #(
                             scan_start_pulse <= 1'b1;
                             scan_abort       <= 1'b0;
                             boot_failed      <= 1'b0;
-                            boot_idx         <= 2'd0;
+                            preload_idx      <= 3'd0;
+                            image_ready      <= 4'd0;
+                            load_busy        <= 1'b0;
+                            source_done_seen <= 1'b0;
                             load_error_seen  <= 1'b0;
                         end else begin
                             scan_abort       <= 1'b1;
@@ -471,29 +500,22 @@ module sd_card_bmp #(
                             auto_cnt         <= 32'd0;
                             retry_count      <= 2'd0;
                             load_error_seen  <= 1'b1;
-                            if (!display_valid) begin
-                                // 首图失败时按顺序尝试下一张候选图，避免反复重试同一张坏图。
-                                // 候选扇区与存在性已提前寄存，切断 load_error 的长组合路径。
-                                if (has_more_boot_r) begin
-                                    boot_idx         <= boot_idx + 2'd1;
-                                    load_idx         <= boot_idx + 2'd1;
-                                    load_index       <= boot_index_next;
-                                    pending_buf_idx  <= 2'd0;
-                                    write_buf_idx    <= 2'd0;
-                                    load_start_pulse <= 1'b1;
-                                    load_busy        <= 1'b1;
-                                    load_error_seen  <= 1'b0;
-                                    retry_count      <= 2'd0;
-                                end else begin
-                                    boot_failed <= 1'b1;
-                                end
+                            // 预加载失败时跳过该图，继续尝试后续bank；
+                            // 手动切换失败时保留当前画面，不破坏已有显示。
+                            if (load_is_preload) begin
+                                if (load_idx == 2'd3)
+                                    preload_idx <= 3'd4;
+                                else
+                                    preload_idx <= {1'b0, load_idx} + 3'd1;
+                            end
+                            if (!display_valid && (preload_idx >= img_found_count))
+                                boot_failed <= 1'b1;
                             end
                         end
                     end
                 end
             end
         end
-    end
 
     // =========================================================================
     // 实例化消抖模块

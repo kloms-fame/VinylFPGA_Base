@@ -75,11 +75,12 @@ reg [15:0]                            wr_x;                       // current x p
 reg [BURST_BITS - 1:0]				burst_cnt;
 wire								wr_burst_finish;
 
+	reg [9:0]							rdusedw_r;                  // registered FIFO level for the burst decision
 reg App_wr_en_r;
 reg App_wr_en_d0;
 
 wire into_burst;
-assign into_burst = (((write_len_latch <= (rdusedw + write_cnt))||rdusedw > BURST_SIZE) && ~App_rd_busy);//当rd在突发时不会进入burst
+	assign into_burst = (((write_len_latch <= (rdusedw_r + write_cnt))||rdusedw_r > BURST_SIZE) && ~App_rd_busy);//当rd在突发时不会进入burst
 
 assign App_wr_addr = {App_wr_addr_r[ADDR_BITS - 1:0]};
 //assign O_wr_busy = (state != S_IDLE || (S_IDLE && write_req_d2));
@@ -93,6 +94,7 @@ always@(posedge mem_clk or posedge rst)
 begin
 	if(rst == 1'b1)
 	begin
+		rdusedw_r       <=  10'd0;
 		write_req_d0    <=  1'b0;
 		write_req_d1    <=  1'b0;
 		write_req_d2    <=  1'b0;
@@ -103,6 +105,7 @@ begin
 	end
 	else
 	begin
+		rdusedw_r <= rdusedw;
 		write_req_d0    <=  write_req;
 		write_req_d1    <=  write_req_d0;
 		write_req_d2    <=  write_req_d1;

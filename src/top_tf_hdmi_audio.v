@@ -31,6 +31,8 @@ parameter BUSRT_BITS    = 10;
 parameter FRAME_PIXELS  = 24'd307200;   // 640*480
 parameter BUF0_ADDR     = 24'd0;
 parameter BUF1_ADDR     = FRAME_PIXELS;
+parameter BUF2_ADDR     = FRAME_PIXELS * 24'd2;
+parameter BUF3_ADDR     = FRAME_PIXELS * 24'd3;
 
 wire Sdr_init_done;
 wire Sdr_init_ref_vld;
@@ -288,8 +290,8 @@ frame_read_write #(
     .read_finish       (),
     .read_addr_0       (BUF0_ADDR),
     .read_addr_1       (BUF1_ADDR),
-    .read_addr_2       (24'd0),
-    .read_addr_3       (24'd0),
+    .read_addr_2       (BUF2_ADDR),
+    .read_addr_3       (BUF3_ADDR),
     .read_addr_index   (disp_buf_idx),
     .read_len          (FRAME_PIXELS),
     .read_en           (video_read_en),
@@ -306,8 +308,8 @@ frame_read_write #(
     .write_finish      (frame_write_finish),
     .write_addr_0      (BUF0_ADDR),
     .write_addr_1      (BUF1_ADDR),
-    .write_addr_2      (24'd0),
-    .write_addr_3      (24'd0),
+    .write_addr_2      (BUF2_ADDR),
+    .write_addr_3      (BUF3_ADDR),
     .write_addr_index  (write_buf_idx),
     .write_len         (FRAME_PIXELS),
     .write_en          (sd_card_write_en),

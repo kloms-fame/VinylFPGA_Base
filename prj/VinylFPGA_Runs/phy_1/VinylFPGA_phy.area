@@ -8,12 +8,12 @@ IO Statistics
   #inout                    1
 
 Utilization Statistics
-#lut                     5876   out of  19600   29.98%
+#lut                     5884   out of  19600   30.02%
 #reg                     4671   out of  19600   23.83%
-#le                      7142
-  #lut only              2471   out of   7142   34.60%
-  #reg only              1266   out of   7142   17.73%
-  #lut&reg               3405   out of   7142   47.68%
+#le                      7150
+  #lut only              2479   out of   7150   34.67%
+  #reg only              1266   out of   7150   17.71%
+  #lut&reg               3405   out of   7150   47.62%
 #bram                      20   out of     64   31.25%
   #bram9k                  20
   #fifo9k                   0
@@ -118,19 +118,40 @@ Detailed IO Report
      dq[14]          INOUT        S88        LVCMOS25      PAD            8           PULLUP     IREG;OREG  
      dq[15]          INOUT        S89        LVCMOS25      PAD            8           PULLUP     IREG;OREG  
 
+Report Clock Domain Luts:
+
+------------------------------------------------------------------------------------------------------------------
+  Index   |  Name         |  Frequency   |  LUT As Logic   |  LUT As Shifter   |  LUT As Dram   |  BRAM   |  DSP
+------------------------------------------------------------------------------------------------------------------
+  #1      |  clk          |  50MHz       |  30             |  0                |  0             |  0      |  0
+  #2      |  ext_mem_clk  |  125MHz      |  244            |  0                |  0             |  4      |  0
+  #3      |  hdmi_5x_clk  |  125MHz      |  16             |  0                |  0             |  0      |  0
+  #4      |  sd_card_clk  |  100MHz      |  1640           |  0                |  0             |  2      |  0
+  #5      |  video_clk    |  25MHz       |  896            |  0                |  16            |  18     |  1
+------------------------------------------------------------------------------------------------------------------
+
+Clock Resource Statistics
+Index     ClockNet                                            Type               DriverType         Driver                         Fanout
+#1        sys_pll_m0/clk0_buf                                 Global             pll                sys_pll_m0/pll_inst.clkc0      1181
+#2        video_pll_m0/clk0_buf                               Global             pll                video_pll_m0/pll_inst.clkc0    1162
+#3        U3/u2_ram/u1_init_ref/Sdr_clk                       Global             pll                sys_pll_m0/pll_inst.clkc1      473
+#4        u_hdmi2phy_wrapper/u0_lane_lvds_8_1/I_serial_clk    Global             pll                video_pll_m0/pll_inst.clkc1    34
+#5        clk_dup_1                                           Global             io                 clk_syn_2.di                   26
+#6        U3/u2_ram/SDRAM_CLK                                 Global             pll                sys_pll_m0/pll_inst.clkc2      0
+
 Report Hierarchy Area:
 +---------------------------------------------------------------------------------------------------------------------------------------------------+
 |Instance                                  |Module                                            |le      |lut     |ripple  |seq     |bram    |dsp     |
 +---------------------------------------------------------------------------------------------------------------------------------------------------+
-|top                                       |top                                               |7142    |4907    |969     |4695    |20      |2       |
+|top                                       |top                                               |7150    |4915    |969     |4695    |20      |2       |
 |  U3                                      |sdram                                             |396     |116     |5       |386     |0       |0       |
 |    u2_ram                                |sdr_as_ram                                        |396     |116     |5       |386     |0       |0       |
 |      u1_init_ref                         |sdr_init_ref                                      |83      |19      |5       |75      |0       |0       |
 |      u2_wrrd                             |sdr_wrrd                                          |313     |97      |0       |311     |0       |0       |
-|  frame_read_write_m0                     |frame_read_write                                  |593     |373     |151     |342     |4       |0       |
+|  frame_read_write_m0                     |frame_read_write                                  |599     |379     |151     |342     |4       |0       |
 |    frame_fifo_read_m0                    |frame_fifo_read                                   |117     |91      |24      |74      |0       |0       |
 |    frame_fifo_write_m0                   |frame_fifo_write                                  |222     |142     |77      |86      |0       |0       |
-|    read_buf                              |rfifo_32_32_512                                   |128     |62      |24      |91      |2       |0       |
+|    read_buf                              |rfifo_32_32_512                                   |134     |68      |24      |91      |2       |0       |
 |      ram_inst                            |ram_infer_rfifo_32_32_512                         |0       |0       |0       |0       |2       |0       |
 |      rd_to_wr_cross_inst                 |fifo_cross_domain_addr_process_al_rfifo_32_32_512 |34      |16      |0       |34      |0       |0       |
 |      wr_to_rd_cross_inst                 |fifo_cross_domain_addr_process_al_rfifo_32_32_512 |32      |20      |0       |32      |0       |0       |
@@ -149,7 +170,7 @@ Report Hierarchy Area:
 |      spi_master_m0                       |spi_master                                        |55      |50      |5       |45      |0       |0       |
 |    u_key_auto                            |key_press_debounce                                |58      |40      |18      |22      |0       |0       |
 |    u_key_next                            |key_press_debounce                                |59      |41      |18      |26      |0       |0       |
-|  seg_scan_m0                             |seg_scan                                          |60      |46      |14      |20      |0       |0       |
+|  seg_scan_m0                             |seg_scan                                          |62      |48      |14      |20      |0       |0       |
 |  sys_pll_m0                              |sys_pll                                           |0       |0       |0       |0       |0       |0       |
 |  u_audio_arc_calculate                   |audio_arc_calculate                               |76      |45      |14      |48      |0       |0       |
 |  u_hdmi2phy_wrapper                      |hdmi_phy_wrapper                                  |45      |33      |0       |45      |0       |0       |
@@ -195,3 +216,18 @@ Report Hierarchy Area:
 |    color_bar_m0                          |color_bar                                         |40      |31      |8       |28      |0       |0       |
 |  video_delay_m0                          |video_delay                                       |58      |38      |0       |58      |0       |0       |
 +---------------------------------------------------------------------------------------------------------------------------------------------------+
+
+
+DataNet Average Fanout:
+
+   Index     Fanout     Nets  
+    #1          1       5732  
+    #2          2       1455  
+    #3          3       469   
+    #4          4       337   
+    #5        5-10      550   
+    #6        11-50     216   
+    #7       51-100      28   
+    #8       101-500     2    
+    #9        >500       1    
+  Average     2.60            

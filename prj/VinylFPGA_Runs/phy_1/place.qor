@@ -12,18 +12,18 @@
 |     Num of violated H-EP  |           13                |
 -----------------------------------------------------------
 | Routing Resource          |                             |
-|     Wire length           |       375146                |
+|     Wire length           |       375266                |
 -----------------------------------------------------------
 | Utilization               |                             |
-|     #slices               |         3832                |
-|     slices percentage     |       39.10%                |
+|     #slices               |         3836                |
+|     slices percentage     |       39.14%                |
 |     #RAMs                 |           20                |
 |     #DSPs                 |            2                |
 |     #DRAMHARDCON          |            0                |
 -----------------------------------------------------------
 | Congestion                |                             |
-|     Top 1% tile util      |           37                |
-|     Top 1% tile avg util  |       40.59%                |
+|     Top 1% tile util      |           36                |
+|     Top 1% tile avg util  |       40.07%                |
 |     Over 100% util #tile  |            0                |
 -----------------------------------------------------------
 Report place stage QoR done.
