@@ -1,0 +1,675 @@
+Created by          : Tang Dynasty v6.2.168116
+                    : Copyright (c) 2012-2025 Anlogic Inc.
+Generated           : Sun Oct  4 11:12:05 2026
+
+Top Model           : top
+Device              : EG4S20BG256
+Speed               : NA
+STA coverage        : 95.82%
+
+----------------------------------------------------------------------------------------------------
+Path Group     :     ext_mem_clk -> ext_mem_clk
+Type           :     Self
+From Clock     :     ext_mem_clk
+To Clock       :     ext_mem_clk
+Min Period     :     1.359ns
+Fmax           :     735.835MHz
+
+Statistics:
+Max            : SWNS      6.641ns, STNS      0.000ns,         0 Viol Endpoints,         4 Total Endpoints,         4 Paths Analyzed
+Min            : HWNS      0.181ns, HTNS      0.000ns,         0 Viol Endpoints,         4 Total Endpoints,         4 Paths Analyzed
+----------------------------------------------------------------------------------------------------
+
+Max Paths
+----------------------------------------------------------------------------------------------------
+Slack               : 6.699ns
+Begin Point         : frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : frame_read_write_m0/frame_fifo_read_m0/state_reg[1]_syn_4.b[0] (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+Check Type          : setup
+Process             : slow
+Budget              : 8.000ns { ext_mem_clk rising@8.000ns - ext_mem_clk rising@0.000ns }
+Data Path Delay     : 1.021ns (cell 0.695ns (68%), net 0.326ns (32%))
+Clock Skew          : 0.064ns
+Logic Level         : 1 ( LUT4=1 )
+Max Fanout          : 2
+Clock Uncertainty   : 0.100ns (sdc uncertainty: 0.000ns, default uncertainty: 0.100ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.660          1.660          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.660          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -2.067         -0.407          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            2.276          1.869          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk
+launch edge                             0.000    r     1.869               
+--------------------------------------------------------------------  ---------------
+clk2q               x012y012z1          0.146    r     2.015          pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.q[1]
+net (fo=2)                              0.326          2.341          net: frame_read_write_m0/frame_fifo_read_m0/read_len_d1[12],  ../src/SD/frame_fifo_read.v(57)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/state_reg[1]_syn_4.b[0]
+LUT4 (reg)          x011y012z2          0.549    f     2.890       1  net: frame_read_write_m0/frame_fifo_read_m0/read_len_latch[12],  ../src/SD/frame_fifo_read.v(58)
+--------------------------------------------------------------------  ---------------
+Arrival                                                2.890               
+
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.493          1.493          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.493          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.857         -0.364          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            2.045          1.681          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/state_reg[1]_syn_4.clk
+capture edge                            8.000    r     9.681               
+--------------------------------------------------------------------  ---------------
+setup                                  -0.116          9.565               
+clock uncertainty                      -0.100          9.465               
+clock pessimism                         0.124          9.589               
+--------------------------------------------------------------------  ---------------
+Required                                               9.589               
+--------------------------------------------------------------------  ---------------
+Slack                                                  6.699               
+
+Slack               : 6.641ns
+Begin Point         : frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : frame_read_write_m0/frame_fifo_write_m0/App_wr_en_r_reg_syn_9.b[0] (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+Check Type          : setup
+Process             : slow
+Budget              : 8.000ns { ext_mem_clk rising@8.000ns - ext_mem_clk rising@0.000ns }
+Data Path Delay     : 1.079ns (cell 0.597ns (55%), net 0.482ns (45%))
+Clock Skew          : 0.064ns
+Logic Level         : 1 ( LUT4=1 )
+Max Fanout          : 2
+Clock Uncertainty   : 0.100ns (sdc uncertainty: 0.000ns, default uncertainty: 0.100ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.660          1.660          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.660          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -2.067         -0.407          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            2.276          1.869          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk
+launch edge                             0.000    r     1.869               
+--------------------------------------------------------------------  ---------------
+clk2q               x012y012z1          0.146    r     2.015          pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.q[1]
+net (fo=2)                              0.482          2.497          net: frame_read_write_m0/frame_fifo_read_m0/read_len_d1[12],  ../src/SD/frame_fifo_read.v(57)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/App_wr_en_r_reg_syn_9.b[0]
+LUT4 (reg)          x013y010z1          0.451    f     2.948       1  net: frame_read_write_m0/frame_fifo_write_m0/write_len_latch[12],  ../src/SD/frame_fifo_write.v(67)
+--------------------------------------------------------------------  ---------------
+Arrival                                                2.948               
+
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.493          1.493          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.493          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.857         -0.364          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            2.045          1.681          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/App_wr_en_r_reg_syn_9.clk
+capture edge                            8.000    r     9.681               
+--------------------------------------------------------------------  ---------------
+setup                                  -0.116          9.565               
+clock uncertainty                      -0.100          9.465               
+clock pessimism                         0.124          9.589               
+--------------------------------------------------------------------  ---------------
+Required                                               9.589               
+--------------------------------------------------------------------  ---------------
+Slack                                                  6.641               
+
+Slack               : 6.832ns
+Begin Point         : frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.d[0] (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+Check Type          : setup
+Process             : slow
+Budget              : 8.000ns { ext_mem_clk rising@8.000ns - ext_mem_clk rising@0.000ns }
+Data Path Delay     : 0.952ns (cell 0.460ns (48%), net 0.492ns (52%))
+Clock Skew          : 0.000ns
+Logic Level         : 1 ( LUT3=1 )
+Max Fanout          : 4
+Clock Uncertainty   : 0.100ns (sdc uncertainty: 0.000ns, default uncertainty: 0.100ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.660          1.660          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.660          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -2.067         -0.407          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            2.276          1.869          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk
+launch edge                             0.000    r     1.869               
+--------------------------------------------------------------------  ---------------
+clk2q               x012y012z1          0.146    r     2.015          pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.q[0]
+net (fo=4)                              0.492          2.507          net: frame_read_write_m0/frame_fifo_write_m0/fifo_aclr,  ../src/SD/frame_fifo_write.v(40)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.d[0]
+LUT3 (reg)          x012y012z1          0.314    r     2.821       1  net: frame_read_write_m0/frame_fifo_write_m0/fifo_aclr,  ../src/SD/frame_fifo_write.v(40)
+--------------------------------------------------------------------  ---------------
+Arrival                                                2.821               
+
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.493          1.493          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.493          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.857         -0.364          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            2.045          1.681          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk
+capture edge                            8.000    r     9.681               
+--------------------------------------------------------------------  ---------------
+setup                                  -0.116          9.565               
+clock uncertainty                      -0.100          9.465               
+clock pessimism                         0.188          9.653               
+--------------------------------------------------------------------  ---------------
+Required                                               9.653               
+--------------------------------------------------------------------  ---------------
+Slack                                                  6.832               
+
+Slack               : 6.692ns
+Begin Point         : frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : frame_read_write_m0/write_buf/asy_r_rst1_reg_syn_4.sr (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+Check Type          : recovery
+Process             : slow
+Budget              : 8.000ns { ext_mem_clk rising@8.000ns - ext_mem_clk rising@0.000ns }
+Data Path Delay     : 0.844ns (cell 0.232ns (27%), net 0.612ns (73%))
+Clock Skew          : 0.064ns
+Logic Level         : 0
+Max Fanout          : 4
+Clock Uncertainty   : 0.100ns (sdc uncertainty: 0.000ns, default uncertainty: 0.100ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.660          1.660          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.660          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -2.067         -0.407          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            2.276          1.869          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk
+launch edge                             0.000    r     1.869               
+--------------------------------------------------------------------  ---------------
+clk2q               x012y012z1          0.146    r     2.015          pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.q[0]
+net (fo=4)                              0.612          2.627          net: frame_read_write_m0/frame_fifo_write_m0/fifo_aclr,  ../src/SD/frame_fifo_write.v(40)
+                                                                      pin: frame_read_write_m0/write_buf/asy_r_rst1_reg_syn_4.sr
+reg                 x014y012z3          0.086    r     2.713               
+--------------------------------------------------------------------  ---------------
+Arrival                                                2.713               
+
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.493          1.493          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.493          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.857         -0.364          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            2.045          1.681          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/write_buf/asy_r_rst1_reg_syn_4.clk
+capture edge                            8.000    r     9.681               
+--------------------------------------------------------------------  ---------------
+recovery                               -0.300          9.381               
+clock uncertainty                      -0.100          9.281               
+clock pessimism                         0.124          9.405               
+--------------------------------------------------------------------  ---------------
+Required                                               9.405               
+--------------------------------------------------------------------  ---------------
+Slack                                                  6.692               
+
+
+
+Min Paths
+----------------------------------------------------------------------------------------------------
+Slack               : 0.181ns
+Begin Point         : frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : frame_read_write_m0/write_buf/asy_r_rst1_reg_syn_4.sr (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+Check Type          : removal
+Process             : fast
+Budget              : 0.000ns { ext_mem_clk rising@0.000ns - ext_mem_clk rising@0.000ns }
+Data Path Delay     : 0.579ns (cell 0.161ns (27%), net 0.418ns (73%))
+Clock Skew          : 0.045ns
+Logic Level         : 0
+Max Fanout          : 4
+Clock Uncertainty   : 0.100ns (sdc uncertainty: 0.000ns, default uncertainty: 0.100ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.184          1.184          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.184          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.788         -0.604          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            1.938          1.334          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk
+launch edge                             0.000    r     1.334               
+--------------------------------------------------------------------  ---------------
+clk2q               x012y012z1          0.109    f     1.443          pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.q[0]
+net (fo=4)                              0.418          1.861          net: frame_read_write_m0/frame_fifo_write_m0/fifo_aclr,  ../src/SD/frame_fifo_write.v(40)
+                                                                      pin: frame_read_write_m0/write_buf/asy_r_rst1_reg_syn_4.sr
+reg                 x014y012z3          0.052    f     1.913               
+--------------------------------------------------------------------  ---------------
+Arrival                                                1.913               
+
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.302          1.302          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.302          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.965         -0.663          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            2.130          1.467          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/write_buf/asy_r_rst1_reg_syn_4.clk
+capture edge                            0.000    r     1.467               
+--------------------------------------------------------------------  ---------------
+removal                                 0.253          1.720               
+clock uncertainty                       0.100          1.820               
+clock pessimism                        -0.088          1.732               
+--------------------------------------------------------------------  ---------------
+Required                                               1.732               
+--------------------------------------------------------------------  ---------------
+Slack                                                  0.181               
+
+Slack               : 0.624ns
+Begin Point         : frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : frame_read_write_m0/frame_fifo_read_m0/state_reg[1]_syn_4.b[0] (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+Check Type          : hold
+Process             : fast
+Budget              : 0.000ns { ext_mem_clk rising@0.000ns - ext_mem_clk rising@0.000ns }
+Data Path Delay     : 0.730ns (cell 0.514ns (70%), net 0.216ns (30%))
+Clock Skew          : 0.045ns
+Logic Level         : 1 ( LUT4=1 )
+Max Fanout          : 2
+Clock Uncertainty   : 0.000ns (sdc uncertainty: 0.000ns, default uncertainty: 0.000ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.184          1.184          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.184          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.788         -0.604          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            1.938          1.334          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk
+launch edge                             0.000    r     1.334               
+--------------------------------------------------------------------  ---------------
+clk2q               x012y012z1          0.109    f     1.443          pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.q[1]
+net (fo=2)                              0.216          1.659          net: frame_read_write_m0/frame_fifo_read_m0/read_len_d1[12],  ../src/SD/frame_fifo_read.v(57)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/state_reg[1]_syn_4.b[0]
+LUT4 (reg)          x011y012z2          0.405    r     2.064       1  net: frame_read_write_m0/frame_fifo_read_m0/read_len_latch[12],  ../src/SD/frame_fifo_read.v(58)
+--------------------------------------------------------------------  ---------------
+Arrival                                                2.064               
+
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.302          1.302          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.302          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.965         -0.663          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            2.130          1.467          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/state_reg[1]_syn_4.clk
+capture edge                            0.000    r     1.467               
+--------------------------------------------------------------------  ---------------
+hold                                    0.061          1.528               
+clock uncertainty                       0.000          1.528               
+clock pessimism                        -0.088          1.440               
+--------------------------------------------------------------------  ---------------
+Required                                               1.440               
+--------------------------------------------------------------------  ---------------
+Slack                                                  0.624               
+
+Slack               : 0.663ns
+Begin Point         : frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : frame_read_write_m0/frame_fifo_write_m0/App_wr_en_r_reg_syn_9.b[0] (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+Check Type          : hold
+Process             : fast
+Budget              : 0.000ns { ext_mem_clk rising@0.000ns - ext_mem_clk rising@0.000ns }
+Data Path Delay     : 0.769ns (cell 0.428ns (55%), net 0.341ns (45%))
+Clock Skew          : 0.045ns
+Logic Level         : 1 ( LUT4=1 )
+Max Fanout          : 2
+Clock Uncertainty   : 0.000ns (sdc uncertainty: 0.000ns, default uncertainty: 0.000ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.184          1.184          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.184          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.788         -0.604          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            1.938          1.334          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk
+launch edge                             0.000    r     1.334               
+--------------------------------------------------------------------  ---------------
+clk2q               x012y012z1          0.109    f     1.443          pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.q[1]
+net (fo=2)                              0.341          1.784          net: frame_read_write_m0/frame_fifo_read_m0/read_len_d1[12],  ../src/SD/frame_fifo_read.v(57)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/App_wr_en_r_reg_syn_9.b[0]
+LUT4 (reg)          x013y010z1          0.319    r     2.103       1  net: frame_read_write_m0/frame_fifo_write_m0/write_len_latch[12],  ../src/SD/frame_fifo_write.v(67)
+--------------------------------------------------------------------  ---------------
+Arrival                                                2.103               
+
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.302          1.302          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.302          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.965         -0.663          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            2.130          1.467          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/App_wr_en_r_reg_syn_9.clk
+capture edge                            0.000    r     1.467               
+--------------------------------------------------------------------  ---------------
+hold                                    0.061          1.528               
+clock uncertainty                       0.000          1.528               
+clock pessimism                        -0.088          1.440               
+--------------------------------------------------------------------  ---------------
+Required                                               1.440               
+--------------------------------------------------------------------  ---------------
+Slack                                                  0.663               
+
+Slack               : 0.603ns
+Begin Point         : frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.d[0] (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+Check Type          : hold
+Process             : fast
+Budget              : 0.000ns { ext_mem_clk rising@0.000ns - ext_mem_clk rising@0.000ns }
+Data Path Delay     : 0.664ns (cell 0.325ns (48%), net 0.339ns (52%))
+Clock Skew          : 0.000ns
+Logic Level         : 1 ( LUT3=1 )
+Max Fanout          : 4
+Clock Uncertainty   : 0.000ns (sdc uncertainty: 0.000ns, default uncertainty: 0.000ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.184          1.184          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.184          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.788         -0.604          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            1.938          1.334          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk
+launch edge                             0.000    r     1.334               
+--------------------------------------------------------------------  ---------------
+clk2q               x012y012z1          0.109    f     1.443          pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.q[0]
+net (fo=4)                              0.339          1.782          net: frame_read_write_m0/frame_fifo_write_m0/fifo_aclr,  ../src/SD/frame_fifo_write.v(40)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.d[0]
+LUT3 (reg)          x012y012z1          0.216    f     1.998       1  net: frame_read_write_m0/frame_fifo_write_m0/fifo_aclr,  ../src/SD/frame_fifo_write.v(40)
+--------------------------------------------------------------------  ---------------
+Arrival                                                1.998               
+
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.302          1.302          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.302          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.965         -0.663          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            2.130          1.467          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk
+capture edge                            0.000    r     1.467               
+--------------------------------------------------------------------  ---------------
+hold                                    0.061          1.528               
+clock uncertainty                       0.000          1.528               
+clock pessimism                        -0.133          1.395               
+--------------------------------------------------------------------  ---------------
+Required                                               1.395               
+--------------------------------------------------------------------  ---------------
+Slack                                                  0.603               
+
+
+----------------------------------------------------------------------------------------------------
+Path Group     :     ext_mem_clk -> sd_card_clk
+Type           :     Same Domain
+From Clock     :     ext_mem_clk
+To Clock       :     sd_card_clk
+Min Period     :     6.325ns
+Fmax           :     158.103MHz
+
+Statistics:
+Max            : SWNS      0.735ns, STNS      0.000ns,         0 Viol Endpoints,         2 Total Endpoints,         2 Paths Analyzed
+Min            : HWNS      0.211ns, HTNS      0.000ns,         0 Viol Endpoints,         2 Total Endpoints,         2 Paths Analyzed
+----------------------------------------------------------------------------------------------------
+
+Max Paths
+----------------------------------------------------------------------------------------------------
+Slack               : 0.735ns
+Begin Point         : frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : frame_read_write_m0/write_buf/asy_w_rst1_reg_syn_4.sr (rising edge triggered by clock sd_card_clk  { rise@0.000000ns  fall@5.000000ns  period=10.000000 })
+Check Type          : recovery
+Process             : slow
+Budget              : 2.000ns { sd_card_clk rising@10.000ns - ext_mem_clk rising@8.000ns }
+Data Path Delay     : 0.844ns (cell 0.232ns (27%), net 0.612ns (73%))
+Clock Skew          : 0.021ns
+Logic Level         : 0
+Max Fanout          : 4
+Clock Uncertainty   : 0.100ns (sdc uncertainty: 0.000ns, default uncertainty: 0.100ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.660          1.660          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.660          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -2.067         -0.407          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            2.276          1.869          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk
+launch edge                             8.000    r     9.869               
+--------------------------------------------------------------------  ---------------
+clk2q               x012y012z1          0.146    r    10.015          pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.q[0]
+net (fo=4)                              0.612         10.627          net: frame_read_write_m0/frame_fifo_write_m0/fifo_aclr,  ../src/SD/frame_fifo_write.v(40)
+                                                                      pin: frame_read_write_m0/write_buf/asy_w_rst1_reg_syn_4.sr
+reg                 x013y012z1          0.086    r    10.713               
+--------------------------------------------------------------------  ---------------
+Arrival                                               10.713               
+
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.493          1.493          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.493          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.857         -0.364          pin: sys_pll_m0/pll_inst.clkc[0]
+net (fo=1)                              0.000         -0.364          net: sys_pll_m0/clk0_buf,  ../src/IP/sys_pll.v(38)
+                                                                      pin: sys_pll_m0/bufg_feedback.clki
+GCLK                x001y047z0          0.000         -0.364          pin: sys_pll_m0/bufg_feedback.clko
+net (fo=510)                            2.045          1.681          net: sd_card_bmp_m0/clk,  ../src/SD/sd_card_bmp.v(17)
+                                                                      pin: frame_read_write_m0/write_buf/asy_w_rst1_reg_syn_4.clk
+capture edge                           10.000    r    11.681               
+--------------------------------------------------------------------  ---------------
+recovery                               -0.300         11.381               
+clock uncertainty                      -0.100         11.281               
+clock pessimism                         0.167         11.448               
+--------------------------------------------------------------------  ---------------
+Required                                              11.448               
+--------------------------------------------------------------------  ---------------
+Slack                                                  0.735               
+
+Slack               : 0.985ns
+Begin Point         : frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : sd_card_write_req_ack_sync_reg[0]_syn_3.mi[0] (rising edge triggered by clock sd_card_clk  { rise@0.000000ns  fall@5.000000ns  period=10.000000 })
+Check Type          : setup
+Process             : slow
+Budget              : 2.000ns { sd_card_clk rising@10.000ns - ext_mem_clk rising@8.000ns }
+Data Path Delay     : 0.778ns (cell 0.289ns (37%), net 0.489ns (63%))
+Clock Skew          : 0.021ns
+Logic Level         : 0
+Max Fanout          : 4
+Clock Uncertainty   : 0.100ns (sdc uncertainty: 0.000ns, default uncertainty: 0.100ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.660          1.660          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.660          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -2.067         -0.407          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            2.276          1.869          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk
+launch edge                             8.000    r     9.869               
+--------------------------------------------------------------------  ---------------
+clk2q               x012y012z1          0.146    r    10.015          pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.q[0]
+net (fo=4)                              0.489         10.504          net: frame_read_write_m0/frame_fifo_write_m0/fifo_aclr,  ../src/SD/frame_fifo_write.v(40)
+                                                                      pin: sd_card_write_req_ack_sync_reg[0]_syn_3.mi[0]
+reg                 x012y012z2          0.143    r    10.647          net: sd_card_write_req_ack_sync[0],  ../src/top_tf_hdmi_audio.v(65)
+--------------------------------------------------------------------  ---------------
+Arrival                                               10.647               
+
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.493          1.493          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.493          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.857         -0.364          pin: sys_pll_m0/pll_inst.clkc[0]
+net (fo=1)                              0.000         -0.364          net: sys_pll_m0/clk0_buf,  ../src/IP/sys_pll.v(38)
+                                                                      pin: sys_pll_m0/bufg_feedback.clki
+GCLK                x001y047z0          0.000         -0.364          pin: sys_pll_m0/bufg_feedback.clko
+net (fo=510)                            2.045          1.681          net: sd_card_bmp_m0/clk,  ../src/SD/sd_card_bmp.v(17)
+                                                                      pin: sd_card_write_req_ack_sync_reg[0]_syn_3.clk
+capture edge                           10.000    r    11.681               
+--------------------------------------------------------------------  ---------------
+setup                                  -0.116         11.565               
+clock uncertainty                      -0.100         11.465               
+clock pessimism                         0.167         11.632               
+--------------------------------------------------------------------  ---------------
+Required                                              11.632               
+--------------------------------------------------------------------  ---------------
+Slack                                                  0.985               
+
+
+
+Min Paths
+----------------------------------------------------------------------------------------------------
+Slack               : 0.211ns
+Begin Point         : frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : frame_read_write_m0/write_buf/asy_w_rst1_reg_syn_4.sr (rising edge triggered by clock sd_card_clk  { rise@0.000000ns  fall@5.000000ns  period=10.000000 })
+Check Type          : removal
+Process             : fast
+Budget              : 0.000ns { ext_mem_clk rising@0.000ns - sd_card_clk rising@0.000ns }
+Data Path Delay     : 0.579ns (cell 0.161ns (27%), net 0.418ns (73%))
+Clock Skew          : 0.015ns
+Logic Level         : 0
+Max Fanout          : 4
+Clock Uncertainty   : 0.100ns (sdc uncertainty: 0.000ns, default uncertainty: 0.100ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.184          1.184          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.184          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.788         -0.604          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            1.938          1.334          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk
+launch edge                             0.000    r     1.334               
+--------------------------------------------------------------------  ---------------
+clk2q               x012y012z1          0.109    f     1.443          pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.q[0]
+net (fo=4)                              0.418          1.861          net: frame_read_write_m0/frame_fifo_write_m0/fifo_aclr,  ../src/SD/frame_fifo_write.v(40)
+                                                                      pin: frame_read_write_m0/write_buf/asy_w_rst1_reg_syn_4.sr
+reg                 x013y012z1          0.052    f     1.913               
+--------------------------------------------------------------------  ---------------
+Arrival                                                1.913               
+
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.302          1.302          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.302          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.965         -0.663          pin: sys_pll_m0/pll_inst.clkc[0]
+net (fo=1)                              0.000         -0.663          net: sys_pll_m0/clk0_buf,  ../src/IP/sys_pll.v(38)
+                                                                      pin: sys_pll_m0/bufg_feedback.clki
+GCLK                x001y047z0          0.000         -0.663          pin: sys_pll_m0/bufg_feedback.clko
+net (fo=510)                            2.130          1.467          net: sd_card_bmp_m0/clk,  ../src/SD/sd_card_bmp.v(17)
+                                                                      pin: frame_read_write_m0/write_buf/asy_w_rst1_reg_syn_4.clk
+capture edge                            0.000    r     1.467               
+--------------------------------------------------------------------  ---------------
+removal                                 0.253          1.720               
+clock uncertainty                       0.100          1.820               
+clock pessimism                        -0.118          1.702               
+--------------------------------------------------------------------  ---------------
+Required                                               1.702               
+--------------------------------------------------------------------  ---------------
+Slack                                                  0.211               
+
+Slack               : 0.358ns
+Begin Point         : frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : sd_card_write_req_ack_sync_reg[0]_syn_3.mi[0] (rising edge triggered by clock sd_card_clk  { rise@0.000000ns  fall@5.000000ns  period=10.000000 })
+Check Type          : hold
+Process             : fast
+Budget              : 0.000ns { ext_mem_clk rising@0.000ns - sd_card_clk rising@0.000ns }
+Data Path Delay     : 0.534ns (cell 0.204ns (38%), net 0.330ns (62%))
+Clock Skew          : 0.015ns
+Logic Level         : 0
+Max Fanout          : 4
+Clock Uncertainty   : 0.100ns (sdc uncertainty: 0.000ns, default uncertainty: 0.100ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.184          1.184          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.184          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.788         -0.604          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=452)                            1.938          1.334          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.clk
+launch edge                             0.000    r     1.334               
+--------------------------------------------------------------------  ---------------
+clk2q               x012y012z1          0.109    f     1.443          pin: frame_read_write_m0/frame_fifo_read_m0/read_len_d1_reg[12]_syn_4.q[0]
+net (fo=4)                              0.330          1.773          net: frame_read_write_m0/frame_fifo_write_m0/fifo_aclr,  ../src/SD/frame_fifo_write.v(40)
+                                                                      pin: sd_card_write_req_ack_sync_reg[0]_syn_3.mi[0]
+reg                 x012y012z2          0.095    f     1.868          net: sd_card_write_req_ack_sync[0],  ../src/top_tf_hdmi_audio.v(65)
+--------------------------------------------------------------------  ---------------
+Arrival                                                1.868               
+
+source latency                          0.000          0.000               
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                 x020y071            1.302          1.302          pin: clk_syn_2.di
+net (fo=27)         x000y071            0.000          1.302          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(3)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                 x000y071           -1.965         -0.663          pin: sys_pll_m0/pll_inst.clkc[0]
+net (fo=1)                              0.000         -0.663          net: sys_pll_m0/clk0_buf,  ../src/IP/sys_pll.v(38)
+                                                                      pin: sys_pll_m0/bufg_feedback.clki
+GCLK                x001y047z0          0.000         -0.663          pin: sys_pll_m0/bufg_feedback.clko
+net (fo=510)                            2.130          1.467          net: sd_card_bmp_m0/clk,  ../src/SD/sd_card_bmp.v(17)
+                                                                      pin: sd_card_write_req_ack_sync_reg[0]_syn_3.clk
+capture edge                            0.000    r     1.467               
+--------------------------------------------------------------------  ---------------
+hold                                    0.061          1.528               
+clock uncertainty                       0.100          1.628               
+clock pessimism                        -0.118          1.510               
+--------------------------------------------------------------------  ---------------
+Required                                               1.510               
+--------------------------------------------------------------------  ---------------
+Slack                                                  0.358               
+
+
+
+

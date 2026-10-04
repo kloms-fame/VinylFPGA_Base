@@ -62,6 +62,7 @@ wire        sd_card_write_en;
 wire [31:0] sd_card_write_data;
 wire        sd_card_write_req;
 wire        sd_card_write_req_ack;
+reg  [1:0]  sd_card_write_req_ack_sync;
 wire        frame_write_finish;
 reg         frame_write_toggle_mem;
 
@@ -143,6 +144,15 @@ always @(posedge ext_mem_clk or posedge rst_all) begin
         frame_write_toggle_mem <= ~frame_write_toggle_mem;
 end
 
+// write_req_ack 来自 ext_mem_clk 域。先在 sd_card_clk 域做两级同步，
+// 再交给 bmp_read 的写请求握手，避免长组合路径直接跨域采样。
+always @(posedge sd_card_clk or posedge rst_all) begin
+    if (rst_all)
+        sd_card_write_req_ack_sync <= 2'b00;
+    else
+        sd_card_write_req_ack_sync <= {sd_card_write_req_ack_sync[0], sd_card_write_req_ack};
+end
+
 // ===================== TF 多图扫描与缓存（双缓冲） =====================
 sd_card_bmp #(
     .CLK_FREQ_HZ       (100_000_000),
@@ -164,7 +174,7 @@ sd_card_bmp #(
     .disp_buf_idx      (disp_buf_idx),
 
     .write_req         (sd_card_write_req),
-    .write_req_ack     (sd_card_write_req_ack),
+    .write_req_ack     (sd_card_write_req_ack_sync[1]),
     .write_en          (sd_card_write_en),
     .write_data        (sd_card_write_data),
     .SD_nCS            (sd_ncs),
