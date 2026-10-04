@@ -1,8 +1,8 @@
 // =============================================================================
 // File Name    : sd_card_bmp.v
 // Module Name  : sd_card_bmp
-// Project      : VinylFPGA (完赛优化系列 - 第三讲/第五讲/第六讲)
-// Description  : 长短按复用、双向切换、参数化轮播、稳定性恢复与SDRAM就绪启动
+// Project      : VinylFPGA (完赛优化系列 - 第三讲/第五讲/第六讲/第七讲)
+// Description  : 长短按复用、双向切换、自动轮播、稳定性恢复、FAT32文件读取
 // =============================================================================
 
 module sd_card_bmp #(
@@ -58,15 +58,15 @@ module sd_card_bmp #(
     wire        scan_done;
     wire        scan_done_eff;
     wire        scan_found_valid;
-    wire [31:0] scan_found_sector;
-    wire [2:0]  scan_found_total;
+    wire [1:0]  scan_found_index;
+    wire        scan_found_total;
     wire [3:0]  bmp_internal_state;
-    wire [2:0]  bmp_error;
+    wire [3:0]  bmp_error;
     wire        load_error;
 
     reg         scan_start_pulse;
     reg         load_start_pulse;
-    reg [31:0]  load_sector;
+    reg [1:0]   load_index;
     reg         scan_kicked;
     reg         first_image_committed;
     reg         scan_abort;
@@ -80,10 +80,12 @@ module sd_card_bmp #(
     reg [1:0]   load_idx;            // 正在向后台缓冲区加载的图片编号(0~3)
     reg [1:0]   pending_buf_idx;     // 后台写入的目标缓冲区编号(0或1)
 
-    reg [31:0]  img_sector0;
-    reg [31:0]  img_sector1;
-    reg [31:0]  img_sector2;
-    reg [31:0]  img_sector3;
+    // FAT32 扫描结果：每张有效图片对应的资源索引(0~3)，
+    // 加载时交给 fat32_media_loader 选择 PICn.BMP 的簇号/大小。
+    reg [1:0]   img_index0;
+    reg [1:0]   img_index1;
+    reg [1:0]   img_index2;
+    reg [1:0]   img_index3;
 
     reg         next_req_pending;    // 下一张请求挂起标志（防连跳）
     reg         prev_req_pending;    // 上一张请求挂起标志（防连跳）
@@ -92,9 +94,9 @@ module sd_card_bmp #(
     reg         load_error_seen;
     reg [1:0]   retry_count;
 
-    // 稳定性时序优化：预计算"下一张候选首图"的扇区与存在性，
-    // 避免 load_error 直接驱动 32 位 sector_lut 形成长组合路径。
-    reg [31:0]  boot_sector_next;
+    // 稳定性时序优化：预计算"下一张候选首图"的索引与存在性，
+    // 避免 load_error 直接驱动 LUT 形成长组合路径。
+    reg [1:0]   boot_index_next;
     reg         has_more_boot_r;
 
     // KEY2 长按检测逻辑寄存器
@@ -158,15 +160,15 @@ module sd_card_bmp #(
         end
     endfunction
 
-    // 扇区查表函数
-    function [31:0] sector_lut;
+    // 图片资源索引查表函数
+    function [1:0] index_lut;
         input [1:0] idx;
         begin
             case (idx)
-                2'd0: sector_lut = img_sector0;
-                2'd1: sector_lut = img_sector1;
-                2'd2: sector_lut = img_sector2;
-                default: sector_lut = img_sector3;
+                2'd0: index_lut = img_index0;
+                2'd1: index_lut = img_index1;
+                2'd2: index_lut = img_index2;
+                default: index_lut = img_index3;
             endcase
         end
     endfunction
@@ -193,7 +195,7 @@ module sd_card_bmp #(
             wrfin_tgl_sync        <= 3'b000;
             scan_start_pulse      <= 1'b0;
             load_start_pulse      <= 1'b0;
-            load_sector           <= 32'd0;
+            load_index            <= 2'd0;
             scan_kicked           <= 1'b0;
             first_image_committed <= 1'b0;
             scan_abort            <= 1'b0;
@@ -207,17 +209,17 @@ module sd_card_bmp #(
             pending_buf_idx       <= 2'd0;
             write_buf_idx         <= 2'd0;
             disp_buf_idx          <= 2'd0;
-            img_sector0           <= 32'd0;
-            img_sector1           <= 32'd0;
-            img_sector2           <= 32'd0;
-            img_sector3           <= 32'd0;
+            img_index0            <= 2'd0;
+            img_index1            <= 2'd0;
+            img_index2            <= 2'd0;
+            img_index3            <= 2'd0;
             next_req_pending      <= 1'b0;
             prev_req_pending      <= 1'b0;
             load_busy             <= 1'b0;
             source_done_seen      <= 1'b0;
             load_error_seen       <= 1'b0;
             retry_count           <= 2'd0;
-            boot_sector_next      <= 32'd0;
+            boot_index_next       <= 2'd0;
             has_more_boot_r       <= 1'b0;
             display_valid         <= 1'b0;
             long_press_cnt        <= 32'd0;
@@ -230,7 +232,9 @@ module sd_card_bmp #(
             key_auto_stable_d <= key_auto_stable;
 
             // 首图候选预计算（每拍寄存，切断 load_error 的组合长路径）
-            boot_sector_next <= sector_lut(boot_idx + 2'd1);
+            // 第七讲扫描器要求 PIC1~PIC4 全部存在，并按 1~4 顺序报告；
+            // 因此显示序号与 FAT32 资源索引一致，不再走组合查表。
+            boot_index_next  <= boot_idx + 2'd1;
             has_more_boot_r  <= (({1'b0, boot_idx} + 3'd1) < img_found_count);
 
             scan_start_pulse  <= 1'b0;
@@ -250,17 +254,17 @@ module sd_card_bmp #(
                 pending_buf_idx       <= 2'd0;
                 write_buf_idx         <= 2'd0;
                 disp_buf_idx          <= 2'd0;
-                img_sector0           <= 32'd0;
-                img_sector1           <= 32'd0;
-                img_sector2           <= 32'd0;
-                img_sector3           <= 32'd0;
+                img_index0            <= 2'd0;
+                img_index1            <= 2'd0;
+                img_index2            <= 2'd0;
+                img_index3            <= 2'd0;
                 next_req_pending      <= 1'b0;
                 prev_req_pending      <= 1'b0;
                 load_busy             <= 1'b0;
                 source_done_seen      <= 1'b0;
                 load_error_seen       <= 1'b0;
                 retry_count           <= 2'd0;
-                boot_sector_next      <= 32'd0;
+                boot_index_next       <= 2'd0;
                 has_more_boot_r       <= 1'b0;
                 display_valid         <= 1'b0;
                 long_press_cnt        <= 32'd0;
@@ -270,10 +274,10 @@ module sd_card_bmp #(
                 // 1. 扫描匹配结果更新
                 if (scan_found_valid) begin
                     case (img_found_count)
-                        3'd0: img_sector0 <= scan_found_sector;
-                        3'd1: img_sector1 <= scan_found_sector;
-                        3'd2: img_sector2 <= scan_found_sector;
-                        3'd3: img_sector3 <= scan_found_sector;
+                        3'd0: img_index0 <= scan_found_index;
+                        3'd1: img_index1 <= scan_found_index;
+                        3'd2: img_index2 <= scan_found_index;
+                        3'd3: img_index3 <= scan_found_index;
                         default: ;
                     endcase
                     if (img_found_count < 3'd4)
@@ -375,7 +379,7 @@ module sd_card_bmp #(
                     if (scan_done_eff && !first_image_committed && !boot_failed &&
                         bmp_ready && !load_busy && (img_found_count != 3'd0)) begin
                         load_idx         <= boot_idx;
-                        load_sector      <= sector_lut(boot_idx);
+                        load_index       <= boot_idx;
                         pending_buf_idx  <= 2'd0;
                         write_buf_idx    <= 2'd0;
                         load_start_pulse <= 1'b1;
@@ -390,7 +394,7 @@ module sd_card_bmp #(
                     // 优先级 2：响应【下一张】请求（手动优先）
                     else if (scan_done_eff && bmp_ready && display_valid && !load_busy && next_req_pending && (img_found_count != 3'd0)) begin
                         load_idx         <= next_from_current;
-                        load_sector      <= sector_lut(next_from_current);
+                        load_index       <= next_from_current;
                         pending_buf_idx  <= next_buf_lut(disp_buf_idx, display_valid);
                         write_buf_idx    <= next_buf_lut(disp_buf_idx, display_valid);
                         load_start_pulse <= 1'b1;
@@ -404,7 +408,7 @@ module sd_card_bmp #(
                     // 优先级 3：响应【上一张】请求（手动优先）
                     else if (scan_done_eff && bmp_ready && display_valid && !load_busy && prev_req_pending && (img_found_count != 3'd0)) begin
                         load_idx         <= prev_from_current;
-                        load_sector      <= sector_lut(prev_from_current);
+                        load_index       <= prev_from_current;
                         pending_buf_idx  <= next_buf_lut(disp_buf_idx, display_valid);
                         write_buf_idx    <= next_buf_lut(disp_buf_idx, display_valid);
                         load_start_pulse <= 1'b1;
@@ -418,7 +422,7 @@ module sd_card_bmp #(
                     // 优先级 4：响应【自动轮播定时器】触发
                     else if (scan_done_eff && bmp_ready && display_valid && !load_busy && auto_play_en && auto_tick && (img_found_count > 3'd1)) begin
                         load_idx         <= next_from_current;
-                        load_sector      <= sector_lut(next_from_current);
+                        load_index       <= next_from_current;
                         pending_buf_idx  <= next_buf_lut(disp_buf_idx, display_valid);
                         write_buf_idx    <= next_buf_lut(disp_buf_idx, display_valid);
                         load_start_pulse <= 1'b1;
@@ -473,7 +477,7 @@ module sd_card_bmp #(
                                 if (has_more_boot_r) begin
                                     boot_idx         <= boot_idx + 2'd1;
                                     load_idx         <= boot_idx + 2'd1;
-                                    load_sector      <= boot_sector_next;
+                                    load_index       <= boot_index_next;
                                     pending_buf_idx  <= 2'd0;
                                     write_buf_idx    <= 2'd0;
                                     load_start_pulse <= 1'b1;
@@ -517,25 +521,19 @@ module sd_card_bmp #(
     );
 
     // =========================================================================
-    // 底层子模块例化（保持不变）
+    // 底层子模块例化：第七讲用 FAT32 加载器替换 bmp_read。
     // =========================================================================
-    bmp_read #(
-        .CLK_FREQ_HZ        (CLK_FREQ_HZ),
-        .SD_READ_TIMEOUT_MS (SD_READ_TIMEOUT_MS)
-    ) bmp_read_m0 (
+    fat32_media_loader fat32_media_loader_m0 (
         .clk                    (clk),
         .rst                    (rst),
         .ready                  (bmp_ready),
         .scan_start             (scan_start_pulse),
-        .scan_start_sector      (SCAN_START_SECTOR),
-        .scan_max_sector        (SCAN_MAX_SECTOR),
-        .scan_target_count      (SCAN_TARGET_COUNT),
         .scan_done              (scan_done),
         .scan_found_valid       (scan_found_valid),
-        .scan_found_sector      (scan_found_sector),
+        .scan_found_index       (scan_found_index),
         .scan_found_total       (scan_found_total),
         .load_start             (load_start_pulse),
-        .load_sector            (load_sector),
+        .load_index             (load_index),
         .sd_init_done           (sd_init_done),
         .state_code             (bmp_internal_state), // 改接内部 wire
         .bmp_width              (bmp_width),

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Project Version="3" Minor="2" RunTime="2026-10-04T10:54:10">
+<Project Version="3" Minor="2" RunTime="2026-10-04T15:46:15">
     <Project_Created_Time></Project_Created_Time>
     <TD_Version>6.2.168116</TD_Version>
     <UCode>01010010</UCode>
@@ -97,6 +97,7 @@
             </File>
             <File Path="../../../src/SD/bmp_read.v">
                 <FileInfo>
+                    <Attr Name="AutoExcluded" Val="true"/>
                     <Attr Name="UsedInSyn" Val="true"/>
                     <Attr Name="UsedInP&R" Val="true"/>
                     <Attr Name="BelongTo" Val="design_1"/>
@@ -328,6 +329,54 @@
                     <Attr Name="UsedInP&R" Val="true"/>
                     <Attr Name="BelongTo" Val="design_1"/>
                     <Attr Name="CompileOrder" Val="39"/>
+                </FileInfo>
+            </File>
+            <File Path="../../../src/reset_sync.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="40"/>
+                </FileInfo>
+            </File>
+            <File Path="../../../src/sync_2ff.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="41"/>
+                </FileInfo>
+            </File>
+            <File Path="../../../src/SD/fat32_volume_scanner.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="42"/>
+                </FileInfo>
+            </File>
+            <File Path="../../../src/SD/fat32_file_streamer.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="43"/>
+                </FileInfo>
+            </File>
+            <File Path="../../../src/SD/sd_sector_adapter.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="44"/>
+                </FileInfo>
+            </File>
+            <File Path="../../../src/SD/fat32_media_loader.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="45"/>
                 </FileInfo>
             </File>
         </Verilog>

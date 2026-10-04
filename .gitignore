@@ -17,6 +17,7 @@ __pycache__/
 run/
 run_board/
 work/
+VinylFPGA_Runs/
 
 # 报告输出
 reports/
