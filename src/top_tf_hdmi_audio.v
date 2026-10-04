@@ -52,8 +52,10 @@ wire [23:0] vout_data_raw;
 wire [23:0] vout_data;
 wire [23:0] transition_rgb;
 wire [23:0] osd_rgb_out;
+wire [23:0] waveform_rgb_out;
 wire        osd_de_out;
 wire        osd_active;
+wire        waveform_active;
 wire        display_valid;
 wire        auto_play_en_out;
 wire [7:0]  osd_error_code;
@@ -433,6 +435,28 @@ osd_overlay_24 #(
     .osd_active   (osd_active)
 );
 
+// 第十二讲：音频波形+峰值条叠加。位于OSD之后、RGB转AXIS之前，
+// 纯像素级组合替换，不改变de/vs节拍，不影响HDMI音频数据岛调度。
+promax_audio_waveform #(
+    .WAVE_X      (64),
+    .WAVE_Y      (376),
+    .WAVE_WIDTH  (512),
+    .WAVE_HEIGHT (96),
+    .DECIMATE    (12)
+) u_promax_audio_waveform (
+    .clk             (video_clk),
+    .rst_n           (video_rst_n),
+    .vsync           (vs),
+    .de              (de),
+    .rgb_in          (osd_rgb_out),
+    .pixel_x         (osd_pixel_x),
+    .enable          (audio_play_enable),
+    .pcm_tap_valid   (wav_sample_valid),
+    .pcm_tap_left    (wav_sample_left),
+    .rgb_out         (waveform_rgb_out),
+    .waveform_active (waveform_active)
+);
+
 frame_read_write #(
     .WRITE_V_FLIP     (1),
     .FRAME_WIDTH      (640),
@@ -728,7 +752,7 @@ video_rgb_to_axis_640x480 u_video_rgb_to_axis_640x480(
     .I_rst         (~video_rst_n),
     .I_vs          (vs),
     .I_de          (de),
-    .I_rgb         (osd_rgb_out),
+    .I_rgb         (waveform_rgb_out),
     .O_video_user  (axis_s_user),
     .O_video_valid (axis_s_valid),
     .O_video_last  (axis_s_last),
