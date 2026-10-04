@@ -29,6 +29,9 @@ module fat32_volume_scanner (
     output reg  [31:0] resource1_size,
     output reg  [31:0] resource2_size,
     output reg  [31:0] resource3_size,
+    output reg         audio_valid,
+    output reg  [31:0] audio_cluster,
+    output reg  [31:0] audio_size,
     output reg         sector_req,
     output reg  [31:0] sector_lba,
     input  wire        sector_busy,
@@ -80,6 +83,7 @@ module fat32_volume_scanner (
     reg [7:0]  dir_name9;
     reg [7:0]  dir_name10;
     reg        dir_entry_match;
+    reg        dir_audio_match;
     reg [1:0]  dir_resource_index;
     reg [15:0] dir_cluster_high;
     reg [15:0] dir_cluster_low;
@@ -153,6 +157,9 @@ module fat32_volume_scanner (
             resource1_size <= 32'd0;
             resource2_size <= 32'd0;
             resource3_size <= 32'd0;
+            audio_valid <= 1'b0;
+            audio_cluster <= 32'd0;
+            audio_size <= 32'd0;
             sector_req <= 1'b0;
             sector_lba <= 32'd0;
             root_cluster <= 32'd0;
@@ -175,6 +182,7 @@ module fat32_volume_scanner (
             dir_name9 <= 8'd0;
             dir_name10 <= 8'd0;
             dir_entry_match <= 1'b0;
+            dir_audio_match <= 1'b0;
             dir_resource_index <= 2'd3;
             dir_cluster_high <= 16'd0;
             dir_cluster_low <= 16'd0;
@@ -192,6 +200,7 @@ module fat32_volume_scanner (
                     5'd0: begin
                         dir_name0 <= sector_byte;
                         dir_entry_match <= 1'b0;
+                        dir_audio_match <= 1'b0;
                     end
                     5'd1:  dir_name1 <= sector_byte;
                     5'd2:  dir_name2 <= sector_byte;
@@ -213,6 +222,15 @@ module fat32_volume_scanner (
                             (dir_name9 == "M") && (dir_name10 == "P")) begin
                             dir_entry_match <= 1'b1;
                             dir_resource_index <= dir_name3 - "1";
+                        end
+                        if ((sector_byte == 8'h20) &&
+                            (dir_name0 == "A") && (dir_name1 == "U") &&
+                            (dir_name2 == "D") && (dir_name3 == "I") &&
+                            (dir_name4 == "O") && (dir_name5 == " ") &&
+                            (dir_name6 == " ") && (dir_name7 == " ") &&
+                            (dir_name8 == "P") && (dir_name9 == "C") &&
+                            (dir_name10 == "M")) begin
+                            dir_audio_match <= 1'b1;
                         end
                     end
                     5'd20: dir_cluster_high[7:0] <= sector_byte;
@@ -247,6 +265,11 @@ module fat32_volume_scanner (
                                     resource_valid[3] <= 1'b1;
                                 end
                             endcase
+                        end
+                        if (dir_audio_match) begin
+                            audio_cluster <= {dir_cluster_high, dir_cluster_low};
+                            audio_size <= {sector_byte, dir_file_size[23:0]};
+                            audio_valid <= 1'b1;
                         end
                     end
                     default: ;
@@ -334,7 +357,11 @@ module fat32_volume_scanner (
                 end
                 ST_ROOT_REQ: if (!sector_busy) begin
                     resource_valid <= 4'd0;
+                    audio_valid <= 1'b0;
+                    audio_cluster <= 32'd0;
+                    audio_size <= 32'd0;
                     dir_entry_match <= 1'b0;
+                    dir_audio_match <= 1'b0;
                     sector_req <= 1'b1;
                     state <= ST_ROOT_WAIT;
                 end

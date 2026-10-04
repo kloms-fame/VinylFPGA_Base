@@ -45,7 +45,20 @@ module fat32_media_loader (
     input  wire        sd_sec_read_end,
 
     output reg         bmp_data_wr_en,
-    output reg  [23:0] bmp_data
+    output reg  [23:0] bmp_data,
+
+    // 第十一讲：AUDIO.PCM 元数据与额外扇区客户端。
+    output wire        audio_file_valid,
+    output wire [31:0] audio_start_lba,
+    output wire [31:0] audio_total_sectors,
+    input  wire        audio_sec_req,
+    input  wire [31:0] audio_sec_lba,
+    output wire        audio_sec_busy,
+    output wire        audio_sec_valid,
+    output wire [7:0]  audio_sec_byte,
+    output wire [8:0]  audio_sec_byte_index,
+    output wire        audio_sec_done,
+    output wire [7:0]  audio_sec_error
 );
 
     localparam ERR_NONE        = 4'd0;
@@ -83,6 +96,9 @@ module fat32_media_loader (
     wire [31:0] scanner_size1;
     wire [31:0] scanner_size2;
     wire [31:0] scanner_size3;
+    wire        scanner_audio_valid;
+    wire [31:0] scanner_audio_cluster;
+    wire [31:0] scanner_audio_size;
     wire        scanner_req;
     wire [31:0] scanner_lba;
     wire        scanner_sector_busy;
@@ -115,6 +131,12 @@ module fat32_media_loader (
     wire [8:0]  arb_sector_byte_index;
     wire        arb_sector_done;
     wire [7:0]  arb_sector_error;
+
+    reg         audio_active;
+    reg  [31:0] audio_lba_latched;
+    reg         audio_file_valid_reg;
+    reg  [31:0] audio_start_lba_reg;
+    reg  [31:0] audio_total_sectors_reg;
 
     reg [31:0] load_cluster;
     reg [31:0] load_size;
@@ -159,6 +181,63 @@ module fat32_media_loader (
                         (data_offset >= 32'd54) &&
                         (data_offset < file_len) &&
                         (file_len >= (data_offset + required_pixel_bytes));
+
+    function [2:0] spc_shift;
+        input [7:0] value;
+        begin
+            case (value)
+                8'd1:   spc_shift = 3'd0;
+                8'd2:   spc_shift = 3'd1;
+                8'd4:   spc_shift = 3'd2;
+                8'd8:   spc_shift = 3'd3;
+                8'd16:  spc_shift = 3'd4;
+                8'd32:  spc_shift = 3'd5;
+                8'd64:  spc_shift = 3'd6;
+                8'd128: spc_shift = 3'd7;
+                default: spc_shift = 3'd0;
+            endcase
+        end
+    endfunction
+
+    wire audio_cluster_valid = scanner_audio_valid &&
+                               (scanner_audio_cluster >= 32'd2) &&
+                               (scanner_spc != 8'd0);
+    wire [31:0] audio_start_lba_calc =
+        scanner_data_start +
+        ((scanner_audio_cluster - 32'd2) << spc_shift(scanner_spc));
+    wire [31:0] audio_total_sectors_calc =
+        (scanner_audio_size + 32'd511) >> 9;
+
+    wire audio_file_valid_calc = audio_cluster_valid &&
+                                 (scanner_audio_size != 32'd0);
+    wire [31:0] audio_start_lba_latched =
+        audio_cluster_valid ? audio_start_lba_calc : 32'd0;
+    wire [31:0] audio_total_sectors_latched =
+        (audio_file_valid_calc &&
+         (audio_total_sectors_calc != 32'd0)) ?
+        audio_total_sectors_calc : 32'd0;
+
+    // 扫描结果跨模块直接参与 wav_stream_player 的播放使能和指针控制
+    // 会形成超长组合路径；在扫描完成时锁存一次，保持语义不变。
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            audio_file_valid_reg    <= 1'b0;
+            audio_start_lba_reg     <= 32'd0;
+            audio_total_sectors_reg <= 32'd0;
+        end else if (scan_start) begin
+            audio_file_valid_reg    <= 1'b0;
+            audio_start_lba_reg     <= 32'd0;
+            audio_total_sectors_reg <= 32'd0;
+        end else if (scanner_done) begin
+            audio_file_valid_reg    <= audio_file_valid_calc;
+            audio_start_lba_reg     <= audio_start_lba_latched;
+            audio_total_sectors_reg <= audio_total_sectors_latched;
+        end
+    end
+
+    assign audio_file_valid = audio_file_valid_reg;
+    assign audio_start_lba = audio_start_lba_reg;
+    assign audio_total_sectors = audio_total_sectors_reg;
 
     // -------------------------------------------------------------------------
     // 请求锁存：上游 pulse 即使与子模块 busy 同拍也不会丢失。
@@ -212,6 +291,9 @@ module fat32_media_loader (
         .resource1_size      (scanner_size1),
         .resource2_size      (scanner_size2),
         .resource3_size      (scanner_size3),
+        .audio_valid         (scanner_audio_valid),
+        .audio_cluster       (scanner_audio_cluster),
+        .audio_size          (scanner_audio_size),
         .sector_req          (scanner_req),
         .sector_lba          (scanner_lba),
         .sector_busy         (scanner_sector_busy),
@@ -254,22 +336,60 @@ module fat32_media_loader (
     // -------------------------------------------------------------------------
     // 两路扇区读分时复用
     // -------------------------------------------------------------------------
-    assign arb_sector_req = use_streamer ? streamer_req : scanner_req;
-    assign arb_sector_lba = use_streamer ? streamer_lba : scanner_lba;
+    // 第十一讲：音频扇区请求优先级最高，但每次只占用一个扇区。
+    // 图片预加载/自动轮播的流读取器请求会在音频扇区结束后的下一拍继续
+    // 获得仲裁，因此不会长时间饿死图片加载。
+    assign arb_sector_req = audio_active ? 1'b1 :
+                            ((!arb_sector_busy && audio_sec_req) ? 1'b1 :
+                             (use_streamer ? streamer_req : scanner_req));
+    assign arb_sector_lba = audio_active ? audio_lba_latched :
+                            ((!arb_sector_busy && audio_sec_req) ? audio_sec_lba :
+                             (use_streamer ? streamer_lba : scanner_lba));
 
-    assign scanner_sector_busy       = use_streamer ? 1'b1 : arb_sector_busy;
-    assign scanner_sector_valid      = use_streamer ? 1'b0 : arb_sector_valid;
-    assign scanner_sector_byte       = use_streamer ? 8'd0 : arb_sector_byte;
-    assign scanner_sector_byte_index = use_streamer ? 9'd0 : arb_sector_byte_index;
-    assign scanner_sector_done       = use_streamer ? 1'b0 : arb_sector_done;
-    assign scanner_sector_error      = use_streamer ? 8'd0 : arb_sector_error;
+    assign scanner_sector_busy       = (use_streamer || audio_active) ?
+                                       1'b1 : arb_sector_busy;
+    assign scanner_sector_valid      = (use_streamer || audio_active) ?
+                                       1'b0 : arb_sector_valid;
+    assign scanner_sector_byte       = (use_streamer || audio_active) ?
+                                       8'd0 : arb_sector_byte;
+    assign scanner_sector_byte_index = (use_streamer || audio_active) ?
+                                       9'd0 : arb_sector_byte_index;
+    assign scanner_sector_done       = (use_streamer || audio_active) ?
+                                       1'b0 : arb_sector_done;
+    assign scanner_sector_error      = (use_streamer || audio_active) ?
+                                       8'd0 : arb_sector_error;
 
-    assign streamer_sector_busy       = use_streamer ? arb_sector_busy : 1'b1;
-    assign streamer_sector_valid      = use_streamer ? arb_sector_valid : 1'b0;
-    assign streamer_sector_byte       = use_streamer ? arb_sector_byte : 8'd0;
-    assign streamer_sector_byte_index = use_streamer ? arb_sector_byte_index : 9'd0;
-    assign streamer_sector_done       = use_streamer ? arb_sector_done : 1'b0;
-    assign streamer_sector_error      = use_streamer ? arb_sector_error : 8'd0;
+    assign streamer_sector_busy       = (!use_streamer || audio_active) ?
+                                        1'b1 : arb_sector_busy;
+    assign streamer_sector_valid      = (use_streamer && !audio_active) ?
+                                        arb_sector_valid : 1'b0;
+    assign streamer_sector_byte       = (use_streamer && !audio_active) ?
+                                        arb_sector_byte : 8'd0;
+    assign streamer_sector_byte_index = (use_streamer && !audio_active) ?
+                                        arb_sector_byte_index : 9'd0;
+    assign streamer_sector_done       = (use_streamer && !audio_active) ?
+                                        arb_sector_done : 1'b0;
+    assign streamer_sector_error      = (use_streamer && !audio_active) ?
+                                        arb_sector_error : 8'd0;
+
+    assign audio_sec_busy       = arb_sector_busy;
+    assign audio_sec_valid      = audio_active ? arb_sector_valid : 1'b0;
+    assign audio_sec_byte       = audio_active ? arb_sector_byte : 8'd0;
+    assign audio_sec_byte_index = audio_active ? arb_sector_byte_index : 9'd0;
+    assign audio_sec_done       = audio_active ? arb_sector_done : 1'b0;
+    assign audio_sec_error      = audio_active ? arb_sector_error : 8'd0;
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            audio_active      <= 1'b0;
+            audio_lba_latched <= 32'd0;
+        end else if (audio_active && arb_sector_done) begin
+            audio_active <= 1'b0;
+        end else if (!audio_active && !arb_sector_busy && audio_sec_req) begin
+            audio_active      <= 1'b1;
+            audio_lba_latched <= audio_sec_lba;
+        end
+    end
 
     // -------------------------------------------------------------------------
     // 扫描结果打散：旧上层接口按“找到一张就发一个 scan_found_valid”，

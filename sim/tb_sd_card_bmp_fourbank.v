@@ -27,6 +27,18 @@ module tb_sd_card_bmp_fourbank;
     wire        sd_dclk;
     wire        sd_mosi;
     wire        sd_miso = 1'b0;
+    wire        audio_file_valid;
+    wire [31:0] audio_start_lba;
+    wire [31:0] audio_total_sectors;
+    wire        audio_play_enable;
+    reg         audio_sec_req = 1'b0;
+    reg  [31:0] audio_sec_lba = 32'd0;
+    wire        audio_sec_busy;
+    wire        audio_sec_valid;
+    wire [7:0]  audio_sec_byte;
+    wire [8:0]  audio_sec_byte_index;
+    wire        audio_sec_done;
+    wire [7:0]  audio_sec_error;
 
     reg [1:0]   load_banks [0:15];
     integer     load_start_count = 0;
@@ -64,7 +76,19 @@ module tb_sd_card_bmp_fourbank;
         .SD_nCS              (sd_ncs),
         .SD_DCLK             (sd_dclk),
         .SD_MOSI             (sd_mosi),
-        .SD_MISO             (sd_miso)
+        .SD_MISO             (sd_miso),
+        .audio_file_valid    (audio_file_valid),
+        .audio_start_lba     (audio_start_lba),
+        .audio_total_sectors (audio_total_sectors),
+        .audio_play_enable   (audio_play_enable),
+        .audio_sec_req       (audio_sec_req),
+        .audio_sec_lba       (audio_sec_lba),
+        .audio_sec_busy      (audio_sec_busy),
+        .audio_sec_valid     (audio_sec_valid),
+        .audio_sec_byte      (audio_sec_byte),
+        .audio_sec_byte_index(audio_sec_byte_index),
+        .audio_sec_done      (audio_sec_done),
+        .audio_sec_error     (audio_sec_error)
     );
 
     always #5 clk = ~clk;
@@ -155,6 +179,21 @@ module tb_sd_card_bmp_fourbank;
             @(posedge clk);
         if (dut.image_ready != 4'b1111) begin
             $display("FAIL: image_ready=%b, expected 1111", dut.image_ready);
+            errors = errors + 1;
+        end
+
+        // 第十一讲：图片预加载完成后，AUDIO.PCM 元数据有效时应放行 WAV。
+        for (wait_count = 0;
+             wait_count < 100 && !audio_play_enable;
+             wait_count = wait_count + 1)
+            @(posedge clk);
+        if (!audio_play_enable) begin
+            $display("FAIL: audio_play_enable not asserted after preload");
+            errors = errors + 1;
+        end
+        if (audio_start_lba != 32'd100 || audio_total_sectors != 32'd2) begin
+            $display("FAIL: audio metadata start=%0d sectors=%0d",
+                     audio_start_lba, audio_total_sectors);
             errors = errors + 1;
         end
 
@@ -258,7 +297,18 @@ module fat32_media_loader (
     input  wire        sd_sec_read_data_valid,
     input  wire        sd_sec_read_end,
     output reg         bmp_data_wr_en,
-    output reg  [23:0] bmp_data
+    output reg  [23:0] bmp_data,
+    output wire        audio_file_valid,
+    output wire [31:0] audio_start_lba,
+    output wire [31:0] audio_total_sectors,
+    input  wire        audio_sec_req,
+    input  wire [31:0] audio_sec_lba,
+    output wire        audio_sec_busy,
+    output wire        audio_sec_valid,
+    output wire [7:0]  audio_sec_byte,
+    output wire [8:0]  audio_sec_byte_index,
+    output wire        audio_sec_done,
+    output wire [7:0]  audio_sec_error
 );
     reg [2:0] scan_state;
     reg [1:0] scan_index;
@@ -269,6 +319,15 @@ module fat32_media_loader (
     assign state_code = 4'd1;
     assign sd_sec_read = 1'b0;
     assign sd_sec_read_addr = 32'd0;
+    assign audio_file_valid = 1'b1;
+    assign audio_start_lba = 32'd100;
+    assign audio_total_sectors = 32'd2;
+    assign audio_sec_busy = 1'b0;
+    assign audio_sec_valid = 1'b0;
+    assign audio_sec_byte = 8'd0;
+    assign audio_sec_byte_index = 9'd0;
+    assign audio_sec_done = 1'b0;
+    assign audio_sec_error = 8'd0;
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin

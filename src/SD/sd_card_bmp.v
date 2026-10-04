@@ -40,7 +40,21 @@ module sd_card_bmp #(
     output                      SD_nCS,
     output                      SD_DCLK,
     output                      SD_MOSI,
-    input                       SD_MISO
+    input                       SD_MISO,
+
+    // 第十一讲：AUDIO.PCM 元数据与音频扇区客户端。
+    output wire                 audio_file_valid,
+    output wire [31:0]          audio_start_lba,
+    output wire [31:0]          audio_total_sectors,
+    output wire                 audio_play_enable,
+    input  wire                 audio_sec_req,
+    input  wire [31:0]          audio_sec_lba,
+    output wire                 audio_sec_busy,
+    output wire                 audio_sec_valid,
+    output wire [7:0]           audio_sec_byte,
+    output wire [8:0]           audio_sec_byte_index,
+    output wire                 audio_sec_done,
+    output wire [7:0]           audio_sec_error
 );
 
     // =========================================================================
@@ -68,6 +82,7 @@ module sd_card_bmp #(
     wire [3:0]  bmp_internal_state;
     wire [3:0]  bmp_error;
     wire        load_error;
+    wire        preload_done;
 
     reg         scan_start_pulse;
     reg         load_start_pulse;
@@ -81,6 +96,7 @@ module sd_card_bmp #(
     reg         auto_play_en;
     reg [31:0]  auto_cnt;
     reg [2:0]   img_found_count;
+    reg         audio_play_enable_reg;
     reg [1:0]   img_idx;             // 当前屏幕上显示的图片编号(0~3)
     reg [1:0]   load_idx;            // 正在加载的图片编号(0~3)
     reg [3:0]   image_ready;         // 四个bank加载完成标记，bit n对应PIC(n+1)
@@ -126,6 +142,22 @@ module sd_card_bmp #(
     assign auto_tick          = (auto_cnt >= (AUTO_PLAY_CYCLES - 1'b1));
     assign scan_done_eff      = scan_done | scan_abort;
     assign auto_play_en_out   = auto_play_en;
+    assign preload_done       = (img_found_count == 3'd0) ||
+                                (preload_idx >= img_found_count);
+    wire audio_play_request = audio_file_valid && scan_done_eff &&
+                              preload_done;
+    assign audio_play_enable = audio_play_enable_reg;
+
+    // 播放使能由组合调度信号寄存后送 WAV 播放器，切断扫描/预加载
+    // 到音频缓冲控制的跨模块长路径；只延迟一个 sd_card_clk 周期。
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            audio_play_enable_reg <= 1'b0;
+        else if (!sd_init_done)
+            audio_play_enable_reg <= 1'b0;
+        else
+            audio_play_enable_reg <= audio_play_request;
+    end
 
     // 四bank后，图片编号就是bank编号，切换时读地址索引直接使用img_idx。
     assign next_from_current  = next_index_limited(img_idx, img_found_count);
@@ -591,7 +623,18 @@ module sd_card_bmp #(
         .sd_sec_read_data_valid (sd_sec_read_data_valid),
         .sd_sec_read_end        (sd_sec_read_end),
         .bmp_data_wr_en         (bmp_data_wr_en),
-        .bmp_data               (bmp_data)
+        .bmp_data               (bmp_data),
+        .audio_file_valid       (audio_file_valid),
+        .audio_start_lba        (audio_start_lba),
+        .audio_total_sectors    (audio_total_sectors),
+        .audio_sec_req          (audio_sec_req),
+        .audio_sec_lba          (audio_sec_lba),
+        .audio_sec_busy         (audio_sec_busy),
+        .audio_sec_valid        (audio_sec_valid),
+        .audio_sec_byte         (audio_sec_byte),
+        .audio_sec_byte_index   (audio_sec_byte_index),
+        .audio_sec_done         (audio_sec_done),
+        .audio_sec_error        (audio_sec_error)
     );
 
     sd_card_top sd_card_top_m0(

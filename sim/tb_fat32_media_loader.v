@@ -28,6 +28,15 @@ module tb_fat32_media_loader;
     reg  sd_sec_read_end = 0;
     wire bmp_data_wr_en;
     wire [23:0] bmp_data;
+    wire        audio_file_valid;
+    wire [31:0] audio_start_lba;
+    wire [31:0] audio_total_sectors;
+    wire        audio_sec_busy;
+    wire        audio_sec_valid;
+    wire [7:0]  audio_sec_byte;
+    wire [8:0]  audio_sec_byte_index;
+    wire        audio_sec_done;
+    wire [7:0]  audio_sec_error;
 
     reg [7:0] mem [0:262143];
     reg [31:0] served_lba = 0;
@@ -54,7 +63,17 @@ module tb_fat32_media_loader;
         .sd_sec_read_data(sd_sec_read_data),
         .sd_sec_read_data_valid(sd_sec_read_data_valid),
         .sd_sec_read_end(sd_sec_read_end),
-        .bmp_data_wr_en(bmp_data_wr_en), .bmp_data(bmp_data)
+        .bmp_data_wr_en(bmp_data_wr_en), .bmp_data(bmp_data),
+        .audio_file_valid(audio_file_valid),
+        .audio_start_lba(audio_start_lba),
+        .audio_total_sectors(audio_total_sectors),
+        .audio_sec_req(1'b0), .audio_sec_lba(32'd0),
+        .audio_sec_busy(audio_sec_busy),
+        .audio_sec_valid(audio_sec_valid),
+        .audio_sec_byte(audio_sec_byte),
+        .audio_sec_byte_index(audio_sec_byte_index),
+        .audio_sec_done(audio_sec_done),
+        .audio_sec_error(audio_sec_error)
     );
 
     always #5 clk = ~clk;
@@ -157,6 +176,26 @@ module tb_fat32_media_loader;
             mem[33*512 + i*32 +31] = FILE_SIZE[31:24];
         end
 
+        // AUDIO.PCM: 根目录第5个目录项，只验证元数据，不触发音频读取。
+        mem[33*512 + 4*32 + 0] = "A";
+        mem[33*512 + 4*32 + 1] = "U";
+        mem[33*512 + 4*32 + 2] = "D";
+        mem[33*512 + 4*32 + 3] = "I";
+        mem[33*512 + 4*32 + 4] = "O";
+        mem[33*512 + 4*32 + 5] = " ";
+        mem[33*512 + 4*32 + 6] = " ";
+        mem[33*512 + 4*32 + 7] = " ";
+        mem[33*512 + 4*32 + 8] = "P";
+        mem[33*512 + 4*32 + 9] = "C";
+        mem[33*512 + 4*32 +10] = "M";
+        mem[33*512 + 4*32 +11] = 8'h20;
+        mem[33*512 + 4*32 +26] = 8'd9;
+        mem[33*512 + 4*32 +27] = 8'h00;
+        mem[33*512 + 4*32 +28] = 8'h00;
+        mem[33*512 + 4*32 +29] = 8'h04;
+        mem[33*512 + 4*32 +30] = 8'h00;
+        mem[33*512 + 4*32 +31] = 8'h00;
+
         // FAT 项：簇5 -> EOF。
         mem[32*512 + 5*4 + 0] = 8'hFF;
         mem[32*512 + 5*4 + 1] = 8'hFF;
@@ -223,6 +262,13 @@ module tb_fat32_media_loader;
                      dut.u_volume_scanner.sector_buffer[27],
                      dut.u_volume_scanner.sector_buffer[28],
                      dut.u_volume_scanner.sector_buffer[31]);
+            errors = errors + 1;
+        end
+
+        if (!audio_file_valid || audio_start_lba != 40 ||
+            audio_total_sectors != 2) begin
+            $display("FAIL audio metadata valid=%b start_lba=%0d sectors=%0d",
+                     audio_file_valid, audio_start_lba, audio_total_sectors);
             errors = errors + 1;
         end
 

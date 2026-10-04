@@ -13,6 +13,9 @@ module tb_fat32_volume_scanner;
     wire [31:0] max_cluster;
     wire [3:0] resource_valid;
     wire [31:0] c0,c1,c2,c3,s0,s1,s2,s3;
+    wire audio_valid;
+    wire [31:0] audio_cluster;
+    wire [31:0] audio_size;
     wire sector_req;
     wire [31:0] sector_lba;
     wire sector_busy;
@@ -40,6 +43,8 @@ module tb_fat32_volume_scanner;
         .resource2_cluster(c2), .resource3_cluster(c3),
         .resource0_size(s0), .resource1_size(s1),
         .resource2_size(s2), .resource3_size(s3),
+        .audio_valid(audio_valid), .audio_cluster(audio_cluster),
+        .audio_size(audio_size),
         .sector_req(sector_req), .sector_lba(sector_lba),
         .sector_busy(sector_busy), .sector_valid(sector_valid),
         .sector_byte(sector_byte), .sector_byte_index(sector_byte_index),
@@ -129,6 +134,28 @@ module tb_fat32_volume_scanner;
             mem[34*512 + (i+1)*32 +30]=8'h0E;
         end
 
+        // AUDIO.PCM: 根目录第5个目录项，验证第十一讲短文件名和元数据。
+        mem[34*512 + 4*32 + 0]="A";
+        mem[34*512 + 4*32 + 1]="U";
+        mem[34*512 + 4*32 + 2]="D";
+        mem[34*512 + 4*32 + 3]="I";
+        mem[34*512 + 4*32 + 4]="O";
+        mem[34*512 + 4*32 + 5]=" ";
+        mem[34*512 + 4*32 + 6]=" ";
+        mem[34*512 + 4*32 + 7]=" ";
+        mem[34*512 + 4*32 + 8]="P";
+        mem[34*512 + 4*32 + 9]="C";
+        mem[34*512 + 4*32 +10]="M";
+        mem[34*512 + 4*32 +11]=8'h20;
+        mem[34*512 + 4*32 +20]=8'h00;
+        mem[34*512 + 4*32 +21]=8'h00;
+        mem[34*512 + 4*32 +26]=8'd9;
+        mem[34*512 + 4*32 +27]=8'h00;
+        mem[34*512 + 4*32 +28]=8'h00;
+        mem[34*512 + 4*32 +29]=8'h04;
+        mem[34*512 + 4*32 +30]=8'h00;
+        mem[34*512 + 4*32 +31]=8'h00;
+
         repeat (5) @(posedge clk);
         rst_n = 1;
         repeat (5) @(posedge clk);
@@ -142,6 +169,9 @@ module tb_fat32_volume_scanner;
         check(c0 == 5 && c1 == 6 && c2 == 7 && c3 == 8,
               "directory clusters should match");
         check(s0 == 32'h000E1016, "PIC1 size should match");
+        check(audio_valid, "AUDIO.PCM should be found");
+        check(audio_cluster == 9, "AUDIO.PCM cluster should match");
+        check(audio_size == 32'h00000400, "AUDIO.PCM size should match");
         check(fat_start_lba == 32 && data_start_lba == 34,
               "FAT/data layout should match");
 

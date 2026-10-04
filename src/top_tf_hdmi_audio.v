@@ -116,6 +116,42 @@ wire        audio_sample_overflow;
 wire        audio_contract_error;
 wire        audio_blip_active;
 
+// 第十一讲：AUDIO.PCM 流式播放相关信号
+wire        audio_file_valid;
+wire [31:0] audio_start_lba;
+wire [31:0] audio_total_sectors;
+wire        audio_play_enable;
+wire        wav_sec_req;
+wire [31:0] wav_sec_lba;
+wire        wav_sec_busy;
+wire        wav_sec_valid;
+wire [7:0]  wav_sec_byte;
+wire [8:0]  wav_sec_byte_index;
+wire        wav_sec_done;
+wire [7:0]  wav_sec_error;
+wire        wav_sample_valid;
+wire        wav_sample_ready;
+wire signed [15:0] wav_sample_left;
+wire signed [15:0] wav_sample_right;
+wire        wav_stream_active;
+wire        wav_stream_end;
+wire        wav_buffer_low;
+wire [31:0] wav_sample_counter;
+wire [7:0]  wav_fade_gain;
+wire        wav_scaled_valid;
+wire signed [15:0] wav_scaled_left;
+wire signed [15:0] wav_scaled_right;
+wire        arp_sample_valid;
+wire        arp_sample_ready;
+wire signed [15:0] arp_sample_left;
+wire signed [15:0] arp_sample_right;
+wire        mix_sample_valid;
+wire        mix_sample_ready;
+wire signed [15:0] mix_sample_left;
+wire signed [15:0] mix_sample_right;
+reg  [31:0] wav_tick_acc;
+reg         wav_sample_tick;
+
 reg [3:0]   media_state_code_sync1;
 reg [3:0]   media_state_code_sync2;
 reg [3:0]   media_state_code_sync3;
@@ -260,7 +296,19 @@ sd_card_bmp #(
     .SD_nCS            (sd_ncs),
     .SD_DCLK           (sd_dclk),
     .SD_MOSI           (sd_mosi),
-    .SD_MISO           (sd_miso)
+    .SD_MISO           (sd_miso),
+    .audio_file_valid  (audio_file_valid),
+    .audio_start_lba   (audio_start_lba),
+    .audio_total_sectors(audio_total_sectors),
+    .audio_play_enable (audio_play_enable),
+    .audio_sec_req     (wav_sec_req),
+    .audio_sec_lba     (wav_sec_lba),
+    .audio_sec_busy    (wav_sec_busy),
+    .audio_sec_valid   (wav_sec_valid),
+    .audio_sec_byte    (wav_sec_byte),
+    .audio_sec_byte_index(wav_sec_byte_index),
+    .audio_sec_done    (wav_sec_done),
+    .audio_sec_error   (wav_sec_error)
 );
 
 // 第十讲：KEY1外部消抖后送转场控制器，避免被sd_card_bmp内部硬切逻辑抢先响应。
@@ -537,20 +585,130 @@ assign media_id = (display_valid_sync2 &&
 // 16点正弦 LUT 峰值约 12000，200/255 缩放后仍保留足够余量，避免削波爆音。
 assign audio_volume = 8'd200;
 
-hdmi_pcm_audio_bridge #(
+// 48kHz WAV 采样节拍。video_clk=25MHz，与 pcm_media_tone 使用同一
+// 分数累加器算法，保证 WAV 与原琶音音源的采样率一致。
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n) begin
+        wav_tick_acc    <= 32'd0;
+        wav_sample_tick <= 1'b0;
+    end else begin
+        wav_sample_tick <= 1'b0;
+        if (wav_tick_acc >= (32'd25_000_000 - 32'd48_000)) begin
+            wav_tick_acc    <= wav_tick_acc + 32'd48_000 - 32'd25_000_000;
+            wav_sample_tick <= 1'b1;
+        end else begin
+            wav_tick_acc <= wav_tick_acc + 32'd48_000;
+        end
+    end
+end
+
+// 第十一讲核心：从 AUDIO.PCM 的连续扇区流式播放。
+wav_stream_player #(
+    .ADDR_WIDTH        (12),
+    .SAMPLES_PER_SECTOR(256)
+) u_wav_stream_player (
+    .wr_clk            (sd_card_clk),
+    .wr_rst_n          (sdcard_rst_n),
+    .play_enable       (audio_play_enable),
+    .start_lba         (audio_start_lba),
+    .total_sectors     (audio_total_sectors),
+    .sd_req            (wav_sec_req),
+    .sd_lba            (wav_sec_lba),
+    .sd_busy           (wav_sec_busy),
+    .sd_valid          (wav_sec_valid),
+    .sd_byte           (wav_sec_byte),
+    .sd_byte_index     (wav_sec_byte_index),
+    .sd_done           (wav_sec_done),
+    .sd_error          (wav_sec_error),
+
+    .rd_clk            (video_clk),
+    .rd_rst_n          (video_rst_n),
+    .sample_tick       (wav_sample_tick),
+    .sample_out        (wav_sample_left),
+    .sample_valid      (wav_sample_valid),
+    .sample_ready      (wav_sample_ready),
+    .sample_counter    (wav_sample_counter),
+    .stream_active     (wav_stream_active),
+    .stream_end        (wav_stream_end),
+    .buffer_low        (wav_buffer_low)
+);
+
+// 单声道 PCM 左右声道使用同一数据。
+assign wav_sample_right = wav_sample_left;
+
+// 转场 alpha -> 音频域增益。只作用于 WAV，保留原切图提示音不受影响。
+sync_fade_gain u_sync_fade_gain (
+    .pix_clk    (video_clk),
+    .pix_rst_n  (video_rst_n),
+    .frame_start(frame_start),
+    .alpha_pix  (fade_alpha),
+    .fade_active(fade_active),
+    .aud_clk    (video_clk),
+    .aud_rst_n  (video_rst_n),
+    .gain_aud   (wav_fade_gain)
+);
+
+// 用户音量 200/255 与转场增益一起缩放 WAV。
+pcm_volume_fade u_pcm_volume_fade (
+    .sample_valid (wav_sample_valid),
+    .sample_ready (wav_sample_ready),
+    .sample_left  (wav_sample_left),
+    .sample_right (wav_sample_right),
+    .volume       (audio_volume),
+    .fade_gain    (wav_fade_gain),
+    .out_valid    (wav_scaled_valid),
+    .out_ready    (),
+    .out_left     (wav_scaled_left),
+    .out_right    (wav_scaled_right)
+);
+
+// 保留第四讲已有的媒体琶音音源；WAV 活跃时由 audio_source_mux 抢占。
+pcm_media_tone #(
     .CLOCK_HZ  (25_000_000),
     .SAMPLE_HZ (48_000)
-) u_hdmi_pcm_audio_bridge (
+) u_pcm_media_tone (
     .clk             (video_clk),
     .rst_n           (video_rst_n),
     .media_id        (media_id),
     .volume          (audio_volume),
-    .audio_valid     (audio_valid),
-    .audio_left      (audio_left_data),
-    .audio_right     (audio_right_data),
-    .sample_overflow (audio_sample_overflow),
-    .contract_error  (audio_contract_error),
+    .sample_valid    (arp_sample_valid),
+    .sample_ready    (arp_sample_ready),
+    .sample_left     (arp_sample_left),
+    .sample_right    (arp_sample_right),
+    .overflow        (audio_sample_overflow),
     .blip_active     (audio_blip_active)
+);
+
+audio_source_mux u_audio_source_mux (
+    .clk            (video_clk),
+    .rst_n          (video_rst_n),
+    .wav_valid      (wav_scaled_valid),
+    .wav_ready      (wav_sample_ready),
+    .wav_left       (wav_scaled_left),
+    .wav_right      (wav_scaled_right),
+    .wav_active     (wav_stream_active),
+    .arp_valid      (arp_sample_valid),
+    .arp_ready      (arp_sample_ready),
+    .arp_left       (arp_sample_left),
+    .arp_right      (arp_sample_right),
+    .force_arpeggio (1'b0),
+    .out_valid      (mix_sample_valid),
+    .out_ready      (mix_sample_ready),
+    .out_left       (mix_sample_left),
+    .out_right      (mix_sample_right)
+);
+
+hdmi_pcm_source_bridge u_hdmi_pcm_source_bridge (
+    .clk            (video_clk),
+    .rst_n          (video_rst_n),
+    .source_valid   (mix_sample_valid),
+    .source_ready   (mix_sample_ready),
+    .source_left    (mix_sample_left),
+    .source_right   (mix_sample_right),
+    .audio_valid    (audio_valid),
+    .audio_left     (audio_left_data),
+    .audio_right    (audio_right_data),
+    .contract_error (audio_contract_error)
 );
 
 audio_arc_calculate #(
