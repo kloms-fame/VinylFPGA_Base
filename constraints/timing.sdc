@@ -32,6 +32,7 @@ derive_clocks
 # ------------------------------------------------------------
 rename_clock -name {sd_card_clk} -source [get_ports {clk}] -master_clock {clk} [get_pins {sys_pll_m0/pll_inst.clkc[0]}]
 rename_clock -name {ext_mem_clk} -source [get_ports {clk}] -master_clock {clk} [get_pins {sys_pll_m0/pll_inst.clkc[1]}]
+rename_clock -name {ext_mem_clk_sft} -source [get_ports {clk}] -master_clock {clk} [get_pins {sys_pll_m0/pll_inst.clkc[2]}]
 rename_clock -name {video_clk}   -source [get_ports {clk}] -master_clock {clk} [get_pins {video_pll_m0/pll_inst.clkc[0]}]
 rename_clock -name {hdmi_5x_clk} -source [get_ports {clk}] -master_clock {clk} [get_pins {video_pll_m0/pll_inst.clkc[1]}]
 
@@ -74,3 +75,21 @@ set_clock_groups -exclusive \
 # 7. 其余 Input/Output delay 先保持空白
 #    你当前两个原始 sdc 也都没有写这部分。
 # ------------------------------------------------------------
+
+# ------------------------------------------------------------
+# 8. 第六讲：复位与同步器时序约束
+# ------------------------------------------------------------
+# 复位信号异步进入各时钟域，由 reset_sync 做同步释放。
+set_false_path -from [get_ports {rst_n}]
+
+# reset_sync / sync_2ff 的第一级均为异步采样寄存器。
+set_false_path -to [get_regs -hier {*/s1}]
+
+# HDMI TMDS ODDR 输出路径的数字延迟上限。
+set_max_delay -from [get_clocks {hdmi_5x_clk}] \
+    -to [get_ports {HDMI_CLK_P HDMI_D0_P HDMI_D1_P HDMI_D2_P}] \
+    8.000 -datapath_only
+
+# SDRAM 移位采样时钟属于硬 IP 的 I/O 窗口，不做 fabric 跨时钟分析。
+set_false_path -from [get_clocks {ext_mem_clk}] -to [get_clocks {ext_mem_clk_sft}]
+set_false_path -from [get_clocks {ext_mem_clk_sft}] -to [get_clocks {ext_mem_clk}]

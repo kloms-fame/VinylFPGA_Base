@@ -115,10 +115,44 @@ wire [9:0]  tmds_ch1_data;
 wire [9:0]  tmds_ch2_data;
 wire [9:0]  tmds_clk_data;
 
-// 第3课起音频复用像素时钟，不再依赖独立音频 PLL。
-// 这样音频 PLL 异常不会反向复位 TF、SDRAM、视频和 HDMI 主链路。
-wire rst_all;
-assign rst_all = ~rst_n;
+// 第六讲：复位源由外部复位按键和两个 PLL 锁定共同决定。
+// 第3课起音频复用像素时钟，因此这里只等待 sys_pll 与 video_pll。
+wire sys_pll_lock;
+wire video_pll_lock;
+wire ext_rst_n;
+wire sdcard_rst_n;
+wire mem_rst_n;
+wire video_rst_n;
+wire Sdr_init_done_sd;
+
+assign ext_rst_n = rst_n & sys_pll_lock & video_pll_lock;
+
+// 每个实际时钟域独立做“异步复位、同步释放”。
+reset_sync u_sdcard_reset (
+    .clk        (sd_card_clk),
+    .ext_rst_n  (ext_rst_n),
+    .rst_n_sync (sdcard_rst_n)
+);
+
+reset_sync u_mem_reset (
+    .clk        (ext_mem_clk),
+    .ext_rst_n  (ext_rst_n),
+    .rst_n_sync (mem_rst_n)
+);
+
+reset_sync u_video_reset (
+    .clk        (video_clk),
+    .ext_rst_n  (ext_rst_n),
+    .rst_n_sync (video_rst_n)
+);
+
+// Sdr_init_done 位于 ext_mem_clk 域，进入 sd_card_bmp 前做两级同步。
+sync_2ff u_sdram_init_sync (
+    .clk        (sd_card_clk),
+    .rst_n      (sdcard_rst_n),
+    .async_in   (Sdr_init_done),
+    .sync_out   (Sdr_init_done_sd)
+);
 
 // 保持你原来的 TF / SDRAM / video 时钟
 sys_pll sys_pll_m0(
@@ -126,19 +160,21 @@ sys_pll sys_pll_m0(
     .clk0_out   (sd_card_clk),
     .clk1_out   (ext_mem_clk),
     .clk2_out   (ext_mem_clk_sft),
-    .reset      (1'b0)
+    .reset      (~rst_n),
+    .locked     (sys_pll_lock)
 );
 
 video_pll video_pll_m0(
     .refclk     (clk),
     .clk0_out   (video_clk),
     .clk1_out   (hdmi_5x_clk),
-    .reset      (1'b0)
+    .reset      (~rst_n),
+    .locked     (video_pll_lock)
 );
 
 // mem_clk 域把 write_finish 单拍转成 toggle，供 sd_card_clk 域可靠同步
-always @(posedge ext_mem_clk or posedge rst_all) begin
-    if (rst_all)
+always @(posedge ext_mem_clk or negedge mem_rst_n) begin
+    if (!mem_rst_n)
         frame_write_toggle_mem <= 1'b0;
     else if (frame_write_finish)
         frame_write_toggle_mem <= ~frame_write_toggle_mem;
@@ -146,8 +182,8 @@ end
 
 // write_req_ack 来自 ext_mem_clk 域。先在 sd_card_clk 域做两级同步，
 // 再交给 bmp_read 的写请求握手，避免长组合路径直接跨域采样。
-always @(posedge sd_card_clk or posedge rst_all) begin
-    if (rst_all)
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+    if (!sdcard_rst_n)
         sd_card_write_req_ack_sync <= 2'b00;
     else
         sd_card_write_req_ack_sync <= {sd_card_write_req_ack_sync[0], sd_card_write_req_ack};
@@ -161,7 +197,8 @@ sd_card_bmp #(
     .SCAN_TARGET_COUNT (3'd4)
 ) sd_card_bmp_m0(
     .clk               (sd_card_clk),
-    .rst               (rst_all),
+    .rst               (~sdcard_rst_n),
+    .sdr_init_done     (Sdr_init_done_sd),
     .key_next          (key1),
     .key_auto          (key2),
     .state_code        (state_code),
@@ -204,7 +241,7 @@ seg_scan seg_scan_m0(
 // ===================== 原图像时序与帧缓存 =====================
 video_timing_data video_timing_data_m0(
     .video_clk         (video_clk),
-    .rst               (rst_all),
+    .rst               (~video_rst_n),
     .read_req          (video_read_req),
     .read_req_ack      (video_read_req_ack),
     .hs                (hs_0),
@@ -214,7 +251,7 @@ video_timing_data video_timing_data_m0(
 
 video_delay video_delay_m0(
     .video_clk         (video_clk),
-    .rst               (rst_all),
+    .rst               (~video_rst_n),
     .read_en           (video_read_en),
     .read_data         (video_read_data[31:8]),
     .hs                (hs_0),
@@ -235,7 +272,7 @@ frame_read_write #(
     .FRAME_HEIGHT     (480)
 ) frame_read_write_m0(
     .mem_clk           (ext_mem_clk),
-    .rst               (rst_all),
+    .rst               (~mem_rst_n),
     .Sdr_init_done     (Sdr_init_done),
     .Sdr_init_ref_vld  (Sdr_init_ref_vld),
     .Sdr_busy          (Sdr_busy),
@@ -280,7 +317,7 @@ frame_read_write #(
 sdram U3(
     .Clk               (ext_mem_clk),
     .Clk_sft           (ext_mem_clk_sft),
-    .Rst               (rst_all),
+    .Rst               (~mem_rst_n),
     .Sdr_init_done     (Sdr_init_done),
     .Sdr_init_ref_vld  (Sdr_init_ref_vld),
     .Sdr_busy          (Sdr_busy),
@@ -297,8 +334,8 @@ sdram U3(
 // ===================== 音频：第3课正弦媒体音调 =====================
 // state_code 在第二讲中已改为“当前图片编号 1~4”，这里减 1 得到 media_id 0~3。
 // 两拍同步把 100MHz sd_card_clk 域的图片编号安全地带到 25MHz video_clk 域。
-always @(posedge video_clk or posedge rst_all) begin
-    if (rst_all) begin
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n) begin
         media_state_code_sync1 <= 4'd0;
         media_state_code_sync2 <= 4'd0;
         display_valid_sync1    <= 1'b0;
@@ -326,7 +363,7 @@ hdmi_pcm_audio_bridge #(
     .SAMPLE_HZ (48_000)
 ) u_hdmi_pcm_audio_bridge (
     .clk             (video_clk),
-    .rst_n           (~rst_all),
+    .rst_n           (video_rst_n),
     .media_id        (media_id),
     .volume          (audio_volume),
     .audio_valid     (audio_valid),
@@ -341,7 +378,7 @@ audio_arc_calculate #(
     .ACR_N         (6144)
 ) u_audio_arc_calculate (
     .I_clk         (video_clk),
-    .I_rst         (rst_all),
+    .I_rst         (~video_rst_n),
     .I_audio_valid (audio_valid),
     .O_acr_valid   (acr_valid),
     .O_acr_cts     (acr_cts),
@@ -351,7 +388,7 @@ audio_arc_calculate #(
 // ===================== RGB/DE 转 AXIS 视频 =====================
 video_rgb_to_axis_640x480 u_video_rgb_to_axis_640x480(
     .I_clk         (video_clk),
-    .I_rst         (rst_all),
+    .I_rst         (~video_rst_n),
     .I_vs          (vs),
     .I_de          (de),
     .I_rgb         (vout_data),
@@ -366,7 +403,7 @@ startup_pulse #(
     .CNT_MAX(20'd100000)
 ) u_startup_pulse (
     .I_clk   (video_clk),
-    .I_rst   (rst_all),
+    .I_rst   (~video_rst_n),
     .O_pulse (edid_trig)
 );
 
@@ -390,7 +427,7 @@ hdmi_1_4b_transmitter_core_wrapper #(
     .IIC_SCL_DIV            ( 250        )
 ) u_hdmi_1_4b_transmitter_core_wrapper(
     .I_pixel_clk        (video_clk),
-    .I_rst              (rst_all),
+    .I_rst              (~video_rst_n),
     .I_edid_read_trig   (edid_trig),
     .O_edid_read_valid  (edid_valid),
     .O_edid_read_data   (edid_data),
@@ -423,7 +460,7 @@ hdmi_phy_wrapper #(
 ) u_hdmi2phy_wrapper(
     .I_pixel_clk        (video_clk),
     .I_serial_clk       (hdmi_5x_clk),
-    .I_rst              (rst_all),
+    .I_rst              (~video_rst_n),
     .I_tmds_channel_0   (tmds_ch0_data),
     .I_tmds_channel_1   (tmds_ch1_data),
     .I_tmds_channel_2   (tmds_ch2_data),

@@ -1,8 +1,8 @@
 // =============================================================================
 // File Name    : sd_card_bmp.v
 // Module Name  : sd_card_bmp
-// Project      : VinylFPGA (完赛优化系列 - 第三讲：按键切换与自动轮播)
-// Description  : 具备长短按复用、上一张/下一张双向切换、参数化轮播与数码管图号显示
+// Project      : VinylFPGA (完赛优化系列 - 第三讲/第五讲/第六讲)
+// Description  : 长短按复用、双向切换、参数化轮播、稳定性恢复与SDRAM就绪启动
 // =============================================================================
 
 module sd_card_bmp #(
@@ -18,6 +18,7 @@ module sd_card_bmp #(
 )(
     input                       clk,
     input                       rst,
+    input                       sdr_init_done,         // SDRAM初始化完成，已同步到本时钟域
     input                       key_next,              // KEY1：短按下一张
     input                       key_auto,              // KEY2：短按自动轮播开关 / 长按上一张
     output reg [3:0]            state_code,            // 数码管显示：当前图片编号 1~4
@@ -303,7 +304,7 @@ module sd_card_bmp #(
                     state_code <= bmp_internal_state;
 
                 // 5. 扫描与加载调度状态机
-                if (!scan_kicked && bmp_ready) begin
+                if (!scan_kicked && bmp_ready && sdr_init_done) begin
                     // 上电自启动扫描
                     scan_start_pulse      <= 1'b1;
                     scan_kicked           <= 1'b1;
