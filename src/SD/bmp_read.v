@@ -1,4 +1,7 @@
-module bmp_read(
+module bmp_read #(
+    parameter integer CLK_FREQ_HZ        = 100_000_000,
+    parameter integer SD_READ_TIMEOUT_MS = 500
+)(
     input                       clk,
     input                       rst,
     output                      ready,
@@ -21,6 +24,8 @@ module bmp_read(
     output reg [3:0]            state_code,
     input  [15:0]               bmp_width,
     input  [15:0]               bmp_height,
+    output reg [2:0]            bmp_error,
+    output reg                  load_error,
 
     output reg                  write_req,
     input                       write_req_ack,
@@ -41,15 +46,24 @@ localparam ST_LOAD_HDR  = 3'd2;
 localparam ST_LOAD_WAIT = 3'd3;
 localparam ST_LOAD_DATA = 3'd4;
 
+localparam ERR_NONE      = 3'd0;
+localparam ERR_HEADER    = 3'd1;
+localparam ERR_TIMEOUT   = 3'd2;
+localparam ERR_TRUNCATED = 3'd3;
+
+localparam [31:0] TIMEOUT_CYCLES = (CLK_FREQ_HZ / 1000) * SD_READ_TIMEOUT_MS;
+
 reg [2:0]  state;
 reg [9:0]  rd_cnt;
 
 reg [7:0]  header_0;
 reg [7:0]  header_1;
 reg [31:0] file_len;
+reg [31:0] dib_size;
 reg [31:0] pixel_offset;
 reg [31:0] width;
 reg [31:0] height;
+reg [15:0] planes;
 reg [15:0] bit_count;
 reg [31:0] compression;
 
@@ -57,26 +71,46 @@ reg [31:0] scan_sector;
 reg [31:0] load_sector_latched;
 reg [31:0] bmp_len_cnt;
 reg [1:0]  bmp_byte_idx;
+reg [31:0] pixel_count;
+reg [31:0] sd_timeout_cnt;
+reg [31:0] file_sector_count_r;
 
 wire header_match;
 wire bmp_data_valid;
-wire [31:0] file_sector_count;
 wire [31:0] next_scan_sector_if_match;
 wire [31:0] next_scan_sector_if_miss;
+wire [31:0] expected_pixel_count;
+wire [31:0] required_pixel_bytes;
 
 assign ready = (state == ST_IDLE);
+assign expected_pixel_count = {16'd0, bmp_width} * {16'd0, bmp_height};
+assign required_pixel_bytes = expected_pixel_count * 32'd3;
 assign header_match = (header_0 == "B") &&
                       (header_1 == "M") &&
+                      (dib_size >= 32'd40) &&
                       (width[15:0]  == bmp_width) &&
                       (height[15:0] == bmp_height) &&
+                      (planes == 16'd1) &&
                       (bit_count    == 16'd24) &&
-                      (compression  == 32'd0);
+                      (compression  == 32'd0) &&
+                      (pixel_offset >= 32'd54) &&
+                      (pixel_offset < file_len) &&
+                      (file_len >= (pixel_offset + required_pixel_bytes));
 assign bmp_data_valid = (sd_sec_read_data_valid == 1'b1) &&
                         (bmp_len_cnt >= pixel_offset) &&
-                        (bmp_len_cnt <  file_len);
-assign file_sector_count = (file_len == 32'd0) ? 32'd1 : ((file_len + 32'd511) >> 9);
-assign next_scan_sector_if_match = scan_sector + file_sector_count;
+                        (bmp_len_cnt <  file_len) &&
+                        (bmp_len_cnt <  (pixel_offset + required_pixel_bytes));
+assign next_scan_sector_if_match = scan_sector + file_sector_count_r;
 assign next_scan_sector_if_miss  = scan_sector + 32'd1;
+
+// file_len 在头字段解析完成后保持稳定；先寄存扇区数，切断
+// file_len -> 加法 -> 上限比较 -> 状态机的长组合路径。
+always @(posedge clk or posedge rst) begin
+    if (rst)
+        file_sector_count_r <= 32'd1;
+    else
+        file_sector_count_r <= (file_len == 32'd0) ? 32'd1 : ((file_len + 32'd511) >> 9);
+end
 
 always @(posedge clk or posedge rst) begin
     if (rst) begin
@@ -96,9 +130,11 @@ always @(posedge clk or posedge rst) begin
         header_0     <= 8'd0;
         header_1     <= 8'd0;
         file_len     <= 32'd0;
+        dib_size     <= 32'd0;
         pixel_offset <= 32'd54;
         width        <= 32'd0;
         height       <= 32'd0;
+        planes       <= 16'd0;
         bit_count    <= 16'd0;
         compression  <= 32'd0;
     end else if (((state == ST_SCAN) || (state == ST_LOAD_HDR)) && sd_sec_read_data_valid) begin
@@ -110,6 +146,11 @@ always @(posedge clk or posedge rst) begin
             10'd3 : file_len[15:8] <= sd_sec_read_data;
             10'd4 : file_len[23:16] <= sd_sec_read_data;
             10'd5 : file_len[31:24] <= sd_sec_read_data;
+
+            10'd14: dib_size[7:0] <= sd_sec_read_data;
+            10'd15: dib_size[15:8] <= sd_sec_read_data;
+            10'd16: dib_size[23:16] <= sd_sec_read_data;
+            10'd17: dib_size[31:24] <= sd_sec_read_data;
 
             10'd10: pixel_offset[7:0] <= sd_sec_read_data;
             10'd11: pixel_offset[15:8] <= sd_sec_read_data;
@@ -125,6 +166,9 @@ always @(posedge clk or posedge rst) begin
             10'd23: height[15:8] <= sd_sec_read_data;
             10'd24: height[23:16] <= sd_sec_read_data;
             10'd25: height[31:24] <= sd_sec_read_data;
+
+            10'd26: planes[7:0] <= sd_sec_read_data;
+            10'd27: planes[15:8] <= sd_sec_read_data;
 
             10'd28: bit_count[7:0] <= sd_sec_read_data;
             10'd29: bit_count[15:8] <= sd_sec_read_data;
@@ -146,6 +190,29 @@ always @(posedge clk or posedge rst) begin
             bmp_len_cnt <= bmp_len_cnt + 32'd1;
     end else begin
         bmp_len_cnt <= 32'd0;
+    end
+end
+
+// 已输出像素计数：每个完整 24bit 像素只计一次，用于截断校验。
+always @(posedge clk or posedge rst) begin
+    if (rst) begin
+        pixel_count <= 32'd0;
+    end else if (state == ST_LOAD_DATA) begin
+        if (bmp_data_valid && (bmp_byte_idx == 2'd2))
+            pixel_count <= pixel_count + 32'd1;
+    end else begin
+        pixel_count <= 32'd0;
+    end
+end
+
+// SD 读取软超时计数器：SCAN/LOAD_HDR/LOAD_DATA 三个阶段均受保护。
+always @(posedge clk or posedge rst) begin
+    if (rst) begin
+        sd_timeout_cnt <= 32'd0;
+    end else if ((state == ST_SCAN) || (state == ST_LOAD_HDR) || (state == ST_LOAD_DATA)) begin
+        sd_timeout_cnt <= sd_timeout_cnt + 32'd1;
+    end else begin
+        sd_timeout_cnt <= 32'd0;
     end
 end
 
@@ -195,6 +262,8 @@ always @(posedge clk or posedge rst) begin
     if (rst) begin
         state             <= ST_IDLE;
         state_code        <= 4'd0;
+        bmp_error         <= ERR_NONE;
+        load_error        <= 1'b0;
         sd_sec_read       <= 1'b0;
         sd_sec_read_addr  <= 32'd0;
         write_req         <= 1'b0;
@@ -207,6 +276,8 @@ always @(posedge clk or posedge rst) begin
     end else if (!sd_init_done) begin
         state             <= ST_IDLE;
         state_code        <= 4'd0;
+        bmp_error         <= ERR_NONE;
+        load_error        <= 1'b0;
         sd_sec_read       <= 1'b0;
         sd_sec_read_addr  <= 32'd0;
         write_req         <= 1'b0;
@@ -218,6 +289,7 @@ always @(posedge clk or posedge rst) begin
         load_sector_latched <= 32'd0;
     end else begin
         scan_found_valid <= 1'b0;
+        load_error       <= 1'b0;
 
         case (state)
             ST_IDLE: begin
@@ -226,12 +298,14 @@ always @(posedge clk or posedge rst) begin
                 write_req   <= 1'b0;
 
                 if (scan_start) begin
+                    bmp_error        <= ERR_NONE;
                     scan_done        <= 1'b0;
                     scan_found_total <= 3'd0;
                     scan_sector      <= scan_start_sector;
                     sd_sec_read_addr <= scan_start_sector;
                     state            <= ST_SCAN;
                 end else if (load_start) begin
+                    bmp_error           <= ERR_NONE;
                     load_sector_latched <= load_sector;
                     sd_sec_read_addr    <= load_sector;
                     state               <= ST_LOAD_HDR;
@@ -242,7 +316,12 @@ always @(posedge clk or posedge rst) begin
                 state_code  <= 4'd2;
                 sd_sec_read <= 1'b1;
 
-                if (sd_sec_read_end) begin
+                if (sd_timeout_cnt >= TIMEOUT_CYCLES) begin
+                    sd_sec_read <= 1'b0;
+                    bmp_error   <= ERR_TIMEOUT;
+                    load_error  <= 1'b1;
+                    state       <= ST_IDLE;
+                end else if (sd_sec_read_end) begin
                     sd_sec_read <= 1'b0;
 
                     if (header_match) begin
@@ -260,7 +339,18 @@ always @(posedge clk or posedge rst) begin
                             scan_sector      <= next_scan_sector_if_match;
                         end
                     end else begin
-                        if (scan_sector >= scan_max_sector) begin
+                        // 坏图快速跳过：仍是 BMP 签名但头校验失败时，按文件长度跳过整个文件；
+                        // 非 BMP 数据仍只跳一个扇区。
+                        if ((header_0 == "B") && (header_1 == "M")) begin
+                            if ((next_scan_sector_if_match > scan_max_sector) ||
+                                (next_scan_sector_if_match <= scan_sector)) begin
+                                scan_done <= 1'b1;
+                                state     <= ST_IDLE;
+                            end else begin
+                                sd_sec_read_addr <= next_scan_sector_if_match;
+                                scan_sector      <= next_scan_sector_if_match;
+                            end
+                        end else if (scan_sector >= scan_max_sector) begin
                             scan_done <= 1'b1;
                             state     <= ST_IDLE;
                         end else begin
@@ -275,14 +365,22 @@ always @(posedge clk or posedge rst) begin
                 state_code  <= 4'd2;
                 sd_sec_read <= 1'b1;
 
-                if (sd_sec_read_end) begin
+                if (sd_timeout_cnt >= TIMEOUT_CYCLES) begin
+                    sd_sec_read <= 1'b0;
+                    bmp_error   <= ERR_TIMEOUT;
+                    load_error  <= 1'b1;
+                    state       <= ST_IDLE;
+                end else if (sd_sec_read_end) begin
                     sd_sec_read <= 1'b0;
                     if (header_match) begin
                         write_req        <= 1'b1;
                         sd_sec_read_addr <= load_sector_latched;
                         state            <= ST_LOAD_WAIT;
                     end else begin
-                        state <= ST_IDLE;
+                        write_req  <= 1'b0;
+                        bmp_error  <= ERR_HEADER;
+                        load_error <= 1'b1;
+                        state      <= ST_IDLE;
                     end
                 end
             end
@@ -299,9 +397,18 @@ always @(posedge clk or posedge rst) begin
                 state_code  <= 4'd4;
                 sd_sec_read <= 1'b1;
 
-                if (sd_sec_read_end) begin
+                if (sd_timeout_cnt >= TIMEOUT_CYCLES) begin
+                    sd_sec_read <= 1'b0;
+                    bmp_error   <= ERR_TIMEOUT;
+                    load_error  <= 1'b1;
+                    state       <= ST_IDLE;
+                end else if (sd_sec_read_end) begin
                     sd_sec_read <= 1'b0;
                     if (bmp_len_cnt >= file_len) begin
+                        if (pixel_count < expected_pixel_count) begin
+                            bmp_error  <= ERR_TRUNCATED;
+                            load_error <= 1'b1;
+                        end
                         state <= ST_IDLE;
                     end else begin
                         sd_sec_read_addr <= sd_sec_read_addr + 32'd1;

@@ -9,6 +9,9 @@ __pycache__/
 *.fsdb
 *.shm
 
+# Icarus Verilog 编译产物
+*.vvp
+
 # TD工具运行输出目录
 *_Runs/
 run/

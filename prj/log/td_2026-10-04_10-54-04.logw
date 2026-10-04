@@ -8,3 +8,5 @@
 
    Run on =     RENNICK
 ============================================================
+HDL-5007 WARNING: concatenation with an unsized literal will be treated as 32 bits in ../src/include/sdr_init_ref.enc.v(47)
+HDL-5007 WARNING: concatenation with an unsized literal will be treated as 32 bits in ../src/include/sdr_wrrd.enc.v(283)
