@@ -20,6 +20,7 @@ module sd_card_bmp #(
     input                       rst,
     input                       sdr_init_done,         // SDRAM初始化完成，已同步到本时钟域
     input                       key_next,              // KEY1：短按下一张
+    input                       next_event,            // 第十讲：转场模块完成淡出后的下一张请求
     input                       key_auto,              // KEY2：短按自动轮播开关 / 长按上一张
     output reg [3:0]            state_code,            // 数码管显示：当前图片编号 1~4
     input  [15:0]               bmp_width,
@@ -28,6 +29,7 @@ module sd_card_bmp #(
     output wire                 auto_play_en_out,      // 第九讲OSD：自动轮播状态
     output reg  [7:0]           osd_error_code,        // 第九讲OSD：错误码，0=正常
     output reg                  osd_error_toggle,      // 跨到video_clk域的捆绑数据翻转标志
+    output reg                  switch_abort_toggle,   // 第十讲：手动切换失败时释放转场状态机
     input                       write_finish_toggle,   // 来自 mem_clk 域的写完成翻转信号
     output reg [1:0]            write_buf_idx,         // 当前加载目标bank(0~3)
     output reg [1:0]            disp_buf_idx,          // 当前显示bank(0~3)
@@ -225,6 +227,7 @@ module sd_card_bmp #(
             display_valid         <= 1'b0;
             osd_error_code        <= 8'd0;
             osd_error_toggle      <= 1'b0;
+            switch_abort_toggle   <= 1'b0;
             long_press_cnt        <= 32'd0;
             long_press_marked     <= 1'b0;
             key_auto_stable_d     <= 1'b1;
@@ -266,6 +269,7 @@ module sd_card_bmp #(
                 display_valid         <= 1'b0;
                 osd_error_code        <= 8'd0;
                 osd_error_toggle      <= 1'b0;
+                switch_abort_toggle   <= 1'b0;
                 long_press_cnt        <= 32'd0;
                 long_press_marked     <= 1'b0;
                 state_code            <= 4'd0;
@@ -347,7 +351,8 @@ module sd_card_bmp #(
                     retry_count           <= 2'd0;
                 end else begin
                     // ---- KEY1: 手动下一张 ----
-                    if (key_next_press && scan_done_eff && (img_found_count > 3'd0))
+                    if ((key_next_press || next_event) && scan_done_eff &&
+                        (img_found_count > 3'd0))
                         next_req_pending <= 1'b1;
 
                     // ---- KEY2: 长按(上一张) 与 短按(自动轮播开关) 互斥判定 ----
@@ -514,6 +519,8 @@ module sd_card_bmp #(
                             auto_cnt         <= 32'd0;
                             retry_count      <= 2'd0;
                             load_error_seen  <= 1'b1;
+                            if (load_for_display && !load_is_preload)
+                                switch_abort_toggle <= ~switch_abort_toggle;
                             // 预加载失败时跳过该图，继续尝试后续bank；
                             // 手动切换失败时保留当前画面，不破坏已有显示。
                             if (load_is_preload) begin

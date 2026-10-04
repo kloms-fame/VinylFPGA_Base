@@ -50,6 +50,7 @@ wire de;
 
 wire [23:0] vout_data_raw;
 wire [23:0] vout_data;
+wire [23:0] transition_rgb;
 wire [23:0] osd_rgb_out;
 wire        osd_de_out;
 wire        osd_active;
@@ -57,6 +58,18 @@ wire        display_valid;
 wire        auto_play_en_out;
 wire [7:0]  osd_error_code;
 wire        osd_error_toggle;
+wire        switch_abort_toggle;
+
+// 第十讲：图片转场控制与像素应用
+wire        key_next_transition_press;
+wire        fade_next_event;
+wire        fade_busy;
+wire [7:0]  fade_alpha;
+wire        fade_active;
+wire        wipe_active;
+wire [4:0]  wipe_ramp;
+wire [1:0]  transition_kind;
+wire        frame_start;
 
 wire [3:0]  state_code;
 wire [6:0]  seg_data_0;
@@ -105,6 +118,7 @@ wire        audio_blip_active;
 
 reg [3:0]   media_state_code_sync1;
 reg [3:0]   media_state_code_sync2;
+reg [3:0]   media_state_code_sync3;
 reg         display_valid_sync1;
 reg         display_valid_sync2;
 reg         auto_enabled_sync1;
@@ -117,6 +131,11 @@ reg         osd_error_toggle_seen;
 reg         osd_error_update_pending;
 reg [7:0]   osd_error_code_frame;
 reg [9:0]   osd_pixel_x;
+reg         vs_q;
+reg         transition_armed;
+reg         index_change_pending;
+reg         index_commit_pulse;
+reg [2:0]   switch_abort_sync;
 
 wire        axis_s_user;
 wire        axis_s_valid;
@@ -217,7 +236,9 @@ sd_card_bmp #(
     .clk               (sd_card_clk),
     .rst               (~sdcard_rst_n),
     .sdr_init_done     (Sdr_init_done_sd),
-    .key_next          (key1),
+    // 第十讲：KEY1先进入转场控制器，淡出完成后再用next_event触发切换。
+    .key_next          (1'b1),
+    .next_event        (fade_next_event),
     .key_auto          (key2),
     .state_code        (state_code),
     .bmp_width         (16'd640),
@@ -226,6 +247,7 @@ sd_card_bmp #(
     .auto_play_en_out  (auto_play_en_out),
     .osd_error_code    (osd_error_code),
     .osd_error_toggle  (osd_error_toggle),
+    .switch_abort_toggle(switch_abort_toggle),
 
     .write_finish_toggle(frame_write_toggle_mem),
     .write_buf_idx     (write_buf_idx),
@@ -239,6 +261,40 @@ sd_card_bmp #(
     .SD_DCLK           (sd_dclk),
     .SD_MOSI           (sd_mosi),
     .SD_MISO           (sd_miso)
+);
+
+// 第十讲：KEY1外部消抖后送转场控制器，避免被sd_card_bmp内部硬切逻辑抢先响应。
+key_press_debounce #(
+    .CLK_FREQ_HZ (100_000_000),
+    .DEBOUNCE_MS (20)
+) u_key_next_transition (
+    .clk              (sd_card_clk),
+    .rst              (~sdcard_rst_n),
+    .button_in        (key1),
+    .press_pulse      (key_next_transition_press),
+    .button_stable_out()
+);
+
+video_fade_transition #(
+    .FADE_FRAMES (16)
+) u_video_fade_transition (
+    .ctrl_clk        (sd_card_clk),
+    .ctrl_rst_n      (sdcard_rst_n),
+    .next_event_in   (key_next_transition_press),
+    .next_event_out  (fade_next_event),
+    .fade_busy       (fade_busy),
+
+    .pix_clk         (video_clk),
+    .pix_rst_n       (video_rst_n),
+    .player_active   (display_valid_sync2),
+    .frame_start     (frame_start),
+    .index_commit    (index_commit_pulse),
+    .active_index    (media_id),
+    .alpha_out       (fade_alpha),
+    .fade_active     (fade_active),
+    .wipe_active     (wipe_active),
+    .ramp_out        (wipe_ramp),
+    .transition_kind (transition_kind)
 );
 
 seg_decoder seg_decoder_m0(
@@ -299,6 +355,18 @@ always @(posedge video_clk or negedge video_rst_n) begin
         osd_pixel_x <= osd_pixel_x + 10'd1;
 end
 
+// 第十讲：先做转场处理，再送入OSD；OSD永远位于最上层。
+video_transition_apply #(
+    .WIPE_STEP (40)
+) u_video_transition_apply (
+    .rgb_in      (vout_data),
+    .alpha       (fade_alpha),
+    .wipe_active (wipe_active),
+    .wipe_ramp   (wipe_ramp),
+    .pixel_x     (osd_pixel_x),
+    .rgb_out     (transition_rgb)
+);
+
 osd_overlay_24 #(
     .OSD_X(8),
     .OSD_Y(8)
@@ -307,7 +375,7 @@ osd_overlay_24 #(
     .rst_n        (video_rst_n),
     .vsync        (vs),
     .de           (de),
-    .rgb_in       (vout_data),
+    .rgb_in       (transition_rgb),
     .pixel_x      (osd_pixel_x),
     .active_index (media_id),
     .auto_enabled (auto_enabled_sync2),
@@ -389,6 +457,7 @@ always @(posedge video_clk or negedge video_rst_n) begin
     if (!video_rst_n) begin
         media_state_code_sync1 <= 4'd0;
         media_state_code_sync2 <= 4'd0;
+        media_state_code_sync3 <= 4'd0;
         display_valid_sync1    <= 1'b0;
         display_valid_sync2    <= 1'b0;
         auto_enabled_sync1     <= 1'b0;
@@ -400,13 +469,22 @@ always @(posedge video_clk or negedge video_rst_n) begin
         osd_error_toggle_seen  <= 1'b0;
         osd_error_update_pending <= 1'b0;
         osd_error_code_frame   <= 8'd0;
+        vs_q                   <= 1'b1;
+        transition_armed       <= 1'b0;
+        index_change_pending   <= 1'b0;
+        index_commit_pulse     <= 1'b0;
+        switch_abort_sync      <= 3'b000;
     end else begin
         media_state_code_sync1 <= state_code;
         media_state_code_sync2 <= media_state_code_sync1;
+        media_state_code_sync3 <= media_state_code_sync2;
         display_valid_sync1    <= display_valid;
         display_valid_sync2    <= display_valid_sync1;
         auto_enabled_sync1     <= auto_play_en_out;
         auto_enabled_sync2     <= auto_enabled_sync1;
+        vs_q                   <= vs;
+        index_commit_pulse     <= 1'b0;
+        switch_abort_sync      <= {switch_abort_sync[1:0], switch_abort_toggle};
 
         // error_code 是低频8位状态，用toggle作为捆绑数据更新标志。
         // 等待toggle同步完成后的下一拍再提交数据，避免多位同时变化时
@@ -422,8 +500,32 @@ always @(posedge video_clk or negedge video_rst_n) begin
             osd_error_code_frame    <= osd_error_code_sync2;
             osd_error_update_pending <= 1'b0;
         end
+
+        // 第十讲：首图提交只用于“武装”转场控制器，不触发转场。
+        // 后续每次显示图片号变化都在下一个frame_start提交给转场模块，
+        // 手动切换此时处于S_HOLD走淡入，自动轮播在S_IDLE走Wipe。
+        if (display_valid_sync2 &&
+            media_state_code_sync2 >= 4'd1 &&
+            media_state_code_sync2 <= 4'd4) begin
+            if (!transition_armed) begin
+                transition_armed <= 1'b1;
+            end else if (media_state_code_sync2 != media_state_code_sync3) begin
+                index_change_pending <= 1'b1;
+            end
+        end
+
+        if (frame_start && index_change_pending) begin
+            index_commit_pulse <= 1'b1;
+            index_change_pending <= 1'b0;
+        end
+
+        // 手动切换加载失败时，释放转场状态机，避免一直停在黑场。
+        if (switch_abort_sync[2] ^ switch_abort_sync[1])
+            index_commit_pulse <= 1'b1;
     end
 end
+
+assign frame_start = vs_q && !vs;
 
 // display_valid 置位后 state_code 稳定为 1~4；首图提交前固定使用 media_id=0。
 assign media_id = (display_valid_sync2 &&

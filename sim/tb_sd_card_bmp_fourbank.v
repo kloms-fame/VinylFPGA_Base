@@ -11,6 +11,7 @@ module tb_sd_card_bmp_fourbank;
     reg         rst = 1'b1;
     reg         sdr_init_done = 1'b0;
     reg         key_next = 1'b1;
+    reg         next_event = 1'b0;
     reg         key_auto = 1'b1;
     reg         write_finish_toggle = 1'b0;
     reg         write_req_ack = 1'b0;
@@ -47,6 +48,7 @@ module tb_sd_card_bmp_fourbank;
         .rst                 (rst),
         .sdr_init_done       (sdr_init_done),
         .key_next            (key_next),
+        .next_event          (next_event),
         .key_auto            (key_auto),
         .state_code          (state_code),
         .bmp_width           (16'd2),
@@ -103,6 +105,14 @@ module tb_sd_card_bmp_fourbank;
             @(negedge clk) key_next = 1'b0;
             repeat (30) @(posedge clk);
             @(negedge clk) key_next = 1'b1;
+            repeat (30) @(posedge clk);
+        end
+    endtask
+
+    task pulse_next_event;
+        begin
+            @(negedge clk) next_event = 1'b1;
+            @(negedge clk) next_event = 1'b0;
             repeat (30) @(posedge clk);
         end
     endtask
@@ -178,9 +188,17 @@ module tb_sd_card_bmp_fourbank;
             errors = errors + 1;
         end
 
-        // KEY2长按：上一张，应回到bank1。
+        // 第十讲：转场提交脉冲走与KEY1相同的下一张仲裁路径。
+        pulse_next_event();
+        if (disp_buf_idx !== 2'd3 || load_start_count != 4) begin
+            $display("FAIL: next_event switch disp=%0d load_count=%0d",
+                     disp_buf_idx, load_start_count);
+            errors = errors + 1;
+        end
+
+        // KEY2长按：上一张，应回到bank2。
         long_press_key2();
-        if (disp_buf_idx !== 2'd1 || load_start_count != 4) begin
+        if (disp_buf_idx !== 2'd2 || load_start_count != 4) begin
             $display("FAIL: KEY2 long switch disp=%0d load_count=%0d",
                      disp_buf_idx, load_start_count);
             errors = errors + 1;
@@ -198,13 +216,13 @@ module tb_sd_card_bmp_fourbank;
             $display("FAIL: auto play caused reload, count=%0d", load_start_count);
             errors = errors + 1;
         end
-        if (disp_buf_idx == 2'd1) begin
+        if (disp_buf_idx == 2'd2) begin
             $display("FAIL: auto play did not advance image");
             errors = errors + 1;
         end
 
         if (errors == 0)
-            $display("PASS: four-bank scheduler preload/switch/long-press/auto");
+            $display("PASS: four-bank scheduler preload/switch/next_event/long-press/auto");
         else
             $display("FAIL: errors=%0d", errors);
         $finish;

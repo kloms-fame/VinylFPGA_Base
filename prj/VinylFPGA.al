@@ -395,6 +395,30 @@
                     <Attr Name="CompileOrder" Val="47"/>
                 </FileInfo>
             </File>
+            <File Path="../src/display/video_transition_apply.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="48"/>
+                </FileInfo>
+            </File>
+            <File Path="../src/display/video_fade_transition.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="49"/>
+                </FileInfo>
+            </File>
+            <File Path="../src/display/frame_blend.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="50"/>
+                </FileInfo>
+            </File>
         </Verilog>
         <ADC_FILE>
             <File Path="../constraints/pin.adc">
