@@ -50,7 +50,13 @@ wire de;
 
 wire [23:0] vout_data_raw;
 wire [23:0] vout_data;
+wire [23:0] osd_rgb_out;
+wire        osd_de_out;
+wire        osd_active;
 wire        display_valid;
+wire        auto_play_en_out;
+wire [7:0]  osd_error_code;
+wire        osd_error_toggle;
 
 wire [3:0]  state_code;
 wire [6:0]  seg_data_0;
@@ -101,6 +107,16 @@ reg [3:0]   media_state_code_sync1;
 reg [3:0]   media_state_code_sync2;
 reg         display_valid_sync1;
 reg         display_valid_sync2;
+reg         auto_enabled_sync1;
+reg         auto_enabled_sync2;
+reg [7:0]   osd_error_code_sync1;
+reg [7:0]   osd_error_code_sync2;
+reg         osd_error_toggle_sync1;
+reg         osd_error_toggle_sync2;
+reg         osd_error_toggle_seen;
+reg         osd_error_update_pending;
+reg [7:0]   osd_error_code_frame;
+reg [9:0]   osd_pixel_x;
 
 wire        axis_s_user;
 wire        axis_s_valid;
@@ -207,6 +223,9 @@ sd_card_bmp #(
     .bmp_width         (16'd640),
     .bmp_height        (16'd480),
     .display_valid     (display_valid),
+    .auto_play_en_out  (auto_play_en_out),
+    .osd_error_code    (osd_error_code),
+    .osd_error_toggle  (osd_error_toggle),
 
     .write_finish_toggle(frame_write_toggle_mem),
     .write_buf_idx     (write_buf_idx),
@@ -267,6 +286,36 @@ video_delay video_delay_m0(
 
 // 首图提交前黑屏；提交后一直显示当前显示缓冲区内容
 assign vout_data = display_valid ? vout_data_raw : 24'd0;
+
+// ===================== 第九讲：OSD状态字幕叠加 =====================
+// OSD 紧跟在黑屏屏蔽之后、video_rgb_to_axis 之前，纯组合替换像素，
+// 不改变现有 de/vs 的节拍，也不影响 HDMI 音频数据岛调度。
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n)
+        osd_pixel_x <= 10'd0;
+    else if (!de)
+        osd_pixel_x <= 10'd0;
+    else
+        osd_pixel_x <= osd_pixel_x + 10'd1;
+end
+
+osd_overlay_24 #(
+    .OSD_X(8),
+    .OSD_Y(8)
+) u_osd_overlay_24 (
+    .clk          (video_clk),
+    .rst_n        (video_rst_n),
+    .vsync        (vs),
+    .de           (de),
+    .rgb_in       (vout_data),
+    .pixel_x      (osd_pixel_x),
+    .active_index (media_id),
+    .auto_enabled (auto_enabled_sync2),
+    .error_code   (osd_error_code_frame),
+    .rgb_out      (osd_rgb_out),
+    .de_out       (osd_de_out),
+    .osd_active   (osd_active)
+);
 
 frame_read_write #(
     .WRITE_V_FLIP     (1),
@@ -342,11 +391,37 @@ always @(posedge video_clk or negedge video_rst_n) begin
         media_state_code_sync2 <= 4'd0;
         display_valid_sync1    <= 1'b0;
         display_valid_sync2    <= 1'b0;
+        auto_enabled_sync1     <= 1'b0;
+        auto_enabled_sync2     <= 1'b0;
+        osd_error_code_sync1   <= 8'd0;
+        osd_error_code_sync2   <= 8'd0;
+        osd_error_toggle_sync1 <= 1'b0;
+        osd_error_toggle_sync2 <= 1'b0;
+        osd_error_toggle_seen  <= 1'b0;
+        osd_error_update_pending <= 1'b0;
+        osd_error_code_frame   <= 8'd0;
     end else begin
         media_state_code_sync1 <= state_code;
         media_state_code_sync2 <= media_state_code_sync1;
         display_valid_sync1    <= display_valid;
         display_valid_sync2    <= display_valid_sync1;
+        auto_enabled_sync1     <= auto_play_en_out;
+        auto_enabled_sync2     <= auto_enabled_sync1;
+
+        // error_code 是低频8位状态，用toggle作为捆绑数据更新标志。
+        // 等待toggle同步完成后的下一拍再提交数据，避免多位同时变化时
+        // 视频域采到中间值。
+        osd_error_code_sync1   <= osd_error_code;
+        osd_error_code_sync2   <= osd_error_code_sync1;
+        osd_error_toggle_sync1 <= osd_error_toggle;
+        osd_error_toggle_sync2 <= osd_error_toggle_sync1;
+        if (osd_error_toggle_sync2 != osd_error_toggle_seen) begin
+            osd_error_toggle_seen   <= osd_error_toggle_sync2;
+            osd_error_update_pending <= 1'b1;
+        end else if (osd_error_update_pending) begin
+            osd_error_code_frame    <= osd_error_code_sync2;
+            osd_error_update_pending <= 1'b0;
+        end
     end
 end
 
@@ -393,7 +468,7 @@ video_rgb_to_axis_640x480 u_video_rgb_to_axis_640x480(
     .I_rst         (~video_rst_n),
     .I_vs          (vs),
     .I_de          (de),
-    .I_rgb         (vout_data),
+    .I_rgb         (osd_rgb_out),
     .O_video_user  (axis_s_user),
     .O_video_valid (axis_s_valid),
     .O_video_last  (axis_s_last),

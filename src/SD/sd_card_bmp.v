@@ -25,6 +25,9 @@ module sd_card_bmp #(
     input  [15:0]               bmp_width,
     input  [15:0]               bmp_height,
     output reg                  display_valid,
+    output wire                 auto_play_en_out,      // 第九讲OSD：自动轮播状态
+    output reg  [7:0]           osd_error_code,        // 第九讲OSD：错误码，0=正常
+    output reg                  osd_error_toggle,      // 跨到video_clk域的捆绑数据翻转标志
     input                       write_finish_toggle,   // 来自 mem_clk 域的写完成翻转信号
     output reg [1:0]            write_buf_idx,         // 当前加载目标bank(0~3)
     output reg [1:0]            disp_buf_idx,          // 当前显示bank(0~3)
@@ -120,6 +123,7 @@ module sd_card_bmp #(
     assign write_finish_pulse = wrfin_tgl_sync[2] ^ wrfin_tgl_sync[1];
     assign auto_tick          = (auto_cnt >= (AUTO_PLAY_CYCLES - 1'b1));
     assign scan_done_eff      = scan_done | scan_abort;
+    assign auto_play_en_out   = auto_play_en;
 
     // 四bank后，图片编号就是bank编号，切换时读地址索引直接使用img_idx。
     assign next_from_current  = next_index_limited(img_idx, img_found_count);
@@ -219,6 +223,8 @@ module sd_card_bmp #(
             load_error_seen       <= 1'b0;
             retry_count           <= 2'd0;
             display_valid         <= 1'b0;
+            osd_error_code        <= 8'd0;
+            osd_error_toggle      <= 1'b0;
             long_press_cnt        <= 32'd0;
             long_press_marked     <= 1'b0;
             key_auto_stable_d     <= 1'b1;
@@ -258,6 +264,8 @@ module sd_card_bmp #(
                 load_error_seen       <= 1'b0;
                 retry_count           <= 2'd0;
                 display_valid         <= 1'b0;
+                osd_error_code        <= 8'd0;
+                osd_error_toggle      <= 1'b0;
                 long_press_cnt        <= 32'd0;
                 long_press_marked     <= 1'b0;
                 state_code            <= 4'd0;
@@ -288,6 +296,10 @@ module sd_card_bmp #(
                     boot_failed           <= 1'b0;
                     load_error_seen       <= 1'b0;
                     retry_count           <= 2'd0;
+                    if (osd_error_code != 8'd0) begin
+                        osd_error_code   <= 8'd0;
+                        osd_error_toggle <= ~osd_error_toggle;
+                    end
                     if (!display_valid || load_for_display) begin
                         img_idx       <= load_idx;
                         disp_buf_idx  <= load_idx;
@@ -464,6 +476,8 @@ module sd_card_bmp #(
                 //    扫描超时：重试一次；仍失败则强制结束扫描，避免永久停在 scan_done=0。
                 //    加载错误：重试当前图一次；仍失败则保留上一帧并跳过。
                 if (load_error && !load_error_seen) begin
+                    osd_error_code   <= {4'b0000, bmp_error};
+                    osd_error_toggle <= ~osd_error_toggle;
                     if (!scan_done && !scan_abort) begin
                         if (retry_count < MAX_RETRIES) begin
                             retry_count      <= retry_count + 2'd1;
