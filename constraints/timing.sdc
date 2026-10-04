@@ -6,7 +6,7 @@
 # 合并原则：
 # 1) 保留 top.sdc 里的系统主时钟与 derive_clocks
 # 2) 把 timing(2).sdc 里的 pixel/serial 时钟改成整合工程实际名字
-# 3) 增加 hdmi_5x_clk / audio_mclk 的命名
+# 3) 增加 hdmi_5x_clk 命名，音频统一使用 video_clk
 # 4) 不再对内部 net 直接 create_clock，避免和 derive_clocks 重复
 # ============================================================
 
@@ -26,7 +26,7 @@ derive_clocks
 #    下面这些路径是按你当前工程实例名写的：
 #      sys_pll      -> sys_pll_m0
 #      video_pll    -> video_pll_m0
-#      音频 PLL     -> u_audio_pll
+#      第3课音频已复用 video_clk，不再创建 audio_mclk
 #
 #    如果综合后实例路径略有不同，就按 Timing Analyzer 里的实际 pin 路径改。
 # ------------------------------------------------------------
@@ -34,7 +34,6 @@ rename_clock -name {sd_card_clk} -source [get_ports {clk}] -master_clock {clk} [
 rename_clock -name {ext_mem_clk} -source [get_ports {clk}] -master_clock {clk} [get_pins {sys_pll_m0/pll_inst.clkc[1]}]
 rename_clock -name {video_clk}   -source [get_ports {clk}] -master_clock {clk} [get_pins {video_pll_m0/pll_inst.clkc[0]}]
 rename_clock -name {hdmi_5x_clk} -source [get_ports {clk}] -master_clock {clk} [get_pins {video_pll_m0/pll_inst.clkc[1]}]
-rename_clock -name {audio_mclk}  -source [get_ports {clk}] -master_clock {clk} [get_pins {u_audio_pll/pll_inst.clkc[2]}]
 
 # ------------------------------------------------------------
 # 4. 从原 timing(2).sdc 迁移过来的 HDMI 像素/串行时钟约束
@@ -55,16 +54,9 @@ set_clock_groups -exclusive \
     -group [get_clocks {hdmi_5x_clk}]
 
 # ------------------------------------------------------------
-# 5. 音频 I2S 发生器/接收器跨域
+# 5. 第3课起 pcm_media_tone / ACR / 音频数据全部运行在 video_clk，
+#    不再存在 audio_mclk 跨域约束。
 #
-#    audio_mclk 域里生成 I2S，video_clk 域里做三拍同步采样。
-#    这类路径不是普通同步时序路径，直接切掉更合理。
-# ------------------------------------------------------------
-set_clock_groups -asynchronous \
-    -group [get_clocks {audio_mclk}] \
-    -group [get_clocks {video_clk} hdmi_5x_clk sd_card_clk ext_mem_clk]
-
-# ------------------------------------------------------------
 # 6. 可选：如果你的 frame_read_write 内部异步 FIFO 已经完全处理好了跨域，
 #    且报告里总出现 video_clk / sd_card_clk / ext_mem_clk 之间的大量伪违例，
 #    可以打开下面这组异步分组。

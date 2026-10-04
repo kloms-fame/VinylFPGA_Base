@@ -82,17 +82,22 @@ wire vs_0;
 wire de_0;
 
 // HDMI 1.4b 音频发射相关
-wire        audio_pll_lock;
-wire        audio_mclk;
-wire        audio_i2s_bclk;
-wire        audio_i2s_lrck;
-wire        audio_i2s_dout;
 wire        audio_valid;
 wire [23:0] audio_left_data;
 wire [23:0] audio_right_data;
 wire        acr_valid;
 wire [19:0] acr_cts;
 wire [19:0] acr_n;
+wire [1:0]  media_id;
+wire [7:0]  audio_volume;
+wire        audio_sample_overflow;
+wire        audio_contract_error;
+wire        audio_blip_active;
+
+reg [3:0]   media_state_code_sync1;
+reg [3:0]   media_state_code_sync2;
+reg         display_valid_sync1;
+reg         display_valid_sync2;
 
 wire        axis_s_user;
 wire        axis_s_valid;
@@ -109,9 +114,10 @@ wire [9:0]  tmds_ch1_data;
 wire [9:0]  tmds_ch2_data;
 wire [9:0]  tmds_clk_data;
 
-// 统一复位：TF 图像链路 + HDMI 音频链路
+// 第3课起音频复用像素时钟，不再依赖独立音频 PLL。
+// 这样音频 PLL 异常不会反向复位 TF、SDRAM、视频和 HDMI 主链路。
 wire rst_all;
-assign rst_all = ~rst_n | ~audio_pll_lock;
+assign rst_all = ~rst_n;
 
 // 保持你原来的 TF / SDRAM / video 时钟
 sys_pll sys_pll_m0(
@@ -127,16 +133,6 @@ video_pll video_pll_m0(
     .clk0_out   (video_clk),
     .clk1_out   (hdmi_5x_clk),
     .reset      (1'b0)
-);
-
-// 复用你 I2S->HDMI 工程里的 PLL，只取 12.288MHz 音频主时钟
-PLL_HDMI_AUDIO u_audio_pll(
-    .refclk     (clk),
-    .reset      (1'b0),
-    .extlock    (audio_pll_lock),
-    .clk0_out   (),
-    .clk1_out   (),
-    .clk2_out   (audio_mclk)
 );
 
 // mem_clk 域把 write_finish 单拍转成 toggle，供 sd_card_clk 域可靠同步
@@ -288,27 +284,47 @@ sdram U3(
     .Sdr_rd_dout       (Sdr_rd_dout)
 );
 
-// ===================== 音频：内部 I2S 测试音 =====================
-hdmi_audio_tone_i2s_64fs #(
-    .PHASE_INC (32'd39370534),
-    .AMP       (24'sd2000000)
-) u_hdmi_audio_tone_i2s_64fs (
-    .I_mclk      (audio_mclk),
-    .I_rst       (rst_all),
-    .O_i2s_BCLK  (audio_i2s_bclk),
-    .O_i2s_LRCK  (audio_i2s_lrck),
-    .O_i2s_DOUT  (audio_i2s_dout)
-);
+// ===================== 音频：第3课正弦媒体音调 =====================
+// state_code 在第二讲中已改为“当前图片编号 1~4”，这里减 1 得到 media_id 0~3。
+// 两拍同步把 100MHz sd_card_clk 域的图片编号安全地带到 25MHz video_clk 域。
+always @(posedge video_clk or posedge rst_all) begin
+    if (rst_all) begin
+        media_state_code_sync1 <= 4'd0;
+        media_state_code_sync2 <= 4'd0;
+        display_valid_sync1    <= 1'b0;
+        display_valid_sync2    <= 1'b0;
+    end else begin
+        media_state_code_sync1 <= state_code;
+        media_state_code_sync2 <= media_state_code_sync1;
+        display_valid_sync1    <= display_valid;
+        display_valid_sync2    <= display_valid_sync1;
+    end
+end
 
-I2S_receiver u_I2S_receiver(
-    .I_clk              (video_clk),
-    .I_rst              (rst_all),
-    .I_i2s_BCLK         (audio_i2s_bclk),
-    .I_i2s_LRCK         (audio_i2s_lrck),
-    .I_i2s_DOUT         (audio_i2s_dout),
-    .O_audio_valid      (audio_valid),
-    .O_audio_left_data  (audio_left_data),
-    .O_audio_right_data (audio_right_data)
+// display_valid 置位后 state_code 稳定为 1~4；首图提交前固定使用 media_id=0。
+assign media_id = (display_valid_sync2 &&
+                   media_state_code_sync2 >= 4'd1 &&
+                   media_state_code_sync2 <= 4'd4)
+                ? (media_state_code_sync2[1:0] - 2'd1)
+                : 2'd0;
+
+// 16点正弦 LUT 峰值约 12000，200/255 缩放后仍保留足够余量，避免削波爆音。
+assign audio_volume = 8'd200;
+
+hdmi_pcm_audio_bridge #(
+    .CLOCK_HZ  (25_000_000),
+    .SAMPLE_HZ (48_000)
+) u_hdmi_pcm_audio_bridge (
+    .clk             (video_clk),
+    .rst_n           (~rst_all),
+    .media_id        (media_id),
+    .volume          (audio_volume),
+    .audio_valid     (audio_valid),
+    .audio_left      (audio_left_data),
+    .audio_right     (audio_right_data),
+    .sample_overflow (audio_sample_overflow),
+    .contract_error  (audio_contract_error),
+    .blip_active     (audio_blip_active)
 );
 
 audio_arc_calculate #(

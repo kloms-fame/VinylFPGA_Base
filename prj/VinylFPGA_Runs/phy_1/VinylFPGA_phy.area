@@ -8,23 +8,23 @@ IO Statistics
   #inout                    1
 
 Utilization Statistics
-#lut                     4083   out of  19600   20.83%
-#reg                     3820   out of  19600   19.49%
-#le                      5282
-  #lut only              1462   out of   5282   27.68%
-  #reg only              1199   out of   5282   22.70%
-  #lut&reg               2621   out of   5282   49.62%
+#lut                     4142   out of  19600   21.13%
+#reg                     3548   out of  19600   18.10%
+#le                      5064
+  #lut only              1516   out of   5064   29.94%
+  #reg only               922   out of   5064   18.21%
+  #lut&reg               2626   out of   5064   51.86%
 #bram                      20   out of     64   31.25%
   #bram9k                  20
   #fifo9k                   0
 #bram32k                    0   out of     16    0.00%
-#dsp                        0   out of     29    0.00%
+#dsp                        1   out of     29    3.45%
 #pad                       32   out of    188   17.02%
   #ireg                     2
   #oreg                    21
   #treg                     1
-#pll                        3   out of      4   75.00%
-#gclk                       3   out of     16   18.75%
+#pll                        2   out of      4   50.00%
+#gclk                       2   out of     16   12.50%
 
 
 Detailed IO Report
@@ -120,111 +120,108 @@ Detailed IO Report
 
 Report Clock Domain Luts:
 
-------------------------------------------------------------------------------------------------------------------
-  Index   |  Name         |  Frequency   |  LUT As Logic   |  LUT As Shifter   |  LUT As Dram   |  BRAM   |  DSP
-------------------------------------------------------------------------------------------------------------------
-  #1      |  audio_mclk   |  12MHz       |  59             |  0                |  0             |  0      |  0
-  #2      |  clk          |  50MHz       |  32             |  0                |  0             |  0      |  0
-  #3      |  ext_mem_clk  |  125MHz      |  247            |  0                |  0             |  4      |  0
-  #4      |  hdmi_5x_clk  |  125MHz      |  18             |  0                |  0             |  0      |  0
-  #5      |  sd_card_clk  |  100MHz      |  603            |  0                |  0             |  2      |  0
-  #6      |  video_clk    |  25MHz       |  914            |  0                |  0             |  18     |  0
-------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------
+  Index   |  Name                       |  Frequency   |  LUT As Logic   |  LUT As Shifter   |  LUT As Dram   |  BRAM   |  DSP
+--------------------------------------------------------------------------------------------------------------------------------
+  #1      |  clk                        |  50MHz       |  25             |  0                |  0             |  0      |  0
+  #2      |  ext_mem_clk                |  125MHz      |  257            |  0                |  0             |  4      |  0
+  #3      |  hdmi_5x_clk                |  125MHz      |  13             |  0                |  0             |  0      |  0
+  #4      |  sd_card_clk                |  100MHz      |  623            |  0                |  0             |  2      |  0
+  #5      |  sys_pll_m0/pll_inst.clk... |  125MHz      |  1              |  0                |  0             |  0      |  0
+  #6      |  video_clk                  |  25MHz       |  1018           |  0                |  16            |  18     |  1
+--------------------------------------------------------------------------------------------------------------------------------
 
 Clock Resource Statistics
 Index     ClockNet                                            Type               DriverType         Driver                         Fanout
-#1        video_pll_m0/clk0_buf                               Global             pll                video_pll_m0/pll_inst.clkc0    1251
+#1        video_pll_m0/clk0_buf                               Global             pll                video_pll_m0/pll_inst.clkc0    1157
 #2        sys_pll_m0/clk0_buf                                 Global             pll                sys_pll_m0/pll_inst.clkc0      502
-#3        U3/u2_ram/u1_init_ref/Sdr_clk                       Global             pll                sys_pll_m0/pll_inst.clkc1      457
-#4        u_hdmi_audio_tone_i2s_64fs/I_mclk                   Global             pll                u_audio_pll/pll_inst.clkc2     47
-#5        u_hdmi2phy_wrapper/u0_lane_lvds_8_1/I_serial_clk    Global             pll                video_pll_m0/pll_inst.clkc1    31
-#6        clk_dup_1                                           Global             io                 clk_syn_2.di                   28
-#7        U3/u2_ram/SDRAM_CLK                                 Global             pll                sys_pll_m0/pll_inst.clkc2      0
-#8        u_audio_pll/clk0_buf                                Global             pll                u_audio_pll/pll_inst.clkc0     0
+#3        U3/u2_ram/u1_init_ref/Sdr_clk                       Global             pll                sys_pll_m0/pll_inst.clkc1      454
+#4        u_hdmi2phy_wrapper/u0_lane_lvds_8_1/I_serial_clk    Global             pll                video_pll_m0/pll_inst.clkc1    33
+#5        clk_dup_1                                           Global             io                 clk_syn_2.di                   27
+#6        U3/u2_ram/SDRAM_CLK                                 Global             pll                sys_pll_m0/pll_inst.clkc2      0
 
 Report Hierarchy Area:
 +---------------------------------------------------------------------------------------------------------------------------------------------------+
 |Instance                                  |Module                                            |le      |lut     |ripple  |seq     |bram    |dsp     |
 +---------------------------------------------------------------------------------------------------------------------------------------------------+
-|top                                       |top                                               |5282    |3446    |637     |3844    |20      |0       |
-|  U3                                      |sdram                                             |424     |120     |5       |411     |0       |0       |
-|    u2_ram                                |sdr_as_ram                                        |424     |120     |5       |411     |0       |0       |
-|      u1_init_ref                         |sdr_init_ref                                      |81      |19      |5       |72      |0       |0       |
-|      u2_wrrd                             |sdr_wrrd                                          |343     |101     |0       |339     |0       |0       |
-|  frame_read_write_m0                     |frame_read_write                                  |650     |426     |145     |342     |4       |0       |
-|    frame_fifo_read_m0                    |frame_fifo_read                                   |114     |90      |24      |74      |0       |0       |
-|    frame_fifo_write_m0                   |frame_fifo_write                                  |223     |144     |77      |78      |0       |0       |
-|    read_buf                              |rfifo_32_32_512                                   |181     |116     |18      |92      |2       |0       |
-|      ram_inst                            |ram_infer_rfifo_32_32_512                         |0       |0       |0       |0       |2       |0       |
-|      rd_to_wr_cross_inst                 |fifo_cross_domain_addr_process_al_rfifo_32_32_512 |86      |70      |0       |32      |0       |0       |
-|      wr_to_rd_cross_inst                 |fifo_cross_domain_addr_process_al_rfifo_32_32_512 |31      |19      |0       |31      |0       |0       |
-|    write_buf                             |wfifo_32_32_512                                   |132     |76      |26      |98      |2       |0       |
+|top                                       |top                                               |5064    |3478    |664     |3572    |20      |1       |
+|  U3                                      |sdram                                             |423     |126     |5       |411     |0       |0       |
+|    u2_ram                                |sdr_as_ram                                        |423     |126     |5       |411     |0       |0       |
+|      u1_init_ref                         |sdr_init_ref                                      |91      |12      |5       |83      |0       |0       |
+|      u2_wrrd                             |sdr_wrrd                                          |332     |114     |0       |328     |0       |0       |
+|  frame_read_write_m0                     |frame_read_write                                  |597     |381     |147     |338     |4       |0       |
+|    frame_fifo_read_m0                    |frame_fifo_read                                   |117     |91      |24      |73      |0       |0       |
+|    frame_fifo_write_m0                   |frame_fifo_write                                  |225     |146     |77      |78      |0       |0       |
+|    read_buf                              |rfifo_32_32_512                                   |124     |68      |20      |90      |2       |0       |
+|      ram_inst                            |ram_infer_rfifo_32_32_512                         |2       |2       |0       |0       |2       |0       |
+|      rd_to_wr_cross_inst                 |fifo_cross_domain_addr_process_al_rfifo_32_32_512 |32      |25      |0       |32      |0       |0       |
+|      wr_to_rd_cross_inst                 |fifo_cross_domain_addr_process_al_rfifo_32_32_512 |33      |17      |0       |33      |0       |0       |
+|    write_buf                             |wfifo_32_32_512                                   |131     |76      |26      |97      |2       |0       |
 |      ram_inst                            |ram_infer_wfifo_32_32_512                         |0       |0       |0       |0       |2       |0       |
-|      rd_to_wr_cross_inst                 |fifo_cross_domain_addr_process_al_wfifo_32_32_512 |40      |24      |0       |40      |0       |0       |
-|      wr_to_rd_cross_inst                 |fifo_cross_domain_addr_process_al_wfifo_32_32_512 |30      |21      |0       |30      |0       |0       |
-|  sd_card_bmp_m0                          |sd_card_bmp                                       |1391    |1008    |214     |852     |0       |0       |
-|    bmp_read_m0                           |bmp_read                                          |639     |446     |108     |375     |0       |0       |
-|    sd_card_top_m0                        |sd_card_top                                       |299     |254     |24      |182     |0       |0       |
-|      sd_card_cmd_m0                      |sd_card_cmd                                       |149     |130     |19      |53      |0       |0       |
-|      sd_card_sec_read_write_m0           |sd_card_sec_read_write                            |85      |64      |0       |82      |0       |0       |
-|      spi_master_m0                       |spi_master                                        |65      |60      |5       |47      |0       |0       |
-|    u_key_auto                            |key_press_debounce                                |58      |40      |18      |24      |0       |0       |
-|    u_key_next                            |key_press_debounce                                |60      |41      |18      |25      |0       |0       |
-|  seg_scan_m0                             |seg_scan                                          |60      |46      |14      |26      |0       |0       |
+|      rd_to_wr_cross_inst                 |fifo_cross_domain_addr_process_al_wfifo_32_32_512 |32      |16      |0       |32      |0       |0       |
+|      wr_to_rd_cross_inst                 |fifo_cross_domain_addr_process_al_wfifo_32_32_512 |35      |26      |0       |35      |0       |0       |
+|  sd_card_bmp_m0                          |sd_card_bmp                                       |1372    |1012    |214     |853     |0       |0       |
+|    bmp_read_m0                           |bmp_read                                          |613     |431     |108     |384     |0       |0       |
+|    sd_card_top_m0                        |sd_card_top                                       |308     |272     |24      |181     |0       |0       |
+|      sd_card_cmd_m0                      |sd_card_cmd                                       |160     |141     |19      |60      |0       |0       |
+|      sd_card_sec_read_write_m0           |sd_card_sec_read_write                            |84      |72      |0       |80      |0       |0       |
+|      spi_master_m0                       |spi_master                                        |64      |59      |5       |41      |0       |0       |
+|    u_key_auto                            |key_press_debounce                                |60      |42      |18      |24      |0       |0       |
+|    u_key_next                            |key_press_debounce                                |56      |38      |18      |20      |0       |0       |
+|  seg_scan_m0                             |seg_scan                                          |62      |48      |14      |21      |0       |0       |
 |  sys_pll_m0                              |sys_pll                                           |0       |0       |0       |0       |0       |0       |
-|  u_I2S_receiver                          |I2S_receiver                                      |292     |135     |0       |273     |0       |0       |
-|  u_audio_arc_calculate                   |audio_arc_calculate                               |74      |42      |14      |52      |0       |0       |
-|  u_audio_pll                             |PLL_HDMI_AUDIO                                    |0       |0       |0       |0       |0       |0       |
+|  u_audio_arc_calculate                   |audio_arc_calculate                               |72      |43      |14      |46      |0       |0       |
 |  u_hdmi2phy_wrapper                      |hdmi_phy_wrapper                                  |44      |38      |0       |44      |0       |0       |
-|    u0_lane_lvds_8_1                      |lane_lvds_10_1                                    |16      |12      |0       |16      |0       |0       |
-|    u1_lane_lvds_8_1                      |lane_lvds_10_1                                    |14      |12      |0       |14      |0       |0       |
-|    u2_lane_lvds_8_1                      |lane_lvds_10_1                                    |10      |10      |0       |10      |0       |0       |
-|    u3_lane_lvds_8_1                      |lane_lvds_10_1                                    |4       |4       |0       |4       |0       |0       |
-|  u_hdmi_1_4b_transmitter_core_wrapper    |hdmi_1_4b_transmitter_core_wrapper                |2059    |1437    |213     |1591    |16      |0       |
-|    u0_reset_sync                         |hdmi_1_4b_tx_reset_sync                           |15      |1       |0       |15      |0       |0       |
-|    u_hdmi_edid_wrapper                   |hdmi_edid_wrapper                                 |250     |208     |23      |158     |2       |0       |
-|      u_hdmi_edid_read_controller         |hdmi_edid_read_controller                         |15      |12      |3       |11      |0       |0       |
-|      u_iic_master_wrapper                |iic_master_wrapper                                |235     |196     |20      |147     |2       |0       |
-|        u_iic_bit_transmitter             |iic_bit_transmitter                               |61      |51      |10      |34      |0       |0       |
+|    u0_lane_lvds_8_1                      |lane_lvds_10_1                                    |16      |11      |0       |16      |0       |0       |
+|    u1_lane_lvds_8_1                      |lane_lvds_10_1                                    |12      |12      |0       |12      |0       |0       |
+|    u2_lane_lvds_8_1                      |lane_lvds_10_1                                    |13      |13      |0       |13      |0       |0       |
+|    u3_lane_lvds_8_1                      |lane_lvds_10_1                                    |3       |2       |0       |3       |0       |0       |
+|  u_hdmi_1_4b_transmitter_core_wrapper    |hdmi_1_4b_transmitter_core_wrapper                |1994    |1431    |213     |1506    |16      |0       |
+|    u0_reset_sync                         |hdmi_1_4b_tx_reset_sync                           |9       |0       |0       |9       |0       |0       |
+|    u_hdmi_edid_wrapper                   |hdmi_edid_wrapper                                 |266     |239     |23      |152     |2       |0       |
+|      u_hdmi_edid_read_controller         |hdmi_edid_read_controller                         |16      |13      |3       |10      |0       |0       |
+|      u_iic_master_wrapper                |iic_master_wrapper                                |250     |226     |20      |142     |2       |0       |
+|        u_iic_bit_transmitter             |iic_bit_transmitter                               |77      |67      |10      |34      |0       |0       |
 |        u_iic_receiver_controller         |iic_receiver_controller                           |2       |2       |0       |0       |0       |0       |
-|        u_iic_transmitter_controller      |iic_transmitter_controller                        |172     |143     |10      |113     |2       |0       |
-|          u_iic_w11_d1024_fifo            |iic_w11_d1024_fifo                                |56      |48      |0       |50      |2       |0       |
-|    u_hdmi_tx_controller_wrapper          |hdmi_tx_controller_wrapper                        |1794    |1228    |190     |1418    |14      |0       |
-|      u0_hdmi_tmds_encode                 |hdmi_tmds_encode                                  |236     |145     |30      |175     |0       |0       |
-|      u1_hdmi_tmds_encode                 |hdmi_tmds_encode                                  |172     |110     |30      |124     |0       |0       |
-|      u2_hdmi_tmds_encode                 |hdmi_tmds_encode                                  |172     |130     |30      |104     |0       |0       |
-|      u_hdmi_data_distribution            |hdmi_data_distribution                            |31      |8       |0       |31      |0       |0       |
-|      u_hdmi_island_data_assemble         |hdmi_island_data_assemble                         |434     |308     |0       |431     |0       |0       |
-|      u_hdmi_island_data_gen              |hdmi_island_data_gen                              |427     |335     |5       |414     |11      |0       |
-|        U_audio_sample_packet_2_channel   |audio_sample_packet_2_channel                     |228     |158     |5       |221     |11      |0       |
-|          u_w96_d1024_fifo                |w96_d1024_fifo                                    |53      |39      |0       |51      |11      |0       |
+|        u_iic_transmitter_controller      |iic_transmitter_controller                        |171     |157     |10      |108     |2       |0       |
+|          u_iic_w11_d1024_fifo            |iic_w11_d1024_fifo                                |52      |49      |0       |50      |2       |0       |
+|    u_hdmi_tx_controller_wrapper          |hdmi_tx_controller_wrapper                        |1719    |1192    |190     |1345    |14      |0       |
+|      u0_hdmi_tmds_encode                 |hdmi_tmds_encode                                  |223     |119     |30      |167     |0       |0       |
+|      u1_hdmi_tmds_encode                 |hdmi_tmds_encode                                  |164     |109     |30      |119     |0       |0       |
+|      u2_hdmi_tmds_encode                 |hdmi_tmds_encode                                  |195     |146     |30      |119     |0       |0       |
+|      u_hdmi_data_distribution            |hdmi_data_distribution                            |32      |17      |0       |32      |0       |0       |
+|      u_hdmi_island_data_assemble         |hdmi_island_data_assemble                         |428     |316     |0       |424     |0       |0       |
+|      u_hdmi_island_data_gen              |hdmi_island_data_gen                              |370     |320     |5       |343     |11      |0       |
+|        U_audio_sample_packet_2_channel   |audio_sample_packet_2_channel                     |159     |131     |5       |147     |11      |0       |
+|          u_w96_d1024_fifo                |w96_d1024_fifo                                    |58      |42      |0       |54      |11      |0       |
 |          u_BCH_32_24_encode              |BCH_32_24_encode                                  |2       |2       |0       |2       |0       |0       |
-|          u_BCH_64_56_encode              |BCH_64_56_encode                                  |8       |8       |0       |8       |0       |0       |
+|          u_BCH_64_56_encode              |BCH_64_56_encode                                  |4       |4       |0       |3       |0       |0       |
 |        u_audio_clock_regeneration_packet |audio_clock_regeneration_packet                   |52      |30      |0       |52      |0       |0       |
-|          u_BCH_64_56_encode              |BCH_64_56_encode                                  |7       |7       |0       |7       |0       |0       |
-|      u_hdmi_video_data_assemble          |hdmi_video_data_assemble                          |31      |6       |0       |31      |0       |0       |
-|      u_hdmi_video_source                 |hdmi_video_source                                 |237     |135     |95      |56      |0       |0       |
-|      u_video_axi_stream_receiver         |video_axi_stream_receiver                         |54      |51      |0       |52      |3       |0       |
-|        u_w24_d1024_fifo                  |w24_d1024_fifo                                    |52      |49      |0       |50      |3       |0       |
-|  u_hdmi_audio_tone_i2s_64fs              |hdmi_audio_tone_i2s_64fs                          |112     |81      |18      |83      |0       |0       |
-|  u_startup_pulse                         |startup_pulse                                     |34      |18      |6       |23      |0       |0       |
-|  u_video_rgb_to_axis_640x480             |video_rgb_to_axis_640x480                         |29      |26      |0       |29      |0       |0       |
+|          u_BCH_64_56_encode              |BCH_64_56_encode                                  |6       |6       |0       |6       |0       |0       |
+|      u_hdmi_video_data_assemble          |hdmi_video_data_assemble                          |34      |4       |0       |34      |0       |0       |
+|      u_hdmi_video_source                 |hdmi_video_source                                 |220     |120     |95      |54      |0       |0       |
+|      u_video_axi_stream_receiver         |video_axi_stream_receiver                         |53      |41      |0       |53      |3       |0       |
+|        u_w24_d1024_fifo                  |w24_d1024_fifo                                    |51      |39      |0       |51      |3       |0       |
+|  u_hdmi_pcm_audio_bridge                 |hdmi_pcm_audio_bridge                             |223     |179     |43      |103     |0       |1       |
+|    u_pcm_media_tone                      |pcm_media_tone                                    |223     |179     |43      |103     |0       |1       |
+|  u_startup_pulse                         |startup_pulse                                     |32      |13      |6       |22      |0       |0       |
+|  u_video_rgb_to_axis_640x480             |video_rgb_to_axis_640x480                         |28      |26      |0       |28      |0       |0       |
 |  video_pll_m0                            |video_pll                                         |0       |0       |0       |0       |0       |0       |
-|  video_timing_data_m0                    |video_timing_data                                 |53      |38      |8       |34      |0       |0       |
-|    color_bar_m0                          |color_bar                                         |44      |31      |8       |31      |0       |0       |
-|  video_delay_m0                          |video_delay                                       |59      |30      |0       |59      |0       |0       |
+|  video_timing_data_m0                    |video_timing_data                                 |41      |32      |8       |29      |0       |0       |
+|    color_bar_m0                          |color_bar                                         |39      |31      |8       |27      |0       |0       |
+|  video_delay_m0                          |video_delay                                       |65      |38      |0       |65      |0       |0       |
 +---------------------------------------------------------------------------------------------------------------------------------------------------+
 
 
 DataNet Average Fanout:
 
    Index     Fanout    Nets  
-    #1         1       4549  
-    #2         2       740   
-    #3         3       380   
-    #4         4       231   
-    #5        5-10     355   
-    #6       11-50     178   
+    #1         1       4302  
+    #2         2       823   
+    #3         3       357   
+    #4         4       201   
+    #5        5-10     389   
+    #6       11-50     181   
     #7       51-100     12   
     #8        >500      1    
-  Average     2.44           
+  Average     2.49           
