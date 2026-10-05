@@ -30,6 +30,13 @@
 `include "boot/boot_logo_rom.v"
 `include "boot/boot_layer.v"
 
+// ==========================================================================
+// S5 音频播放与歌词渲染实现随 top 一起编译（与 S1/S2 同样的兜底方式）。
+// ==========================================================================
+`include "audio/timebase_48k.v"
+`include "audio/play_ctrl.v"
+`include "display/lrc_osd.v"
+
 module top(
     input                       clk,
     input                       rst_n,
@@ -112,6 +119,12 @@ parameter S2_BOOT_ENABLE = 1'b1;
 //                       母板 KEY1/KEY2 作为兜底通路仍然并联生效。
 // =0：整体旁路 J2 选曲事件，行为回到 S2（母板按键控制），用于回滚。
 parameter S3_J2_BROWSE_ENABLE = 1'b1;
+
+// ===================== S5：音频播放与歌词渲染 =====================
+// S5_PLAY_ENABLE=1：缩略图确认曲目后进入播放态，音频/歌词只在该状态推进；
+//                   EC1 按压暂停/恢复、EC1 旋转切曲、KEY04/05 音量。
+// =0：整层旁路，音频回到 S0~S4 的"扫描完成即播放"行为（回滚开关）。
+parameter S5_PLAY_ENABLE = 1'b1;
 
 wire Sdr_init_done;
 wire Sdr_init_ref_vld;
@@ -288,6 +301,31 @@ wire        brw_thumb_right;    // 缩略图：焦点 +1
 wire        brw_thumb_left;     // 缩略图：焦点 -1
 wire        brw_thumb_confirm;  // 缩略图：确认
 wire        brw_thumb_mode;     // 进入/退出缩略图
+// S5：播放控制额外事件（clk 域 toggle）
+wire        brw_ev_enc_cw_tgl;
+wire        brw_ev_enc_ccw_tgl;
+wire        brw_ev_key_up_tgl;
+wire        brw_ev_key_down_tgl;
+
+// ===================== S5：播放态（sd_card_clk 域） =====================
+wire        play_active_sd;
+wire        paused_sd;
+wire [1:0]  play_sel_song_sd;
+wire [7:0]  play_volume_sd;
+wire        play_track_step_sd;
+wire        play_track_dir_sd;
+wire [2:0]  song_total_sd;
+wire        audio_play_enable_gated;
+// 播放态慢变信号 -> video 域（两级同步）
+reg         play_active_v1, play_active_v2;
+reg         paused_v1, paused_v2;
+reg  [7:0]  play_volume_v1, play_volume_v2;
+// 切曲 -> video 域时基复位（电平翻转 + 边沿检测）
+reg         play_track_tgl_sd;
+reg         play_track_tgl_v1, play_track_tgl_v2, play_track_tgl_v3;
+wire        play_track_restart_vid = play_track_tgl_v2 ^ play_track_tgl_v3;
+wire        play_running_vid = play_active_v2 & ~paused_v2;
+wire [31:0] lyric_time_ms;
 
 wire        frw_app_rd_en;          // frame_read_write -> 仲裁器
 wire [ADDR_BITS-1:0] frw_app_rd_addr;
@@ -667,7 +705,7 @@ sd_card_bmp #(
     // 第十讲：KEY1先进入转场控制器，淡出完成后再用next_event触发切换。
     .key_next          (1'b1),
     .next_event        (fade_next_event && !thumb_select_pending_sd),
-    .prev_event        (brw_fs_prev),
+    .prev_event        (brw_fs_prev | play_fs_prev_sd),
     .select_req        (thumb_select_req_sd),
     .select_index      (thumb_select_index_sd),
     .select_ack        (sd_select_ack),
@@ -675,6 +713,7 @@ sd_card_bmp #(
     .state_code        (state_code),
     .bmp_width         (16'd640),
     .bmp_height        (16'd480),
+    .song_sel          (play_sel_song_sd),
     .display_valid     (display_valid),
     .auto_play_en_out  (auto_play_en_out),
     .osd_error_code    (osd_error_code),
@@ -741,9 +780,64 @@ key_press_hold #(
     .button_stable_out()
 );
 
+// S5：可播放曲目数 = 已就绪 bank 数（索引模式下等于索引曲目数）
+assign song_total_sd = {2'b0, image_ready_sd[0]} + {2'b0, image_ready_sd[1]} +
+                       {2'b0, image_ready_sd[2]} + {2'b0, image_ready_sd[3]};
+
+// S5：播放态控制（sd_card_clk 域，与选曲/取数同域，事件侧沿用 3FF 同步）
+play_ctrl u_play_ctrl (
+    .clk           (sd_card_clk),
+    .rst_n         (sdcard_rst_n),
+    .song_total    (song_total_sd),
+    .song_confirm  (brw_thumb_confirm),
+    .focus_index   (thumb_focus_index_sd),
+    .enc_cw_tgl    (brw_ev_enc_cw_tgl),
+    .enc_ccw_tgl   (brw_ev_enc_ccw_tgl),
+    .confirm_tgl   (brw_ev_confirm_tgl),
+    .key_up_tgl    (brw_ev_key_up_tgl),
+    .key_down_tgl  (brw_ev_key_down_tgl),
+    .stop_tgl      (brw_ev_mode_tgl),
+    .play_active   (play_active_sd),
+    .paused        (paused_sd),
+    .sel_song      (play_sel_song_sd),
+    .volume        (play_volume_sd),
+    .track_step    (play_track_step_sd),
+    .track_dir     (play_track_dir_sd)
+);
+
+// S5：播放态切曲复用既有"下一张/上一张"通路（browse_fsm 在播放态被抑制）
+wire play_fs_next_sd = play_track_step_sd &  play_track_dir_sd;
+wire play_fs_prev_sd = play_track_step_sd & ~play_track_dir_sd;
+
+// S5：切曲时短暂松开 play_enable，让 wav_stream_player 回到 WS_IDLE 并按
+// 新的 start_lba 重新起播（该播放器的读 FSM 只在 IDLE 接受新起点）。
+reg [3:0] s5_mute_cnt;
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+    if (!sdcard_rst_n)
+        s5_mute_cnt <= 4'd0;
+    else if (play_track_step_sd)
+        s5_mute_cnt <= 4'd12;
+    else if (s5_mute_cnt != 4'd0)
+        s5_mute_cnt <= s5_mute_cnt - 4'd1;
+end
+wire s5_mute = (s5_mute_cnt != 4'd0);
+
+// 播放使能：进入播放态才起播；暂停不停请求（保住 FIFO 指针，恢复续播）。
+assign audio_play_enable_gated = S5_PLAY_ENABLE
+    ? (audio_play_enable && play_active_sd && !s5_mute)
+    : audio_play_enable;
+
+// S5：切曲 -> video 域时基复位的电平翻转
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+    if (!sdcard_rst_n)
+        play_track_tgl_sd <= 1'b0;
+    else if (play_track_step_sd)
+        play_track_tgl_sd <= ~play_track_tgl_sd;
+end
+
 // S3：全屏"下一张"入口 = 母板 KEY1 短按(兜底) 或 J2 EC1 顺时针/方向键(next)。
 // browse_fsm 已按 view_mode 拆好：缩略图态走 brw_thumb_right，不会在此重复触发。
-assign key_next_request_sd   = brw_fs_next;
+assign key_next_request_sd   = brw_fs_next | play_fs_next_sd;
 assign key2_to_sd            = (thumb_mode_sd || key2_thumb_lock_sd) ? 1'b1 : key2_eff_n;
 // S3：缩略图"确认"入口 = 母板 KEY2 长按(兜底) 或 J2 EC1 按压/KEY02(中)。
 assign thumb_confirm_event_sd = brw_thumb_confirm;
@@ -766,6 +860,7 @@ browse_fsm #(
     .mb_left         (key2_thumb_press),
     .mb_confirm      (key2_thumb_hold),
     .view_mode       (thumb_mode_sd),
+    .mode_play       (play_active_sd),
     .fs_next         (brw_fs_next),
     .fs_prev         (brw_fs_prev),
     .thumb_right     (brw_thumb_right),
@@ -1402,7 +1497,15 @@ assign media_id = (display_valid_sync2 &&
                 : 2'd0;
 
 // 16点正弦 LUT 峰值约 12000，200/255 缩放后仍保留足够余量，避免削波爆音。
-assign audio_volume = 8'd200;
+// S5：音量改由播放态控制（KEY04/05，带饱和钳位）；暂停时压到 0 静音。
+wire [7:0] audio_volume_eff = (S5_PLAY_ENABLE && paused_v2) ? 8'd0 :
+                              (S5_PLAY_ENABLE ? play_volume_v2 : 8'd200);
+assign audio_volume = audio_volume_eff;
+
+// S5：暂停时冻结播放器采样节拍（音频位置与歌词时基同时停住），
+// 并用 force_arpeggio 保持 48 kHz 静音流，避免 HDMI 音频饿死。
+wire wav_sample_tick_eff = wav_sample_tick & ~(S5_PLAY_ENABLE & paused_v2);
+wire audio_force_arp     =  S5_PLAY_ENABLE & paused_v2;
 
 // 48kHz WAV 采样节拍。video_clk=25MHz，与 pcm_media_tone 使用同一
 // 分数累加器算法，保证 WAV 与原琶音音源的采样率一致。
@@ -1428,7 +1531,7 @@ wav_stream_player #(
 ) u_wav_stream_player (
     .wr_clk            (sd_card_clk),
     .wr_rst_n          (sdcard_rst_n),
-    .play_enable       (audio_play_enable),
+    .play_enable       (audio_play_enable_gated),
     .start_lba         (audio_start_lba),
     .total_sectors     (audio_total_sectors),
     .sd_req            (wav_sec_req),
@@ -1442,7 +1545,7 @@ wav_stream_player #(
 
     .rd_clk            (video_clk),
     .rd_rst_n          (video_rst_n),
-    .sample_tick       (wav_sample_tick),
+    .sample_tick       (wav_sample_tick_eff),
     .sample_out        (wav_sample_left),
     .sample_valid      (wav_sample_valid),
     .sample_ready      (wav_sample_ready),
@@ -1510,7 +1613,7 @@ audio_source_mux u_audio_source_mux (
     .arp_ready      (arp_sample_ready),
     .arp_left       (arp_sample_left),
     .arp_right      (arp_sample_right),
-    .force_arpeggio (1'b0),
+    .force_arpeggio (audio_force_arp),
     .out_valid      (mix_sample_valid),
     .out_ready      (mix_sample_ready),
     .out_left       (mix_sample_left),
@@ -1566,7 +1669,24 @@ boot_layer #(
 
 // S2 总开关（含诊断模式旁路）：=0 或不生效时整层旁路，回到 S1 像素。
 wire s2_boot_on = S2_BOOT_ENABLE && !pat_mode;
-assign final_rgb = (s2_boot_on && boot_active) ? boot_rgb : wave_rgb_eff;
+
+// ===================== S5：单行歌词叠加（末级，开机 Logo 之下）================
+wire [23:0] lrc_rgb;
+wire        lrc_hit;
+lrc_osd u_lrc_osd (
+    .clk      (video_clk),
+    .rst_n    (video_rst_n),
+    .vs       (vs),
+    .de       (adjusted_de),
+    .pixel_x  (adjusted_pixel_x),
+    .enable   (S5_PLAY_ENABLE && play_active_v2 && !pat_mode),
+    .time_ms  (lyric_time_ms),
+    .rgb_in   (wave_rgb_eff),
+    .rgb_out  (lrc_rgb),
+    .hit      (lrc_hit)
+);
+
+assign final_rgb = (s2_boot_on && boot_active) ? boot_rgb : lrc_rgb;
 
 video_rgb_to_axis_640x480 u_video_rgb_to_axis_640x480(
     .I_clk         (video_clk),
@@ -1729,7 +1849,11 @@ ui_event_bridge u_ui_event_bridge (
     .prev_tgl     (brw_ev_prev_tgl),
     .next_tgl     (brw_ev_next_tgl),
     .confirm_tgl  (brw_ev_confirm_tgl),
-    .mode_tgl     (brw_ev_mode_tgl)
+    .mode_tgl     (brw_ev_mode_tgl),
+    .enc_cw_tgl   (brw_ev_enc_cw_tgl),
+    .enc_ccw_tgl  (brw_ev_enc_ccw_tgl),
+    .key_up_tgl   (brw_ev_key_up_tgl),
+    .key_down_tgl (brw_ev_key_down_tgl)
 );
 
 // ==========================================================================
@@ -1752,5 +1876,48 @@ always @(posedge clk or negedge exp_rst_n) begin
         boot_active_s2 <= boot_active_s1;
     end
 end
+
+// ==========================================================================
+// S5：播放态跨越 sd_card_clk -> video_clk
+//   play_active/paused/volume 都是慢变电平，直接两级同步；
+//   track_step 是单拍事件，用"电平翻转 + 目标域边沿检测"搬过去做时基复位。
+// ==========================================================================
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n) begin
+        play_active_v1    <= 1'b0;
+        play_active_v2    <= 1'b0;
+        paused_v1         <= 1'b0;
+        paused_v2         <= 1'b0;
+        play_volume_v1    <= 8'd0;
+        play_volume_v2    <= 8'd0;
+        play_track_tgl_v1 <= 1'b0;
+        play_track_tgl_v2 <= 1'b0;
+        play_track_tgl_v3 <= 1'b0;
+    end else begin
+        play_active_v1    <= play_active_sd;
+        play_active_v2    <= play_active_v1;
+        paused_v1         <= paused_sd;
+        paused_v2         <= paused_v1;
+        play_volume_v1    <= play_volume_sd;
+        play_volume_v2    <= play_volume_v1;
+        play_track_tgl_v1 <= play_track_tgl_sd;
+        play_track_tgl_v2 <= play_track_tgl_v1;
+        play_track_tgl_v3 <= play_track_tgl_v2;
+    end
+end
+
+// ==========================================================================
+// S5：全工程唯一的 48 kHz 毫秒时基（歌词/进度只认它）
+// ==========================================================================
+timebase_48k u_timebase_48k (
+    .clk          (video_clk),
+    .rst_n        (video_rst_n),
+    .sample_tick  (wav_sample_tick_eff),
+    .running      (play_running_vid),
+    .restart      (play_track_restart_vid),
+    .sample_count (),
+    .cur_time_ms  (lyric_time_ms),
+    .sub_sample   ()
+);
 
 endmodule

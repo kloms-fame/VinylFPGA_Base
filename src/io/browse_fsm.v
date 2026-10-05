@@ -43,6 +43,7 @@ module browse_fsm #(
     input  wire        mb_confirm,     // 母板 KEY2 长按（sd 域单拍，缩略图确认）
 
     input  wire        view_mode,      // 1=2x2 缩略图选曲视图
+    input  wire        mode_play,      // 1=播放态：本模块完全不产生导航脉冲
 
     output reg         fs_next,        // 全屏：下一张
     output reg         fs_prev,        // 全屏：上一张
@@ -100,13 +101,13 @@ module browse_fsm #(
             thumb_confirm <= 1'b0;
             thumb_mode    <= 1'b0;
         end else begin
-            fs_next       <= next_any & ~view_mode;
-            fs_prev       <= prev_any & ~view_mode;
-            thumb_right   <= next_any &  view_mode;
-            thumb_left    <= left_any &  view_mode;
-            thumb_confirm <= confirm_any & view_mode;
+            fs_next       <= next_any & ~view_mode & ~mode_play;
+            fs_prev       <= prev_any & ~view_mode & ~mode_play;
+            thumb_right   <= next_any &  view_mode & ~mode_play;
+            thumb_left    <= left_any &  view_mode & ~mode_play;
+            thumb_confirm <= confirm_any & view_mode & ~mode_play;
             // 显式 mode 事件始终可切换视图；全屏下的 confirm 进入选曲视图。
-            thumb_mode    <= mode_any | (j2_confirm & ~view_mode);
+            thumb_mode    <= (mode_any | (j2_confirm & ~view_mode)) & ~mode_play;
         end
     end
 endmodule

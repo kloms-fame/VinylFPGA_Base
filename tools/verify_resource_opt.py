@@ -22,11 +22,12 @@ def run(name, sources, top=None):
     compile_result = subprocess.run(['iverilog', '-g2005', '-I', str(ROOT / 'src/include'),
         '-y', str(ROOT / 'src'), *[arg for path in libraries for arg in ('-y', path)],
         '-s', top or name, '-o', str(binary), *map(str, sources)],
-        cwd=ROOT, capture_output=True, text=True, timeout=60)
+        cwd=ROOT, capture_output=True, text=True, timeout=60,
+        encoding='utf-8', errors='replace')
     if compile_result.returncode:
         raise RuntimeError(compile_result.stderr)
     result = subprocess.run(['vvp', str(binary)], cwd=OUT, capture_output=True,
-                            text=True, timeout=120)
+                            text=True, timeout=120, encoding='utf-8', errors='replace')
     log = compile_result.stdout + compile_result.stderr + result.stdout + result.stderr
     (OUT / (name + '.log')).write_text(log, encoding='utf-8')
     if result.returncode or 'FAIL' in log or 'PASS' not in log:

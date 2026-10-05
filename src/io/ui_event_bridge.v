@@ -33,7 +33,14 @@ module ui_event_bridge (
     output reg         prev_tgl,
     output reg         next_tgl,
     output reg         confirm_tgl,
-    output reg         mode_tgl
+    output reg         mode_tgl,
+    // ---- S5：播放控制额外需要的"原始"事件（与上面 4 路并存）----
+    // enc_cw/enc_ccw 只取 EC1 旋转本身（播放态 = 切曲）；
+    // key_up/key_down 取 KEY04/KEY05（播放态 = 音量±，方向键上下）。
+    output reg         enc_cw_tgl,
+    output reg         enc_ccw_tgl,
+    output reg         key_up_tgl,
+    output reg         key_down_tgl
 );
     `include "exp_event_defs.vh"
 
@@ -60,17 +67,31 @@ module ui_event_bridge (
     wire ev_confirm = is_enc1_down | key_ok;
     wire ev_mode    = key_mode;
 
+    // S5：EC1 旋转（仅编码器本身）与 KEY04/KEY05
+    wire ev_enc_cw  = enc1_inc;
+    wire ev_enc_ccw = enc1_dec;
+    wire ev_key_up  = is_key_down && (ev_arg == 16'd3);   // KEY04 上
+    wire ev_key_dn  = is_key_down && (ev_arg == 16'd4);   // KEY05 下
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             prev_tgl    <= 1'b0;
             next_tgl    <= 1'b0;
             confirm_tgl <= 1'b0;
             mode_tgl    <= 1'b0;
+            enc_cw_tgl  <= 1'b0;
+            enc_ccw_tgl <= 1'b0;
+            key_up_tgl  <= 1'b0;
+            key_down_tgl<= 1'b0;
         end else begin
             if (ev_valid && ev_prev)    prev_tgl    <= ~prev_tgl;
             if (ev_valid && ev_next)    next_tgl    <= ~next_tgl;
             if (ev_valid && ev_confirm) confirm_tgl <= ~confirm_tgl;
             if (ev_valid && ev_mode)    mode_tgl    <= ~mode_tgl;
+            if (ev_valid && ev_enc_cw)  enc_cw_tgl  <= ~enc_cw_tgl;
+            if (ev_valid && ev_enc_ccw) enc_ccw_tgl <= ~enc_ccw_tgl;
+            if (ev_valid && ev_key_up)  key_up_tgl  <= ~key_up_tgl;
+            if (ev_valid && ev_key_dn)  key_down_tgl<= ~key_down_tgl;
         end
     end
 endmodule

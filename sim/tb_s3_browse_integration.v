@@ -115,6 +115,7 @@ module tb_s3_browse_integration;
         .mb_left        (1'b0),
         .mb_confirm     (1'b0),
         .view_mode      (view_mode),
+        .mode_play      (1'b0),
         .fs_next        (fs_next),
         .fs_prev        (fs_prev),
         .thumb_right    (thumb_right),

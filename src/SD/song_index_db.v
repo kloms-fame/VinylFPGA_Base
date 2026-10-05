@@ -84,14 +84,11 @@ module song_index_db #(
     // 封面：每首都要（S4 的 4 张封面来自索引）—— 保留 4 组。
     reg [31:0] e_cov_cl [0:MAX_SONGS-1];
     reg [31:0] e_cov_by [0:MAX_SONGS-1];
-    // 标志与音频：S4 沿用既有"单轨播放"语义，只保留第 1 首的音频定位，
-    // 其余曲目只记"是否有封面/音频"位。这样比保留 4×32bit 音频字段省约
-    // 200 个触发器，避免把 sd_card_clk 的既有加法链挤出时序预算；
-    // 多曲音频选择属 S5（届时把音频字段重新展开为 4 组即可）。
+    // 音频：S5 起需要按选中曲目切换，因此 4 首的音频簇号/字节数都要保留。
     reg [3:0]  e_has_cover;
-    reg        e_has_audio0;
-    reg [31:0] e_aud_cl0;
-    reg [31:0] e_aud_by0;
+    reg [3:0]  e_has_audio;
+    reg [31:0] e_aud_cl [0:MAX_SONGS-1];
+    reg [31:0] e_aud_by [0:MAX_SONGS-1];
 
     integer k;
 
@@ -157,12 +154,12 @@ module song_index_db #(
             crc_calc       <= 32'hFFFFFFFF;
             byte_idx       <= 9'd0;
             e_has_cover    <= 4'd0;
-            e_has_audio0   <= 1'b0;
-            e_aud_cl0      <= 32'd0;
-            e_aud_by0      <= 32'd0;
+            e_has_audio    <= 4'd0;
             for (k = 0; k < MAX_SONGS; k = k + 1) begin
                 e_cov_cl[k] <= 32'd0;
                 e_cov_by[k] <= 32'd0;
+                e_aud_cl[k] <= 32'd0;
+                e_aud_by[k] <= 32'd0;
             end
         end else begin
             done <= 1'b0;
@@ -189,12 +186,12 @@ module song_index_db #(
                     crc_calc       <= 32'hFFFFFFFF;
                     byte_idx       <= 9'd0;
                     e_has_cover    <= 4'd0;
-                    e_has_audio0   <= 1'b0;
-                    e_aud_cl0      <= 32'd0;
-                    e_aud_by0      <= 32'd0;
+                    e_has_audio    <= 4'd0;
                     for (k = 0; k < MAX_SONGS; k = k + 1) begin
                         e_cov_cl[k] <= 32'd0;
                         e_cov_by[k] <= 32'd0;
+                        e_aud_cl[k] <= 32'd0;
+                        e_aud_by[k] <= 32'd0;
                     end
                     phase <= P_STREAM;
                 end
@@ -235,18 +232,15 @@ module song_index_db #(
 
                         if (entry_off == 6'd0) begin
                             e_has_cover[entry_sel] <= in_byte[SIDX_FLAG_COVER];
-                            if (entry_sel == 2'd0)
-                                e_has_audio0 <= in_byte[SIDX_FLAG_AUDIO];
+                            e_has_audio[entry_sel] <= in_byte[SIDX_FLAG_AUDIO];
                         end else if (entry_off <= 6'd7) begin
                             e_cov_cl[entry_sel] <= {in_byte, e_cov_cl[entry_sel][31:8]};
                         end else if (entry_off <= 6'd11) begin
                             e_cov_by[entry_sel] <= {in_byte, e_cov_by[entry_sel][31:8]};
-                        end else if (entry_sel == 2'd0 &&
-                                     entry_off >= 6'd16 && entry_off <= 6'd19) begin
-                            e_aud_cl0 <= {in_byte, e_aud_cl0[31:8]};
-                        end else if (entry_sel == 2'd0 &&
-                                     entry_off >= 6'd20 && entry_off <= 6'd23) begin
-                            e_aud_by0 <= {in_byte, e_aud_by0[31:8]};
+                        end else if (entry_off >= 6'd16 && entry_off <= 6'd19) begin
+                            e_aud_cl[entry_sel] <= {in_byte, e_aud_cl[entry_sel][31:8]};
+                        end else if (entry_off >= 6'd20 && entry_off <= 6'd23) begin
+                            e_aud_by[entry_sel] <= {in_byte, e_aud_by[entry_sel][31:8]};
                         end
                     end
                 end
@@ -297,19 +291,18 @@ module song_index_db #(
                     valid       <= 1'b1;
                     err         <= SIDX_ERR_NONE;
                     song_count  <= hdr_count[2:0];
-                    // 第 1 首带 {cover,audio} 两位，其余仅 cover 位（S4 单轨）
-                    song_flags  <= {{3'b0, e_has_cover[3]},
-                                    {3'b0, e_has_cover[2]},
-                                    {3'b0, e_has_cover[1]},
-                                    {2'b0, e_has_audio0, e_has_cover[0]}};
+                    song_flags  <= {{2'b0, e_has_audio[3], e_has_cover[3]},
+                                    {2'b0, e_has_audio[2], e_has_cover[2]},
+                                    {2'b0, e_has_audio[1], e_has_cover[1]},
+                                    {2'b0, e_has_audio[0], e_has_cover[0]}};
                     song_cover0 <= {e_cov_by[0], e_cov_cl[0]};
                     song_cover1 <= {e_cov_by[1], e_cov_cl[1]};
                     song_cover2 <= {e_cov_by[2], e_cov_cl[2]};
                     song_cover3 <= {e_cov_by[3], e_cov_cl[3]};
-                    song_audio0 <= {e_aud_by0, e_aud_cl0};
-                    song_audio1 <= 64'd0;
-                    song_audio2 <= 64'd0;
-                    song_audio3 <= 64'd0;
+                    song_audio0 <= {e_aud_by[0], e_aud_cl[0]};
+                    song_audio1 <= {e_aud_by[1], e_aud_cl[1]};
+                    song_audio2 <= {e_aud_by[2], e_aud_cl[2]};
+                    song_audio3 <= {e_aud_by[3], e_aud_cl[3]};
                 end
             end
             default: phase <= P_IDLE;

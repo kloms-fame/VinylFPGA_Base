@@ -89,6 +89,22 @@
 - 交付说明：`doc/开发资料/S4_SD卡体系构建_交付说明_20261005.md`
 - **上板人工验收：待用户确认**（见交付说明第 8 节）
 
+### 0.5 S5 阶段完成记录（2026-10-05，音频播放与歌词渲染）
+
+- 已实现：索引驱动的**多曲播放**（缩略图确认第 N 格 → 进播放态并从该曲目起播）；`src/audio/timebase_48k.v` 建立**全工程唯一 48 kHz 毫秒时基**（48 拍=1 ms，暂停冻结、切曲清零）；`src/audio/play_ctrl.v`（sd_card_clk 域）负责播放/暂停、EC1 正反转切曲（回绕）、KEY04/05 音量（`[32,255]` 饱和钳位）、KEY07 退出；`src/display/lrc_osd.v` + `tools/gen_lrc_assets.py` 生成 16×16 点阵字库与歌词行表，按 `cur_time_ms` 显示单行歌词。
+- 关键约束落实："只允许一个 48 kHz 源"——歌词只认 `timebase_48k.cur_time_ms`，自身不计数；暂停时门控采样节拍冻结播放位置与时基，同时音量压 0 + `force_arpeggio` 维持 48 kHz 静音流避免 HDMI 音频饿死；切曲时松开 `play_enable` 12 拍让播放器按新 `start_lba` 重播，并在 video 域复位时基。
+- 字库预算：只收录歌词真正用到的字符（演示 60 字形/1920 字节），字形按包围盒自适应缩放居中；综合后 **BRAM 仍为 46/64**（未新增），BRAM 余量留给后续 MV/黑胶。
+- 交互：浏览/缩略图行为与 S3 完全一致；播放态由 `browse_fsm.mode_play` 抑制导航脉冲；`ui_event_bridge` 新增 EC1 正反转与 KEY04/05 四路"原始"事件。母板兜底仍作用于浏览态。
+- 串口与约束：**均无变化**（`pin.adc`/`timing.sdc` 零改动，IO 仍 `71/188`；新增逻辑落在既有 100 MHz/25 MHz 域）。
+- 构建快照：`prj/resource_opt_verified_20261005/S5_play/`（`resource_opt_round.py` → `build_verified_round.py --seed 5 --map-mode area_prior` → `release_verified_round.py`；**seed 5 一次通过，未做种子扫描**）
+- 时序：Setup WNS `+94 ps` / TNS `0 ps` / 违例端点 `0`；Hold WNS `+19 ps` / TNS `0 ps` / 违例端点 `0`（基线 S4 为 +47 / +3）
+- 资源：LUT `13596/19600 = 69.37%`，REG `8678/19600 = 44.28%`，BRAM9K `46/64`，DSP `12/29`，IO `71/188`，Slices `7443 = 75.95%`（相对 S4：LUT +1556、REG +572、BRAM/DSP/IO +0）
+- bit：`S5_play/VinylFPGA_optimized.bit`，SHA256 `bf163c48d2b50464b755bec2334872eb42255316d36c7e98f8bd43915323b443`
+- 仿真：新增 `sim/tb_s5_play.v`（时基 48 拍=1 ms / 冻结 / 清零；播放态进入/暂停/切曲回绕/音量双向钳位/退出；歌词在 t=0、11.5 s、超末行三处都点亮字形像素）；`python tools/verify_resource_opt.py` 全 PASS；`verify_counter_opt.py keys/header` 全 PASS
+- 工具：`tools/verify_resource_opt.py` 子进程改 UTF-8 容错解码（非 ASCII 仿真输出不再让回归工具自身抛异常掩盖真实失败）；fourbank 里的 loader 桩模块补齐新端口
+- 交付说明：`doc/开发资料/S5_音频播放与歌词渲染_交付说明_20261005.md`
+- **上板人工验收：待用户确认**（见交付说明第 7 节）
+
 ## 1. 当前工程现状（以代码为准）
 
 ### 1.1 顶层接口与实际约束

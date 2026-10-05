@@ -73,6 +73,7 @@ module tb_fat32_index_loader;
         .state_code             (state_code),
         .bmp_width              (16'd64),
         .bmp_height             (16'd4),
+        .song_sel               (2'd0),
         .bmp_error              (bmp_error),
         .load_error             (load_error),
         .write_req              (write_req),

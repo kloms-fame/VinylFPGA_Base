@@ -29,6 +29,7 @@ module sd_card_bmp #(
     output reg [3:0]            state_code,            // 数码管显示：当前图片编号 1~4
     input  [15:0]               bmp_width,
     input  [15:0]               bmp_height,
+    input  [1:0]                song_sel,           // S5：当前选中曲目（同域，播放音频定位用）
     output reg                  display_valid,
     output wire                 auto_play_en_out,      // 第九讲OSD：自动轮播状态
     output reg  [7:0]           osd_error_code,        // 第九讲OSD：错误码，0=正常
@@ -655,6 +656,7 @@ module sd_card_bmp #(
         .state_code             (bmp_internal_state), // 改接内部 wire
         .bmp_width              (bmp_width),
         .bmp_height             (bmp_height),
+        .song_sel               (song_sel),
         .bmp_error              (bmp_error),
         .load_error             (load_error),
         .write_req              (write_req),

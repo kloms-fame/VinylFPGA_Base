@@ -36,6 +36,7 @@ module fat32_media_loader #(
     output wire [3:0]  state_code,
     input  wire [15:0] bmp_width,
     input  wire [15:0] bmp_height,
+    input  wire [1:0]  song_sel,       // S5：当前选中曲目（已同步到本域）
     output reg  [3:0]  bmp_error,
     output reg         load_error,
 
@@ -169,12 +170,22 @@ module fat32_media_loader #(
     wire [15:0] idx_song_flags;
     wire [63:0] idx_cover0, idx_cover1, idx_cover2, idx_cover3;
     wire [63:0] idx_audio0, idx_audio1, idx_audio2, idx_audio3;
-    // S4 音频边界：索引已记录每首曲目的音频定位；本阶段沿用既有"单轨播放"
-    // 语义，取第 1 首（索引条目 0）作为 AUDIO 源，多曲切换属 S5。
-    wire [31:0] idx_aud_cluster = idx_audio0[31:0];
-    wire [31:0] idx_aud_bytes   = idx_audio0[63:32];
+    // S5：按选中曲目切换音频定位（索引里 4 首的音频簇号/字节数都已保留）。
+    reg  [63:0] idx_audio_sel;
+    always @* begin
+        case (song_sel)
+            2'd0:    idx_audio_sel = idx_audio0;
+            2'd1:    idx_audio_sel = idx_audio1;
+            2'd2:    idx_audio_sel = idx_audio2;
+            default: idx_audio_sel = idx_audio3;
+        endcase
+    end
+    wire [31:0] idx_aud_cluster = idx_audio_sel[31:0];
+    wire [31:0] idx_aud_bytes   = idx_audio_sel[63:32];
     wire        idx_aud_valid   = (idx_aud_bytes != 32'd0) &&
                                   (idx_aud_cluster >= 32'd2);
+    reg  [1:0]  song_sel_d;
+    wire        song_sel_changed = (song_sel != song_sel_d) && index_mode;
     wire [3:0]  idx_valid_vec  = (4'd1 << idx_song_count) - 4'd1;
     wire [3:0]  idx_valid_bits = index_mode ? idx_valid_vec : 4'd0;
     wire [3:0]  eff_valid = index_mode ? idx_valid_bits : scanner_valid;
@@ -287,13 +298,16 @@ module fat32_media_loader #(
             audio_size_d            <= 32'd0;
             audio_cluster_valid_d   <= 1'b0;
             audio_meta_pending      <= 1'b0;
+            song_sel_d              <= 2'd0;
         end else if (scan_start) begin
             audio_file_valid_reg    <= 1'b0;
             audio_start_lba_reg     <= 32'd0;
             audio_total_sectors_reg <= 32'd0;
             audio_meta_pending      <= 1'b0;
-        end else if (idx_done && idx_valid) begin
-            // S4：索引有效时，音频定位改由索引条目给出（仍是裸 PCM 语义）。
+        end else if ((idx_done && idx_valid) || song_sel_changed) begin
+            // S5：索引有效时音频定位由"当前选中曲目"的条目给出（裸 PCM 语义）；
+            // 切曲时 song_sel_changed 会重新走一遍这条两级流水（约 2 拍）。
+            song_sel_d            <= song_sel;
             audio_cluster_m2_d    <= idx_aud_valid ?
                                      (idx_aud_cluster - 32'd2) : 32'd0;
             audio_spc_shift_d     <= spc_shift(scanner_spc);

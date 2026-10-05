@@ -73,6 +73,7 @@ module tb_sd_card_bmp_fourbank;
         .state_code          (state_code),
         .bmp_width           (16'd2),
         .bmp_height          (16'd2),
+        .song_sel            (2'd0),
         .display_valid       (display_valid),
         .write_finish_toggle (write_finish_toggle),
         .write_buf_idx       (write_buf_idx),
@@ -323,6 +324,7 @@ module fat32_media_loader (
     output wire [3:0]  state_code,
     input  wire [15:0] bmp_width,
     input  wire [15:0] bmp_height,
+    input  wire [1:0]  song_sel,       // S5：曲目选择（stub 不参与行为，仅为端口对齐）
     output reg  [3:0]  bmp_error,
     output reg         load_error,
     output reg         write_req,
