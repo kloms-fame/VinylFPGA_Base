@@ -37,7 +37,7 @@ module wav_stream_player #(
     input  wire        rd_clk,
     input  wire        rd_rst_n,
     input  wire        sample_tick,
-    output reg  signed [15:0] sample_out,
+    output wire signed [15:0] sample_out,
     output reg         sample_valid,
     input  wire        sample_ready,
 
@@ -49,7 +49,7 @@ module wav_stream_player #(
     localparam [ADDR_WIDTH:0] BUFFER_HIGH_WATER = (1 << (ADDR_WIDTH - 1));
     localparam [ADDR_WIDTH:0] BUFFER_LOW_WATER  = (1 << (ADDR_WIDTH - 2));
 
-    reg [15:0] buffer [0:(1 << ADDR_WIDTH) - 1];
+    (* ram_style = "bram" *) reg [15:0] buffer [0:(1 << ADDR_WIDTH) - 1];
     reg [ADDR_WIDTH-1:0] wr_ptr;
     reg [ADDR_WIDTH-1:0] rd_ptr;
 
@@ -105,6 +105,35 @@ module wav_stream_player #(
     reg [7:0]  lo_byte;
     reg        lo_pending;
 
+    // TD 的块 RAM 推断需要独立、无数组复位的同步读写端口。
+    // 仍为 4096 x 16bit，读数据在消费沿更新，不增加 sample_valid 延迟。
+    wire buffer_write = wr_rst_n && play_enable &&
+                        (wstate == WS_FILL) && sd_valid && lo_pending;
+    wire buffer_available = (level_rd >= SAMPLES_PER_SECTOR) ||
+                            ((wstate_sync2 == WS_END) && (level_rd > 0));
+    wire buffer_read = rd_rst_n && sample_tick && sample_ready && buffer_available;
+    reg [15:0] buffer_data;
+    reg sample_has_data;
+
+    always @(posedge wr_clk) begin
+        if (buffer_write)
+            buffer[wr_ptr] <= {sd_byte, lo_byte};
+    end
+
+    always @(posedge rd_clk) begin
+        if (buffer_read)
+            buffer_data <= buffer[rd_ptr];
+    end
+
+    // RAM 本体不复位；输出选择位保留原来的异步复位、静音和保持语义。
+    always @(posedge rd_clk or negedge rd_rst_n) begin
+        if (!rd_rst_n)
+            sample_has_data <= 1'b0;
+        else if (sample_tick && sample_ready)
+            sample_has_data <= buffer_available;
+    end
+    assign sample_out = sample_has_data ? buffer_data : 16'sd0;
+
     assign sd_req = (wstate == WS_REQ);
     // stream_active/stream_end 必须由读时钟域给出：写侧完成最后一个扇区后，
     // 读侧还要把 BRAM 里的残余样本排空，之后才允许声源选择器切回琶音。
@@ -157,7 +186,6 @@ module wav_stream_player #(
                             lo_byte    <= sd_byte;
                             lo_pending <= 1'b1;
                         end else begin
-                            buffer[wr_ptr] <= {sd_byte, lo_byte};
                             wr_ptr         <= wr_ptr + 1'b1;
                             lo_pending     <= 1'b0;
                         end
@@ -196,7 +224,6 @@ module wav_stream_player #(
     always @(posedge rd_clk or negedge rd_rst_n) begin
         if (!rd_rst_n) begin
             rd_ptr         <= {ADDR_WIDTH{1'b0}};
-            sample_out     <= 16'sd0;
             sample_valid   <= 1'b0;
             sample_counter <= 32'd0;
             wr_gray_sync1  <= {ADDR_WIDTH{1'b0}};
@@ -236,14 +263,11 @@ module wav_stream_player #(
             end
 
             if (sample_tick && sample_ready) begin
-                if ((level_rd >= SAMPLES_PER_SECTOR) ||
-                    ((wstate_sync2 == WS_END) && (level_rd > 0))) begin
-                    sample_out    <= buffer[rd_ptr];
+                if (buffer_available) begin
                     rd_ptr        <= rd_ptr + 1'b1;
                     sample_valid  <= 1'b1;
                     sample_counter <= sample_counter + 1'b1;
                 end else begin
-                    sample_out   <= 16'sd0;
                     sample_valid <= 1'b1;
                 end
             end

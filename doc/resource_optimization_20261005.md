@@ -40,3 +40,10 @@
 - decision: 开始基线回归及最小 RAM 映射试验
 - blocking_reason: 无；未安装的 Python 信号预研究技能不作为本次既有 RTL 等价优化的必要依赖，使用原 RTL 实际波形作参考
 - next_action: 基线仿真、RAM 映射、等价回归、TD 实现、板级下载
+
+## P0 阶段结果
+
+独立无复位 RAM 端口 + ram_style=bram 映射成功。综合 LUT=7179、BRAM9K=28；物理 LUT=7325、REG=5329、Slice=4497、DSP=7。旧版/新版长流逐拍对比 329348 个沿、背压/间隙 440356 个沿，以及停止重启、复位、SD 错误和波形测试均通过。
+
+P0 路由尚不能放行烧录：setup -653ps（22 端点），hold +11ps（0 端点）。全部 setup 端点来自 scanner.sectors_per_cluster 到 file_streamer.sector_lba 的首簇地址计算，WAV 不再是瓶颈。后续仅对该组合选择网络做等价改写，保持请求拍数。P0 提交是已通过仿真/资源验证的开发检查点，不标记为板级可用版本。
+

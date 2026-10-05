@@ -59,3 +59,6 @@ sim_out/
 .vscode/.DS_Store
 .idea/
 .vscode/
+
+# Reproducible resource optimization simulation outputs
+sim/resource_opt/
