@@ -1,0 +1,11 @@
+{
+  "round": "p03_s5",
+  "lut": 8719,
+  "ff": 5929,
+  "bram9k": 30,
+  "bram32k": 0,
+  "dsp": 11,
+  "slices": 5184,
+  "setup_ps": -25,
+  "hold_ps": 3
+}

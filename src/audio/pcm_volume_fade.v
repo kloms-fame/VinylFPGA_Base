@@ -16,13 +16,14 @@ module pcm_volume_fade (
 );
     wire signed [31:0] left_ext  = {{16{sample_left[15]}},  sample_left};
     wire signed [31:0] right_ext = {{16{sample_right[15]}}, sample_right};
-    wire signed [31:0] volume_ext = {24'd0, volume};
-    wire signed [31:0] fade_ext   = {24'd0, fade_gain};
+    // Keep the full unsigned 8x8 gain product; no intermediate rounding.
+    wire [15:0] gain_product = {8'd0, volume} * {8'd0, fade_gain};
+    wire signed [31:0] gain_ext = {16'd0, gain_product};
 
     // 显式使用32位有符号中间结果；16bit满幅样本乘200乘255仍在
     // signed 32bit范围内，不会发生中间表达式位宽截断。
-    wire signed [31:0] left_full  = (left_ext  * volume_ext) * fade_ext;
-    wire signed [31:0] right_full = (right_ext * volume_ext) * fade_ext;
+    wire signed [31:0] left_full  = left_ext  * gain_ext;
+    wire signed [31:0] right_full = right_ext * gain_ext;
 
     wire signed [15:0] left_scaled =
         (left_full > 32'sd2147418112) ? 16'sh7fff :

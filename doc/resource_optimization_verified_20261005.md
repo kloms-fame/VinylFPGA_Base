@@ -46,6 +46,9 @@ scanner 的512字节声明不等于4096个FF：读取常量偏移会被综合裁
 |p03_header|基线，仅BMP头计数器|8728|5925|5279|30/0|11|+1 / +11|时序通过但资源装箱退化，不选用|
 |p03_s5|相同BMP头修改，seed5|8719|5929|5184|30/0|11|−25 / +3|时序失败，不选用|
 |p03_s3|相同BMP头修改，seed3|8705|5924|5183|30/0|11|+109 / +3|保留为当前通过版本|
+|p04_area|p03_s3源码，gate map_mode=area_prior，seed3|7825|5922|4515|30/0|11|+141 / +4|保留；相对上一通过版本−880 LUT、−668 Slice|
+|p05_pcm|p04_area + 已授权精确增益共享，seed3|7834|5924|4579|30/0|10|−265 / +3|功能验证通过，时序失败，不下载|
+|p05_s5|同一音频修改，复用gate.db，seed5|7827|5920|4527|30/0|10|+53 / +3|最终保留并生成固件|
 
 p03_s3 相比基线减少6 LUT、31 FF、2 Slice，BRAM/DSP不变；属于RTL修改与布局种子的联合结果，不能将6 LUT全算成计数器修改的净收益。header_byte_cnt从复位0起，仅在LD_HEADER收到有效字节时递增，在53离开该状态，因此所有可达值均在0..53。六位容量足够，不改变任何文件偏移、尺寸输入或输出周期。
 
@@ -58,3 +61,53 @@ p03_s3 相比基线减少6 LUT、31 FF、2 Slice，BRAM/DSP不变；属于RTL修
 历史及复现基线的关键路径：load_cluster_reg[23] → u_file_streamer/sector_lba_reg[27]，逻辑8级（4 ADDER + 3 LUT5 + 1 LUT4），数据延迟9.638ns（cell 4.683ns + net 4.955ns）。计数器改动无法直接消除该地址链瓶颈。
 
 基线已有工具告警：两个PLL反馈使用local network；SDRAM IP位置约束未满足后由placer移动；缺5个input delay、23个output delay。不能宣称DRC/约束全清。这些既有问题本次不通过加假路径或放宽时钟隐藏。
+
+## 已授权的音频表达式重构
+
+用户明确同意仅重构pcm_volume_fade的精确乘法。将 `(sample * volume) * fade` 改为 `sample * (volume * fade)`，中间增益保留完整无符号16位（最大65025），零扩展为有符号32位后与符号扩展的sample相乘。原截位、饱和判断、握手与组合延迟级数不变。没有将增益截断成8位，也没有使用近似除法。
+
+数学边界：最大正乘积32767×65025=2130674175，最小负乘积−32768×65025=−2130739200，均在signed32范围内，所以重结合不产生额外溢出或舍入。专项逐位测试比对左右完整32位积、最终16位输出和握手：全部65536组增益×8组样本边界，全部65536个样本×16组增益边界，以及100000随机组，总计1672864组全部通过。属于大规模仿真加代数证明，不冒称对43亿所有输入组合做过穷举或形式验证。
+
+进行中用户/外部工作区将之前修改提交为530fccc；本任务未创建该提交，后续保留它，仍使用本轮最初c4bfcd3源码快照作比较基线。
+
+## 最终交付与验证状态
+
+最终采用p05_s5：相对基线LUT −884（−10.15%）、FF −35（−0.59%）、Slice −658（−12.69%）、DSP −1（11→10），BRAM9K=30、BRAM32K=0不变。Setup从+82ps变为+53ps，Hold维持+3ps，TNS=0、setup/hold违规端点均为0。时序有通过但裕量仍薄，不能称为时序大幅改善。
+
+相对无音频重构的p04_area，最终p05_s5是用+2 LUT、+12 Slice换−1 DSP、−2 FF；这是明确的资源权衡，并非所有资源逐项都下降。采用理由是满足用户批准的精确共享方案、节省DSP且现有约束时序仍通过。保留p04_area全部快照与报告作为较大setup裕量的备选。
+
+保留的实际修改只有：
+
+1. `src/SD/fat32_media_loader.v`：BMP头计数器32→6位。
+2. `src/audio/pcm_volume_fade.v`：完整16位公共增益乘积；原端口/输出位/延迟不变。
+3. 构建采用 `set_param gate map_mode area_prior`、`set_param place seed 5`。该配置已固化为 `tools/build_verified_round.py` 的默认参数。**原GUI .al仍是默认策略，直接点击旧GUI构建不会自动获得本次配置；应使用下面的验证脚本。**
+4. TB连续赋值端口声明reg→wire，及回归、归档、快照、发布脚本。
+
+验证：全套既有回归通过；BMP原版/新版逐拍比较通过；PCM 1672864组精确比较通过；所有当前src/constraints文件与p05_s5构建输入SHA256完全一致。p05_s5与p05_pcm源码相同，仅布局种子变化，复用同一次通过的功能回归结果。
+
+按照anlogic-place-route交付条件，route数据库与final时序一致，**允许放行到anlogic-create-bitstream**。新bit生成、setup_debugger、.bitgen_param.f均完成，**允许放行到下载/后续调试**。
+
+固件：`prj/resource_opt_verified_20261005/p05_s5/VinylFPGA_optimized.bit`，629624字节。
+
+SHA256：`8d6a4d3dd22e7b50c31ef1d97ee70e202794c9d2f5a9435af31a2e2288380f7c`。
+
+已执行JTAG SRAM下载，日志包含芯片验证成功EG4S20BG256、program/download正常结束及VERIFIED_SRAM_DOWNLOAD_COMPLETE；未写Flash。hwserver初始探测输出一次device not found，但后续已找到目标并完成下载；不能据此替代人工功能验收。
+
+**人工验收已通过（2026-10-05，用户反馈）**：用户明确回复“已验证，以上功能正常”，确认图片加载及四格bank映射、单击/长按/组合键菜单、自动轮播、亮度/对比度、WAV声音与淡入淡出正常；验收清单包含彩点、撕裂、爆音观察。此结论来自用户板级实测反馈，与自动仿真及下载成功分别记录。
+
+### 复现命令
+
+在VinylFPGA工程根目录运行，round名称必须是尚不存在的新名称：
+
+```powershell
+python tools/verify_resource_opt.py
+python tools/verify_counter_opt.py header
+python tools/verify_counter_opt.py pcm
+python tools/resource_opt_round.py release_rebuild
+python tools/build_verified_round.py release_rebuild --seed 5 --map-mode area_prior
+python tools/release_verified_round.py release_rebuild --program-sram
+```
+
+快照中保留逐轮源码、输入哈希及数据库；小型实测证据另存 `prj/resource_history/20261005_verified/`，其中 `comparison.json` 汇总所有轮次。失败试验不作为可下载固件。
+
+后续未授权结构改造不实施：scanner地址算术重排、跨模块SPC共享、同步链重构、按键共享和BRAM原语迁移。已证实收益很小的计数器裁剪停止扩展。当前结论是本轮在已授权范围内取得上述实测收益，不宣称找到所有可能实现的理论最小资源。

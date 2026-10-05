@@ -8,9 +8,9 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 p = argparse.ArgumentParser()
 p.add_argument('round')
-p.add_argument('--seed', type=int, default=1)
+p.add_argument('--seed', type=int, default=5)
 p.add_argument('--gate', type=Path)
-p.add_argument('--map-mode')
+p.add_argument('--map-mode', default='area_prior', help='Validated release default; use auto for baseline experiments')
 p.add_argument('--td', type=Path, default=Path('D:/Anlogic/TD_6.2.1_Engineer_6.2.168.116/bin/td_commands_prompt.exe'))
 a = p.parse_args()
 dest = (ROOT / 'prj/resource_opt_verified_20261005' / a.round).resolve(strict=True)
@@ -53,7 +53,7 @@ script.write_text('\n'.join(lines) + '\n', encoding='utf-8')
 with (dest / 'native_build.log').open('wb') as log:
     result = subprocess.run([a.td.as_posix(), script.as_posix()], cwd=dest, stdout=log, stderr=subprocess.STDOUT, timeout=900)
 log = (dest / 'native_build.log').read_text(encoding='gbk', errors='replace')
-if result.returncode or 'VERIFIED_ROUND_COMPLETE' not in log:
+if result.returncode or 'VERIFIED_ROUND_COMPLETE' not in log or re.search(r'\b(?:ERROR|FATAL)\b', log):
     print(log[-3000:])
     sys.exit(1)
 qor = (dest / 'final.qor').read_text(encoding='gbk')

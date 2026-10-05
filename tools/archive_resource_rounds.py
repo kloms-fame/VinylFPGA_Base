@@ -31,10 +31,14 @@ for run in sorted(RUNS.iterdir()):
     dest.mkdir(exist_ok=True)
     for p in run.iterdir():
         if p.is_file() and (p.suffix in ('.area','.qor','.timing','.status','.constraints','.params','.exceptions')
-                           or p.name in ('inputs.sha256.json','native_build.tcl','round_settings.tcl')):
+                           or p.name in ('inputs.sha256.json','native_build.tcl','round_settings.tcl',
+                                         'bitstream.sha256','release_bitgen.tcl','release_download.tcl')):
             shutil.copy2(p,dest/p.name)
     if (run/'regression.log').exists():
         shutil.copy2(run/'regression.log',dest/'regression_results.md')
+    for step in ('release_bitgen','release_download'):
+        if (run/(step+'.log')).exists():
+            shutil.copy2(run/(step+'.log'),dest/(step+'_results.md'))
     patches = []
     for original in (RUNS/'baseline/src').rglob('*.v'):
         rel = original.relative_to(RUNS/'baseline')

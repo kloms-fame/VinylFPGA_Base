@@ -171,6 +171,53 @@ def header():
              audio_sec_busy=1,audio_sec_valid=1,audio_sec_byte=8,audio_sec_byte_index=9,
              audio_sec_done=1,audio_sec_error=8), reset='!rst')
 
+def pcm():
+    ref = reference('audio/pcm_volume_fade.v','pcm_volume_fade')
+    src = '''`timescale 1ns/1ps
+module tb_pcm_volume_fade_opt_equiv;
+reg sample_valid=0,sample_ready=0;
+reg signed [15:0] sample_left=0,sample_right=0;
+reg [7:0] volume=0,fade_gain=0;
+integer i,j,k,n,checks=0;
+pcm_volume_fade dut(.sample_valid(sample_valid),.sample_ready(sample_ready),
+ .sample_left(sample_left),.sample_right(sample_right),.volume(volume),.fade_gain(fade_gain));
+pcm_volume_fade_reference refdut(.sample_valid(sample_valid),.sample_ready(sample_ready),
+ .sample_left(sample_left),.sample_right(sample_right),.volume(volume),.fade_gain(fade_gain));
+function [7:0] edge_gain; input integer idx;
+ begin case(idx) 0:edge_gain=0;1:edge_gain=1;2:edge_gain=128;default:edge_gain=255;endcase end
+endfunction
+function signed [15:0] edge_sample; input integer idx;
+ begin case(idx)
+  0:edge_sample=-32768;1:edge_sample=-32767;2:edge_sample=-1;3:edge_sample=0;
+  4:edge_sample=1;5:edge_sample=127;6:edge_sample=16384;default:edge_sample=32767;
+ endcase end
+endfunction
+task compare;
+ begin
+  sample_valid=checks[0];sample_ready=checks[1];#1;checks=checks+1;
+  if({dut.out_valid,dut.out_ready,dut.out_left,dut.out_right,dut.left_full,dut.right_full} !==
+     {refdut.out_valid,refdut.out_ready,refdut.out_left,refdut.out_right,refdut.left_full,refdut.right_full})
+   $fatal(1,"FAIL PCM left=%d right=%d volume=%d fade=%d",sample_left,sample_right,volume,fade_gain);
+ end
+endtask
+initial begin
+ // Every gain pair, including 128..255 unsigned gains, with signed extrema.
+ for(i=0;i<256;i=i+1) for(j=0;j<256;j=j+1) for(k=0;k<8;k=k+1) begin
+  volume=i;fade_gain=j;sample_left=edge_sample(k);sample_right=edge_sample(7-k);compare;
+ end
+ // Every 16-bit sample across both signs and sixteen boundary gain pairs.
+ for(i=0;i<65536;i=i+1) for(j=0;j<4;j=j+1) for(k=0;k<4;k=k+1) begin
+  sample_left=i;sample_right=65535-i;volume=edge_gain(j);fade_gain=edge_gain(k);compare;
+ end
+ for(n=0;n<100000;n=n+1) begin
+  sample_left=$random;sample_right=$random;volume=$random;fade_gain=$random;compare;
+ end
+ $display("PASS PCM exact signed products, output bits and handshake: %0d cases",checks);$finish;
+end
+endmodule
+'''
+    simulate('tb_pcm_volume_fade_opt_equiv',src,[ref])
+
 if __name__ == '__main__':
     if sys.argv[1] == 'menu':
         menu()
@@ -178,3 +225,5 @@ if __name__ == '__main__':
         keys()
     elif sys.argv[1] == 'header':
         header()
+    elif sys.argv[1] == 'pcm':
+        pcm()

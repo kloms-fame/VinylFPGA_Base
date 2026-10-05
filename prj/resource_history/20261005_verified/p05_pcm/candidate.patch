@@ -1,0 +1,34 @@
+--- baseline/src/audio/pcm_volume_fade.v
++++ p05_pcm/src/audio/pcm_volume_fade.v
+@@ -16,13 +16,14 @@
+ );
+     wire signed [31:0] left_ext  = {{16{sample_left[15]}},  sample_left};
+     wire signed [31:0] right_ext = {{16{sample_right[15]}}, sample_right};
+-    wire signed [31:0] volume_ext = {24'd0, volume};
+-    wire signed [31:0] fade_ext   = {24'd0, fade_gain};
++    // Keep the full unsigned 8x8 gain product; no intermediate rounding.
++    wire [15:0] gain_product = {8'd0, volume} * {8'd0, fade_gain};
++    wire signed [31:0] gain_ext = {16'd0, gain_product};
+ 
+     // 显式使用32位有符号中间结果；16bit满幅样本乘200乘255仍在
+     // signed 32bit范围内，不会发生中间表达式位宽截断。
+-    wire signed [31:0] left_full  = (left_ext  * volume_ext) * fade_ext;
+-    wire signed [31:0] right_full = (right_ext * volume_ext) * fade_ext;
++    wire signed [31:0] left_full  = left_ext  * gain_ext;
++    wire signed [31:0] right_full = right_ext * gain_ext;
+ 
+     wire signed [15:0] left_scaled =
+         (left_full > 32'sd2147418112) ? 16'sh7fff :
+--- baseline/src/SD/fat32_media_loader.v
++++ p05_pcm/src/SD/fat32_media_loader.v
+@@ -152,7 +152,9 @@
+     reg [15:0] planes;
+     reg [15:0] bit_count;
+     reg [31:0] compression;
+-    reg [31:0] header_byte_cnt;
++    // Only counts the 54-byte BMP header: the state exits at byte 53.
++    // File offsets and dynamic image dimensions retain their full width.
++    reg [5:0]  header_byte_cnt;
+     reg [31:0] pixel_byte_cnt;
+     reg [31:0] pixel_count;
+     reg [2:0]  rgb_byte_cnt;
