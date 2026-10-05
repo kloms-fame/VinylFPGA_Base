@@ -62,3 +62,4 @@ sim_out/
 
 # Reproducible resource optimization simulation outputs
 sim/resource_opt/
+prj/resource_opt_20261005/seed*/

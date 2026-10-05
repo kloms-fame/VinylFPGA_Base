@@ -67,6 +67,23 @@ module fat32_file_streamer #(
 
     wire [27:0] fat_value = {fat_byte3[3:0], fat_byte2, fat_byte1, fat_byte0};
 
+    // 首簇地址直接按 BPB 的 2 次幂扇区数选择固定移位，避免
+    // “编码成 shift -> 桶形移位”串联；默认值仍与 cluster_shift 一致。
+    wire [31:0] first_cluster_delta = first_cluster - 32'd2;
+    reg [31:0] first_cluster_offset;
+    always @* begin
+        case (sectors_per_cluster)
+            8'd2:   first_cluster_offset = first_cluster_delta << 1;
+            8'd4:   first_cluster_offset = first_cluster_delta << 2;
+            8'd8:   first_cluster_offset = first_cluster_delta << 3;
+            8'd16:  first_cluster_offset = first_cluster_delta << 4;
+            8'd32:  first_cluster_offset = first_cluster_delta << 5;
+            8'd64:  first_cluster_offset = first_cluster_delta << 6;
+            8'd128: first_cluster_offset = first_cluster_delta << 7;
+            default:first_cluster_offset = first_cluster_delta;
+        endcase
+    end
+
     assign file_busy = (state != ST_IDLE);
 
     function [2:0] cluster_shift;
@@ -169,9 +186,7 @@ module fat32_file_streamer #(
                         finish_with_error(ERR_CLUSTER_RANGE);
                     end else begin
                         current_cluster <= first_cluster;
-                        sector_lba <= data_start_lba +
-                                      ((first_cluster - 2) <<
-                                       cluster_shift(sectors_per_cluster));
+                        sector_lba <= data_start_lba + first_cluster_offset;
                         state <= ST_DATA_REQ;
                     end
                 end

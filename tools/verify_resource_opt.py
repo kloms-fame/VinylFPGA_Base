@@ -18,7 +18,9 @@ reference.write_text(BASE.read_text(encoding='utf-8').replace(
 
 def run(name, sources, top=None):
     binary = OUT / (name + '.vvp')
-    compile_result = subprocess.run(['iverilog', '-g2012', '-I', str(ROOT / 'src/include'),
+    libraries = [str(p) for p in (ROOT / 'src').iterdir() if p.is_dir()]
+    compile_result = subprocess.run(['iverilog', '-g2005', '-I', str(ROOT / 'src/include'),
+        '-y', str(ROOT / 'src'), *[arg for path in libraries for arg in ('-y', path)],
         '-s', top or name, '-o', str(binary), *map(str, sources)],
         cwd=ROOT, capture_output=True, text=True, timeout=60)
     if compile_result.returncode:
@@ -98,7 +100,7 @@ def equivalence_bench(name, source, stress=False, control=False):
         repeat (10) @(negedge rd_clk);
         wr_rst_n = 1; rd_rst_n = 1;
         total_sectors = 1;
-        // A partial sector followed by a card error must drain identically.
+        // A card error asserted during transfer must drain identically.
         wait (tx_index == 97);
         @(negedge wr_clk); sd_error = 8'h41;
         repeat (3000) @(negedge rd_clk);
@@ -130,4 +132,59 @@ equivalence_bench('tb_wav_equiv_long', flow)
 equivalence_bench('tb_wav_equiv_stalls', flow, stress=True)
 equivalence_bench('tb_wav_equiv_control', flow, control=True)
 run('tb_promax_audio_waveform', [ROOT / 'sim/tb_promax_audio_waveform.v', rtl / 'display/promax_audio_waveform.v'])
+
+# Re-run the existing subsystem benches against the current sources.
+for bench in sorted((ROOT / 'sim').glob('tb_*.v')):
+    if bench.stem.startswith('tb_wav_') or bench.stem == 'tb_promax_audio_waveform':
+        continue
+    run(bench.stem, [bench])
+
+# Compare the complete fragmented-chain test and all 256 possible BPB byte values.
+stream_ref = OUT / 'fat32_file_streamer_reference.v'
+stream_ref.write_text((BASE.parent / 'fat32_file_streamer.v').read_text(encoding='utf-8').replace(
+    'module fat32_file_streamer #(', 'module fat32_file_streamer_reference #('), encoding='utf-8')
+source = (ROOT / 'sim/tb_fat32_file_streamer.v').read_text(encoding='utf-8')
+name = 'tb_fat32_streamer_equiv'
+source = source.replace('module tb_fat32_file_streamer;', 'module ' + name + ';')
+instance = re.search(r'    fat32_file_streamer dut \(.*?\n    \);', source, re.S).group(0)
+outputs = {'file_busy':1,'file_done':1,'file_valid':1,'file_byte':8,
+           'file_byte_offset':32,'fs_error':8,'sector_req':1,'sector_lba':32}
+ref_inst = instance.replace('fat32_file_streamer dut', 'fat32_file_streamer_reference reference_dut')
+for port in outputs:
+    ref_inst = ref_inst.replace('(' + port + ')', '(ref_' + port + ')')
+decl = '\n'.join('    wire [%d:0] ref_%s;' % (width-1, port) for port,width in outputs.items())
+bus = ','.join(outputs)
+ref_bus = ','.join('ref_' + x for x in outputs)
+check = '\n    always @(negedge clk) if (rst_n && {' + bus + '} !== {' + ref_bus + '}) $fatal(1,"FAIL streamer cycle equivalence");\n'
+source = source.replace(instance, decl + '\n' + instance + '\n' + ref_inst + check)
+file = OUT / (name + '.v')
+file.write_text(source, encoding='utf-8')
+run(name, [file, stream_ref])
+
+# Prove the only changed combinational expression for every selector and random
+# 32-bit cluster values, including wraparound, invalid BPB values and sign bits.
+source = '''`timescale 1ns/1ps
+module tb_cluster_offset_equiv;
+reg [31:0] first_cluster;
+reg [7:0] sectors_per_cluster;
+integer s, n;
+fat32_file_streamer dut (.first_cluster(first_cluster), .sectors_per_cluster(sectors_per_cluster));
+initial begin
+  for (s=0;s<256;s=s+1) begin
+    sectors_per_cluster=s;
+    for (n=0;n<1024;n=n+1) begin
+      first_cluster = n<4 ? n : $random;
+      #1;
+      if (dut.first_cluster_offset !== ((first_cluster - 32'd2) << dut.cluster_shift(sectors_per_cluster)))
+        $fatal(1,"FAIL cluster offset spc=%0d cluster=%h",s,first_cluster);
+    end
+  end
+  $display("PASS: 262144 cluster offset cases, all BPB byte values");
+  $finish;
+end
+endmodule
+'''
+file = OUT / 'tb_cluster_offset_equiv.v'
+file.write_text(source, encoding='utf-8')
+run('tb_cluster_offset_equiv', [file])
 print('PASS: all resource optimization regressions')
