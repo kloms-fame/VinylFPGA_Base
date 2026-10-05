@@ -10,6 +10,9 @@ module status_osd_overlay #(
     input  wire [1:0]  active_index,
     input  wire        auto_enabled,
     input  wire [7:0]  error_code,
+    input  wire [7:0]  brightness,
+    input  wire [7:0]  contrast,
+    input  wire        menu_active,
     input  wire        in_de,
     input  wire [11:0] in_rgb,
     input  wire [11:0] pixel_x,
@@ -21,8 +24,12 @@ module status_osd_overlay #(
     reg [1:0] index_q;
     reg auto_q;
     reg [7:0] error_q;
+    reg [7:0] brightness_q;
+    reg [7:0] contrast_q;
+    reg       menu_active_q;
 
     reg osd_hit;
+    reg menu_hit;
     reg [3:0] char_value;
     reg [2:0] char_row;
     reg [2:0] char_col;
@@ -33,10 +40,16 @@ module status_osd_overlay #(
             index_q <= 2'd0;
             auto_q <= 1'b0;
             error_q <= 8'd0;
+            brightness_q <= 8'd255;
+            contrast_q <= 8'd128;
+            menu_active_q <= 1'b0;
         end else if (frame_start) begin
             index_q <= active_index;
             auto_q <= auto_enabled;
             error_q <= error_code;
+            brightness_q <= brightness;
+            contrast_q <= contrast;
+            menu_active_q <= menu_active;
         end
     end
 
@@ -56,6 +69,9 @@ module status_osd_overlay #(
                 4'h8: case(row) 0:font_row=5'b11111;1:font_row=5'b10001;2:font_row=5'b10001;3:font_row=5'b11111;4:font_row=5'b10001;5:font_row=5'b10001;default:font_row=5'b11111; endcase
                 4'h9: case(row) 0:font_row=5'b11111;1:font_row=5'b10001;2:font_row=5'b10001;3:font_row=5'b11111;4:font_row=5'b00001;5:font_row=5'b00001;default:font_row=5'b11111; endcase
                 4'ha: case(row) 0:font_row=5'b01110;1:font_row=5'b10001;2:font_row=5'b10001;3:font_row=5'b11111;4:font_row=5'b10001;5:font_row=5'b10001;default:font_row=5'b10001; endcase
+                4'hb: case(row) 0:font_row=5'b11110;1:font_row=5'b10001;2:font_row=5'b10001;3:font_row=5'b11110;4:font_row=5'b10001;5:font_row=5'b10001;default:font_row=5'b11111; endcase
+                4'hc: case(row) 0:font_row=5'b01111;1:font_row=5'b10000;2:font_row=5'b10000;3:font_row=5'b10000;4:font_row=5'b10000;5:font_row=5'b10000;default:font_row=5'b01111; endcase
+                4'hd: case(row) 0:font_row=5'b11110;1:font_row=5'b10001;2:font_row=5'b10001;3:font_row=5'b10001;4:font_row=5'b10001;5:font_row=5'b10001;default:font_row=5'b11110; endcase
                 4'he: case(row) 0:font_row=5'b11111;1:font_row=5'b10000;2:font_row=5'b10000;3:font_row=5'b11110;4:font_row=5'b10000;5:font_row=5'b10000;default:font_row=5'b11111; endcase
                 4'hf: case(row) 0:font_row=5'b11111;1:font_row=5'b10000;2:font_row=5'b10000;3:font_row=5'b11110;4:font_row=5'b10000;5:font_row=5'b10000;default:font_row=5'b10000; endcase
                 default: font_row = 5'b00000;
@@ -65,11 +81,13 @@ module status_osd_overlay #(
 
     always @* begin
         osd_hit = 1'b0;
+        menu_hit = 1'b0;
         char_value = 4'h0;
         char_row = pixel_y - OSD_Y;
         char_col = pixel_x - OSD_X;
         glyph_row = 5'b00000;
 
+        // 第一行保持第九讲原有 4 字符状态显示。
         if (pixel_x >= OSD_X && pixel_x < OSD_X + 32 &&
             pixel_y >= OSD_Y && pixel_y < OSD_Y + 8) begin
             case ((pixel_x - OSD_X) / 8)
@@ -86,11 +104,33 @@ module status_osd_overlay #(
                 osd_hit = glyph_row[4 - ((pixel_x - OSD_X) % 8)];
         end
 
+        // 第二行在参数菜单打开时显示 BxxCyy（十六进制）。
+        if (menu_active_q &&
+            pixel_x >= OSD_X && pixel_x < OSD_X + 48 &&
+            pixel_y >= OSD_Y + 16 && pixel_y < OSD_Y + 24) begin
+            char_row = pixel_y - (OSD_Y + 16);
+            case ((pixel_x - OSD_X) / 8)
+                0: char_value = 4'hb;
+                1: char_value = brightness_q[7:4];
+                2: char_value = brightness_q[3:0];
+                3: char_value = 4'hc;
+                4: char_value = contrast_q[7:4];
+                5: char_value = contrast_q[3:0];
+                default: char_value = 4'h0;
+            endcase
+
+            glyph_row = font_row(char_value, char_row);
+            if ((pixel_x - OSD_X) % 8 < 5 && char_row < 7)
+                menu_hit = glyph_row[4 - ((pixel_x - OSD_X) % 8)];
+        end
+
         out_de = in_de;
         out_rgb = in_rgb;
         if (in_de && osd_hit)
             out_rgb = error_q == 0 ? 12'hff0 : 12'hf44;
+        else if (in_de && menu_hit)
+            out_rgb = 12'hff0;
     end
 
-    assign osd_pixel = osd_hit && in_de;
+    assign osd_pixel = (osd_hit || menu_hit) && in_de;
 endmodule

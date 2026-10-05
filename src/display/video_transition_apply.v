@@ -9,21 +9,29 @@ module video_transition_apply #(
 ) (
     input  wire [23:0] rgb_in,
     input  wire [7:0]  alpha,
+    input  wire [7:0]  brightness,
     input  wire        wipe_active,
     input  wire [4:0]  wipe_ramp,
     input  wire [9:0]  pixel_x,
     output wire [23:0] rgb_out
 );
+    // 第十四讲教程 2.1：完赛工程把亮度折进转场系数，只增加一次 8x8
+    // 乘法。brightness=255 时 effective_alpha 与输入 alpha 完全相同，
+    // 因而默认参数下的既有淡入淡出/擦除行为逐位不变。
+    wire [8:0]  brightness_eff = {1'b0, brightness} + 9'd1;
+    wire [16:0] alpha_mul      = {8'd0, alpha} * brightness_eff;
+    wire [7:0]  effective_alpha = alpha_mul[16:8];
+
     // /256 is used instead of /255; alpha=255 is 0.4% short of full scale and
     // is visually indistinguishable, while avoiding a wide divider.
     // Explicitly extend each 8-bit channel before the multiply. In Verilog
     // the result width of "8-bit * 8-bit" is only 8 bits, so writing the
     // expression without zero-extension would truncate values above 255 and
     // darken the image even when alpha is full-scale.
-    wire [15:0] red_mul   = {8'd0, rgb_in[23:16]} * alpha;
-    wire [15:0] green_mul = {8'd0, rgb_in[15:8]}  * alpha;
-    wire [15:0] blue_mul  = {8'd0, rgb_in[7:0]}   * alpha;
-    wire [23:0] faded_rgb = {
+    wire [15:0] red_mul   = {8'd0, rgb_in[23:16]} * effective_alpha;
+    wire [15:0] green_mul = {8'd0, rgb_in[15:8]}  * effective_alpha;
+    wire [15:0] blue_mul  = {8'd0, rgb_in[7:0]}   * effective_alpha;
+    wire [23:0] scaled_rgb = {
         red_mul[15:8],
         green_mul[15:8],
         blue_mul[15:8]
@@ -32,5 +40,9 @@ module video_transition_apply #(
     wire [10:0] wipe_boundary = wipe_ramp * WIPE_STEP;
     wire        show_new      = (pixel_x < wipe_boundary);
 
-    assign rgb_out = wipe_active ? (show_new ? rgb_in : 24'd0) : faded_rgb;
+    // 擦除模式也需要应用亮度；brightness=255 时保持原教程/第十讲的
+    // “新画面原样、旧区域黑场”行为不变。
+    wire [23:0] wipe_rgb = (brightness == 8'd255) ? rgb_in : scaled_rgb;
+
+    assign rgb_out = wipe_active ? (show_new ? wipe_rgb : 24'd0) : scaled_rgb;
 endmodule

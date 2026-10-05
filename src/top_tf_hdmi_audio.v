@@ -73,6 +73,31 @@ wire [4:0]  wipe_ramp;
 wire [1:0]  transition_kind;
 wire        frame_start;
 
+// ===================== 第十四讲：亮度/对比度参数 =====================
+// 参数菜单控制器在 sd_card_clk 域，现有 KEY1/KEY2 的低有效键流先经过它。
+wire        key1_eff_n;
+wire        key2_eff_n;
+wire [7:0]  cfg_brightness_ctrl;
+wire [7:0]  cfg_contrast_ctrl;
+wire        cfg_param_update;
+wire        cfg_menu_event;
+wire [1:0]  cfg_menu_kind;
+wire [3:0]  cfg_menu_level;
+wire        cfg_menu_active;
+
+reg  [7:0]  cfg_brightness_sync1;
+reg  [7:0]  cfg_brightness_sync2;
+reg  [7:0]  cfg_contrast_sync1;
+reg  [7:0]  cfg_contrast_sync2;
+reg         cfg_menu_active_sync1;
+reg         cfg_menu_active_sync2;
+reg  [7:0]  brightness_frame;
+reg  [7:0]  contrast_frame;
+reg         menu_active_frame;
+wire [23:0] adjusted_rgb;
+wire        adjusted_de;
+reg  [9:0]  adjusted_pixel_x;
+
 wire [3:0]  state_code;
 wire [6:0]  seg_data_0;
 
@@ -260,6 +285,32 @@ sync_2ff u_sdram_init_sync (
     .rst_n      (sdcard_rst_n),
     .async_in   (Sdr_init_done),
     .sync_out   (Sdr_init_done_sd)
+);
+
+// ===================== 第十四讲：参数菜单入口 =====================
+// 教程的完赛工程用 KEY4；本工程物理上只有 KEY1/KEY2，因此按教程 2.4
+// 的“组合键扩展”方案，用双键长按进入/退出菜单。菜单外两路键完全直通，
+// 原有 KEY1/KEY2 行为不变。
+param_menu_controller #(
+    .CLK_FREQ_HZ     (100_000_000),
+    .DEBOUNCE_MS     (20),
+    .COMBO_HOLD_MS   (1000),
+    .LONG_HOLD_MS    (1000),
+    .MENU_TIMEOUT_MS (10000)
+) u_param_menu_controller (
+    .clk              (sd_card_clk),
+    .rst_n            (sdcard_rst_n),
+    .key1_n           (key1),
+    .key2_n           (key2),
+    .key1_out_n       (key1_eff_n),
+    .key2_out_n       (key2_eff_n),
+    .cfg_brightness   (cfg_brightness_ctrl),
+    .cfg_contrast     (cfg_contrast_ctrl),
+    .cfg_update_valid (cfg_param_update),
+    .menu_event       (cfg_menu_event),
+    .menu_kind        (cfg_menu_kind),
+    .menu_level       (cfg_menu_level),
+    .menu_active      (cfg_menu_active)
 );
 
 // =========================================================================
@@ -476,7 +527,7 @@ sd_card_bmp #(
     // 第十讲：KEY1先进入转场控制器，淡出完成后再用next_event触发切换。
     .key_next          (1'b1),
     .next_event        (fade_next_event),
-    .key_auto          (key2),
+    .key_auto          (key2_eff_n),
     .state_code        (state_code),
     .bmp_width         (16'd640),
     .bmp_height        (16'd480),
@@ -525,7 +576,7 @@ key_press_hold #(
 ) u_key_next_transition (
     .clk              (sd_card_clk),
     .rst              (~sdcard_rst_n),
-    .button_in        (key1),
+    .button_in        (key1_eff_n),
     .press_pulse      (key_next_transition_press),
     .hold_pulse       (key_view_hold),
     .button_stable_out()
@@ -740,6 +791,36 @@ assign vout_data = (`DIAG_LOCAL_PATTERN) ? local_pattern_rgb
 assign view_rgb = thumb_view ? (thumb_active ? thumb_rgb : 24'd0)
                              : vout_data;
 
+// ===================== 第十四讲：亮度/对比度像素调节 =====================
+// 控制域参数先做两级同步，再在 frame_start 整帧锁存。默认值
+// brightness=255、contrast=128 时模块严格旁路，因此不改动既有画面。
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n) begin
+        cfg_brightness_sync1  <= 8'd255;
+        cfg_brightness_sync2  <= 8'd255;
+        cfg_contrast_sync1    <= 8'd128;
+        cfg_contrast_sync2    <= 8'd128;
+        cfg_menu_active_sync1 <= 1'b0;
+        cfg_menu_active_sync2 <= 1'b0;
+        brightness_frame      <= 8'd255;
+        contrast_frame        <= 8'd128;
+        menu_active_frame     <= 1'b0;
+    end else begin
+        cfg_brightness_sync1  <= cfg_brightness_ctrl;
+        cfg_brightness_sync2  <= cfg_brightness_sync1;
+        cfg_contrast_sync1    <= cfg_contrast_ctrl;
+        cfg_contrast_sync2    <= cfg_contrast_sync1;
+        cfg_menu_active_sync1 <= cfg_menu_active;
+        cfg_menu_active_sync2 <= cfg_menu_active_sync1;
+
+        if (frame_start) begin
+            brightness_frame  <= cfg_brightness_sync2;
+            contrast_frame    <= cfg_contrast_sync2;
+            menu_active_frame <= cfg_menu_active_sync2;
+        end
+    end
+end
+
 // ===================== 第九讲：OSD状态字幕叠加 =====================
 // OSD 紧跟在黑屏屏蔽之后、video_rgb_to_axis 之前，纯组合替换像素，
 // 不改变现有 de/vs 的节拍，也不影响 HDMI 音频数据岛调度。
@@ -752,17 +833,44 @@ always @(posedge video_clk or negedge video_rst_n) begin
         osd_pixel_x <= osd_pixel_x + 10'd1;
 end
 
-// 第十讲：先做转场处理，再送入OSD；OSD永远位于最上层。
+// 第十四讲教程 2.1：亮度折进转场 alpha，只增加一次乘法；brightness=255
+// 时 effective_alpha 与原有 fade_alpha 完全相同，不改变第十讲既有行为。
 video_transition_apply #(
     .WIPE_STEP (40)
 ) u_video_transition_apply (
     .rgb_in      (view_rgb),
     .alpha       (fade_alpha),
+    .brightness  (brightness_frame),
     .wipe_active (wipe_active),
     .wipe_ramp   (wipe_ramp),
     .pixel_x     (osd_pixel_x),
     .rgb_out     (transition_rgb)
 );
+
+// 第十四讲教程 3.2.2：对比度采用参考答案的 signed 乘法、算术右移和
+// 饱和截断。亮度已按教程 2.1 折进转场上式，因此这里固定为满亮度，
+// 单独模块自身的亮度通路仍保留，便于按教程做独立仿真和扩展。
+brightness_contrast_adjust u_brightness_contrast_adjust (
+    .clk        (video_clk),
+    .rst_n      (video_rst_n),
+    .in_de      (de),
+    .rgb_in     (transition_rgb),
+    .brightness (8'd255),
+    .contrast   (contrast_frame),
+    .out_de     (adjusted_de),
+    .rgb_out    (adjusted_rgb)
+);
+
+// 对比度模块内部有一拍流水线，像素 x 坐标同步后移一拍，保证 OSD/波形
+// 仍与 rgb 对齐。
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n)
+        adjusted_pixel_x <= 10'd0;
+    else if (!adjusted_de)
+        adjusted_pixel_x <= 10'd0;
+    else
+        adjusted_pixel_x <= adjusted_pixel_x + 10'd1;
+end
 
 osd_overlay_24 #(
     .OSD_X(8),
@@ -771,12 +879,15 @@ osd_overlay_24 #(
     .clk          (video_clk),
     .rst_n        (video_rst_n),
     .vsync        (vs),
-    .de           (de),
-    .rgb_in       (transition_rgb),
-    .pixel_x      (osd_pixel_x),
+    .de           (adjusted_de),
+    .rgb_in       (adjusted_rgb),
+    .pixel_x      (adjusted_pixel_x),
     .active_index (media_id),
     .auto_enabled (auto_enabled_sync2),
     .error_code   (osd_error_code_frame),
+    .brightness   (brightness_frame),
+    .contrast     (contrast_frame),
+    .menu_active  (menu_active_frame),
     .rgb_out      (osd_rgb_out),
     .de_out       (osd_de_out),
     .osd_active   (osd_active)
@@ -794,9 +905,9 @@ promax_audio_waveform #(
     .clk             (video_clk),
     .rst_n           (video_rst_n),
     .vsync           (vs),
-    .de              (de),
+    .de              (adjusted_de),
     .rgb_in          (osd_rgb_out),
-    .pixel_x         (osd_pixel_x),
+    .pixel_x         (adjusted_pixel_x),
     .enable          (audio_play_enable_sync2),
     .pcm_tap_valid   (wav_sample_valid),
     .pcm_tap_left    (wav_sample_left),
@@ -1183,7 +1294,7 @@ video_rgb_to_axis_640x480 u_video_rgb_to_axis_640x480(
     .I_clk         (video_clk),
     .I_rst         (~video_rst_n),
     .I_vs          (vs),
-    .I_de          (de),
+    .I_de          (pat_mode ? de : adjusted_de),
     .I_rgb         (wave_rgb_eff),
     .O_video_user  (axis_s_user),
     .O_video_valid (axis_s_valid),

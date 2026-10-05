@@ -30,6 +30,7 @@ module tb_video_fade_transition;
 
     reg [23:0] apply_rgb_in = 24'h80C0FF;
     reg [7:0] apply_alpha = 8'd255;
+    reg [7:0] apply_brightness = 8'd255;
     reg apply_wipe_active = 1'b0;
     reg [4:0] apply_wipe_ramp = 5'd0;
     reg [9:0] apply_pixel_x = 10'd0;
@@ -86,6 +87,7 @@ module tb_video_fade_transition;
     ) apply_dut (
         .rgb_in(apply_rgb_in),
         .alpha(apply_alpha),
+        .brightness(apply_brightness),
         .wipe_active(apply_wipe_active),
         .wipe_ramp(apply_wipe_ramp),
         .pixel_x(apply_pixel_x),
@@ -221,12 +223,29 @@ module tb_video_fade_transition;
             $display("FAIL: alpha=255 arithmetic got %h", apply_rgb_out);
             errors = errors + 1;
         end
+
+        // 第十四讲：亮度按教程 2.1 折进转场 alpha。
+        apply_brightness = 8'd128;
+        #1;
+        if (apply_rgb_out !== 24'h40607F) begin
+            $display("FAIL: brightness=128 arithmetic got %h", apply_rgb_out);
+            errors = errors + 1;
+        end
+        apply_brightness = 8'd0;
+        #1;
+        if (apply_rgb_out !== 24'h000000) begin
+            $display("FAIL: brightness=0 arithmetic got %h", apply_rgb_out);
+            errors = errors + 1;
+        end
+        apply_brightness = 8'd255;
+
         apply_alpha = 8'd0;
         #1;
         if (apply_rgb_out !== 24'h000000) begin
             $display("FAIL: alpha=0 arithmetic got %h", apply_rgb_out);
             errors = errors + 1;
         end
+        apply_alpha = 8'd255;
         apply_wipe_active = 1'b1;
         apply_wipe_ramp = 5'd1;
         apply_pixel_x = 10'd39;
@@ -235,6 +254,15 @@ module tb_video_fade_transition;
             $display("FAIL: wipe left side did not show new frame");
             errors = errors + 1;
         end
+
+        apply_brightness = 8'd128;
+        #1;
+        if (apply_rgb_out !== 24'h40607F) begin
+            $display("FAIL: wipe brightness arithmetic got %h", apply_rgb_out);
+            errors = errors + 1;
+        end
+        apply_brightness = 8'd255;
+
         apply_pixel_x = 10'd40;
         #1;
         if (apply_rgb_out !== 24'h000000) begin

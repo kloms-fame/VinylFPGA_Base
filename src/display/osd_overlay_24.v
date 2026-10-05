@@ -18,6 +18,9 @@ module osd_overlay_24 #(
     input  wire [1:0]  active_index,
     input  wire        auto_enabled,
     input  wire [7:0]  error_code,
+    input  wire [7:0]  brightness,
+    input  wire [7:0]  contrast,
+    input  wire        menu_active,
     output wire [23:0] rgb_out,
     output wire        de_out,
     output wire        osd_active
@@ -55,6 +58,8 @@ module osd_overlay_24 #(
         .frame_start(frame_start),
         .active_index(active_index), .auto_enabled(auto_enabled),
         .error_code(error_code),
+        .brightness(brightness), .contrast(contrast),
+        .menu_active(menu_active),
         .in_de(de),
         .in_rgb({rgb_in[23:20], rgb_in[15:12], rgb_in[7:4]}),
         .pixel_x({2'b00, pixel_x}),

@@ -10,6 +10,9 @@ module tb_osd_overlay;
     reg  [1:0]  active_index = 2'd0;
     reg         auto_enabled = 1'b0;
     reg  [7:0]  error_code = 8'h00;
+    reg  [7:0]  brightness = 8'd255;
+    reg  [7:0]  contrast = 8'd128;
+    reg         menu_active = 1'b0;
 
     wire [23:0] rgb_out;
     wire        de_out;
@@ -32,6 +35,9 @@ module tb_osd_overlay;
         .active_index (active_index),
         .auto_enabled (auto_enabled),
         .error_code   (error_code),
+        .brightness   (brightness),
+        .contrast     (contrast),
+        .menu_active  (menu_active),
         .rgb_out      (rgb_out),
         .de_out       (de_out),
         .osd_active   (osd_active)
@@ -101,6 +107,38 @@ module tb_osd_overlay;
         end
     endtask
 
+    task render_menu_frame;
+        begin
+            for (line = 0; line < 25; line = line + 1) begin
+                for (x = 0; x < 640; x = x + 1) begin
+                    @(negedge clk);
+                    pixel_x = x[9:0];
+                    de = 1'b1;
+                    #1;
+
+                    if (line == 24) begin
+                        case (x)
+                            8:  begin expect_rgb(24'hFFFF00); end
+                            12: begin expect_rgb(24'h123456); end
+                            17: begin expect_rgb(24'hFFFF00); end
+                            25: begin expect_rgb(24'hFFFF00); end
+                            33: begin expect_rgb(24'hFFFF00); end
+                            41: begin expect_rgb(24'hFFFF00); end
+                            48: begin expect_rgb(24'hFFFF00); end
+                            56: begin expect_rgb(24'h123456); end
+                            default: ;
+                        endcase
+                    end
+                end
+
+                @(negedge clk);
+                de = 1'b0;
+                pixel_x = 10'd0;
+                @(negedge clk);
+            end
+        end
+    endtask
+
     initial begin
         repeat (4) @(negedge clk);
         rst_n = 1'b1;
@@ -113,6 +151,15 @@ module tb_osd_overlay;
         // 错误状态：图片3 + 自动A + 错误码44，OSD为红色，区域外仍透传。
         begin_frame(2'd2, 1'b1, 8'h44);
         render_frame(1'b1, 24'hFF4444);
+
+        // 菜单状态：第二行显示亮度AB、对比度CD；字形内部为黄色，空白处透传。
+        @(negedge clk);
+        brightness = 8'hab;
+        contrast = 8'hcd;
+        menu_active = 1'b1;
+        begin_frame(2'd0, 1'b0, 8'h00);
+        render_menu_frame;
+        menu_active = 1'b0;
 
         // 消隐期不得叠加OSD。
         @(negedge clk);
