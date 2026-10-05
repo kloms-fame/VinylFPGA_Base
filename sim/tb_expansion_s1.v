@@ -27,10 +27,12 @@ module tb_expansion_s1;
     reg        exp_enc2_b    = 1'b1;
     reg        exp_enc2_sw_n = 1'b1;
     reg        exp_ir_rx     = 1'b1;
+    reg        tb_sw1        = 1'b1;   // 母板拨码 SW1（用于反馈音检查）
 
     wire [3:0] exp_led_n;
     wire       exp_ws2812_data;
     wire [5:0] exp_ext_o;
+    wire       board_buzzer_n;
     wire       uart_tx;
 
     integer errors = 0;
@@ -65,9 +67,17 @@ module tb_expansion_s1;
         .exp_enc2_b       (exp_enc2_b),
         .exp_enc2_sw_n    (exp_enc2_sw_n),
         .exp_ir_rx        (exp_ir_rx),
+        .key1             (1'b1),
+        .key2             (1'b1),
+        .key3             (1'b1),
+        .sw1              (tb_sw1),
+        .sw2              (1'b1),
+        .sw3              (1'b1),
+        .sw4              (1'b1),
         .exp_led_n        (exp_led_n),
         .exp_ws2812_data  (exp_ws2812_data),
         .exp_ext_o        (exp_ext_o),
+        .board_buzzer_n   (board_buzzer_n),
         .uart_tx          (uart_tx)
     );
 
@@ -204,6 +214,16 @@ module tb_expansion_s1;
         // 1) 上电横幅
         wait_match("VINYL EXPHUB S1", 15, "", 0, "banner");
 
+        // 1b) 母板拨码 SW1 变化 -> 反馈音（母板 H11 与拓展板 EXT1 同源）
+        tb_sw1 = 1'b0;
+        repeat (12) @(posedge clk);
+        if (board_buzzer_n !== 1'b0) begin
+            errors = errors + 1;
+            $display("FAIL board SW feedback: buzzer_n=%b", board_buzzer_n);
+        end else begin
+            $display("PASS board SW feedback tone");
+        end
+
         // 2) KEY04 按下 -> 事件 + LED4 点亮（低有效）
         exp_key_n[3] = 1'b0;
         wait_match("KEY 04 DOWN", 11, "", 0, "key04-down");
@@ -212,6 +232,14 @@ module tb_expansion_s1;
             $display("FAIL led echo on press: exp_led_n=%b", exp_led_n);
         end else begin
             $display("PASS led echo on press");
+        end
+        // 操作反馈音：母板蜂鸣器（低有效）应进入鸣叫状态，EXT1 同步输出同一波形
+        if ((board_buzzer_n !== 1'b0) || (exp_ext_o[0] !== 1'b0)) begin
+            errors = errors + 1;
+            $display("FAIL buzzer feedback on key press: buzzer_n=%b ext1=%b",
+                     board_buzzer_n, exp_ext_o[0]);
+        end else begin
+            $display("PASS buzzer feedback on key press");
         end
 
         // 3) KEY04 释放 -> 事件 + LED4 熄灭
@@ -258,10 +286,10 @@ module tb_expansion_s1;
             end
         end
 
-        // 10) 输出安全态
-        if (exp_ext_o !== 6'b000000) begin
+        // 10) 输出安全态：EXT1 承载反馈音波形，EXT2..EXT6 必须保持 0
+        if (exp_ext_o[5:1] !== 5'b00000) begin
             errors = errors + 1;
-            $display("FAIL ext_o not zero: %b", exp_ext_o);
+            $display("FAIL ext_o[5:1] not zero: %b", exp_ext_o);
         end
         if (exp_ws2812_data !== 1'b0) begin
             errors = errors + 1;

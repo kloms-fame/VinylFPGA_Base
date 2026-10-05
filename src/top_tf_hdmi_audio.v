@@ -17,6 +17,7 @@
 `include "io/exp_baud_tick.v"
 `include "io/exp_uart_tx.v"
 `include "io/exp_echo_reporter.v"
+`include "io/buzzer_feedback.v"
 `include "io/expansion_integration.v"
 
 module top(
@@ -24,6 +25,11 @@ module top(
     input                       rst_n,
     input                       key1,           // 手动下一张
     input                       key2,           // 自动播放 开/关
+    input                       key3,           // 母板按键 3（B1），用于操作反馈音
+    input                       sw1,            // 母板拨码 SW1（C8），用于操作反馈音
+    input                       sw2,            // 母板拨码 SW2（C7）
+    input                       sw3,            // 母板拨码 SW3（C6）
+    input                       sw4,            // 母板拨码 SW4（C5）
 
     output [5:0]                seg_sel,
     output [7:0]                seg_data,
@@ -58,7 +64,10 @@ module top(
     // ===================== S1：J2 拓展板输出 =====================
     output [3:0]                exp_led_n,       // LED1..LED4，低有效点亮
     output                      exp_ws2812_data, // WS2812 数据线（S1 静态全灭）
-    output [5:0]                exp_ext_o,       // EXT1..EXT6（S1 固定 0）
+    output [5:0]                exp_ext_o,       // EXT1=反馈音波形，EXT2..EXT6=0
+
+    // ===================== 母板蜂鸣器 =====================
+    output                      board_buzzer_n,  // H11，PNP 驱动，低电平鸣叫（SW5 硬件通断）
 
     // ===================== S1：板载 USB 转串口 =====================
     output                      uart_tx          // 115200 8N1 回显输出
@@ -76,6 +85,10 @@ parameter BUF3_ADDR     = FRAME_PIXELS * 24'd3;
 // S1 硬件回显测试开关：1=串口周期上报按键状态（含事件计数），0=完全静默。
 // 只影响 exp_echo_reporter 的串口输出与 exp_led_n 回显，不改变主链路功能。
 parameter ECHO_TEST_ENABLE = 1'b1;
+
+// 按键/拨码/编码器/红外 操作反馈音总开关：1=开启（母板蜂鸣器 + 拓展板 EXT1），0=静音。
+// 母板蜂鸣器还需硬件 SW5 拨至接通档才会发声。
+parameter BUZZER_FEEDBACK_ENABLE = 1'b1;
 
 wire Sdr_init_done;
 wire Sdr_init_ref_vld;
@@ -1559,7 +1572,8 @@ expansion_integration #(
     .DEBOUNCE_CYCLES  (400_000),
     .AB_STABLE_CYCLES (50_000),
     .IR_CLK_FREQ_HZ   (50_000_000),
-    .ECHO_ENABLE      (ECHO_TEST_ENABLE)
+    .ECHO_ENABLE      (ECHO_TEST_ENABLE),
+    .BUZZER_ENABLE    (BUZZER_FEEDBACK_ENABLE)
 ) u_expansion_integration (
     .clk              (clk),
     .rst_n            (exp_rst_n),
@@ -1572,9 +1586,17 @@ expansion_integration #(
     .exp_enc2_b       (exp_enc2_b),
     .exp_enc2_sw_n    (exp_enc2_sw_n),
     .exp_ir_rx        (exp_ir_rx),
+    .key1             (key1),
+    .key2             (key2),
+    .key3             (key3),
+    .sw1              (sw1),
+    .sw2              (sw2),
+    .sw3              (sw3),
+    .sw4              (sw4),
     .exp_led_n        (exp_led_n),
     .exp_ws2812_data  (exp_ws2812_data),
     .exp_ext_o        (exp_ext_o),
+    .board_buzzer_n   (board_buzzer_n),
     .uart_tx          (uart_tx)
 );
 

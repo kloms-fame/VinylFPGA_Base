@@ -26,15 +26,16 @@
 3. 当前主工程没有 `STATE_BOOT/STATE_BROWSE/STATE_PLAY` 顶层业务 FSM，也没有统一 `ui_event_bus`。现有 `state_code` 只是当前图片编号 `1~4`，不能当作产品状态机。
 4. 规划中的 QSPI Logo、曲目索引、多曲音频、歌词、MV、黑胶、母板系统外设和长稳容错均未在主工程完成。必须按 S0→S7 顺序逐阶段编译、下载、人工验收，上一阶段未通过不得引入下一阶段。
 
-### 0.1 S1 阶段完成记录（2026-10-05 更新，v2 收尾）
+### 0.1 S1 阶段完成记录（2026-10-05 更新，v5 含操作反馈音）
 
 - 已实现：J2 输入驱动逐字节移植（`sync_bit` / `debounce_filter` / `key_dip_monitor` / `quadrature_decoder` / `encoder_monitor` / `ir_nec_decoder`）+ `expansion_io_hub` + `ui_event_bus` + `exp_echo_reporter` 硬件回显；顶层新增 `exp_*` 与 `uart_tx` 端口；`constraints/pin.adc` 追加 J2 36 路 + `uart_tx` 共 37 条约束。
-- v2 收尾：① 串口改为**事件驱动**，删除每 250 ms 的 `EXP KEY ...` 周期行，按键只在动作时输出一行最简 `KEY nn DOWN` / `KEY nn UP`（静止时无输出）；② 修复 `expansion_integration ... is a black box`：S1 源码在 `top` 顶部 include 内联，12 个文件加模块级包含保护，无论 `.al` 文件列表是否完整都不会再出现黑盒。
-- 构建快照：`prj/resource_opt_verified_20261005/S1_j2_io_v2/`（`resource_opt_round.py` → `build_verified_round.py --seed 5 --map-mode area_prior`）
-- 时序：Setup WNS `+123 ps` / TNS `0 ps` / 违例端点 `0`；Hold WNS `+3 ps` / TNS `0 ps` / 违例端点 `0`（基线 p05_s5 为 +53 / +3）
-- 资源：LUT `10362/19600 = 52.87%`，REG `7058/19600 = 36.01%`，BRAM9K `30/64`，DSP `10/29`，Slices `5798 = 59.16%`
-- bit：`S1_j2_io_v2/VinylFPGA_optimized.bit`，SHA256 `e1faa4530c8bbd272ce2bd3d26013fec8428bbcd2a88c15da71becca816d21d8`
-- 仿真：`sim/tb_expansion_s1.v` `TEST_PASS`（含 `idle silent` 回归）；J2 原版 TB ×4 `TEST_PASS`；`verify_counter_opt.py keys|menu|header|pcm` PASS；`verify_resource_opt.py` 全 PASS
+- v2 收尾：① 串口改为**事件驱动**，删除每 250 ms 的 `EXP KEY ...` 周期行，按键只在动作时输出一行最简 `KEY nn DOWN` / `KEY nn UP`（静止时无输出）；② 修复 `expansion_integration ... is a black box`：S1 源码在 `top` 顶部 include 内联，13 个文件加模块级包含保护，无论 `.al` 文件列表是否完整都不会再出现黑盒。
+- v5 追加**操作反馈音**：逐字移植 `buzzer_feedback`，母板蜂鸣器 `board_buzzer_n`(H11，PNP 低有效，硬件 SW5 通断) 直接发声；同一波形送到 J2 `exp_ext_o[0]`(EXT1) 供拓展板外接蜂鸣器。触发源含母板 `key1/key2`+新增 `key3`(B1)、新增拨码 `sw1~sw4`(C8/C7/C6/C5)，以及拓展板按键/拨码/编码器/红外。软件总开关 `BUZZER_FEEDBACK_ENABLE`（默认开）。拓展板本体无蜂鸣器器件（`4_GPIO.pdf` 无 BUZ 网络；《产品交互.md》原文"扩展板无蜂鸣器，为母板独有"）。
+- 构建快照：`prj/resource_opt_verified_20261005/S1_j2_io_v5/`（`resource_opt_round.py` → `build_verified_round.py --seed 7 --map-mode area_prior`；seed 5 因既有 100 MHz FAT32 路径未收敛，改用扫描通过的 seed 7）
+- 时序：Setup WNS `+140 ps` / TNS `0 ps` / 违例端点 `0`；Hold WNS `+4 ps` / TNS `0 ps` / 违例端点 `0`（基线 p05_s5 为 +53 / +3）
+- 资源：LUT `10477/19600 = 53.45%`，REG `7173/19600 = 36.60%`，BRAM9K `30/64`，DSP `10/29`，Slices `5859 = 59.79%`，IO `71/188`
+- bit：`S1_j2_io_v5/VinylFPGA_optimized.bit`，SHA256 `957de8939b50f36994f108205a796afbde658297eeabde46eb7a0359a5467290`
+- 仿真：`sim/tb_expansion_s1.v` `TEST_PASS`（含 `idle silent`、`board SW feedback tone`、`buzzer feedback on key press`）；J2 原版 TB ×5 `TEST_PASS`（含 `tb_buzzer_feedback`）；`verify_counter_opt.py keys|menu|header|pcm` PASS；`verify_resource_opt.py` 全 PASS
 - 事件编码 / 串口格式 / J2 约束片段 / 差异说明见 `doc/开发资料/S1_拓展板移植集成_交付说明_20261005.md`
 - **上板人工验收：已完成（用户实测）**。烧录运行、按键/编码器/拨码/红外/LED 通路与主链路画面音频均通过；v2 仅改串口输出方式与编译加固，不改变已验收的物理通路行为（详见交付说明第 7 节）。
 
@@ -721,5 +722,4 @@ S7-B/S7-C/S7-D 使用不同阶段名重复执行；确认所有 RAM 下载验收
 4. S1 烧录和人工验证全部通过后，再开始 S2 Boot；任何后续 Logo、曲库、歌词、MV 设计暂不进入 S1 默认路径。
 
 *报告结束。后续每个阶段完成后，应在本文件顶部更新当前基线、构建路径、bit SHA256、人工验收记录和新增差异。*
-
 

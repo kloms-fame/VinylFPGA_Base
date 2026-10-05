@@ -14,10 +14,11 @@
 //   - 不触碰主链路 key1/key2 消抖、sd_card_clk(100 MHz) 时序预算。
 //
 // 回显开关与输出安全态：
-//   ECHO_ENABLE=1 -> 串口周期性上报 KEY/DIP/ENC/IR，LED1-4 低有效镜像 KEY01-04；
+//   ECHO_ENABLE=1 -> 串口事件上报 KEY/DIP/ENC/IR，LED1-4 低有效镜像 KEY01-04；
 //   ECHO_ENABLE=0 -> 串口静默，LED 全灭。
 //   WS2812 在 S1 静态全灭（动态灯效按报告 D15 留待 S7）；
-//   EXT1-6 与标定工程一致固定 0（尚无业务联动）。
+//   操作反馈音：board_buzzer_n 驱动母板蜂鸣器（H11，低有效，硬件 SW5 通断），
+//   同一蜂鸣波形同时送到 EXT1，供拓展板外接蜂鸣器/蜂鸣器模块；EXT2-6 仍固定 0。
 // =============================================================================
 module expansion_integration #(
     parameter integer CLK_FREQ_HZ      = 50_000_000,
@@ -25,7 +26,8 @@ module expansion_integration #(
     parameter integer DEBOUNCE_CYCLES  = 400_000,
     parameter integer AB_STABLE_CYCLES = 50_000,
     parameter integer IR_CLK_FREQ_HZ   = 50_000_000,
-    parameter         ECHO_ENABLE      = 1'b1
+    parameter         ECHO_ENABLE      = 1'b1,
+    parameter         BUZZER_ENABLE    = 1'b1
 )(
     input  wire        clk,
     input  wire        rst_n,          // 本域"异步生效/同步释放"后的低有效复位
@@ -40,9 +42,20 @@ module expansion_integration #(
     input  wire        exp_enc2_sw_n,
     input  wire        exp_ir_rx,
 
+    // 母板输入：KEY1/KEY2 复用主工程既有按键，KEY3=B1 为本阶段新增；
+    // SW1-SW4 = 板载乒乓拨码（C8/C7/C6/C5），均按按键/拨码低有效消抖。
+    input  wire        key1,
+    input  wire        key2,
+    input  wire        key3,
+    input  wire        sw1,
+    input  wire        sw2,
+    input  wire        sw3,
+    input  wire        sw4,
+
     output wire [3:0]  exp_led_n,
     output wire        exp_ws2812_data,
     output wire [5:0]  exp_ext_o,
+    output wire        board_buzzer_n,
     output wire        uart_tx
 );
 
@@ -163,12 +176,82 @@ module expansion_integration #(
         .uart_tx    (uart_tx)
     );
 
+    // ---- 母板按键 KEY1-3 / 拨码 SW1-4：复用 J2 移植的消抖驱动 ----
+    // 母板按键低有效、拨码上拨=1，与 J2 标定的输入语义一致，故直接复用 key_dip_monitor。
+    wire [2:0] board_key_level;
+    wire [2:0] board_key_fall_pulse;
+    wire [2:0] board_key_rise_pulse;
+    wire [3:0] board_sw_level;
+    wire [3:0] board_sw_change_pulse;
+    wire [2:0] board_sw_change_index;
+
+    key_dip_monitor #(
+        .KEY_COUNT      (3),
+        .DIP_COUNT      (4),
+        .DEBOUNCE_CYCLES(DEBOUNCE_CYCLES)
+    ) u_board_key_sw_monitor (
+        .clk             (clk),
+        .rst_n           (rst_n),
+        .key_async       ({key3, key2, key1}),
+        .dip_async       ({sw4, sw3, sw2, sw1}),
+        .key_level       (board_key_level),
+        .key_fall_pulse  (board_key_fall_pulse),
+        .key_rise_pulse  (board_key_rise_pulse),
+        .dip_level       (board_sw_level),
+        .dip_change_pulse(board_sw_change_pulse),
+        .dip_change_index(board_sw_change_index)
+    );
+
+    // ---- 操作反馈音：复用 J2 标定工程 buzzer_feedback ----
+    // 事件源与校验过的互动展示固件一致（KEY / DIP / EC1 / EC2 / 编码器按压 / 红外新帧）。
+    // 时钟同为 50 MHz，因此 buzzer_feedback 的默认音调参数无需换算。
+    wire key_press_any;
+    wire dip_change_any;
+    wire dip_target;
+    wire encoder_step_any;
+    wire encoder_direction_any;
+    wire encoder_source_any;
+    wire encoder_switch_any;
+    wire encoder_switch_source_any;
+    wire board_sw_change_any;
+
+    // 母板与拓展板事件并入同一反馈音混合器：任意一侧按键/拨码都发声
+    assign board_sw_change_any       = |board_sw_change_pulse;
+    assign key_press_any             = (|key_fall_pulse) | (|board_key_fall_pulse);
+    assign dip_change_any            = (|dip_change_pulse) | board_sw_change_any;
+    assign dip_target                = board_sw_change_any ? board_sw_level[board_sw_change_index]
+                                                           : dip_level[dip_change_index];
+    assign encoder_step_any          = enc1_step_pulse | enc2_step_pulse;
+    assign encoder_direction_any     = enc1_step_pulse ? enc1_direction : enc2_direction;
+    assign encoder_source_any        = enc2_step_pulse;
+    assign encoder_switch_any        = enc1_sw_fall_pulse | enc2_sw_fall_pulse;
+    assign encoder_switch_source_any = enc2_sw_fall_pulse;
+
+    buzzer_feedback u_buzzer_feedback (
+        .clk                   (clk),
+        .rst_n                 (rst_n),
+        .sound_enable          (BUZZER_ENABLE),
+        .key_press             (key_press_any),
+        .dip_change            (dip_change_any),
+        .dip_target            (dip_target),
+        .encoder_step          (encoder_step_any),
+        .encoder_direction     (encoder_direction_any),
+        .encoder_source        (encoder_source_any),
+        .encoder_switch        (encoder_switch_any),
+        .encoder_switch_source (encoder_switch_source_any),
+        .ir_event              (ir_event & ~ir_repeat_event),
+        .ir_action             (2'd0),
+        .buzzer_n              (board_buzzer_n),
+        .busy                  ()
+    );
+
     // ---- J2 输出安全态 / 硬件回显 ----
     // key_level 与 exp_led_n 同为低有效（按下=0 / 点亮=0），因此直连即"按下即点亮"；
     // 关闭回显时输出全 1 = 四路 LED 全灭。
     assign exp_led_n       = ECHO_ENABLE ? key_level[3:0] : 4'hF;
     assign exp_ws2812_data = 1'b0;
-    assign exp_ext_o       = 6'b000000;
+    // EXT1 = 操作反馈音波形（拓展板外接蜂鸣器用，与母板同源）；EXT2-6 保持 0。
+    assign exp_ext_o       = {5'b00000, board_buzzer_n};
 
 endmodule
 `endif

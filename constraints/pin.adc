@@ -95,6 +95,17 @@ set_pin_assignment	{ exp_ext_o[4] }	{ LOCATION = P12; IOSTANDARD = LVCMOS33; DRI
 set_pin_assignment	{ exp_ext_o[5] }	{ LOCATION = R12; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
 set_pin_assignment	{ uart_tx }	{ LOCATION = D12; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
 
+# 母板蜂鸣器：H11，PNP 驱动，低电平鸣叫；硬件 SW5 必须拨到接通档
+set_pin_assignment	{ board_buzzer_n }	{ LOCATION = H11; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
+
+# 母板按键 / 拨码（原理图 U7 网络表：KEY_3=B1，SWKEY_1..4=C8/C7/C6/C5）
+# KEY1/KEY2/RST_N 沿用既有 B2/C1/A2 约束不变。输入均按上拉低有效处理。
+set_pin_assignment	{ key3 }	{ LOCATION = B1; IOSTANDARD = LVCMOS33; PULLTYPE = PULLUP; }
+set_pin_assignment	{ sw1 }	{ LOCATION = C8; IOSTANDARD = LVCMOS33; PULLTYPE = PULLUP; }
+set_pin_assignment	{ sw2 }	{ LOCATION = C7; IOSTANDARD = LVCMOS33; PULLTYPE = PULLUP; }
+set_pin_assignment	{ sw3 }	{ LOCATION = C6; IOSTANDARD = LVCMOS33; PULLTYPE = PULLUP; }
+set_pin_assignment	{ sw4 }	{ LOCATION = C5; IOSTANDARD = LVCMOS33; PULLTYPE = PULLUP; }
+
 
 
 
