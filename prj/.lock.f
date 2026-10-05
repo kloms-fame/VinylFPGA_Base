@@ -1,4 +1,4 @@
-Rennick
-Renni
-24924
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\prj\.lock.f
+DESKTOP-NQDCRBP
+’‘œÚ‘∆
+42492
+D:\git_fpga\VinylFPGA_Base\prj\.lock.f

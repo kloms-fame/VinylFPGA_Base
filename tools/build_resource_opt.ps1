@@ -1,6 +1,6 @@
 param(
     [string]$TdRoot = 'D:/Anlogic/TD_6.2.1_Engineer_6.2.168.116',
-    [ValidateRange(1,100)][int]$Seed = 3,
+    [ValidateRange(1,100)][int]$Seed = 6,
     [string]$GateDb = ''
 )
 $ErrorActionPreference = 'Stop'

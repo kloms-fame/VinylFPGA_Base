@@ -4,6 +4,7 @@ module top(
     input                       rst_n,
     input                       key1,           // 手动下一张
     input                       key2,           // 自动播放 开/关
+    input                       uart_rx,        // 字幕命令输入
 
     output [5:0]                seg_sel,
     output [7:0]                seg_data,
@@ -56,11 +57,31 @@ wire [23:0] waveform_rgb_out;
 wire        osd_de_out;
 wire        osd_active;
 wire        waveform_active;
+wire [23:0] cn_subtitle_rgb_out;
+wire        cn_subtitle_de_out;
+wire        cn_subtitle_vs_out;
+wire        cn_subtitle_active;
 wire        display_valid;
 wire        auto_play_en_out;
 wire [7:0]  osd_error_code;
 wire        osd_error_toggle;
 wire        switch_abort_toggle;
+
+wire        uart_rx_valid;
+wire [7:0]  uart_rx_data;
+wire        subtitle_glyph_we;
+wire [9:0]  subtitle_glyph_waddr;
+wire [15:0] subtitle_glyph_wdata;
+wire [9:0]  subtitle_glyph_raddr;
+wire [15:0] subtitle_glyph_rdata;
+wire        subtitle_text_we;
+wire [5:0]  subtitle_text_waddr;
+wire [4:0]  subtitle_text_wdata;
+wire [5:0]  subtitle_text_raddr;
+wire [4:0]  subtitle_text_rdata;
+wire        subtitle_commit_toggle;
+wire        subtitle_commit_bank;
+wire [5:0]  subtitle_commit_length;
 
 // 第十讲：图片转场控制与像素应用
 wire        key_next_transition_press;
@@ -1025,6 +1046,79 @@ promax_audio_waveform #(
     .waveform_active (waveform_active)
 );
 
+uart_rx #(
+    .CLKS_PER_BIT (434) // 50 MHz / 115200
+) u_subtitle_uart_rx (
+    .clk   (clk),
+    .rst_n (rst_n),
+    .rx    (uart_rx),
+    .data  (uart_rx_data),
+    .valid (uart_rx_valid)
+);
+
+subtitle_ascii_parser u_subtitle_ascii_parser (
+    .clk          (clk),
+    .rst_n        (rst_n),
+    .rx_valid     (uart_rx_valid),
+    .rx_data      (uart_rx_data),
+    .glyph_we     (subtitle_glyph_we),
+    .glyph_waddr  (subtitle_glyph_waddr),
+    .glyph_wdata  (subtitle_glyph_wdata),
+    .text_we      (subtitle_text_we),
+    .text_waddr   (subtitle_text_waddr),
+    .text_wdata   (subtitle_text_wdata),
+    .commit_toggle(subtitle_commit_toggle),
+    .commit_bank  (subtitle_commit_bank),
+    .commit_length(subtitle_commit_length)
+);
+
+subtitle_glyph_ram u_subtitle_glyph_ram (
+    .wr_clk  (clk),
+    .wr_en   (subtitle_glyph_we),
+    .wr_addr (subtitle_glyph_waddr),
+    .wr_data (subtitle_glyph_wdata),
+    .rd_clk  (video_clk),
+    .rd_addr (subtitle_glyph_raddr),
+    .rd_data (subtitle_glyph_rdata)
+);
+
+subtitle_text_ram u_subtitle_text_ram (
+    .wr_clk  (clk),
+    .wr_en   (subtitle_text_we),
+    .wr_addr (subtitle_text_waddr),
+    .wr_data (subtitle_text_wdata),
+    .rd_addr (subtitle_text_raddr),
+    .rd_data (subtitle_text_rdata)
+);
+
+dynamic_cn_subtitle_overlay #(
+    .H_ACTIVE   (640),
+    .V_ACTIVE   (480),
+    .CELL_W     (18),
+    .CELL_H     (18),
+    .SUBTITLE_Y (450)
+) u_dynamic_cn_subtitle_overlay (
+    .src_clk          (clk),
+    .src_rst_n        (rst_n),
+    .commit_toggle    (subtitle_commit_toggle),
+    .commit_bank      (subtitle_commit_bank),
+    .commit_length    (subtitle_commit_length),
+    .video_clk        (video_clk),
+    .video_rst_n      (video_rst_n),
+    .vsync            (vs),
+    .de               (adjusted_de),
+    .pixel_x          (adjusted_pixel_x),
+    .rgb_in           (waveform_rgb_out),
+    .text_raddr       (subtitle_text_raddr),
+    .text_rdata       (subtitle_text_rdata),
+    .glyph_raddr      (subtitle_glyph_raddr),
+    .glyph_rdata      (subtitle_glyph_rdata),
+    .rgb_out          (cn_subtitle_rgb_out),
+    .de_out           (cn_subtitle_de_out),
+    .vs_out           (cn_subtitle_vs_out),
+    .active           (cn_subtitle_active)
+);
+
 frame_read_write #(
     .WRITE_V_FLIP     (1),
     .FRAME_WIDTH      (640),
@@ -1408,9 +1502,9 @@ audio_arc_calculate #(
 video_rgb_to_axis_640x480 u_video_rgb_to_axis_640x480(
     .I_clk         (video_clk),
     .I_rst         (~video_rst_n),
-    .I_vs          (vs),
-    .I_de          (pat_mode ? de : adjusted_de),
-    .I_rgb         (wave_rgb_eff),
+    .I_vs          (pat_mode ? vs : cn_subtitle_vs_out),
+    .I_de          (pat_mode ? de : cn_subtitle_de_out),
+    .I_rgb         (pat_mode ? wave_rgb_eff : cn_subtitle_rgb_out),
     .O_video_user  (axis_s_user),
     .O_video_valid (axis_s_valid),
     .O_video_last  (axis_s_last),

@@ -1,0 +1,23 @@
+Location         : D:\git_fpga\_codex_tmp_vinylfpga_bram_check\prj\resource_opt_20261005\seed3
+Running with     : Tang Dynasty v6.2.168116
+                   Copyright (c) 2012-2025 Anlogic Inc.
+Top Model        : top
+Device           : EG4S20BG256
+Speed            : NA
+
+Timing Mode      : final
+Setup            : WNS   113ps  TNS        0ps  NUM_FEPS     0
+Hold             : WNS     3ps  TNS        0ps  NUM_FEPS     0
+
+Flow Statistics  :
+---------------------------------------------------------------------------------------------------
+     command     |  #calls  |  wall time   |  cpu time(s)  |  used memory(mb)  |  peak memory(mb)  
+---------------------------------------------------------------------------------------------------
+      route      |    2     |  1m30s(70%)  |   118(65%)    |        825        |        825        
+      place      |    2     |   37s(29%)   |    63(34%)    |        824        |        824        
+    import_db    |    1     |    0s(0%)    |     0(0%)     |        233        |        233        
+  import_device  |    1     |    0s(0%)    |     0(0%)     |        83         |        83         
+    read_sdc     |    1     |    0s(0%)    |     0(0%)     |        233        |        233        
+---------------------------------------------------------------------------------------------------
+      total      |    7     |     2m7s     |      181      |        825        |        825        
+---------------------------------------------------------------------------------------------------

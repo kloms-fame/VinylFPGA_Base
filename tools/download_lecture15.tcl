@@ -1,7 +1,7 @@
 # Volatile SRAM programming for the lecture-15 thumbnail interaction build.
 # This only loads the FPGA SRAM; the known-good power-on Flash image is untouched.
 set lecture15_root [file normalize [file join [file dirname [info script]] ..]]
-set lecture15_bit [file join $lecture15_root prj resource_opt_20261005 seed5 VinylFPGA_resource_opt.bit]
+set lecture15_bit [file join $lecture15_root prj resource_opt_20261005 seed6 VinylFPGA_resource_opt.bit]
 if {![file exists $lecture15_bit]} {
     error "Lecture-15 bitstream missing: $lecture15_bit"
 }

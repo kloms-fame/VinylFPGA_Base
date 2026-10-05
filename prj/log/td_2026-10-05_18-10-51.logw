@@ -1,0 +1,54 @@
+============================================================
+   Tang Dynasty, V6.2.168116
+   Copyright (c) 2012-2025 Anlogic Inc.
+   Executable = C:/Anlogic/TD_6.2.1_Engineer_6.2.168.116/bin/td.exe
+   Built at =   16:32:07 Jun 12 2025
+   Run by =     ’‘œÚ‘∆
+   Run Date =   Mon Oct  5 18:10:51 2026
+
+   Run on =     DESKTOP-NQDCRBP
+============================================================
+PRJ-5303 WARNING: Run phy_1 failed.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+ARC-8009 ERROR: Unable to map IO Standard on pad usb1.
+USR-8001 ERROR: Design contains multiple IOSTANDARD setups on bank 0.
+USR-8001 ERROR: Design contains multiple IOSTANDARD setups on bank 0.
+USR-8002 ERROR: Cannot open file ../constraints/pin.adc.
+USR-8002 ERROR: Cannot open file ../constraints/pin.adc.
+USR-8002 ERROR: Cannot open file ../constraints/pin.adc.
+USR-8002 ERROR: Cannot open file ../constraints/pin.adc.
