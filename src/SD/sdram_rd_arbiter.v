@@ -66,6 +66,9 @@ module sdram_rd_arbiter #(
     wire pending   = (vm_level != mode_active);
     // 当前占用方的请求（组合）
     wire owner_req = mode_active ? thumb_rd_req : frw_rd_en;
+    // 换手时不仅要求当前占用方停止发新请求，还要求控制器已经收回最后一拍
+    // 读数据有效信号，避免在途读数据被路由到新占用方。
+    wire owner_quiet = !owner_req && !sdr_rd_en;
 
     // 换手窗口内 mem_idle=0，两侧的请求闸门都会被顶层关掉
     assign mem_idle = ~pending;
@@ -80,7 +83,7 @@ module sdram_rd_arbiter #(
 
             if (!pending) begin
                 quiet_cnt <= 32'd0;
-            end else if (!owner_req) begin
+            end else if (owner_quiet) begin
                 if (quiet_cnt >= (QUIET_CYCLES - 1)) begin
                     quiet_cnt   <= 32'd0;
                     mode_active <= vm_level;      // 静默窗结束才切换归属

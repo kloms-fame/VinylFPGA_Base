@@ -1136,7 +1136,12 @@ sdram_rd_arbiter #(
 // 三、缩略图取像引擎：教程 thumbnail_layout 只做坐标映射，这里按第八讲
 //     media_frame_reader 的职责边界补一个“按坐标取一个像素”的读取器。
 //     enable=0（全屏）时其内部 FIFO 持续复位，不占用 SDRAM 读口。
-assign thumb_mem_enable = rd_arb_mem_idle & rd_arb_mode_active;
+// 第十二讲 78dbb17 的彩点修复已经证明：SDRAM 读口不能在
+// Sdr_init_ref_vld / Sdr_busy 窗口内新起读操作。缩略图取像是随机单字读，
+// 更容易撞上刷新窗口；这里复用同一套边界，只在仲裁完成且控制器空闲时
+// 才允许从地址 FIFO 发出一笔取像请求。
+wire thumb_ctrl_quiet = ~Sdr_init_ref_vld & ~Sdr_busy & Sdr_init_done;
+assign thumb_mem_enable = rd_arb_mem_idle & rd_arb_mode_active & thumb_ctrl_quiet;
 
 thumbnail_view_reader #(
     .DISPLAY_WIDTH  (640),

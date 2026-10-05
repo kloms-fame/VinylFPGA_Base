@@ -1,7 +1,9 @@
 # TD 6.2.1 native flow for a reproducible physical seed and saved databases.
 # Invoke through build_resource_opt.ps1 with a copied absolute-path .al.
 set resource_opt_root [file normalize [file join [file dirname [info script]] ..]]
-set resource_opt_dir [pwd]
+if {![info exists resource_opt_dir] || $resource_opt_dir eq ""} {
+    set resource_opt_dir [pwd]
+}
 source [file join $resource_opt_dir build_settings.tcl]
 import_device eagle_s20.db -package EG4S20BG256
 if {$resource_opt_gate_file ne ""} {

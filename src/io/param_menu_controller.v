@@ -108,8 +108,10 @@ module param_menu_controller #(
     reg       key2_raw;
     reg       key1_stable;
     reg       key2_stable;
-    reg [19:0] key1_deb_cnt;
-    reg [19:0] key2_deb_cnt;
+    // 100MHz、20ms 消抖需要 2_000_000 个周期，20 位计数器最大只能到
+    // 1_048_575，会导致 stable 状态永远无法更新。这里必须使用 32 位。
+    reg [31:0] key1_deb_cnt;
+    reg [31:0] key2_deb_cnt;
 
     // 组合键判定与菜单内按住计时
     reg [31:0] combo_cnt;
@@ -138,8 +140,8 @@ module param_menu_controller #(
             key2_raw         <= 1'b1;
             key1_stable      <= 1'b1;
             key2_stable      <= 1'b1;
-            key1_deb_cnt     <= 20'd0;
-            key2_deb_cnt     <= 20'd0;
+            key1_deb_cnt     <= 32'd0;
+            key2_deb_cnt     <= 32'd0;
             combo_cnt        <= 32'd0;
             combo_long       <= 1'b0;
             key1_hold_cnt    <= 32'd0;
@@ -167,24 +169,24 @@ module param_menu_controller #(
                 if (key1_deb_cnt >= DEBOUNCE_CYCLES - 1) begin
                     key1_raw    <= key1_sync[1];
                     key1_stable <= key1_sync[1];
-                    key1_deb_cnt <= 20'd0;
+                    key1_deb_cnt <= 32'd0;
                 end else begin
                     key1_deb_cnt <= key1_deb_cnt + 1'b1;
                 end
             end else begin
-                key1_deb_cnt <= 20'd0;
+                key1_deb_cnt <= 32'd0;
             end
 
             if (key2_sync[1] != key2_raw) begin
                 if (key2_deb_cnt >= DEBOUNCE_CYCLES - 1) begin
                     key2_raw    <= key2_sync[1];
                     key2_stable <= key2_sync[1];
-                    key2_deb_cnt <= 20'd0;
+                    key2_deb_cnt <= 32'd0;
                 end else begin
                     key2_deb_cnt <= key2_deb_cnt + 1'b1;
                 end
             end else begin
-                key2_deb_cnt <= 20'd0;
+                key2_deb_cnt <= 32'd0;
             end
 
             // 组合键按住计时：达到门限后只置标记，松开时统一切换菜单。

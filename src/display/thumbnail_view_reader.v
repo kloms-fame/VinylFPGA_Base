@@ -4,48 +4,41 @@
 // 第十三讲《图片缩放与缩略图》——缩略图取像引擎（本工程的对应实现）
 //
 // 教程链路：
-//   video_timing -> thumbnail_layout -> media_frame_reader -> 像素 -> OSD/转场
+//   video_timing -> thumbnail_layout -> 本模块(对应 media_frame_reader 职责)
+//     -> 像素 -> OSD/转场
 //
-// 本工程原有的 frame_read_write / frame_fifo_read 只提供“整帧顺序流式读出”，
-// 没有“按坐标取像”的通道；而 thumbnail_layout 输出的恰恰是“每屏像素对应源图
-// 哪一个像素”的坐标。因此这里按第八讲 media_frame_reader 的职责边界，补一个
-// “按坐标取一个像素”的读取器（不改 frame_read_write / frame_fifo_read /
-// SDRAM 控制器内部，只占用它们已有的 App_rd_en / App_rd_addr / Sdr_rd_en 口）：
+// 取像模型严格按第八讲 media_frame_reader 与第十二讲已验证的 SDRAM 读节奏：
+//   - 每个缩略图显示行对应源图的一整行（640 个 32 位字）；
+//   - 按 128 字连续突发读 SDRAM，左右两格共 10 个突发；
+//   - 突发内每 4 个字取 1 个（最近邻 4:1 缩小），每个突发贡献 32 个显示
+//     像素，每格 5 个突发贡献 160 个显示像素；
+//   - 只在突发起始前检查 mem_enable（控制器空闲/非刷新）；一旦突发开始，
+//     必须连续发满 128 拍，不能中途停下（与 frame_fifo_read 的 S_READ_BURST
+//     行为完全一致）；
+//   - 两次突发之间保留 BURST_GAP_CYCLES 个空闲周期给自动刷新。
 //
-//   pixel 域：
-//     - 复现显示行计数 line_y（与 osd_overlay_24 同一口径）；
-//     - 实例化教程模块 thumbnail_layout 三次：
-//         u_layout_display  ：当前显示行坐标映射（决定这一屏像素要不要取像）；
-//         u_layout_prefetch ：下一显示行坐标映射（地址提前一整行写进地址 FIFO）；
-//         u_layout_next_px  ：当前行“下一个像素”的坐标映射，用于标准 FIFO
-//                             的“提前一拍弹出”（valid 比 re 晚一拍）；
-//     - 把 source_index/source_x/source_y 折算成 21 位 SDRAM 字地址，压入地址 FIFO。
-//   mem 域：
-//     - 从地址 FIFO 取地址，控制器空闲时发一次单字读；
-//     - Sdr_rd_en/Sdr_rd_dout 写回像素 FIFO。
+// 为什么不能逐像素单字随机读：
+//   孤立单字随机读把每次读都拆成独立突发，刷新窗口/忙判据一挡就丢数据，
+//   在真实 SDRAM 上表现为缩略图整片全白，并因为读窗口与刷新互相干扰引入
+//   彩点。第八讲和第十二讲已经证明“128 字突发 + 突发间隔 + 只在起始处避让
+//   刷新”才是本工程可靠模型。
 //
-// IP 选型（复用工程既有 IP 与既有用法，不另造轮子）：
-//   - 两个 FIFO 都用 rfifo_32_32_512（标准模式）。实测 show-ahead 的
-//     wfifo_32_32_512 在本工程上下文中 TD 报 SYN-5042 无法推断 BRAM，
-//     会展开成巨量寄存器，因此这里统一用可推断的标准 FIFO。
-//   - 标准 FIFO 的 valid 只保持一拍（“re 之后一拍有效”），所以：
-//       地址侧：rd_req = addr_pop && addr_valid，一个地址恰好读一次；
-//       像素侧：提前一拍弹出（下一像素是不是缩略图像素），行首那一个像素
-//               在消隐期弹出并保持在 row_first 寄存器里，跨消隐保持到行首。
-//
-// 安全设计（不影响原功能）：
-//   - enable=0 时两个 FIFO 被持续复位，取像引擎完全不往 SDRAM 发请求；
-//   - 行内一旦出现欠载，就在行末复位两个 FIFO 重对齐，并把紧随其后的那一行
-//     整行按黑色处理（该行不消费 FIFO），保证地址流与像素流不会越对越偏。
+// 安全边界：
+//   - 不改 frame_read_write / frame_fifo_read / SDRAM 控制器内部；
+//   - enable=0 时持续复位内部 FIFO，绝不发出任何读请求；
+//   - 复用工程既有 rfifo_32_32_512，不新增 IP 原语，不另造轮子。
 // =============================================================================
 module thumbnail_view_reader #(
-    parameter integer DISPLAY_WIDTH   = 640,
-    parameter integer DISPLAY_HEIGHT  = 480,
-    parameter integer ADDR_WIDTH      = 21,
-    parameter integer BANK_WORDS      = 307200,   // 640*480，每 bank 字数
-    parameter integer THUMB_WIDTH     = 160,
-    parameter integer THUMB_HEIGHT    = 120,
-    parameter [23:0]  BORDER_RGB      = 24'hff_ff_00   // 焦点边框颜色（黄）
+    parameter integer DISPLAY_WIDTH    = 640,
+    parameter integer DISPLAY_HEIGHT   = 480,
+    parameter integer ADDR_WIDTH       = 21,
+    parameter integer BANK_WORDS       = 307200,   // 640*480，每 bank 字数
+    parameter integer THUMB_WIDTH      = 160,
+    parameter integer THUMB_HEIGHT     = 120,
+    parameter integer BURST_SIZE       = 128,
+    parameter integer BURSTS_PER_THUMB = 5,        // ceil(640/128)
+    parameter integer BURST_GAP_CYCLES = 12,
+    parameter [23:0]  BORDER_RGB       = 24'hff_ff_00
 ) (
     input  wire                    pix_clk,
     input  wire                    pix_rst_n,
@@ -53,7 +46,7 @@ module thumbnail_view_reader #(
     input  wire                    mem_rst_n,
 
     input  wire                    enable,        // 1=缩略图视图生效
-    input  wire                    mem_enable,    // mem 域：可以发起一次读（含控制器空闲判据）
+    input  wire                    mem_enable,    // mem 域：可以发起一次读突发
     input  wire                    frame_start,   // video 域帧起始单拍
     input  wire [1:0]              focus_index,
     input  wire [3:0]              image_complete,
@@ -71,6 +64,10 @@ module thumbnail_view_reader #(
     input  wire                    rd_valid,      // 对应 Sdr_rd_en
     input  wire [31:0]             rd_data       // 对应 Sdr_rd_dout
 );
+
+    localparam integer TOTAL_BURSTS   = 2 * BURSTS_PER_THUMB;   // 左右两格
+    localparam integer THUMB_ROWS     = THUMB_HEIGHT;
+    localparam [7:0]   BURST_WORD_LAST = BURST_SIZE - 1;
 
     // ---------------------------------------------------------------------
     // 1. 显示行计数（与 osd_overlay_24 同一口径：vs 起始清零，de 下降沿加一）
@@ -91,19 +88,19 @@ module thumbnail_view_reader #(
         end
     end
 
-    // 提前一行的目标行号；最后一行要绕回第 0 行，否则每帧顶行都会缺取像数据
+    // 下一显示行；最后一行绕回第 0 行，保证下一帧顶行也有取像数据。
     wire [11:0] next_line_y = (line_y == (DISPLAY_HEIGHT-1)) ? 12'd0
                                                             : (line_y + 12'd1);
-    wire [11:0] pixel_x12   = {2'b00, pixel_x};
 
     // ---------------------------------------------------------------------
-    // 2. 教程模块 thumbnail_layout：当前行 / 下一行 / 同一行的下一个像素
+    // 2. 教程模块 thumbnail_layout：当前像素的坐标映射与焦点边框
     // ---------------------------------------------------------------------
     wire        cur_thumb_de;
     wire [1:0]  cur_source_index;
     wire [9:0]  cur_source_x;
     wire [9:0]  cur_source_y;
     wire        cur_focus_border;
+    wire [11:0] pixel_x12 = {2'b00, pixel_x};
 
     thumbnail_layout #(
         .DISPLAY_WIDTH  (DISPLAY_WIDTH),
@@ -123,62 +120,124 @@ module thumbnail_view_reader #(
         .focus_border (cur_focus_border)
     );
 
-    wire        next_thumb_de;
-    wire [1:0]  next_source_index;
-    wire [9:0]  next_source_x;
-    wire [9:0]  next_source_y;
-    wire        next_focus_border;   // 取像侧不需要边框，仅占位
+    // ---------------------------------------------------------------------
+    // 3. video -> mem 行任务：每显示行行首请求“下一显示行”的整行取像。
+    //    提前一整行（640 显示时钟 + 行消隐）预取，给 128 字突发留足时间。
+    // ---------------------------------------------------------------------
+    wire        next_row_valid  = (next_line_y < (THUMB_HEIGHT * 2));
+    wire        next_is_bottom  = (next_line_y >= THUMB_HEIGHT);
+    wire [1:0]  next_left_index = next_is_bottom ? 2'd2 : 2'd0;
+    wire [1:0]  next_right_index= next_left_index + 2'd1;
+    wire [11:0] next_local_y    = next_is_bottom ?
+                                  (next_line_y - THUMB_HEIGHT) : next_line_y;
+    wire [9:0]  next_src_y      = next_local_y[9:0] * (DISPLAY_HEIGHT/THUMB_HEIGHT);
+    wire        next_left_valid = next_row_valid && image_complete[next_left_index];
+    wire        next_right_valid= next_row_valid && image_complete[next_right_index];
 
-    thumbnail_layout #(
-        .DISPLAY_WIDTH  (DISPLAY_WIDTH),
-        .DISPLAY_HEIGHT (DISPLAY_HEIGHT),
-        .THUMB_WIDTH    (THUMB_WIDTH),
-        .THUMB_HEIGHT   (THUMB_HEIGHT)
-    ) u_layout_prefetch (
-        .in_de        (in_de),
-        .pixel_x      (pixel_x12),
-        .pixel_y      (next_line_y),
-        .focus_index  (focus_index),
-        .image_complete(image_complete),
-        .thumb_de     (next_thumb_de),
-        .source_index (next_source_index),
-        .source_x     (next_source_x),
-        .source_y     (next_source_y),
-        .focus_border (next_focus_border)
-    );
+    reg         req_toggle_pix;
+    reg         req_busy_pix;
+    reg  [9:0]  req_src_y_pix;
+    reg         req_left_pix;
+    reg         req_right_pix;
+    reg  [1:0]  req_left_index_pix;
+    reg  [1:0]  req_right_index_pix;
+    reg         ack_sync1_pix;
+    reg         ack_sync2_pix;
 
-    // 同一显示行、像素 x+1 的映射结果：标准 FIFO 需要“提前一拍”弹出像素，
-    // 弹出条件就是“下一个显示像素仍然是缩略图像素”。
-    wire        nx_px_thumb_de;
-    wire [1:0]  nx_px_source_index;
-    wire [9:0]  nx_px_source_x;
-    wire [9:0]  nx_px_source_y;
-    wire        nx_px_focus_border;
-    wire [11:0] next_pixel_x12 = pixel_x12 + 12'd1;
+    // mem 域行任务与突发状态（声明提前，供 pix 域 always 读取 ack_toggle_mem）
+    reg         enable_sync1_mem;
+    reg         enable_sync2_mem;
+    reg         req_toggle_sync1_mem;
+    reg         req_toggle_sync2_mem;
+    reg         req_seen_mem;
+    reg         ack_toggle_mem;
+    reg  [9:0]  req_src_y_sync1_mem;
+    reg  [9:0]  req_src_y_sync2_mem;
+    reg         req_left_sync1_mem;
+    reg         req_left_sync2_mem;
+    reg         req_right_sync1_mem;
+    reg         req_right_sync2_mem;
+    reg  [1:0]  req_left_index_sync1_mem;
+    reg  [1:0]  req_left_index_sync2_mem;
+    reg  [1:0]  req_right_index_sync1_mem;
+    reg  [1:0]  req_right_index_sync2_mem;
+    reg         task_active_mem;
+    reg  [9:0]  task_src_y_mem;
+    reg         task_left_mem;
+    reg         task_right_mem;
+    reg  [1:0]  task_left_index_mem;
+    reg  [1:0]  task_right_index_mem;
+    reg  [3:0]  burst_idx_mem;
+    reg  [7:0]  burst_word_mem;
+    reg         burst_active_mem;
+    reg  [7:0]  gap_cnt_mem;
+    reg  [ADDR_WIDTH-1:0] burst_base_mem;
+    reg  [11:0] issued_count_mem;
+    reg  [11:0] returned_count_mem;
+    reg  [11:0] ret_index_mem;
 
-    thumbnail_layout #(
-        .DISPLAY_WIDTH  (DISPLAY_WIDTH),
-        .DISPLAY_HEIGHT (DISPLAY_HEIGHT),
-        .THUMB_WIDTH    (THUMB_WIDTH),
-        .THUMB_HEIGHT   (THUMB_HEIGHT)
-    ) u_layout_next_px (
-        .in_de        (in_de),
-        .pixel_x      (next_pixel_x12),
-        .pixel_y      (line_y),
-        .focus_index  (focus_index),
-        .image_complete(image_complete),
-        .thumb_de     (nx_px_thumb_de),
-        .source_index (nx_px_source_index),
-        .source_x     (nx_px_source_x),
-        .source_y     (nx_px_source_y),
-        .focus_border (nx_px_focus_border)
-    );
+    wire        row_head = enable && in_de && (pixel_x == 10'd0);
+    wire        req_fire = row_head && !req_busy_pix && next_row_valid &&
+                           (next_left_valid || next_right_valid);
+
+    always @(posedge pix_clk or negedge pix_rst_n) begin
+        if (!pix_rst_n) begin
+            req_toggle_pix  <= 1'b0;
+            req_busy_pix    <= 1'b0;
+            req_src_y_pix   <= 10'd0;
+            req_left_pix    <= 1'b0;
+            req_right_pix   <= 1'b0;
+            req_left_index_pix  <= 2'd0;
+            req_right_index_pix <= 2'd1;
+            ack_sync1_pix   <= 1'b0;
+            ack_sync2_pix   <= 1'b0;
+        end else if (!enable) begin
+            req_toggle_pix  <= 1'b0;
+            req_busy_pix    <= 1'b0;
+            req_src_y_pix   <= 10'd0;
+            req_left_pix    <= 1'b0;
+            req_right_pix   <= 1'b0;
+            req_left_index_pix  <= 2'd0;
+            req_right_index_pix <= 2'd1;
+            ack_sync1_pix   <= 1'b0;
+            ack_sync2_pix   <= 1'b0;
+        end else begin
+            ack_sync1_pix <= ack_toggle_mem;
+            ack_sync2_pix <= ack_sync1_pix;
+
+            if (req_fire) begin
+                req_toggle_pix <= ~req_toggle_pix;
+                req_src_y_pix  <= next_src_y;
+                req_left_pix   <= next_left_valid;
+                req_right_pix  <= next_right_valid;
+                req_left_index_pix  <= next_left_index;
+                req_right_index_pix <= next_right_index;
+                req_busy_pix   <= 1'b1;
+            end else if (req_busy_pix && (ack_sync2_pix == req_toggle_pix)) begin
+                req_busy_pix   <= 1'b0;
+            end
+        end
+    end
 
     // ---------------------------------------------------------------------
-    // 3. bank 基地址 + 行内偏移 -> 21 位 SDRAM 字地址
-    //    frame_fifo_write 的 WRITE_V_FLIP 只是把 BMP 底向上的行序转成
-    //    “存储器行号 == 显示行号”，因此读侧 source_y 直接就是存储行号。
+    // 4. mem 域：捕获行任务，按 10 个 128 字突发顺序取像
     // ---------------------------------------------------------------------
+    wire [11:0] pending_returns = issued_count_mem - returned_count_mem;
+    wire        all_bursts_done = (burst_idx_mem >= TOTAL_BURSTS);
+    wire        task_done       = task_active_mem && all_bursts_done &&
+                                  (pending_returns == 12'd0);
+    wire        capture_task    = (req_toggle_sync2_mem != req_seen_mem) &&
+                                  !task_active_mem && !burst_active_mem;
+    wire        cur_burst_left  = (burst_idx_mem < BURSTS_PER_THUMB);
+    wire        cur_burst_valid = cur_burst_left ? task_left_mem : task_right_mem;
+    wire        gap_ok          = (gap_cnt_mem == 8'd0);
+    wire        start_burst     = task_active_mem && !burst_active_mem && gap_ok &&
+                                  (burst_idx_mem < TOTAL_BURSTS) &&
+                                  cur_burst_valid && mem_enable;
+    wire        skip_burst      = task_active_mem && !burst_active_mem && gap_ok &&
+                                  (burst_idx_mem < TOTAL_BURSTS) &&
+                                  !cur_burst_valid;
+
     function [ADDR_WIDTH-1:0] bank_base;
         input [1:0] idx;
         begin
@@ -191,192 +250,249 @@ module thumbnail_view_reader #(
         end
     endfunction
 
-    wire [ADDR_WIDTH-1:0] prefetch_addr =
-        bank_base(next_source_index)
-        + (next_source_y * DISPLAY_WIDTH)
-        + {{(ADDR_WIDTH-10){1'b0}}, next_source_x};
+    wire [1:0] cur_bank = cur_burst_left ? task_left_index_mem
+                                         : task_right_index_mem;
+    wire [3:0] cur_burst_in_thumb = cur_burst_left ? burst_idx_mem :
+                                    (burst_idx_mem - BURSTS_PER_THUMB);
+    wire [ADDR_WIDTH-1:0] cur_burst_in_thumb_ext =
+        {{(ADDR_WIDTH-4){1'b0}}, cur_burst_in_thumb};
+    wire [ADDR_WIDTH-1:0] cur_burst_base =
+        bank_base(cur_bank)
+        + (task_src_y_mem * DISPLAY_WIDTH)
+        + (cur_burst_in_thumb_ext * BURST_SIZE);
 
-    // 下一显示行第一列（x=0）是不是缩略图像素：等价于 thumbnail_layout 在
-    // (pixel_x=0, pixel_y=next_line_y) 上的 thumb_de。用一行组合式判断即可，
-    // 用来决定“这次消隐期是否需要把下一行第一个像素提前弹出来”。
-    wire        nx_row_left_sel  = (next_line_y >= THUMB_HEIGHT);
-    wire        nx_row_starts_thumb =
-                    (next_line_y < (THUMB_HEIGHT * 2))
-                    && image_complete[nx_row_left_sel ? 2'd2 : 2'd0];
+    always @(posedge mem_clk or negedge mem_rst_n) begin
+        if (!mem_rst_n) begin
+            enable_sync1_mem    <= 1'b0;
+            enable_sync2_mem    <= 1'b0;
+            req_toggle_sync1_mem<= 1'b0;
+            req_toggle_sync2_mem<= 1'b0;
+            req_seen_mem        <= 1'b0;
+            ack_toggle_mem      <= 1'b0;
+            req_src_y_sync1_mem <= 10'd0;
+            req_src_y_sync2_mem <= 10'd0;
+            req_left_sync1_mem  <= 1'b0;
+            req_left_sync2_mem  <= 1'b0;
+            req_right_sync1_mem <= 1'b0;
+            req_right_sync2_mem <= 1'b0;
+            req_left_index_sync1_mem  <= 2'd0;
+            req_left_index_sync2_mem  <= 2'd0;
+            req_right_index_sync1_mem <= 2'd1;
+            req_right_index_sync2_mem <= 2'd1;
+            task_active_mem     <= 1'b0;
+            task_src_y_mem      <= 10'd0;
+            task_left_mem       <= 1'b0;
+            task_right_mem      <= 1'b0;
+            task_left_index_mem <= 2'd0;
+            task_right_index_mem<= 2'd1;
+            burst_idx_mem       <= 4'd0;
+            burst_word_mem      <= 8'd0;
+            burst_active_mem    <= 1'b0;
+            gap_cnt_mem         <= 8'd0;
+            burst_base_mem      <= {ADDR_WIDTH{1'b0}};
+            issued_count_mem    <= 12'd0;
+            returned_count_mem  <= 12'd0;
+            ret_index_mem       <= 12'd0;
+        end else begin
+            enable_sync1_mem    <= enable;
+            enable_sync2_mem    <= enable_sync1_mem;
 
-    // ---------------------------------------------------------------------
-    // 4. 地址 FIFO（video -> mem）与像素 FIFO（mem -> video），都是标准模式
-    // ---------------------------------------------------------------------
-    reg  [3:0]  flush_cnt;
-    wire        row_end    = enable && de_q && !in_de;   // de 下降沿：当前显示行结束
+            if (!enable_sync2_mem) begin
+                req_toggle_sync1_mem<= 1'b0;
+                req_toggle_sync2_mem<= 1'b0;
+                req_seen_mem        <= 1'b0;
+                ack_toggle_mem      <= 1'b0;
+                task_active_mem     <= 1'b0;
+                task_left_mem       <= 1'b0;
+                task_right_mem      <= 1'b0;
+                task_left_index_mem <= 2'd0;
+                task_right_index_mem<= 2'd1;
+                burst_idx_mem       <= 4'd0;
+                burst_word_mem      <= 8'd0;
+                burst_active_mem    <= 1'b0;
+                gap_cnt_mem         <= 8'd0;
+                issued_count_mem    <= 12'd0;
+                returned_count_mem  <= 12'd0;
+                ret_index_mem       <= 12'd0;
+            end else begin
+            req_toggle_sync1_mem<= req_toggle_pix;
+            req_toggle_sync2_mem<= req_toggle_sync1_mem;
+            req_src_y_sync1_mem <= req_src_y_pix;
+            req_src_y_sync2_mem <= req_src_y_sync1_mem;
+            req_left_sync1_mem  <= req_left_pix;
+            req_left_sync2_mem  <= req_left_sync1_mem;
+            req_right_sync1_mem <= req_right_pix;
+            req_right_sync2_mem <= req_right_sync1_mem;
+            req_left_index_sync1_mem  <= req_left_index_pix;
+            req_left_index_sync2_mem  <= req_left_index_sync1_mem;
+            req_right_index_sync1_mem <= req_right_index_pix;
+            req_right_index_sync2_mem <= req_right_index_sync1_mem;
 
-    wire        pix_valid;       // 标准模式：re 之后一拍有效
-    wire [31:0] pix_dout;
-    wire        pix_full;        // mem 域回压：像素 FIFO 满则暂停取地址
+            // 突发间隔计数只在没有突发时递减
+            if (!burst_active_mem && (gap_cnt_mem != 8'd0))
+                gap_cnt_mem <= gap_cnt_mem - 8'd1;
 
-    reg         under_flag;      // 本行出现过“取像数据未就绪”（欠载）
-    reg         flush_row;       // 紧随冲刷行的下一行：整行按黑处理且不消费 FIFO
-    wire        flush_req = row_end && under_flag;
-    wire        flush_now = (flush_cnt != 4'd0);
+            if (capture_task) begin
+                req_seen_mem       <= req_toggle_sync2_mem;
+                ack_toggle_mem     <= req_toggle_sync2_mem;
+                task_active_mem    <= 1'b1;
+                task_src_y_mem     <= req_src_y_sync2_mem;
+                task_left_mem      <= req_left_sync2_mem;
+                task_right_mem     <= req_right_sync2_mem;
+                task_left_index_mem<= req_left_index_sync2_mem;
+                task_right_index_mem<= req_right_index_sync2_mem;
+                burst_idx_mem      <= 4'd0;
+                burst_word_mem     <= 8'd0;
+                burst_active_mem   <= 1'b0;
+                issued_count_mem   <= 12'd0;
+                returned_count_mem <= 12'd0;
+                ret_index_mem      <= 12'd0;
+            end else begin
+                if (skip_burst)
+                    burst_idx_mem <= burst_idx_mem + 4'd1;
 
-    wire        addr_full;
-    wire        addr_valid;
-    wire [31:0] addr_dout;
-    // 地址推送：显示第 y 行时，把“下一显示行 y+1”的缩略图像素地址写进 FIFO，
-    // 提前一整行给 SDRAM 单字读留出余量（显示行周期内 mem 时钟快 4 倍）。
-    wire        addr_push  = enable && in_de && next_thumb_de && !addr_full
-                             && !flush_now;
-    // 地址弹出受像素 FIFO 满信号回压；标准模式下 dout 比 re 晚一拍，
-    // 因此读请求由 valid 限定（rd_req = addr_pop && addr_valid），一地址一读。
-    wire        addr_pop   = mem_enable && !pix_full;
+                if (start_burst) begin
+                    burst_active_mem <= 1'b1;
+                    burst_word_mem   <= 8'd0;
+                    burst_base_mem   <= cur_burst_base;
+                end else if (burst_active_mem) begin
+                    issued_count_mem <= issued_count_mem + 12'd1;
+                    if (burst_word_mem == BURST_WORD_LAST) begin
+                        burst_active_mem <= 1'b0;
+                        burst_word_mem   <= 8'd0;
+                        burst_idx_mem    <= burst_idx_mem + 4'd1;
+                        gap_cnt_mem      <= BURST_GAP_CYCLES[7:0];
+                    end else begin
+                        burst_word_mem   <= burst_word_mem + 8'd1;
+                    end
+                end
 
-    // ---- 像素侧消费：标准 FIFO 的“提前一拍弹出” ----
-    // 1) 行内：当前像素显示时，弹出“下一个显示像素”的取像数据（提前一拍）；
-    // 2) 行首那一个像素：在行末消隐期弹出，并保持在 row_first 寄存器里跨消隐
-    //    送到下一行行首（消隐有多长都不会丢）。
-    reg         blank_done;      // 本次消隐期已经成功弹出 1 项
-    reg         row_taken;       // 当前显示行已经出现并消费过缩略图像素
+                if (rd_valid) begin
+                    returned_count_mem <= returned_count_mem + 12'd1;
+                    ret_index_mem      <= ret_index_mem + 12'd1;
+                end
 
-    wire        pop_look  = enable && in_de && nx_px_thumb_de
-                            && !flush_now && !flush_row;
-    wire        pop_blank = enable && !in_de && !blank_done
-                            && nx_row_starts_thumb && !flush_now;
-    wire        pix_pop   = pop_look || pop_blank;
-    wire        blank_cap = enable && !in_de && !de_q && pix_valid && !flush_now;
-
-    reg         row_first_vld;
-    reg  [31:0] row_first_data;
-
-    wire        first_thumb_px = enable && in_de && cur_thumb_de && !row_taken;
-    wire        use_row_first  = first_thumb_px && row_first_vld;
-
-    wire        under_now = enable && in_de && cur_thumb_de
-                            && !(use_row_first ? row_first_vld : pix_valid)
-                            && !flush_now && !flush_row;
-
-    always @(posedge pix_clk or negedge pix_rst_n) begin
-        if (!pix_rst_n)
-            flush_cnt <= 4'd15;
-        else if (!enable)
-            flush_cnt <= 4'd15;                       // 关闭时持续复位两 FIFO
-        else if (flush_req)
-            flush_cnt <= 4'd8;                        // 行末消隐期复位两 FIFO 重对齐
-        else if (flush_cnt != 4'd0)
-            flush_cnt <= flush_cnt - 4'd1;
-    end
-
-    always @(posedge pix_clk or negedge pix_rst_n) begin
-        if (!pix_rst_n)
-            flush_row <= 1'b0;
-        else if (!enable)
-            flush_row <= 1'b0;
-        else if (flush_req)
-            flush_row <= 1'b1;                        // 紧接着的下一行按预期黑处理
-        else if (row_end)
-            flush_row <= 1'b0;
-    end
-
-    always @(posedge pix_clk or negedge pix_rst_n) begin
-        if (!pix_rst_n)
-            blank_done <= 1'b0;
-        else if (!enable || flush_now)
-            blank_done <= 1'b0;
-        else if (in_de)
-            blank_done <= 1'b0;                       // 进入行内即允许下次消隐再弹一次
-        else if (pop_blank)
-            blank_done <= 1'b1;                       // 已发出弹出，避免 valid 未及时到来时重复弹
-    end
-
-    always @(posedge pix_clk or negedge pix_rst_n) begin
-        if (!pix_rst_n)
-            row_taken <= 1'b0;
-        else if (!enable || flush_now)
-            row_taken <= 1'b0;
-        else if (row_end)
-            row_taken <= 1'b0;
-        else if (first_thumb_px)
-            row_taken <= 1'b1;
-    end
-
-    always @(posedge pix_clk or negedge pix_rst_n) begin
-        if (!pix_rst_n) begin
-            row_first_vld  <= 1'b0;
-            row_first_data <= 32'd0;
-        end else if (!enable || flush_now) begin
-            row_first_vld  <= 1'b0;
-            row_first_data <= 32'd0;
-        end else if (blank_cap) begin
-            row_first_vld  <= 1'b1;                   // 消隐期取出的下一行首像素
-            row_first_data <= pix_dout;
-        end else if (use_row_first || row_end) begin
-            row_first_vld  <= 1'b0;                   // 行首消费掉 / 换行时作废
+                if (task_done) begin
+                    task_active_mem <= 1'b0;
+                    ack_toggle_mem  <= req_seen_mem;
+                end
+            end
+            end
         end
     end
 
-    wire fifo_rst = !pix_rst_n | !mem_rst_n | flush_now;
+    // ---------------------------------------------------------------------
+    // 5. 异步 FIFO：mem 域写“每 4 取 1”的缩略图像素，pix 域消费
+    // ---------------------------------------------------------------------
+    wire fifo_rst    = !pix_rst_n | !mem_rst_n | !enable;
+    wire fifo_full;
+    wire fifo_empty;
+    wire [31:0] fifo_dout;
+    wire fifo_valid;
+    wire fifo_we = rd_valid && (ret_index_mem[1:0] == 2'd0) &&
+                   !fifo_full && !fifo_rst;
+    wire raw_read_en;
 
-    // under_flag 描述“当前这一行”，每行行首清零，行内一旦欠载就置位；
-    // 它在行末触发整行冲刷重对齐。
-    always @(posedge pix_clk or negedge pix_rst_n) begin
-        if (!pix_rst_n)
-            under_flag <= 1'b0;
-        else if (!enable || flush_now)
-            under_flag <= 1'b0;
-        else if (in_de && (pixel_x == 10'd0))
-            under_flag <= 1'b0;
-        else if (under_now)
-            under_flag <= 1'b1;
-    end
-
-    assign line_mismatch = flush_req;
-
-    rfifo_32_32_512 u_addr_fifo (
-        .rst        (fifo_rst),
-        .clkw       (pix_clk),
-        .clkr       (mem_clk),
-        .we         (addr_push),
-        .di         ({{(32-ADDR_WIDTH){1'b0}}, prefetch_addr}),
-        .re         (addr_pop),
-        .dout       (addr_dout),
-        .valid      (addr_valid),
-        .full_flag  (addr_full),
-        .empty_flag (),
-        .afull      (),
-        .aempty     (),
-        .wrusedw    (),
-        .rdusedw    ()
-    );
-
-    rfifo_32_32_512 u_pixel_fifo (
+    rfifo_32_32_512 u_thmb_fifo (
         .rst        (fifo_rst),
         .clkw       (mem_clk),
         .clkr       (pix_clk),
-        .we         (rd_valid),
+        .we         (fifo_we),
         .di         (rd_data),
-        .re         (pix_pop),
-        .dout       (pix_dout),
-        .valid      (pix_valid),
-        .full_flag  (pix_full),
-        .empty_flag (),
+        .re         (raw_read_en),
+        .dout       (fifo_dout),
+        .valid      (fifo_valid),
+        .full_flag  (fifo_full),
+        .empty_flag (fifo_empty),
         .afull      (),
         .aempty     (),
         .wrusedw    (),
         .rdusedw    ()
     );
 
-    assign rd_req  = addr_pop && addr_valid;
-    assign rd_addr = addr_dout[ADDR_WIDTH-1:0];
+    // ---------------------------------------------------------------------
+    // 6. 像素域两槽预取（等价于教程 fifo_prefetch_2 的 show-ahead 行为，
+    //    但用本地寄存器实现，避免 TD 对 show-ahead 的 BRAM 推断限制）
+    // ---------------------------------------------------------------------
+    wire        consume   = enable && in_de && cur_thumb_de;
+    reg  [31:0] slot0;
+    reg  [31:0] slot1;
+    reg  [1:0]  count;
+    reg  [1:0]  outstanding;
+    wire        pop       = consume && (count != 2'd0);
+    wire [2:0]  reserved  = {1'b0, count} + {1'b0, outstanding};
+    assign raw_read_en = !fifo_empty &&
+                         ((reserved < 3'd2) ||
+                          (pop && (reserved == 3'd2)));
+    wire        out_valid = (count != 2'd0);
+    wire [31:0] out_data  = slot0;
+
+    always @(posedge pix_clk or negedge pix_rst_n) begin
+        if (!pix_rst_n || !enable) begin
+            slot0       <= 32'd0;
+            slot1       <= 32'd0;
+            count       <= 2'd0;
+            outstanding <= 2'd0;
+        end else begin
+            case ({raw_read_en, fifo_valid})
+                2'b10: outstanding <= outstanding + 2'd1;
+                2'b01: outstanding <= outstanding - 2'd1;
+                default: outstanding <= outstanding;
+            endcase
+
+            case ({pop, fifo_valid})
+                2'b00: count <= count;
+                2'b01: begin
+                    if (count == 2'd0)
+                        slot0 <= fifo_dout;
+                    else
+                        slot1 <= fifo_dout;
+                    count <= count + 2'd1;
+                end
+                2'b10: begin
+                    if (count == 2'd2)
+                        slot0 <= slot1;
+                    count <= count - 2'd1;
+                end
+                2'b11: begin
+                    if (count == 2'd1)
+                        slot0 <= fifo_dout;
+                    else begin
+                        slot0 <= slot1;
+                        slot1 <= fifo_dout;
+                    end
+                    count <= count;
+                end
+            endcase
+        end
+    end
 
     // ---------------------------------------------------------------------
-    // 5. 像素输出（边框优先；数据未就绪/坏行时输出黑）
+    // 7. 欠载诊断：正常带宽下不会发生；只作为 ILA/串口观测点
     // ---------------------------------------------------------------------
-    wire        disp_vld  = use_row_first ? row_first_vld : pix_valid;
-    wire [31:0] disp_data = use_row_first ? row_first_data : pix_dout;
+    reg under_flag;
+    always @(posedge pix_clk or negedge pix_rst_n) begin
+        if (!pix_rst_n || !enable)
+            under_flag <= 1'b0;
+        else if (in_de && (pixel_x == 10'd0))
+            under_flag <= consume && !out_valid;
+        else if (consume && !out_valid)
+            under_flag <= 1'b1;
+    end
 
+    assign line_mismatch = under_flag;
+
+    // ---------------------------------------------------------------------
+    // 8. 像素输出（边框优先；数据未就绪时输出黑）
+    // ---------------------------------------------------------------------
     assign thumb_active = enable && in_de && cur_thumb_de;
     assign focus_border = enable && in_de && cur_focus_border;
     assign pixel_rgb    = focus_border ? BORDER_RGB
-                        : ((disp_vld && !under_flag && !flush_row)
-                           ? disp_data[31:8] : 24'h00_00_00);
+                        : ((thumb_active && out_valid && !under_flag)
+                           ? out_data[31:8] : 24'h00_00_00);
+
+    assign rd_req  = burst_active_mem;
+    assign rd_addr = burst_base_mem
+                     + {{(ADDR_WIDTH-8){1'b0}}, burst_word_mem};
 
 endmodule

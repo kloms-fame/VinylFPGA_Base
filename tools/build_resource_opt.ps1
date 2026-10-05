@@ -6,16 +6,17 @@ param(
 $ErrorActionPreference = 'Stop'
 $resourceRoot = (Split-Path $PSScriptRoot -Parent).Replace('\','/')
 $resourceBuild = "$resourceRoot/prj/resource_opt_20261005/seed$Seed"
+$resourceBuildPath = $resourceBuild.Replace('\','/')
 New-Item -ItemType Directory -Force -Path $resourceBuild | Out-Null
 # TD .al contains literal P&R attribute text, so preserve its vendor format.
 $resourceProject = Get-Content -LiteralPath "$resourceRoot/prj/VinylFPGA.al" -Raw
 $resourceProject = $resourceProject.Replace('"../', ('"' + $resourceRoot + '/'))
 $resourceProject = $resourceProject.Replace(('Path="' + $resourceRoot + '/prj"'), ('Path="' + $resourceBuild + '"'))
 [IO.File]::WriteAllText("$resourceBuild/VinylFPGA.al", $resourceProject, [Text.UTF8Encoding]::new($false))
-$resourceParams = "set resource_opt_seed $Seed`nset resource_opt_gate_file {}"
+$resourceParams = "set resource_opt_dir {$resourceBuildPath}`nset resource_opt_seed $Seed`nset resource_opt_gate_file {}"
 if ($GateDb) {
     $resourceGatePath = (Resolve-Path -LiteralPath $GateDb).Path.Replace('\','/')
-    $resourceParams = "set resource_opt_seed $Seed`nset resource_opt_gate_file {$resourceGatePath}"
+    $resourceParams = "set resource_opt_dir {$resourceBuildPath}`nset resource_opt_seed $Seed`nset resource_opt_gate_file {$resourceGatePath}"
 }
 [IO.File]::WriteAllText("$resourceBuild/build_settings.tcl", $resourceParams, [Text.UTF8Encoding]::new($false))
 Push-Location $resourceBuild
