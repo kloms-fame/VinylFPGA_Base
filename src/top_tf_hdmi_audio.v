@@ -19,6 +19,8 @@
 `include "io/exp_echo_reporter.v"
 `include "io/buzzer_feedback.v"
 `include "io/expansion_integration.v"
+`include "io/ui_event_bridge.v"
+`include "io/browse_fsm.v"
 
 // ==========================================================================
 // S2 开机 Logo/动画实现（boot_logo_rom + boot_layer）随 top 一起编译，
@@ -104,6 +106,12 @@ parameter BUZZER_FEEDBACK_ENABLE = 1'b1;
 // 图源：doc/资源/VinylFPGA_640x480.jpg，由 tools/gen_boot_logo.py 生成
 //      src/boot/boot_logo_rom.v + src/include/boot_logo_geom.vh。
 parameter S2_BOOT_ENABLE = 1'b1;
+
+// ===================== S3：主界面选歌（J2 事件迁移） =====================
+// S3_J2_BROWSE_ENABLE=1：EC1 旋转/方向键/EC1 按压/KEY07 事件接入选曲业务；
+//                       母板 KEY1/KEY2 作为兜底通路仍然并联生效。
+// =0：整体旁路 J2 选曲事件，行为回到 S2（母板按键控制），用于回滚。
+parameter S3_J2_BROWSE_ENABLE = 1'b1;
 
 wire Sdr_init_done;
 wire Sdr_init_ref_vld;
@@ -262,6 +270,24 @@ reg         boot_active_s2;
 wire        boot_active;
 wire [23:0] boot_rgb;
 wire [23:0] final_rgb;
+
+// ===================== S3：主界面选歌（事件迁移） =====================
+// clk 域：expansion_integration 引出的统一事件 + ui_event_bridge 解码出的四路电平翻转。
+wire        ui_event_valid;
+wire [3:0]  ui_event_code;
+wire [15:0] ui_event_arg;
+wire [15:0] ui_event_aux;
+wire        brw_ev_prev_tgl;
+wire        brw_ev_next_tgl;
+wire        brw_ev_confirm_tgl;
+wire        brw_ev_mode_tgl;
+// sd 域：browse_fsm 还原/路由出的控制脉冲。
+wire        brw_fs_next;        // 全屏：下一张
+wire        brw_fs_prev;        // 全屏：上一张
+wire        brw_thumb_right;    // 缩略图：焦点 +1
+wire        brw_thumb_left;     // 缩略图：焦点 -1
+wire        brw_thumb_confirm;  // 缩略图：确认
+wire        brw_thumb_mode;     // 进入/退出缩略图
 
 wire        frw_app_rd_en;          // frame_read_write -> 仲裁器
 wire [ADDR_BITS-1:0] frw_app_rd_addr;
@@ -641,6 +667,7 @@ sd_card_bmp #(
     // 第十讲：KEY1先进入转场控制器，淡出完成后再用next_event触发切换。
     .key_next          (1'b1),
     .next_event        (fade_next_event && !thumb_select_pending_sd),
+    .prev_event        (brw_fs_prev),
     .select_req        (thumb_select_req_sd),
     .select_index      (thumb_select_index_sd),
     .select_ack        (sd_select_ack),
@@ -714,21 +741,49 @@ key_press_hold #(
     .button_stable_out()
 );
 
-assign key_next_request_sd   = key_next_transition_press && !thumb_mode_sd;
+// S3：全屏"下一张"入口 = 母板 KEY1 短按(兜底) 或 J2 EC1 顺时针/方向键(next)。
+// browse_fsm 已按 view_mode 拆好：缩略图态走 brw_thumb_right，不会在此重复触发。
+assign key_next_request_sd   = brw_fs_next;
 assign key2_to_sd            = (thumb_mode_sd || key2_thumb_lock_sd) ? 1'b1 : key2_eff_n;
-assign thumb_confirm_event_sd = key2_thumb_hold && thumb_mode_sd;
+// S3：缩略图"确认"入口 = 母板 KEY2 长按(兜底) 或 J2 EC1 按压/KEY02(中)。
+assign thumb_confirm_event_sd = brw_thumb_confirm;
 assign thumb_select_req_sd   = thumb_select_hold_sd;
 assign thumb_select_index_sd = thumb_select_index_hold_sd;
 
+// S3：选曲事件适配层（sd_card_clk 域）。事件侧(clk 域 toggle)在此同步/边沿还原，
+// 与母板兜底脉冲合并后按当前视图路由成既有主链路可消费的控制脉冲。
+browse_fsm #(
+    .J2_BROWSE_ENABLE (S3_J2_BROWSE_ENABLE)
+) u_browse_fsm (
+    .clk             (sd_card_clk),
+    .rst_n           (sdcard_rst_n),
+    .ev_prev_tgl     (brw_ev_prev_tgl),
+    .ev_next_tgl     (brw_ev_next_tgl),
+    .ev_confirm_tgl  (brw_ev_confirm_tgl),
+    .ev_mode_tgl     (brw_ev_mode_tgl),
+    .mb_next         (key_next_transition_press),
+    .mb_mode         (key_view_hold),
+    .mb_left         (key2_thumb_press),
+    .mb_confirm      (key2_thumb_hold),
+    .view_mode       (thumb_mode_sd),
+    .fs_next         (brw_fs_next),
+    .fs_prev         (brw_fs_prev),
+    .thumb_right     (brw_thumb_right),
+    .thumb_left      (brw_thumb_left),
+    .thumb_confirm   (brw_thumb_confirm),
+    .thumb_mode      (brw_thumb_mode)
+);
+
 // 教程 thumbnail_controller：控制域按键 -> view/focus/active/transition_req。
-// key_mode=KEY1长按；缩略图下 KEY1短按=右移、KEY2短按=左移、KEY2长按=确认。
+// S3 后输入来自 browse_fsm：全屏 EC1/方向键切换、缩略图 EC1 移动焦点、
+// EC1 按压/KEY02 确认、KEY07 进出缩略图；母板 KEY1/KEY2 作为兜底同源并入。
 thumbnail_controller u_thumbnail_controller (
     .clk             (sd_card_clk),
     .rst_n           (sdcard_rst_n),
-    .key_right       (key_next_transition_press && thumb_mode_sd),
-    .key_left        (key2_thumb_press && thumb_mode_sd),
+    .key_right       (brw_thumb_right),
+    .key_left        (brw_thumb_left),
     .key_confirm     (thumb_confirm_event_sd),
-    .key_mode        (key_view_hold),
+    .key_mode        (brw_thumb_mode),
     .image_complete  (image_ready_sd),
     .frame_start     (frame_start_sd),
     .view_mode       (thumb_mode_sd),
@@ -1651,7 +1706,30 @@ expansion_integration #(
     .board_buzzer_n   (board_buzzer_n),
     .uart_tx          (uart_tx),
     .ui_ev_valid      (ui_ev_valid),
-    .boot_active      (boot_active_s2)
+    .boot_active      (boot_active_s2),
+    .ui_event_valid   (ui_event_valid),
+    .ui_event_code    (ui_event_code),
+    .ui_event_arg     (ui_event_arg),
+    .ui_event_aux     (ui_event_aux)
+);
+
+// ==========================================================================
+// S3：主界面选歌事件解码（板级 clk 域）
+//   把统一事件总线里的选曲事件（EC1 旋转、方向键、EC1 按压、KEY07）
+//   解码成四路电平翻转；随后由 sd 域的 browse_fsm 同步/边沿还原。
+//   事件流的物理通路、串口回显、反馈音完全不变，只是新增一路只读消费。
+// ==========================================================================
+ui_event_bridge u_ui_event_bridge (
+    .clk          (clk),
+    .rst_n        (exp_rst_n),
+    .ev_valid     (ui_event_valid),
+    .ev_code      (ui_event_code),
+    .ev_arg       (ui_event_arg),
+    .ev_aux       (ui_event_aux),
+    .prev_tgl     (brw_ev_prev_tgl),
+    .next_tgl     (brw_ev_next_tgl),
+    .confirm_tgl  (brw_ev_confirm_tgl),
+    .mode_tgl     (brw_ev_mode_tgl)
 );
 
 // ==========================================================================

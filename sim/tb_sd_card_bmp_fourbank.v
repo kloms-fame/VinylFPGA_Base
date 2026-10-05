@@ -65,6 +65,7 @@ module tb_sd_card_bmp_fourbank;
         .sdr_init_done       (sdr_init_done),
         .key_next            (key_next),
         .next_event          (next_event),
+        .prev_event          (1'b0),
         .select_req          (select_req),
         .select_index        (select_index),
         .select_ack          (select_ack),

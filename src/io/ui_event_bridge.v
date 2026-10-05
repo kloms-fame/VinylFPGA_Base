@@ -1,0 +1,77 @@
+`ifndef EXP_UI_EVENT_BRIDGE_V
+`define EXP_UI_EVENT_BRIDGE_V
+// =============================================================================
+// ui_event_bridge —— S3：把统一事件总线的"选曲业务"事件解码成电平翻转
+//
+// 运行在板级 clk(50 MHz) 域，紧接 expansion_integration 的 ui_event_* 输出。
+// 只挑选"主界面选歌"需要的四类事件，各自翻一根电平（toggle），再由
+// browse_fsm 在 sd_card_clk(100 MHz) 域做两级同步 + 边沿检测还原为单拍脉冲。
+//
+// 为什么用"每类事件一根独立 toggle"而不是整条总线跨域：
+//   - 沿用 S2 已验证的 CDC 手法（单比特电平翻转 + 目标域 2FF/边沿检测），
+//     不引入新的跨域模块，也不会因为事件密集而丢脉冲；
+//   - 四类事件（prev/next/confirm/mode）互相独立，不会因同一拍仲裁互相覆盖。
+//
+// 事件来源（事件编码见 src/include/exp_event_defs.vh，标定语义见报告 2.3）：
+//   prev   : EC1 逆时针（EV_ENC_STEP, enc=1, dir=1） 或 KEY01(左) 或 KEY04(上)
+//   next   : EC1 顺时针（EV_ENC_STEP, enc=1, dir=0） 或 KEY03(右) 或 KEY05(下)
+//   confirm: EC1 按压（EV_ENC_SW,  enc=1, DOWN）     或 KEY02(中)
+//   mode   : KEY07(切歌模式) —— 进入/退出 2x2 缩略图选曲视图
+//
+// 说明：KEY 事件用按下沿（EV_KEY_DOWN），避免按下/释放各触发一次。
+//       EC1 为选曲主控；EC2 暂不参与选曲（预留给后续播放控制）。
+// =============================================================================
+module ui_event_bridge (
+    input  wire        clk,            // 板级 clk（50 MHz）
+    input  wire        rst_n,          // clk 域低有效复位
+
+    input  wire        ev_valid,       // 统一事件总线单拍
+    input  wire [3:0]  ev_code,
+    input  wire [15:0] ev_arg,
+    input  wire [15:0] ev_aux,
+
+    output reg         prev_tgl,
+    output reg         next_tgl,
+    output reg         confirm_tgl,
+    output reg         mode_tgl
+);
+    `include "exp_event_defs.vh"
+
+    wire is_enc1_step = (ev_code == EV_ENC_STEP) && (ev_aux[1] == 1'b0);
+    wire is_key_down  = (ev_code == EV_KEY_DOWN);
+
+    // EV_ENC_SW: ev_aux[1]=enc_id，ev_arg[0]=0 表示按下（fall）/ 1 表示释放。
+    wire is_enc1_down = (ev_code == EV_ENC_SW) && (ev_aux[1] == 1'b0) &&
+                        (ev_arg[0] == 1'b0);
+
+    // EC1 方向：direction=0 递增（顺时针/下一张）；direction=1 递减（逆时针/上一张）。
+    wire enc1_dec = is_enc1_step && (ev_aux[0] == 1'b1);
+    wire enc1_inc = is_enc1_step && (ev_aux[0] == 1'b0);
+
+    // KEY 索引 = 端口数组位（KEYnn => idx nn-1）：
+    //   0=KEY01左  1=KEY02中  2=KEY03右  3=KEY04上  4=KEY05下  6=KEY07切歌模式
+    wire key_prev = is_key_down && ((ev_arg == 16'd0) || (ev_arg == 16'd3));
+    wire key_next = is_key_down && ((ev_arg == 16'd2) || (ev_arg == 16'd4));
+    wire key_ok   = is_key_down &&  (ev_arg == 16'd1);
+    wire key_mode = is_key_down &&  (ev_arg == 16'd6);
+
+    wire ev_prev    = enc1_dec | key_prev;
+    wire ev_next    = enc1_inc | key_next;
+    wire ev_confirm = is_enc1_down | key_ok;
+    wire ev_mode    = key_mode;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            prev_tgl    <= 1'b0;
+            next_tgl    <= 1'b0;
+            confirm_tgl <= 1'b0;
+            mode_tgl    <= 1'b0;
+        end else begin
+            if (ev_valid && ev_prev)    prev_tgl    <= ~prev_tgl;
+            if (ev_valid && ev_next)    next_tgl    <= ~next_tgl;
+            if (ev_valid && ev_confirm) confirm_tgl <= ~confirm_tgl;
+            if (ev_valid && ev_mode)    mode_tgl    <= ~mode_tgl;
+        end
+    end
+endmodule
+`endif

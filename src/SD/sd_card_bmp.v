@@ -21,6 +21,7 @@ module sd_card_bmp #(
     input                       sdr_init_done,         // SDRAM初始化完成，已同步到本时钟域
     input                       key_next,              // KEY1：短按下一张
     input                       next_event,            // 第十讲：转场模块完成淡出后的下一张请求
+    input                       prev_event,            // S3：J2 EC1/方向键的"上一张"单拍请求
     input                       select_req,            // 第十五讲：快速选图请求（保持到 select_ack）
     input  [1:0]                select_index,          // 第十五讲：快速选图目标 bank
     output reg                  select_ack,            // 第十五讲：快速选图请求已接受
@@ -396,6 +397,10 @@ module sd_card_bmp #(
                     if ((key_next_press || next_event) && scan_done_eff &&
                         (img_found_count > 3'd0))
                         next_req_pending <= 1'b1;
+
+                    // ---- S3: J2 事件"上一张"（与 KEY2 长按同一分支，行为等价）----
+                    if (prev_event && scan_done_eff && (img_found_count > 3'd0))
+                        prev_req_pending <= 1'b1;
 
                     // ---- KEY2: 长按(上一张) 与 短按(自动轮播开关) 互斥判定 ----
                     if (key_auto_stable == 1'b0) begin

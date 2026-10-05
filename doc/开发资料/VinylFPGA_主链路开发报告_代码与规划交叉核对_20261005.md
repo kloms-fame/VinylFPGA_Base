@@ -57,6 +57,21 @@
 - 事件编码 / 串口格式 / J2 约束片段（零新增）/ 参数开关 / 人工验收清单见 `doc/开发资料/S2_开机Logo_交付说明_20261005.md`
 - **上板人工验收：待用户断电重启确认**（断电后应出现金色黑胶唱盘 + VinylFPGA 字样的开机画面，约 4 s 后自动切首图）。
 
+### 0.3 S3 阶段完成记录（2026-10-05，主界面选歌事件迁移）
+
+- 已实现：选曲业务入口从母板 `key1/key2` 迁移到 `ui_event_bus`。新增 `src/io/ui_event_bridge.v`（clk 域把 EC1 旋转/方向键/EC1 按压/KEY07 解码成四路电平翻转）与 `src/io/browse_fsm.v`（sd 域 3FF 同步 + 边沿还原，按 `view_mode` 路由成既有控制脉冲）；`expansion_integration` 引出只读 `ui_event_*`；`sd_card_bmp` 仅新增 `prev_event` 一条端口与一条 `prev_req_pending` 置位（与既有 KEY2 长按"上一张"同分支）。
+- **保持不变**：`thumbnail_controller`/`thumbnail_layout`/`thumbnail_view_reader`、2×2 缩略图布局、四 bank 预加载、`select_req/select_ack` 握手、转场在 `frame_start` 边界提交，均一行未改。母板 KEY1/KEY2 全行为仍是并联兜底通路（`S3_J2_BROWSE_ENABLE=0` 可整体旁路事件侧）。
+- 事件映射：全屏 EC1 顺/逆 = 下一张/上一张；缩略图 EC1 顺/逆 = 焦点±1；EC1 按压/KEY02 = 全屏进缩略图、缩略图确认；KEY07 = 进出缩略图；KEY01/03/04/05 方向键同向映射。EC2/红外不参与 S3。
+- 串口格式与 J2 约束：**均无变化**（115200 8N1 事件驱动；`pin.adc`/`timing.sdc` 零改动，IO 仍 `71/188`）。
+- 构建快照：`prj/resource_opt_verified_20261005/S3_browse_v1/`（`resource_opt_round.py` → `build_verified_round.py --seed 1 --map-mode area_prior` → `release_verified_round.py`）
+- 时序：Setup WNS `+106 ps` / TNS `0 ps` / 违例端点 `0`；Hold WNS `+4 ps` / TNS `0 ps` / 违例端点 `0`（基线 S2 为 +111 / +3）
+- 资源：LUT `10885/19600 = 55.54%`，REG `7267/19600 = 37.08%`，BRAM9K `46/64`，DSP `12/29`，IO `71/188`（相对 S2：LUT +203、REG +20、BRAM +0、DSP +0、IO +0）
+- bit：`S3_browse_v1/VinylFPGA_optimized.bit`，SHA256 `0bcb7bbaccbabffb5e5414cc9074df211a33d8f4177f22286befe549b9ae5f4e`
+- 仿真：新增 `sim/tb_browse_fsm.v`（路由/兜底/回滚）与 `sim/tb_s3_browse_integration.v`（真实 J2 正交+按键整链）；`python tools/verify_resource_opt.py` 全 PASS
+- 种子说明：seed 7 下 Setup `-850 ps`、2 违例端点，**全部落在既有 `sd_card_bmp_m0/fat32_media_loader_m0`（100 MHz）内部**，不在 S3 新逻辑上；复用同一 `gate.db` 扫描种子后 seed 1 收敛。未使用假路径或放宽约束。过程快照 `S3_browse/`（失败证据 + gate.db）、`S3_browse_s1/`（种子扫描产物）。
+- 交付说明：`doc/开发资料/S3_主界面选歌_交付说明_20261005.md`
+- **上板人工验收：待用户确认**（见交付说明第 7 节）
+
 ## 1. 当前工程现状（以代码为准）
 
 ### 1.1 顶层接口与实际约束

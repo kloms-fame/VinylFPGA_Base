@@ -65,7 +65,15 @@ module expansion_integration #(
     output wire        ui_ev_valid,
     // boot_active：video 域 Boot 状态（1=STATE_BOOT），仅用于串口可观测性，
     //              不参与任何业务逻辑。
-    input  wire        boot_active
+    input  wire        boot_active,
+
+    // ===================== S3：选曲事件出口（最小新增）=====================
+    // ui_event_bus 的单拍事件流原样引出，供 S3 的 ui_event_bridge 解码成
+    // prev/next/confirm/mode。bus 侧语义与串口回显完全一致，不二次加工。
+    output wire        ui_event_valid,
+    output wire [3:0]  ui_event_code,
+    output wire [15:0] ui_event_arg,
+    output wire [15:0] ui_event_aux
 );
 
     // 事件编码常量（与 ui_event_bus / exp_echo_reporter 各取一份，module 作用域）
@@ -172,6 +180,12 @@ module expansion_integration #(
         .ev_arg             (ev_arg),
         .ev_aux             (ev_aux)
     );
+
+    // ---- S3：事件流原样引出（供顶层 ui_event_bridge 解码选曲事件）----
+    assign ui_event_valid = ev_valid;
+    assign ui_event_code  = ev_code;
+    assign ui_event_arg   = ev_arg;
+    assign ui_event_aux   = ev_aux;
 
     // ---- 硬件回显上报器 ----
     exp_echo_reporter #(
