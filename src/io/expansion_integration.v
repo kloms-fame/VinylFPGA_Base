@@ -56,8 +56,20 @@ module expansion_integration #(
     output wire        exp_ws2812_data,
     output wire [5:0]  exp_ext_o,
     output wire        board_buzzer_n,
-    output wire        uart_tx
+    output wire        uart_tx,
+
+    // ===================== S2：开机状态接口（最小新增）=====================
+    // ui_ev_valid：任一"已确认"用户输入的单拍脉冲（clk 域），
+    //              = J2 统一事件(含按键/拨码/编码器/红外) + 母板 KEY1-3 按下。
+    //              S2 顶层用它翻转出一根电平，跨到 video 域作为 Boot 跳过源。
+    output wire        ui_ev_valid,
+    // boot_active：video 域 Boot 状态（1=STATE_BOOT），仅用于串口可观测性，
+    //              不参与任何业务逻辑。
+    input  wire        boot_active
 );
+
+    // 事件编码常量（与 ui_event_bus / exp_echo_reporter 各取一份，module 作用域）
+    `include "exp_event_defs.vh"
 
     // hub -> bus / reporter 的中间信号
     wire [11:0] key_level;
@@ -173,6 +185,7 @@ module expansion_integration #(
         .ev_code    (ev_code),
         .ev_arg     (ev_arg),
         .ev_aux     (ev_aux),
+        .boot_active(boot_active),
         .uart_tx    (uart_tx)
     );
 
@@ -201,6 +214,39 @@ module expansion_integration #(
         .dip_change_pulse(board_sw_change_pulse),
         .dip_change_index(board_sw_change_index)
     );
+
+    // ---- S2：Boot 跳过源（含电源启动保护）----
+    // 只把"用户主动动作"当作跳过请求：按键按下/抬起、编码器步进/按压、红外帧。
+    //
+    // 为什么不能直接用 ev_valid：
+    //   sync_bit / debounce_filter 的上电初值都是 1，若某路输入真实电平时为 0
+    //   （J2 拨码拨在 "0" 位、编码器静止相位为低、按键被按住、母板 key1/key2
+    //   无内部上拉），消抖时间到后消抖器会判定为一次"变化"并输出脉冲。
+    //   若把它当成用户操作，boot_layer 会在上电瞬间被"跳过"，表现为开机黑屏、
+    //   直接显示图片 —— 这正是 S2 上板首测失败的原因。
+    //
+    // 处理：① 明确排除 EV_DIP_CHANGE（拨码是静态配置，不是操作，且上电必然报一次）；
+    //       ② 再加 500 ms 上电保护窗，屏蔽所有输入通道的消抖收敛瞬态。
+    wire ev_is_dip = (ev_code == EV_DIP_CHANGE);
+
+    localparam integer SKIP_GUARD_CYCLES = CLK_FREQ_HZ / 2;   // 500 ms
+    reg [26:0] skip_guard_cnt;
+    reg        skip_guard_done;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            skip_guard_cnt  <= 27'd0;
+            skip_guard_done <= 1'b0;
+        end else if (!skip_guard_done) begin
+            if (skip_guard_cnt >= (SKIP_GUARD_CYCLES - 1))
+                skip_guard_done <= 1'b1;
+            else
+                skip_guard_cnt <= skip_guard_cnt + 27'd1;
+        end
+    end
+
+    assign ui_ev_valid = ((ev_valid & ~ev_is_dip) | (|board_key_fall_pulse))
+                         & skip_guard_done;
 
     // ---- 操作反馈音：复用 J2 标定工程 buzzer_feedback ----
     // 事件源与校验过的互动展示固件一致（KEY / DIP / EC1 / EC2 / 编码器按压 / 红外新帧）。

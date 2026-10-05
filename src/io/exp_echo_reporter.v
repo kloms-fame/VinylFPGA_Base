@@ -16,6 +16,7 @@
 //   ENCx SW DOWN / ENCx SW UP
 //   IR hhhhhhhh CMD hh               hhhhhhhh=32 位 NEC 码，hh=命令字节 code[15:8]
 //   IR REPEAT
+//   BOOT LOGO / BOOT DONE            S2：上电进入 STATE_BOOT / 离开 STATE_BOOT
 // =============================================================================
 module exp_echo_reporter #(
     parameter integer CLK_FREQ_HZ = 50_000_000,
@@ -31,6 +32,9 @@ module exp_echo_reporter #(
     input  wire [15:0] ev_arg,
     input  wire [15:0] ev_aux,
 
+    // S2：Boot 状态（video 域电平，已在顶层同步到本域）
+    input  wire        boot_active,
+
     output wire        uart_tx
 );
     `include "exp_event_defs.vh"
@@ -38,7 +42,9 @@ module exp_echo_reporter #(
     localparam [2:0] ST_BANNER = 3'd0,
                      ST_IDLE   = 3'd1,
                      ST_EVENT  = 3'd2,
-                     ST_SEND   = 3'd3;
+                     ST_SEND   = 3'd3,
+                     ST_BOOT   = 3'd4,
+                     ST_BOOTDN = 3'd5;
 
     localparam integer MSG_MAX = 96;
 
@@ -46,9 +52,11 @@ module exp_echo_reporter #(
     reg [7:0]  msg_len;
     reg [7:0]  tx_index;
     reg [2:0]  state;
+    reg [2:0]  state_after_send;
     reg        tx_start;
     reg [7:0]  tx_data;
     reg        tx_issued;
+    reg        boot_active_q;
 
     // 事件小队列（深度 8）；溢出只翻标志，不覆盖已有事件
     reg [3:0]  q_code [0:7];
@@ -174,6 +182,24 @@ module exp_echo_reporter #(
         end
     endtask
 
+    task fmt_boot_logo;
+        begin
+            put_byte("B"); put_byte("O"); put_byte("O"); put_byte("T");
+            put_byte(" ");
+            put_byte("L"); put_byte("O"); put_byte("G"); put_byte("O");
+            put_crlf();
+        end
+    endtask
+
+    task fmt_boot_done;
+        begin
+            put_byte("B"); put_byte("O"); put_byte("O"); put_byte("T");
+            put_byte(" ");
+            put_byte("D"); put_byte("O"); put_byte("N"); put_byte("E");
+            put_crlf();
+        end
+    endtask
+
     task fmt_key_event;
         input is_down;
         begin
@@ -255,6 +281,8 @@ module exp_echo_reporter #(
             tx_start       <= 1'b0;
             tx_data        <= 8'd0;
             tx_issued      <= 1'b0;
+            state_after_send <= ST_IDLE;
+            boot_active_q  <= 1'b0;
             q_rd           <= 3'd0;
             q_wr           <= 3'd0;
             q_count        <= 4'd0;
@@ -264,6 +292,7 @@ module exp_echo_reporter #(
             cur_aux        <= 16'd0;
         end else begin
             tx_start    <= 1'b0;
+            boot_active_q <= boot_active;
 
             // ---- 事件入队 + 按键事件计数 ----
             if (ev_valid) begin
@@ -287,13 +316,27 @@ module exp_echo_reporter #(
                         msg_len  = 8'd0;
                         fmt_banner();
                         tx_index <= 8'd0;
+                        // S2：只有真正处于 STATE_BOOT 时才补一行 BOOT LOGO
+                        state_after_send <= boot_active ? ST_BOOT : ST_IDLE;
                         state    <= ST_SEND;
                     end
                 end
 
+                // S2：上电进入 STATE_BOOT 的观测点
+                ST_BOOT: begin
+                    msg_len = 8'd0;
+                    fmt_boot_logo();
+                    tx_index <= 8'd0;
+                    state_after_send <= ST_IDLE;
+                    state    <= ST_SEND;
+                end
+
                 ST_IDLE: begin
                     tx_issued <= 1'b0;
-                    if (ECHO_ENABLE && (q_count != 4'd0)) begin
+                    if (ECHO_ENABLE && boot_active_q && !boot_active) begin
+                        // S2：离开 STATE_BOOT（首图就绪 / 用户事件 / 兜底超时）
+                        state <= ST_BOOTDN;
+                    end else if (ECHO_ENABLE && (q_count != 4'd0)) begin
                         cur_code <= q_code[q_rd];
                         cur_arg  <= q_arg[q_rd];
                         cur_aux  <= q_aux[q_rd];
@@ -320,6 +363,15 @@ module exp_echo_reporter #(
                         end
                     endcase
                     tx_index <= 8'd0;
+                    state_after_send <= ST_IDLE;
+                    state    <= ST_SEND;
+                end
+
+                ST_BOOTDN: begin
+                    msg_len = 8'd0;
+                    fmt_boot_done();
+                    tx_index <= 8'd0;
+                    state_after_send <= ST_IDLE;
                     state    <= ST_SEND;
                 end
 
@@ -335,7 +387,7 @@ module exp_echo_reporter #(
                         tx_issued <= 1'b0;
                         if (tx_index == (msg_len - 8'd1)) begin
                             tx_index <= 8'd0;
-                            state    <= ST_IDLE;
+                            state    <= state_after_send;
                         end else begin
                             tx_index <= tx_index + 8'd1;
                         end

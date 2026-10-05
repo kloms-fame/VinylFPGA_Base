@@ -20,6 +20,14 @@
 `include "io/buzzer_feedback.v"
 `include "io/expansion_integration.v"
 
+// ==========================================================================
+// S2 开机 Logo/动画实现（boot_logo_rom + boot_layer）随 top 一起编译，
+// 与上面 S1 的兜底方式一致：独立源文件保留给 lint / iverilog，
+// 模块级包含保护保证不会重复定义。
+// ==========================================================================
+`include "boot/boot_logo_rom.v"
+`include "boot/boot_layer.v"
+
 module top(
     input                       clk,
     input                       rst_n,
@@ -89,6 +97,13 @@ parameter ECHO_TEST_ENABLE = 1'b1;
 // 按键/拨码/编码器/红外 操作反馈音总开关：1=开启（母板蜂鸣器 + 拓展板 EXT1），0=静音。
 // 母板蜂鸣器还需硬件 SW5 拨至接通档才会发声。
 parameter BUZZER_FEEDBACK_ENABLE = 1'b1;
+
+// ===================== S2：开机 Logo/启动画面 =====================
+// S2_BOOT_ENABLE=1 时上电进入 STATE_BOOT，先显示片内 Logo 再交给主链路；
+// =0 时整层旁路，顶层行为与 S1 完全一致（回滚开关）。
+// 图源：doc/资源/VinylFPGA_640x480.jpg，由 tools/gen_boot_logo.py 生成
+//      src/boot/boot_logo_rom.v + src/include/boot_logo_geom.vh。
+parameter S2_BOOT_ENABLE = 1'b1;
 
 wire Sdr_init_done;
 wire Sdr_init_ref_vld;
@@ -236,6 +251,17 @@ wire [ADDR_BITS-1:0] thumb_rd_addr;
 wire        thumb_rd_valid;
 wire [31:0] thumb_rd_dout;
 wire        thumb_mem_enable;       // mem 域：缩略图取像允许发请求
+
+// ===================== S2：开机 Logo/启动画面 =====================
+// 事件握手：ui_ev_valid（clk 域单拍）-> 翻转电平 -> video 域同步/边沿检测。
+// 状态回读：boot_active（video 域电平）-> 两级同步到 clk 域，仅供串口观测。
+wire        ui_ev_valid;
+reg         boot_skip_toggle_clk;
+reg         boot_active_s1;
+reg         boot_active_s2;
+wire        boot_active;
+wire [23:0] boot_rgb;
+wire [23:0] final_rgb;
 
 wire        frw_app_rd_en;          // frame_read_write -> 仲裁器
 wire [ADDR_BITS-1:0] frw_app_rd_addr;
@@ -1461,12 +1487,38 @@ audio_arc_calculate #(
 );
 
 // ===================== RGB/DE 转 AXIS 视频 =====================
+// ===================== S2：开机 Logo 图层（末级像素替换）=====================
+// 位置：波形叠加之后、RGB->AXIS 之前。boot_active=1 时整屏由 Logo 接管，
+// 盒外为纯黑；boot_active=0 时 final_rgb 完全等于 S1 的 waveform_rgb_out，
+// de/vs 节拍一行不改，因此不影响 HDMI 时序与音频数据岛调度。
+boot_layer #(
+    .BOOT_ENABLE  (S2_BOOT_ENABLE),
+    .CLK_FREQ_HZ  (25_000_000),   // video_clk
+    .HOLD_MS      (1500),         // Logo 最短显示 1.5 s
+    .TIMEOUT_MS   (8000),         // 无事件/无首图时 8 s 兜底进入浏览态
+    .BREATH_FLOOR (192)           // 呼吸最暗增益 192/256
+) u_boot_layer (
+    .clk               (video_clk),
+    .rst_n             (video_rst_n),
+    .vs                (vs),
+    .de                (adjusted_de),
+    .pixel_x           (adjusted_pixel_x),
+    .skip_toggle       (boot_skip_toggle_clk),
+    .first_image_ready (display_valid_sync2),
+    .boot_active       (boot_active),
+    .rgb               (boot_rgb)
+);
+
+// S2 总开关（含诊断模式旁路）：=0 或不生效时整层旁路，回到 S1 像素。
+wire s2_boot_on = S2_BOOT_ENABLE && !pat_mode;
+assign final_rgb = (s2_boot_on && boot_active) ? boot_rgb : wave_rgb_eff;
+
 video_rgb_to_axis_640x480 u_video_rgb_to_axis_640x480(
     .I_clk         (video_clk),
     .I_rst         (~video_rst_n),
     .I_vs          (vs),
     .I_de          (pat_mode ? de : adjusted_de),
-    .I_rgb         (wave_rgb_eff),
+    .I_rgb         (final_rgb),
     .O_video_user  (axis_s_user),
     .O_video_valid (axis_s_valid),
     .O_video_last  (axis_s_last),
@@ -1597,7 +1649,30 @@ expansion_integration #(
     .exp_ws2812_data  (exp_ws2812_data),
     .exp_ext_o        (exp_ext_o),
     .board_buzzer_n   (board_buzzer_n),
-    .uart_tx          (uart_tx)
+    .uart_tx          (uart_tx),
+    .ui_ev_valid      (ui_ev_valid),
+    .boot_active      (boot_active_s2)
 );
+
+// ==========================================================================
+// S2：Boot 状态跨域握手
+//   1) clk 域：任一已确认事件 -> 翻转电平（单比特电平翻转是标准 CDC 手法，
+//      不会因事件密集而丢脉冲，也不需要事件总线整体跨域）；
+//   2) video 域：boot_layer 内两级同步 + 边沿检测，一次事件只消费一次；
+//   3) 反向：boot_active 为慢变单比特电平，两级同步回 clk 域仅用于串口观测。
+// ==========================================================================
+always @(posedge clk or negedge exp_rst_n) begin
+    if (!exp_rst_n) begin
+        boot_skip_toggle_clk <= 1'b0;
+        boot_active_s1       <= S2_BOOT_ENABLE;
+        boot_active_s2       <= S2_BOOT_ENABLE;
+    end else begin
+        if (ui_ev_valid)
+            boot_skip_toggle_clk <= ~boot_skip_toggle_clk;
+
+        boot_active_s1 <= boot_active;
+        boot_active_s2 <= boot_active_s1;
+    end
+end
 
 endmodule

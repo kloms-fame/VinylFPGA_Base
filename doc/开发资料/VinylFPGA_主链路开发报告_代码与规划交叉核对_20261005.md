@@ -39,6 +39,24 @@
 - 事件编码 / 串口格式 / J2 约束片段 / 差异说明见 `doc/开发资料/S1_拓展板移植集成_交付说明_20261005.md`
 - **上板人工验收：已完成（用户实测）**。烧录运行、按键/编码器/拨码/红外/LED 通路与主链路画面音频均通过；v2 仅改串口输出方式与编译加固，不改变已验收的物理通路行为（详见交付说明第 7 节）。
 
+### 0.2 S2 阶段完成记录（2026-10-05 更新，v2 换透明背景图源 + 配置 Flash 固化）
+
+- 已实现：最小 `STATE_BOOT`（`src/boot/boot_layer.v`）+ 片上调色板 Logo ROM（`src/boot/boot_logo_rom.v`，由 `tools/gen_boot_logo.py` 从 `doc/资源/开机logo透明背景.png` 生成）+ 固定周期呼吸 + 事件跳过 + 首图自动交接 + 8 s 兜底超时。
+- 图层位置：像素链**最末端**（波形之后、`RGB->AXIS` 之前）纯像素替换；不改 `de/vs/hs`，不动 HDMI 核与音频数据岛调度；`boot_active=0` 时 `final_rgb` 等于 S1 的 `waveform_rgb_out`。
+- 事件/CDC：`expansion_integration` 新增 `ui_ev_valid`（J2 统一事件 + 母板 KEY1-3 按下）；`clk`→`video` 用翻转电平 + 两级同步 + 边沿检测，一次事件只消费一次；状态跳转只在 `frame_start` 提交。
+- 图源与编码：透明背景 PNG → alpha 求内容盒 `x[194,445] y[96,376]`，外扩 8 像素后 2 倍欠采样存 `134×149`，16 色、4bit 索引 2 像素/字打包；盒外纯黑。整屏还原 PSNR 24.77 dB。
+- 构建快照：`prj/resource_opt_verified_20261005/S2_boot_v4/`（seed 7 / area_prior；`S2_boot/` 旧 JPG 首版、`S2_boot_v2/` vs 极性 bug 版、`S2_boot_v3/` 上电假事件 bug 版，仅留对比）
+- 时序：Setup WNS `+111 ps` / TNS `0 ps` / 违例端点 `0`；Hold WNS `+3 ps` / TNS `0 ps` / 违例端点 `0`。最紧路径仍是既有 `sd_card_clk`(100 MHz) 域，S2 逻辑全在 25 MHz video 域。
+- 资源：LUT `10682/19600 = 54.50%`，REG `7247/19600 = 36.97%`，BRAM9K `46/64 = 71.88%`，DSP `12/29 = 41.38%`，IO `71/188`（相对 S1：LUT +205、REG +74、BRAM +16、DSP +2）
+- bit：`S2_boot_v4/VinylFPGA_optimized.bit`，SHA256 `ccd057775073db3ad72dcbed4eb6cc529cf2e96b013cbaeffb5d528d7d3fb0f8`
+- 仿真：新增 `sim/tb_boot_s2.v` `TEST_PASS`（Logo 渲染/盒外纯黑/帧边界跳过/事件只消费一次/首图自动交接）；`verify_resource_opt.py` 全 PASS
+- **配置 Flash 固化：已完成**。板载配置 Flash 实测为 `W25Q16`（JEDEC `EF 40 15`，MSPI 上电自启芯片，与《产品交互.md》一致；第六讲文档所写 `W25Q64` 实为另一颗用户数据 SPI Flash）。用 `tools/program_flash_s2_boot.tcl`（BitWizard：`bit_to_vec` → `program_spi` → `verify_spi`）写入，`program_spi` 实测 2.79 s 完成且无报错。
+- **根因记录（用户反馈"开机不显示 Logo"）**：此前只做易失 SRAM 下载，未写配置 Flash，断电重上电后仍运行 Flash 内 S1 老镜像；Logo 逻辑本身无问题（对照实验：把 ROM 初值全换同常量后 RAM 数 46→34，证明 TD 采用了 `initial` 初值）。
+- **第二个根因（已修复）**：`color_bar.v` 在 640×480 下 `VS_POL=0`（**场同步低有效**，vs 只在场同步 2 行拉低、其余 523 行保持高），而 `boot_layer` 最初用 `if (vs) pixel_y<=0` 清行计数，导致行计数被压在 0、永远进不了 Logo 的 Y 范围 `[88,385]` → 整屏黑。修复：改用与主链路同一判据的 `frame_start`（`vs_q & ~vs`），与极性无关；`tb_boot_s2` 同步改为真实低有效 vs（修复前 `nonblack=0`，修复后 `nonblack=43236`）。
+- **第三个根因（上板仍黑屏的真正原因，已修复）**：`sync_bit`/`debounce_filter` 上电初值均为 1，上电后若某路输入真实为 0（J2 拨码拨在 "0" 位、编码器静止相位为低、按键被按住、母板 key1/key2 内部 `PULLTYPE=NONE`），消抖 8 ms 到点会报一次"变化"；S2 的 `ui_ev_valid` 原本把它当成用户跳过请求，于是上电约 8 ms 就把 `boot_active` 清 0 → Logo 从未显示。修复（`expansion_integration`）：① 明确排除 `EV_DIP_CHANGE`（拨码是静态配置、不是操作）；② 增加 500 ms 上电保护窗。新增 `sim/tb_s2_boot_guard.v` 复现并回归：修复前 `FAIL power-on settling produced 1 skip event`，修复后 `PASS no power-on skip event` + `PASS real key press after guard still reported`。
+- 事件编码 / 串口格式 / J2 约束片段（零新增）/ 参数开关 / 人工验收清单见 `doc/开发资料/S2_开机Logo_交付说明_20261005.md`
+- **上板人工验收：待用户断电重启确认**（断电后应出现金色黑胶唱盘 + VinylFPGA 字样的开机画面，约 4 s 后自动切首图）。
+
 ## 1. 当前工程现状（以代码为准）
 
 ### 1.1 顶层接口与实际约束
