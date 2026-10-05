@@ -12,6 +12,8 @@ module tb_sd_card_bmp_fourbank;
     reg         sdr_init_done = 1'b0;
     reg         key_next = 1'b1;
     reg         next_event = 1'b0;
+    reg         select_req = 1'b0;
+    reg  [1:0]  select_index = 2'd0;
     reg         key_auto = 1'b1;
     reg         write_finish_toggle = 1'b0;
     reg         write_req_ack = 1'b0;
@@ -20,6 +22,7 @@ module tb_sd_card_bmp_fourbank;
     wire        display_valid;
     wire [1:0]  write_buf_idx;
     wire [1:0]  disp_buf_idx;
+    wire        select_ack;
     wire        write_req;
     wire        write_en;
     wire [31:0] write_data;
@@ -45,6 +48,7 @@ module tb_sd_card_bmp_fourbank;
     integer     errors = 0;
     integer     wait_count;
     reg         finish_toggled_for_load = 1'b0;
+    reg         abort_before;
 
     sd_card_bmp #(
         .CLK_FREQ_HZ       (1000),
@@ -61,6 +65,9 @@ module tb_sd_card_bmp_fourbank;
         .sdr_init_done       (sdr_init_done),
         .key_next            (key_next),
         .next_event          (next_event),
+        .select_req          (select_req),
+        .select_index        (select_index),
+        .select_ack          (select_ack),
         .key_auto            (key_auto),
         .state_code          (state_code),
         .bmp_width           (16'd2),
@@ -243,6 +250,34 @@ module tb_sd_card_bmp_fourbank;
             errors = errors + 1;
         end
 
+        // 第十五讲：快速选择已加载bank，不允许重新加载。
+        @(negedge clk);
+        select_index = 2'd0;
+        select_req   = 1'b1;
+        wait (select_ack === 1'b1);
+        @(negedge clk);
+        select_req = 1'b0;
+        repeat (5) @(posedge clk);
+        if (disp_buf_idx !== 2'd0 || load_start_count != 4) begin
+            $display("FAIL: quick select disp=%0d load_count=%0d",
+                     disp_buf_idx, load_start_count);
+            errors = errors + 1;
+        end
+
+        // 再次选择同一bank时必须产生一次释放脉冲，供转场状态机退出。
+        abort_before = dut.switch_abort_toggle;
+        @(negedge clk);
+        select_index = 2'd0;
+        select_req   = 1'b1;
+        wait (select_ack === 1'b1);
+        @(negedge clk);
+        select_req = 1'b0;
+        repeat (5) @(posedge clk);
+        if (dut.switch_abort_toggle == abort_before) begin
+            $display("FAIL: same-bank quick select did not release transition");
+            errors = errors + 1;
+        end
+
         // KEY2短按：打开自动轮播；四bank均已加载，应只切换索引。
         short_press_key2();
         if (!dut.auto_play_en) begin
@@ -255,7 +290,7 @@ module tb_sd_card_bmp_fourbank;
             $display("FAIL: auto play caused reload, count=%0d", load_start_count);
             errors = errors + 1;
         end
-        if (disp_buf_idx == 2'd2) begin
+        if (disp_buf_idx == 2'd0) begin
             $display("FAIL: auto play did not advance image");
             errors = errors + 1;
         end

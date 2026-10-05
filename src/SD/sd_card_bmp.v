@@ -21,6 +21,9 @@ module sd_card_bmp #(
     input                       sdr_init_done,         // SDRAM初始化完成，已同步到本时钟域
     input                       key_next,              // KEY1：短按下一张
     input                       next_event,            // 第十讲：转场模块完成淡出后的下一张请求
+    input                       select_req,            // 第十五讲：快速选图请求（保持到 select_ack）
+    input  [1:0]                select_index,          // 第十五讲：快速选图目标 bank
+    output reg                  select_ack,            // 第十五讲：快速选图请求已接受
     input                       key_auto,              // KEY2：短按自动轮播开关 / 长按上一张
     output reg [3:0]            state_code,            // 数码管显示：当前图片编号 1~4
     input  [15:0]               bmp_width,
@@ -267,6 +270,7 @@ module sd_card_bmp #(
             long_press_cnt        <= 32'd0;
             long_press_marked     <= 1'b0;
             key_auto_stable_d     <= 1'b1;
+            select_ack            <= 1'b0;
             state_code            <= 4'd0;
         end else begin
             // 跨时钟域信号同步与按键打拍
@@ -275,6 +279,7 @@ module sd_card_bmp #(
 
             scan_start_pulse  <= 1'b0;
             load_start_pulse  <= 1'b0;
+            select_ack        <= 1'b0;
 
             if (!sd_init_done) begin
                 scan_kicked           <= 1'b0;
@@ -308,6 +313,7 @@ module sd_card_bmp #(
                 switch_abort_toggle   <= 1'b0;
                 long_press_cnt        <= 32'd0;
                 long_press_marked     <= 1'b0;
+                select_ack            <= 1'b0;
                 state_code            <= 4'd0;
             end else begin
                 // 1. 扫描匹配结果更新
@@ -430,8 +436,35 @@ module sd_card_bmp #(
                     end
 
                     // ---- 图片加载/切换仲裁调度逻辑 ----
-                    // 优先级1：手动下一张。已加载bank零延迟切换；未加载bank则加载后再切换。
+                    // 优先级0（第十五讲）：缩略图快速选择。select_req 默认恒为0，
+                    // 以下原有仲裁路径在旧功能下保持原行为。
                     if (scan_done_eff && display_valid && !load_busy &&
+                        select_req && (img_found_count != 3'd0)) begin
+                        auto_cnt <= 32'd0;
+                        if (ready_lut(select_index)) begin
+                            img_idx      <= select_index;
+                            disp_buf_idx <= select_index;
+                            select_ack   <= 1'b1;
+                            // 选中的就是当前bank时 state_code 不变，转场状态机
+                            // 等不到 index_commit；复用已有 abort 脉冲释放它。
+                            if (select_index == img_idx)
+                                switch_abort_toggle <= ~switch_abort_toggle;
+                        end else if (bmp_ready) begin
+                            load_idx         <= select_index;
+                            load_index       <= select_index;
+                            write_buf_idx    <= select_index;
+                            load_start_pulse <= 1'b1;
+                            load_busy        <= 1'b1;
+                            load_is_preload  <= 1'b0;
+                            load_for_display <= 1'b1;
+                            source_done_seen <= 1'b0;
+                            load_error_seen  <= 1'b0;
+                            retry_count      <= 2'd0;
+                            select_ack       <= 1'b1;
+                        end
+                    end
+                    // 优先级1：手动下一张。已加载bank零延迟切换；未加载bank则加载后再切换。
+                    else if (scan_done_eff && display_valid && !load_busy &&
                         next_req_pending && (img_found_count != 3'd0)) begin
                         next_req_pending <= 1'b0;
                         auto_cnt         <= 32'd0;

@@ -126,12 +126,44 @@ wire [ADDR_BITS-1:0] App_wr_addr;
 wire [MEM_DATA_BITS-1:0] App_wr_din;
 wire [3:0] App_wr_dm;
 
-// ===================== 第十三讲：图片缩放与缩略图 =====================
-// 缩略图视图所需的信号。全部是新增线网，全屏模式下不改变任何既有行为。
-wire        key_view_hold;          // KEY1 长按脉冲（sd_card_clk 域）
-wire        view_mode_vid;          // video 域视图请求电平（1=缩略图）
-reg         view_mode_frame;        // 在 frame_start 提交，避免半帧切换
-wire        thumb_view;             // 真正生效的缩略图视图（诊断模式下强制关）
+// ===================== 第十三/十五讲：图片缩略图与交互选择 =====================
+// 第十五讲在第十三讲取像链路上增加 thumbnail_controller。控制器位于
+// sd_card_clk 域，只负责 view_mode/focus_index/active_index/transition_req；
+// 视频域仍在 frame_start 整帧提交，避免像素链路半帧换图。
+wire        key_view_hold;          // KEY1 长按脉冲：进入/退出缩略图
+wire        key2_thumb_press;       // KEY2 短按脉冲：缩略图焦点左移
+wire        key2_thumb_hold;        // KEY2 长按脉冲：缩略图确认
+
+wire        thumb_mode_sd;          // thumbnail_controller 输出（sd 域）
+wire [1:0]  thumb_focus_index_sd;
+wire [1:0]  thumb_active_index_sd;
+wire        thumb_transition_req_sd;
+wire        thumb_confirm_event_sd;
+
+wire        key_next_request_sd;    // 全屏模式 KEY1 短按：下一张
+wire        fade_start_event_sd;    // 送 video_fade_transition 的淡出请求
+wire        key2_to_sd;             // 缩略图模式下屏蔽原 KEY2 功能
+reg         key2_thumb_lock_sd;     // 锁定到 KEY2 松开，防止确认后误触发上一张
+
+reg         thumb_select_pending_sd;
+reg         thumb_select_hold_sd;
+reg  [1:0]  thumb_select_index_hold_sd;
+wire        thumb_select_req_sd;
+wire [1:0]  thumb_select_index_sd;
+wire        sd_select_ack;
+
+reg         frame_start_toggle_vid;
+reg  [2:0]  frame_start_tgl_sd;
+wire        frame_start_sd;
+
+reg         view_mode_sd_sync1;
+reg         view_mode_sd_sync2;
+reg         view_mode_frame;
+wire        thumb_view;
+
+reg  [1:0]  thumb_focus_sync1;
+reg  [1:0]  thumb_focus_sync2;
+reg  [1:0]  thumb_focus_frame;
 
 wire [3:0]  image_ready_sd;         // sd_card_clk 域：四个 bank 就绪标记
 reg  [3:0]  image_ready_sync1;
@@ -526,8 +558,11 @@ sd_card_bmp #(
     .sdr_init_done     (Sdr_init_done_sd),
     // 第十讲：KEY1先进入转场控制器，淡出完成后再用next_event触发切换。
     .key_next          (1'b1),
-    .next_event        (fade_next_event),
-    .key_auto          (key2_eff_n),
+    .next_event        (fade_next_event && !thumb_select_pending_sd),
+    .select_req        (thumb_select_req_sd),
+    .select_index      (thumb_select_index_sd),
+    .select_ack        (sd_select_ack),
+    .key_auto          (key2_to_sd),
     .state_code        (state_code),
     .bmp_width         (16'd640),
     .bmp_height        (16'd480),
@@ -582,12 +617,103 @@ key_press_hold #(
     .button_stable_out()
 );
 
+// 第十五讲：KEY2 短/长按判别只用于缩略图模式（左移/确认）；全屏模式下
+// KEY2 仍原样直通 sd_card_bmp，自动轮播开关和长按上一张保持不变。
+key_press_hold #(
+    .CLK_FREQ_HZ (100_000_000),
+    .DEBOUNCE_MS (20),
+    .HOLD_MS     (1000)
+) u_key_thumb_left_confirm (
+    .clk              (sd_card_clk),
+    .rst              (~sdcard_rst_n),
+    .button_in        (key2_eff_n),
+    .press_pulse      (key2_thumb_press),
+    .hold_pulse       (key2_thumb_hold),
+    .button_stable_out()
+);
+
+assign key_next_request_sd   = key_next_transition_press && !thumb_mode_sd;
+assign key2_to_sd            = (thumb_mode_sd || key2_thumb_lock_sd) ? 1'b1 : key2_eff_n;
+assign thumb_confirm_event_sd = key2_thumb_hold && thumb_mode_sd;
+assign thumb_select_req_sd   = thumb_select_hold_sd;
+assign thumb_select_index_sd = thumb_select_index_hold_sd;
+
+// 教程 thumbnail_controller：控制域按键 -> view/focus/active/transition_req。
+// key_mode=KEY1长按；缩略图下 KEY1短按=右移、KEY2短按=左移、KEY2长按=确认。
+thumbnail_controller u_thumbnail_controller (
+    .clk             (sd_card_clk),
+    .rst_n           (sdcard_rst_n),
+    .key_right       (key_next_transition_press && thumb_mode_sd),
+    .key_left        (key2_thumb_press && thumb_mode_sd),
+    .key_confirm     (thumb_confirm_event_sd),
+    .key_mode        (key_view_hold),
+    .image_complete  (image_ready_sd),
+    .frame_start     (frame_start_sd),
+    .view_mode       (thumb_mode_sd),
+    .focus_index     (thumb_focus_index_sd),
+    .active_index    (thumb_active_index_sd),
+    .transition_req  (thumb_transition_req_sd)
+);
+
+// video 域 frame_start 单拍 -> sd 域单拍，供 controller 在帧边界提交转场请求。
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n)
+        frame_start_toggle_vid <= 1'b0;
+    else if (frame_start)
+        frame_start_toggle_vid <= ~frame_start_toggle_vid;
+end
+
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+    if (!sdcard_rst_n)
+        frame_start_tgl_sd <= 3'b000;
+    else
+        frame_start_tgl_sd <= {frame_start_tgl_sd[1:0], frame_start_toggle_vid};
+end
+
+assign frame_start_sd = frame_start_tgl_sd[2] ^ frame_start_tgl_sd[1];
+
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+    if (!sdcard_rst_n)
+        key2_thumb_lock_sd <= 1'b0;
+    else if (key2_eff_n)
+        key2_thumb_lock_sd <= 1'b0;
+    else if (thumb_mode_sd)
+        key2_thumb_lock_sd <= 1'b1;
+end
+
+// 快速选择：确认后在淡出完成的 next_event 边界发出保持请求，直到
+// sd_card_bmp 的 select_ack 接受，避免预加载忙时丢失一次选图请求。
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+    if (!sdcard_rst_n) begin
+        thumb_select_pending_sd    <= 1'b0;
+        thumb_select_hold_sd       <= 1'b0;
+        thumb_select_index_hold_sd <= 2'd0;
+    end else begin
+        if (thumb_confirm_event_sd)
+            thumb_select_pending_sd <= 1'b1;
+
+        if (thumb_select_pending_sd)
+            thumb_select_index_hold_sd <= thumb_active_index_sd;
+
+        if (fade_next_event && thumb_select_pending_sd) begin
+            thumb_select_hold_sd    <= 1'b1;
+            thumb_select_pending_sd <= 1'b0;
+        end
+
+        if (sd_select_ack)
+            thumb_select_hold_sd <= 1'b0;
+    end
+end
+
+assign fade_start_event_sd = key_next_request_sd ||
+                             (thumb_transition_req_sd && thumb_select_pending_sd);
+
 video_fade_transition #(
     .FADE_FRAMES (16)
 ) u_video_fade_transition (
     .ctrl_clk        (sd_card_clk),
     .ctrl_rst_n      (sdcard_rst_n),
-    .next_event_in   (key_next_transition_press),
+    .next_event_in   (fade_start_event_sd),
     .next_event_out  (fade_next_event),
     .fade_busy       (fade_busy),
 
@@ -673,44 +799,28 @@ seg_scan #(
 wire        video_read_req_eff;
 reg  [23:0] local_pattern_rgb;
 
-// ===================== 第十三讲：缩略图/全屏视图切换 =====================
-// KEY1 长按脉冲（sd_card_clk 域）用 toggle + 两级同步搬到 video 域，
-// 再在 frame_start 处整帧提交，避免切换发生在半帧中间。
-reg view_mode_toggle_sd;
-reg view_mode_tgl_s1;
-reg view_mode_tgl_s2;
-reg view_mode_tgl_s3;
-reg view_mode_vid_r;
-
-always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
-    if (!sdcard_rst_n)
-        view_mode_toggle_sd <= 1'b0;
-    else if (key_view_hold)
-        view_mode_toggle_sd <= ~view_mode_toggle_sd;
-end
-
+// ===================== 第十三/十五讲：缩略图/全屏视图切换 =====================
+// controller 的 view_mode/focus_index 位于 sd_card_clk 域；两级同步后只在
+// frame_start 整帧提交，避免半帧切换坐标或焦点边框造成撕裂。
 always @(posedge video_clk or negedge video_rst_n) begin
     if (!video_rst_n) begin
-        view_mode_tgl_s1 <= 1'b0;
-        view_mode_tgl_s2 <= 1'b0;
-        view_mode_tgl_s3 <= 1'b0;
-        view_mode_vid_r  <= 1'b0;
+        view_mode_sd_sync1 <= 1'b0;
+        view_mode_sd_sync2 <= 1'b0;
+        view_mode_frame    <= 1'b0;
+        thumb_focus_sync1  <= 2'd0;
+        thumb_focus_sync2  <= 2'd0;
+        thumb_focus_frame  <= 2'd0;
     end else begin
-        view_mode_tgl_s1 <= view_mode_toggle_sd;
-        view_mode_tgl_s2 <= view_mode_tgl_s1;
-        view_mode_tgl_s3 <= view_mode_tgl_s2;
-        if (view_mode_tgl_s2 ^ view_mode_tgl_s3)
-            view_mode_vid_r <= ~view_mode_vid_r;
+        view_mode_sd_sync1 <= thumb_mode_sd;
+        view_mode_sd_sync2 <= view_mode_sd_sync1;
+        thumb_focus_sync1  <= thumb_focus_index_sd;
+        thumb_focus_sync2  <= thumb_focus_sync1;
+
+        if (frame_start) begin
+            view_mode_frame   <= view_mode_sd_sync2;
+            thumb_focus_frame <= thumb_focus_sync2;
+        end
     end
-end
-
-assign view_mode_vid = view_mode_vid_r;
-
-always @(posedge video_clk or negedge video_rst_n) begin
-    if (!video_rst_n)
-        view_mode_frame <= 1'b0;
-    else if (frame_start)
-        view_mode_frame <= view_mode_vid;
 end
 
 // 诊断模式（DIAG_SDRAM_PATTERN）下保持原行为，缩略图视图强制关闭。
@@ -1045,7 +1155,7 @@ thumbnail_view_reader #(
     .enable         (thumb_view),
     .mem_enable     (thumb_mem_enable),
     .frame_start    (frame_start),
-    .focus_index    (media_id),
+    .focus_index    (thumb_focus_frame),
     .image_complete (image_ready_sync2),
     .pixel_x        (osd_pixel_x),
     .in_de          (de),
