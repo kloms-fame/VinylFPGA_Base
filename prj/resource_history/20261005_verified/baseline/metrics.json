@@ -1,0 +1,11 @@
+{
+  "round": "baseline",
+  "lut": 8711,
+  "ff": 5955,
+  "bram9k": 30,
+  "bram32k": 0,
+  "dsp": 11,
+  "slices": 5185,
+  "setup_ps": 82,
+  "hold_ps": 3
+}

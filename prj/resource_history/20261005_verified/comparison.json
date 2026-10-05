@@ -1,0 +1,46 @@
+[
+  {
+    "round": "baseline",
+    "lut": 8711,
+    "ff": 5955,
+    "bram9k": 30,
+    "bram32k": 0,
+    "dsp": 11,
+    "slices": 5185,
+    "setup_ps": 82,
+    "hold_ps": 3
+  },
+  {
+    "round": "p01_menu",
+    "lut": 8709,
+    "ff": 5953,
+    "bram9k": 30,
+    "bram32k": 0,
+    "dsp": 11,
+    "slices": 5209,
+    "setup_ps": -415,
+    "hold_ps": 11
+  },
+  {
+    "round": "p02_keys_checked",
+    "lut": 8694,
+    "ff": 5953,
+    "bram9k": 30,
+    "bram32k": 0,
+    "dsp": 11,
+    "slices": 5203,
+    "setup_ps": -140,
+    "hold_ps": 11
+  },
+  {
+    "round": "p03_header",
+    "lut": 8728,
+    "ff": 5925,
+    "bram9k": 30,
+    "bram32k": 0,
+    "dsp": 11,
+    "slices": 5279,
+    "setup_ps": 1,
+    "hold_ps": 11
+  }
+]

@@ -152,7 +152,9 @@ module fat32_media_loader (
     reg [15:0] planes;
     reg [15:0] bit_count;
     reg [31:0] compression;
-    reg [31:0] header_byte_cnt;
+    // Only counts the 54-byte BMP header: the state exits at byte 53.
+    // File offsets and dynamic image dimensions retain their full width.
+    reg [5:0]  header_byte_cnt;
     reg [31:0] pixel_byte_cnt;
     reg [31:0] pixel_count;
     reg [2:0]  rgb_byte_cnt;

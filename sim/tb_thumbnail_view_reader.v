@@ -436,7 +436,7 @@ module rfifo_32_32_512 #(
     input  wire [31:0]           di,
     input  wire                  re,
     output wire [31:0]           dout,
-    output reg                   valid,
+    output wire                  valid,
     output wire                  full_flag,
     output wire                  empty_flag,
     output wire                  afull,

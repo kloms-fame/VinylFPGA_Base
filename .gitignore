@@ -63,3 +63,7 @@ sim_out/
 # Reproducible resource optimization simulation outputs
 sim/resource_opt/
 prj/resource_opt_20261005/seed*/
+
+# Per-round source snapshots and generated cycle-equivalence benches.
+prj/resource_opt_verified_20261005/
+sim/resource_opt_verified/
