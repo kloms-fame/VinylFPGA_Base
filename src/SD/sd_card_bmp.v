@@ -33,6 +33,7 @@ module sd_card_bmp #(
     input                       write_finish_toggle,   // 来自 mem_clk 域的写完成翻转信号
     output reg [1:0]            write_buf_idx,         // 当前加载目标bank(0~3)
     output reg [1:0]            disp_buf_idx,          // 当前显示bank(0~3)
+    output wire [3:0]           image_ready_out,       // 第十三讲：四个bank加载完成标记（只读引出）
     output                      write_req,
     input                       write_req_ack,
     output                      write_en,
@@ -144,6 +145,9 @@ module sd_card_bmp #(
     assign auto_play_en_out   = auto_play_en;
     assign preload_done       = (img_found_count == 3'd0) ||
                                 (preload_idx >= img_found_count);
+    // 第十三讲：把内部 bank 就绪标记只读引出给顶层缩略图视图使用，
+    // 不改变任何原有状态机逻辑。
+    assign image_ready_out    = image_ready;
     wire audio_play_request = audio_file_valid && scan_done_eff &&
                               preload_done;
     assign audio_play_enable = audio_play_enable_reg;

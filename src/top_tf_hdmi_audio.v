@@ -101,6 +101,37 @@ wire [ADDR_BITS-1:0] App_wr_addr;
 wire [MEM_DATA_BITS-1:0] App_wr_din;
 wire [3:0] App_wr_dm;
 
+// ===================== 第十三讲：图片缩放与缩略图 =====================
+// 缩略图视图所需的信号。全部是新增线网，全屏模式下不改变任何既有行为。
+wire        key_view_hold;          // KEY1 长按脉冲（sd_card_clk 域）
+wire        view_mode_vid;          // video 域视图请求电平（1=缩略图）
+reg         view_mode_frame;        // 在 frame_start 提交，避免半帧切换
+wire        thumb_view;             // 真正生效的缩略图视图（诊断模式下强制关）
+
+wire [3:0]  image_ready_sd;         // sd_card_clk 域：四个 bank 就绪标记
+reg  [3:0]  image_ready_sync1;
+reg  [3:0]  image_ready_sync2;      // video 域：缩略图 image_complete
+
+wire        thumb_active;           // 当前像素属于缩略图区域
+wire [23:0] thumb_rgb;              // 缩略图像素（含焦点边框色）
+wire        thumb_focus_border;
+wire        thumb_line_mismatch;    // 行首一致性校验失败（可上 ILA 观察）
+wire [23:0] view_rgb;               // 叠加缩略图之后的像素源
+
+wire        thumb_rd_req;
+wire [ADDR_BITS-1:0] thumb_rd_addr;
+wire        thumb_rd_valid;
+wire [31:0] thumb_rd_dout;
+wire        thumb_mem_enable;       // mem 域：缩略图取像允许发请求
+
+wire        frw_app_rd_en;          // frame_read_write -> 仲裁器
+wire [ADDR_BITS-1:0] frw_app_rd_addr;
+wire        frw_rd_valid;           // 仲裁器 -> frame_read_write 的 Sdr_rd_en
+wire        rd_arb_mode_active;     // 1=缩略图取像占用 SDRAM 读口
+wire        rd_arb_mem_idle;        // 1=读口无待切换
+wire        frw_read_en_gated;      // 帧读 FIFO 消费使能（缩略图模式下关断）
+reg         frw_resume;             // 回到全屏后等一次新的帧读握手再放行
+
 wire hs_0;
 wire vs_0;
 wire de_0;
@@ -458,6 +489,7 @@ sd_card_bmp #(
     .write_finish_toggle(frame_write_toggle_mem),
     .write_buf_idx     (write_buf_idx),
     .disp_buf_idx      (disp_buf_idx),
+    .image_ready_out   (image_ready_sd),
 
     .write_req         (sd_card_write_req),
     .write_req_ack     (sd_card_write_req_ack_sync[1]),
@@ -482,14 +514,20 @@ sd_card_bmp #(
 );
 
 // 第十讲：KEY1外部消抖后送转场控制器，避免被sd_card_bmp内部硬切逻辑抢先响应。
-key_press_debounce #(
+// 第十三讲：换成“短按/长按判别”版本。
+//   - 短按（松开时）仍输出 next 脉冲，行为等价原来的 KEY1“下一张”；
+//   - 长按 1s 输出 hold 脉冲，用于切换“缩略图 / 全屏”视图，且不会同时触发
+//     下一张。KEY2 的消抖模块仍用原 key_press_debounce，行为完全不变。
+key_press_hold #(
     .CLK_FREQ_HZ (100_000_000),
-    .DEBOUNCE_MS (20)
+    .DEBOUNCE_MS (20),
+    .HOLD_MS     (1000)
 ) u_key_next_transition (
     .clk              (sd_card_clk),
     .rst              (~sdcard_rst_n),
     .button_in        (key1),
     .press_pulse      (key_next_transition_press),
+    .hold_pulse       (key_view_hold),
     .button_stable_out()
 );
 
@@ -584,9 +622,69 @@ seg_scan #(
 wire        video_read_req_eff;
 reg  [23:0] local_pattern_rgb;
 
+// ===================== 第十三讲：缩略图/全屏视图切换 =====================
+// KEY1 长按脉冲（sd_card_clk 域）用 toggle + 两级同步搬到 video 域，
+// 再在 frame_start 处整帧提交，避免切换发生在半帧中间。
+reg view_mode_toggle_sd;
+reg view_mode_tgl_s1;
+reg view_mode_tgl_s2;
+reg view_mode_tgl_s3;
+reg view_mode_vid_r;
+
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+    if (!sdcard_rst_n)
+        view_mode_toggle_sd <= 1'b0;
+    else if (key_view_hold)
+        view_mode_toggle_sd <= ~view_mode_toggle_sd;
+end
+
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n) begin
+        view_mode_tgl_s1 <= 1'b0;
+        view_mode_tgl_s2 <= 1'b0;
+        view_mode_tgl_s3 <= 1'b0;
+        view_mode_vid_r  <= 1'b0;
+    end else begin
+        view_mode_tgl_s1 <= view_mode_toggle_sd;
+        view_mode_tgl_s2 <= view_mode_tgl_s1;
+        view_mode_tgl_s3 <= view_mode_tgl_s2;
+        if (view_mode_tgl_s2 ^ view_mode_tgl_s3)
+            view_mode_vid_r <= ~view_mode_vid_r;
+    end
+end
+
+assign view_mode_vid = view_mode_vid_r;
+
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n)
+        view_mode_frame <= 1'b0;
+    else if (frame_start)
+        view_mode_frame <= view_mode_vid;
+end
+
+// 诊断模式（DIAG_SDRAM_PATTERN）下保持原行为，缩略图视图强制关闭。
+assign thumb_view = view_mode_frame & ~pat_mode;
+
 // 实验B 切断 SDRAM 帧读；诊断D 在自检图案落盘前也不发帧读请求。
+// 第十三讲：缩略图视图下同样不发整帧读请求，把 SDRAM 读口让给按坐标取像。
 assign video_read_req_eff = (`DIAG_LOCAL_PATTERN) ? 1'b0
-                          : (pat_read_gate_req ? 1'b0 : video_read_req);
+                          : (pat_read_gate_req ? 1'b0
+                          : (thumb_view ? 1'b0 : video_read_req));
+
+// 缩略图模式关断帧读 FIFO 的消费使能，使 frame_fifo_read 填满后停在
+// S_CHECK_FIFO（App_rd_en 拉低），读口得以安全换手。
+// 回到全屏后等一次新的读请求握手（read_req_ack）再放行，保证从整帧起点
+// 重新开始读，避免半帧错位。全屏稳态下 frw_resume 恒为 1，等价直通。
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n)
+        frw_resume <= 1'b1;
+    else if (thumb_view)
+        frw_resume <= 1'b0;
+    else if (video_read_req_ack)
+        frw_resume <= 1'b1;
+end
+
+assign frw_read_en_gated = video_read_en & frw_resume;
 
 // 8~10 段竖彩条：大块纯色区域最容易暴露单像素彩点。
 always @(*) begin
@@ -635,6 +733,13 @@ assign vout_data = (`DIAG_LOCAL_PATTERN) ? local_pattern_rgb
                  : (pat_bad ? 24'hff_00_ff
                             : (display_ok ? vout_data_raw : 24'd0));
 
+// 第十三讲：缩略图视图只是个像素级替换层——
+//   - 缩略图区域内显示按坐标取回的源图像素（含焦点边框色）；
+//   - 其余区域输出黑（与教程 thumbnail_layout 的 thumb_de 语义一致）；
+//   - 完全不碰 de/vs 节拍，也不影响 HDMI 音频数据岛调度。
+assign view_rgb = thumb_view ? (thumb_active ? thumb_rgb : 24'd0)
+                             : vout_data;
+
 // ===================== 第九讲：OSD状态字幕叠加 =====================
 // OSD 紧跟在黑屏屏蔽之后、video_rgb_to_axis 之前，纯组合替换像素，
 // 不改变现有 de/vs 的节拍，也不影响 HDMI 音频数据岛调度。
@@ -651,7 +756,7 @@ end
 video_transition_apply #(
     .WIPE_STEP (40)
 ) u_video_transition_apply (
-    .rgb_in      (vout_data),
+    .rgb_in      (view_rgb),
     .alpha       (fade_alpha),
     .wipe_active (wipe_active),
     .wipe_ramp   (wipe_ramp),
@@ -710,9 +815,11 @@ frame_read_write #(
     .Sdr_init_ref_vld  (Sdr_init_ref_vld),
     .Sdr_busy          (Sdr_busy),
 
-    .App_rd_en         (App_rd_en),
-    .App_rd_addr       (App_rd_addr),
-    .Sdr_rd_en         (Sdr_rd_en),
+    // 第十三讲：帧读请求先送 sdram_rd_arbiter，再由仲裁器与缩略图取像
+    // 二选一驱动 SDRAM 的唯一只读口。全屏模式下该仲裁器是纯组合直通。
+    .App_rd_en         (frw_app_rd_en),
+    .App_rd_addr       (frw_app_rd_addr),
+    .Sdr_rd_en         (frw_rd_valid),
     .Sdr_rd_dout       (Sdr_rd_dout),
 
     .read_clk          (video_clk),
@@ -725,7 +832,7 @@ frame_read_write #(
     .read_addr_3       (BUF3_ADDR),
     .read_addr_index   (disp_buf_idx_eff),
     .read_len          (FRAME_PIXELS),
-    .read_en           (video_read_en),
+    .read_en           (frw_read_en_gated),
     .read_data         (video_read_data),
 
     .App_wr_en         (App_wr_en),
@@ -762,6 +869,85 @@ sdram U3(
     .App_rd_addr       (App_rd_addr),
     .Sdr_rd_en         (Sdr_rd_en),
     .Sdr_rd_dout       (Sdr_rd_dout)
+);
+
+// ===================== 第十三讲：缩略图取像与 SDRAM 读口换手 =====================
+// 一、把 sd_card_bmp 的 bank 就绪标记同步到 video 域，作为 thumbnail_layout
+//     的 image_complete。四位标记每次只置一位，两拍同步即可。
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n) begin
+        image_ready_sync1 <= 4'd0;
+        image_ready_sync2 <= 4'd0;
+    end else begin
+        image_ready_sync1 <= image_ready_sd;
+        image_ready_sync2 <= image_ready_sync1;
+    end
+end
+
+// 二、读口仲裁器：全屏模式下 app_rd_en/app_rd_addr/frw_rd_valid 都是纯组合
+//     直通，和改动前完全一致；只在缩略图视图下把读口交给取像引擎。
+sdram_rd_arbiter #(
+    .ADDR_WIDTH   (ADDR_BITS),
+    .QUIET_CYCLES (64)
+) u_sdram_rd_arbiter (
+    .clk            (ext_mem_clk),
+    .rst            (~mem_rst_n),
+    .view_mode_req  (thumb_view),
+
+    .frw_rd_en      (frw_app_rd_en),
+    .frw_rd_addr    (frw_app_rd_addr),
+    .frw_rd_valid   (frw_rd_valid),
+
+    .thumb_rd_req   (thumb_rd_req),
+    .thumb_rd_addr  (thumb_rd_addr),
+    .thumb_rd_valid (thumb_rd_valid),
+    .thumb_rd_dout  (thumb_rd_dout),
+
+    .app_rd_en      (App_rd_en),
+    .app_rd_addr    (App_rd_addr),
+    .sdr_rd_en      (Sdr_rd_en),
+    .sdr_rd_dout    (Sdr_rd_dout),
+
+    .mode_active    (rd_arb_mode_active),
+    .mem_idle       (rd_arb_mem_idle)
+);
+
+// 三、缩略图取像引擎：教程 thumbnail_layout 只做坐标映射，这里按第八讲
+//     media_frame_reader 的职责边界补一个“按坐标取一个像素”的读取器。
+//     enable=0（全屏）时其内部 FIFO 持续复位，不占用 SDRAM 读口。
+assign thumb_mem_enable = rd_arb_mem_idle & rd_arb_mode_active;
+
+thumbnail_view_reader #(
+    .DISPLAY_WIDTH  (640),
+    .DISPLAY_HEIGHT (480),
+    .ADDR_WIDTH     (ADDR_BITS),
+    .BANK_WORDS     (307200),
+    .THUMB_WIDTH    (160),
+    .THUMB_HEIGHT   (120),
+    .BORDER_RGB     (24'hff_ff_00)
+) u_thumbnail_view_reader (
+    .pix_clk        (video_clk),
+    .pix_rst_n      (video_rst_n),
+    .mem_clk        (ext_mem_clk),
+    .mem_rst_n      (mem_rst_n),
+
+    .enable         (thumb_view),
+    .mem_enable     (thumb_mem_enable),
+    .frame_start    (frame_start),
+    .focus_index    (media_id),
+    .image_complete (image_ready_sync2),
+    .pixel_x        (osd_pixel_x),
+    .in_de          (de),
+
+    .thumb_active   (thumb_active),
+    .pixel_rgb      (thumb_rgb),
+    .focus_border   (thumb_focus_border),
+    .line_mismatch  (thumb_line_mismatch),
+
+    .rd_req         (thumb_rd_req),
+    .rd_addr        (thumb_rd_addr),
+    .rd_valid       (thumb_rd_valid),
+    .rd_data        (thumb_rd_dout)
 );
 
 // ===================== 音频：第3课正弦媒体音调 =====================

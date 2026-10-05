@@ -469,6 +469,38 @@
                     <Attr Name="CompileOrder" Val="56"/>
                 </FileInfo>
             </File>
+            <File Path="../src/display/thumbnail_layout.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="57"/>
+                </FileInfo>
+            </File>
+            <File Path="../src/display/thumbnail_view_reader.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="58"/>
+                </FileInfo>
+            </File>
+            <File Path="../src/SD/sdram_rd_arbiter.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="59"/>
+                </FileInfo>
+            </File>
+            <File Path="../src/SD/key_press_hold.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="60"/>
+                </FileInfo>
+            </File>
         </Verilog>
         <ADC_FILE>
             <File Path="../constraints/pin.adc">
