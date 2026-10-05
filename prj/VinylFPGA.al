@@ -646,6 +646,14 @@
                     <Attr Name="CompileOrder" Val="78"/>
                 </FileInfo>
             </File>
+            <File Path="../src/SD/song_index_db.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="79"/>
+                </FileInfo>
+            </File>
         </Verilog>
         <ADC_FILE>
             <File Path="../constraints/pin.adc">

@@ -72,6 +72,23 @@
 - 交付说明：`doc/开发资料/S3_主界面选歌_交付说明_20261005.md`
 - **上板人工验收：待用户确认**（见交付说明第 7 节）
 
+### 0.4 S4 阶段完成记录（2026-10-05，SD 卡体系：定长曲目索引）
+
+- 已实现：新增 PC 工具 `tools/vinyl_packer.py`（解析 FAT32 BPB+根目录、走 FAT 簇链解析物理 LBA 运行段、算 CRC32/SHA256、生成并写回 512 B `INDEX.BIN`、输出 `INDEX.json`、做回读校验）；新增 `src/SD/song_index_db.v`（**sd_card_clk 域**流式解析/校验索引：magic/版本/条目长度/曲目上限/entries_crc32/簇号范围）；`fat32_volume_scanner` 增加根目录 `INDEX.BIN` 匹配与 `index_valid/cluster/size` 输出；`fat32_media_loader` 增加 `USE_INDEX_BIN` 参数与 `SP_SCAN/SP_INDEX/SP_EMIT` 三态，**复用同一 `fat32_file_streamer`** 读索引（不新增扇区仲裁端口），索引有效时封面/音频定位改由索引给出。
+- **实际改动面小于规划**：取数路径已被 `fat32_media_loader` 封装，因此 `sd_card_bmp.v` 与 `top_tf_hdmi_audio.v` **一行未改**（四 bank 预加载、`select_req/select_ack` 握手、转场边界、音频 FIFO 语义全部不动）。
+- 关键不变量：条目只存 `first_cluster`，封面复用已验证的流读取器走 FAT 链 → **封面天然支持碎片**（PC 侧同时把物理 LBA 运行段写进报告）；索引固定 512 B（1 扇区）；根目录首扇区（16 项）限制由工具强制校验；`song_count>4` 工具与 RTL 双边拒绝，绝不静默越界；音频在本阶段要求物理连续（`wav_stream_player` 逐扇区 +1，碎片音频属 S5），工具默认拒绝碎片音频。
+- 回退：索引缺失/损坏 → `valid=0` → 自动回退 `PIC1~4 + AUDIO.PCM`；`USE_INDEX_BIN=0` 完全旁路回 S3。
+- 串口与约束：**均无变化**（`pin.adc`/`timing.sdc` 零改动，IO 仍 `71/188`，新增逻辑全在既有 100 MHz 域）。
+- 构建快照：`prj/resource_opt_verified_20261005/S4_index_v3/`（`resource_opt_round.py` → `build_verified_round.py --seed 5 --map-mode area_prior` → `release_verified_round.py`）
+- 时序：Setup WNS `+47 ps` / TNS `0 ps` / 违例端点 `0`；Hold WNS `+3 ps` / TNS `0 ps` / 违例端点 `0`（基线 S3 为 +106 / +4）
+- 资源：LUT `12040/19600 = 61.43%`，REG `8106/19600 = 41.36%`，BRAM9K `46/64`，DSP `12/29`，IO `71/188`，Slices `6638 = 67.73%`（相对 S3：LUT +1155、REG +839、BRAM/DSP/IO +0）
+- bit：`S4_index_v3/VinylFPGA_optimized.bit`，SHA256 `eb43d2f324ab98a15b0ed578c73e3dd8825792ed2a62cd4b405f4784a049c646`
+- 仿真：PC 侧自测 22/22 PASS（含碎片封面 LBA 分段、CRC/超限/越界/碎片音频负例）；新增 `sim/tb_song_index_db.v`（6 用例）与 `sim/tb_fat32_index_loader.v`（4 集成用例，含"封面只能来自索引"与"坏索引回退/报错"）；`python tools/verify_resource_opt.py` 全 PASS；`verify_counter_opt.py menu/keys/header/pcm` 4 组全 PASS
+- 时序收敛说明：首版索引解析器把 `fat32_file_streamer.file_byte_offset`（32 位减法器，S0~S3 一直悬空可裁剪）引用成活信号、并把 4 路簇号范围检查做成宽组合树，route 曾失败；改为"解析器自带字节计数 + 逐拍条目校验 + 删除冗余 32 位比较器/发 found 路径 mux"后 seed 5 收敛。未使用假路径或放宽约束。过程快照 `S4_index/`、`S4_index_v1/`、`S4_index_v2/`。
+- 工具适配：`tools/verify_counter_opt.py` 的等价性比对现在容忍"被测模块新增端口而冻结基线参考没有该端口"（S3 加 `prev_event` 后该套件原本无法运行），只过滤端口段、不动参数覆盖段。
+- 交付说明：`doc/开发资料/S4_SD卡体系构建_交付说明_20261005.md`
+- **上板人工验收：待用户确认**（见交付说明第 8 节）
+
 ## 1. 当前工程现状（以代码为准）
 
 ### 1.1 顶层接口与实际约束

@@ -42,14 +42,39 @@ def existing_miter(module, rel, outputs, bench_module=None, reset='rst_n'):
     src = (ROOT / 'sim' / (bench_module + '.v')).read_text(encoding='utf-8')
     src = src.replace('module ' + bench_module + ';', 'module ' + name + ';')
     inst = re.search(r'    ' + module + r'\b.*?\bdut\s*\(.*?\n    \);', src, re.S).group(0)
-    ref = inst.replace(module, module + '_reference', 1).replace('dut (', 'reference_dut (')
+    ref_path = reference(rel, module)
+    ref_src = ref_path.read_text(encoding='utf-8')
+    # 只过滤"端口连接"段，绝不能碰前面的参数覆盖段
+    # （参数名会被误判成不存在的端口而整段删除，导致参考模块退回默认参数）。
+    if ') dut (' in inst:                      # 带参数覆盖的实例
+        head, _, ports = inst.partition(') dut (')
+        ref_head = head.replace(module, module + '_reference', 1) + ') reference_dut ('
+    elif ' dut (' in inst:                     # 无参数覆盖的实例
+        head, _, ports = inst.partition(' dut (')
+        ref_head = head.replace(module, module + '_reference', 1) + ' reference_dut ('
+    else:
+        raise AssertionError('bench instance layout changed: no "dut (" found')
+    # 参考模块是冻结的历史基线。被测模块后续阶段新增端口时（例如 S3 给
+    # sd_card_bmp 增加 prev_event），基线里没有该端口，直接连接会导致
+    # "port not a port of reference_dut" 而使整个等价性套件无法运行。
+    # 这里只保留参考侧确实存在的端口连接；新增端口不参与本次比对
+    # （其行为由对应阶段自己的专项用例覆盖）。
+    def _ref_has_port(port):
+        return re.search(r'\b(?:input|output|inout)\b[^;)]*\b' + re.escape(port) + r'\b',
+                         ref_src) is not None
+    for port in re.findall(r'\.(\w+)\s*\(', ports):
+        if not _ref_has_port(port):
+            ports = re.sub(r'\s*\.' + port + r'\s*\([^)]*\)\s*,?', '', ports)
+    ports = re.sub(r',(\s*)\)', r'\1)', ports)
+    ports = re.sub(r'\(\s*,', '(', ports)
+    ref = ref_head + ports
     decl = []
     for port, width in outputs.items():
         ref = re.sub(r'(\.' + port + r'\s*\()[^)]*(\))', r'\1ref_' + port + r'\2', ref)
         decl.append('wire [%d:0] ref_%s;' % (width-1, port))
     check = 'always @(negedge clk) if (' + reset + ' && {' + ','.join('dut.' + p for p in outputs) + '} !== {' + ','.join('reference_dut.' + p for p in outputs) + '}) $fatal(1,"FAIL cycle outputs at %0t",$time);'
     src = src.replace(inst, '\n'.join(decl) + '\n' + inst + '\n' + ref + '\n' + check)
-    simulate(name, src, [reference(rel, module)])
+    simulate(name, src, [ref_path])
 
 def menu():
     outputs = dict(key1_out_n=1,key2_out_n=1,cfg_brightness=8,cfg_contrast=8,

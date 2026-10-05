@@ -14,7 +14,11 @@
 //   跳过 data_offset -> BGR 拼成 RGB -> 输出像素
 // 这样在 write_req 等待期间不会提前消费文件字节。
 // =============================================================================
-module fat32_media_loader (
+module fat32_media_loader #(
+    // S4：优先使用 INDEX.BIN 曲目索引；=0 或索引缺失/损坏时完全回退到
+    // PIC1~4.BMP + AUDIO.PCM 旧路径（旧路径逐拍行为保持不变）。
+    parameter         USE_INDEX_BIN = 1'b1
+)(
     input  wire        clk,
     input  wire        rst,
     output wire        ready,
@@ -99,6 +103,9 @@ module fat32_media_loader (
     wire        scanner_audio_valid;
     wire [31:0] scanner_audio_cluster;
     wire [31:0] scanner_audio_size;
+    wire        scanner_index_valid;
+    wire [31:0] scanner_index_cluster;
+    wire [31:0] scanner_index_size;
     wire        scanner_req;
     wire [31:0] scanner_lba;
     wire        scanner_sector_busy;
@@ -112,7 +119,6 @@ module fat32_media_loader (
     wire        streamer_done;
     wire        streamer_valid;
     wire [7:0]  streamer_byte;
-    wire [31:0] streamer_byte_offset;
     wire [7:0]  streamer_error;
     wire        streamer_req;
     wire [31:0] streamer_lba;
@@ -137,6 +143,41 @@ module fat32_media_loader (
     reg         audio_file_valid_reg;
     reg  [31:0] audio_start_lba_reg;
     reg  [31:0] audio_total_sectors_reg;
+
+    // ---------------------------------------------------------------------
+    // S4：INDEX.BIN 曲目索引（复用文件流器读其唯一扇区）
+    // ---------------------------------------------------------------------
+    localparam [1:0] SP_SCAN  = 2'd0;
+    localparam [1:0] SP_INDEX = 2'd1;
+    localparam [1:0] SP_EMIT  = 2'd2;
+
+    reg  [1:0]  scan_phase;
+    reg         idx_started;
+    reg         idx_start_pulse;
+    reg         index_mode;          // 1=本次扫描已采用索引
+    reg  [3:0]  src_valid;           // 本次扫描实际用于发 found 的有效位
+    wire        idx_stream_mode = (scan_phase == SP_INDEX);
+    // 只需判"根目录存在 INDEX.BIN 且扫描无错"；簇号/长度合法性交给
+    // song_index_db 逐拍校验（它本来就要做），避免在这里再挂 32 位比较器
+    // 到 100 MHz 组合路径。
+    wire        idx_take        = USE_INDEX_BIN && scanner_index_valid &&
+                                  (scanner_error == 8'h00);
+    wire        idx_done;
+    wire        idx_valid;
+    wire [7:0]  idx_error;
+    wire [2:0]  idx_song_count;
+    wire [15:0] idx_song_flags;
+    wire [63:0] idx_cover0, idx_cover1, idx_cover2, idx_cover3;
+    wire [63:0] idx_audio0, idx_audio1, idx_audio2, idx_audio3;
+    // S4 音频边界：索引已记录每首曲目的音频定位；本阶段沿用既有"单轨播放"
+    // 语义，取第 1 首（索引条目 0）作为 AUDIO 源，多曲切换属 S5。
+    wire [31:0] idx_aud_cluster = idx_audio0[31:0];
+    wire [31:0] idx_aud_bytes   = idx_audio0[63:32];
+    wire        idx_aud_valid   = (idx_aud_bytes != 32'd0) &&
+                                  (idx_aud_cluster >= 32'd2);
+    wire [3:0]  idx_valid_vec  = (4'd1 << idx_song_count) - 4'd1;
+    wire [3:0]  idx_valid_bits = index_mode ? idx_valid_vec : 4'd0;
+    wire [3:0]  eff_valid = index_mode ? idx_valid_bits : scanner_valid;
 
     reg [31:0] load_cluster;
     reg [31:0] load_size;
@@ -168,6 +209,13 @@ module fat32_media_loader (
     // 只在 SDRAM 写区握手完成的那一拍启动一次文件读取。该组合脉冲
     // 同时被流读取器采样，随后 load_state 离开 LD_WAIT_WRITE 自动撤销。
     wire file_stream_start = (load_state == LD_WAIT_WRITE) && write_req_ack;
+
+    // S4：文件流器在"读索引"与"读图片"之间分时复用。两者互斥——索引只在
+    // 扫描完成、scan_done 尚未拉高时读取，此时不可能有图片加载请求。
+    wire stream_start_any = (idx_stream_mode && idx_start_pulse) || file_stream_start;
+    wire [31:0] stream_first_cluster = idx_stream_mode ? scanner_index_cluster
+                                                       : load_cluster;
+    wire [31:0] stream_file_size     = idx_stream_mode ? 32'd512 : load_size;
 
     wire [31:0] expected_pixel_count;
     wire [31:0] required_pixel_bytes;
@@ -244,7 +292,16 @@ module fat32_media_loader (
             audio_start_lba_reg     <= 32'd0;
             audio_total_sectors_reg <= 32'd0;
             audio_meta_pending      <= 1'b0;
-        end else if (scanner_done) begin
+        end else if (idx_done && idx_valid) begin
+            // S4：索引有效时，音频定位改由索引条目给出（仍是裸 PCM 语义）。
+            audio_cluster_m2_d    <= idx_aud_valid ?
+                                     (idx_aud_cluster - 32'd2) : 32'd0;
+            audio_spc_shift_d     <= spc_shift(scanner_spc);
+            audio_data_start_d    <= scanner_data_start;
+            audio_size_d          <= idx_aud_bytes;
+            audio_cluster_valid_d <= idx_aud_valid;
+            audio_meta_pending    <= 1'b1;
+        end else if (scanner_done && !idx_take) begin
             audio_cluster_m2_d    <= audio_cluster_valid ?
                                      (scanner_audio_cluster - 32'd2) : 32'd0;
             audio_spc_shift_d     <= spc_shift(scanner_spc);
@@ -322,6 +379,9 @@ module fat32_media_loader (
         .audio_valid         (scanner_audio_valid),
         .audio_cluster       (scanner_audio_cluster),
         .audio_size          (scanner_audio_size),
+        .index_valid         (scanner_index_valid),
+        .index_cluster       (scanner_index_cluster),
+        .index_size          (scanner_index_size),
         .sector_req          (scanner_req),
         .sector_lba          (scanner_lba),
         .sector_busy         (scanner_sector_busy),
@@ -338,9 +398,9 @@ module fat32_media_loader (
     fat32_file_streamer u_file_streamer (
         .clk                 (clk),
         .rst_n               (~rst),
-        .file_start          (file_stream_start && !streamer_busy),
-        .first_cluster       (load_cluster),
-        .file_size           (load_size),
+        .file_start          (stream_start_any && !streamer_busy),
+        .first_cluster       (stream_first_cluster),
+        .file_size           (stream_file_size),
         .sectors_per_cluster (scanner_spc),
         .fat_start_lba       (scanner_fat_start),
         .data_start_lba      (scanner_data_start),
@@ -349,7 +409,9 @@ module fat32_media_loader (
         .file_done           (streamer_done),
         .file_valid          (streamer_valid),
         .file_byte           (streamer_byte),
-        .file_byte_offset    (streamer_byte_offset),
+        // S4：file_byte_offset 不引出（其 32 位减法在本设计里无人使用，
+        // 不引出可让 TD 继续裁剪掉它，避免它进入 100 MHz 关键区域）。
+        .file_byte_offset    (),
         .fs_error            (streamer_error),
         .sector_req          (streamer_req),
         .sector_lba          (streamer_lba),
@@ -360,6 +422,46 @@ module fat32_media_loader (
         .sector_done         (streamer_sector_done),
         .sector_error        (streamer_sector_error)
     );
+
+    // -------------------------------------------------------------------------
+    // S4：曲目索引解析器（消费文件流器输出的字节流）
+    // -------------------------------------------------------------------------
+    song_index_db #(
+        .MAX_SONGS (4)
+    ) u_song_index_db (
+        .clk            (clk),
+        .rst_n          (~rst),
+        .start          (idx_start_pulse),
+        .in_valid       (streamer_valid),
+        .in_byte        (streamer_byte),
+        .in_done        (streamer_done),
+        .in_error       (streamer_error),
+        .max_cluster    (scanner_max_cluster),
+        .busy           (),
+        .done           (idx_done),
+        .valid          (idx_valid),
+        .err            (idx_error),
+        .song_count     (idx_song_count),
+        .song_flags     (idx_song_flags),
+        .song_cover0    (idx_cover0),
+        .song_cover1    (idx_cover1),
+        .song_cover2    (idx_cover2),
+        .song_cover3    (idx_cover3),
+        .song_audio0    (idx_audio0),
+        .song_audio1    (idx_audio1),
+        .song_audio2    (idx_audio2),
+        .song_audio3    (idx_audio3)
+    );
+
+    // 索引条目与旧扫描结果的取数选择（index_mode=0 时严格等于旧路径）
+    wire [31:0] sel_cluster0 = index_mode ? idx_cover0[31:0] : scanner_cluster0;
+    wire [31:0] sel_cluster1 = index_mode ? idx_cover1[31:0] : scanner_cluster1;
+    wire [31:0] sel_cluster2 = index_mode ? idx_cover2[31:0] : scanner_cluster2;
+    wire [31:0] sel_cluster3 = index_mode ? idx_cover3[31:0] : scanner_cluster3;
+    wire [31:0] sel_size0    = index_mode ? idx_cover0[63:32] : scanner_size0;
+    wire [31:0] sel_size1    = index_mode ? idx_cover1[63:32] : scanner_size1;
+    wire [31:0] sel_size2    = index_mode ? idx_cover2[63:32] : scanner_size2;
+    wire [31:0] sel_size3    = index_mode ? idx_cover3[63:32] : scanner_size3;
 
     // -------------------------------------------------------------------------
     // 两路扇区读分时复用
@@ -422,6 +524,8 @@ module fat32_media_loader (
     // -------------------------------------------------------------------------
     // 扫描结果打散：旧上层接口按“找到一张就发一个 scan_found_valid”，
     // 本兼容层对资源 1~4 逐位发出 found，维持 img_sector0~3 的索引语义。
+    // S4：若根目录有 INDEX.BIN，则先读一份索引；索引有效时按索引条目发
+    // found（数量=曲目数），索引损坏/缺失时回退到旧的 PIC1~4 分支。
     // -------------------------------------------------------------------------
     always @(posedge clk or posedge rst) begin
         if (rst) begin
@@ -432,25 +536,65 @@ module fat32_media_loader (
             scan_found_total <= 1'b0;
             scan_emitting <= 1'b0;
             scan_emit_idx <= 2'd0;
+            scan_phase <= SP_SCAN;
+            idx_started <= 1'b0;
+            idx_start_pulse <= 1'b0;
+            index_mode <= 1'b0;
+            src_valid <= 4'd0;
         end else begin
             scan_found_valid <= 1'b0;
+            idx_start_pulse <= 1'b0;
 
             // 保持与旧 bmp_read 一致的接口语义：scan_done 在扫描完成后
             // 持续有效，上层 KEY1/KEY2 和自动轮播调度都依赖该电平。
             // 只有下一次 scan_start 到来时才清除。
             if (scan_start) begin
                 scan_done <= 1'b0;
-            end else if (scanner_done) begin
-                use_streamer <= 1'b1;
-                if ((scanner_error != 0) || (scanner_valid == 4'd0)) begin
-                    scan_emitting <= 1'b0;
-                    scan_done <= 1'b1;
-                end else begin
-                    scan_emitting <= 1'b1;
-                    scan_emit_idx <= 2'd0;
+                scan_phase <= SP_SCAN;
+                idx_started <= 1'b0;
+                index_mode <= 1'b0;
+                src_valid <= 4'd0;
+            end else if (scan_phase == SP_SCAN) begin
+                if (scanner_done) begin
+                    use_streamer <= 1'b1;
+                    if (idx_take) begin
+                        // 有有效 INDEX.BIN 条目：下一拍启动索引文件流
+                        scan_phase <= SP_INDEX;
+                    end else if ((scanner_error != 0) || (scanner_valid == 4'd0)) begin
+                        scan_phase <= SP_EMIT;
+                        src_valid  <= 4'd0;
+                        scan_emitting <= 1'b0;
+                        scan_done <= 1'b1;
+                    end else begin
+                        scan_phase <= SP_EMIT;
+                        src_valid  <= scanner_valid;
+                        scan_emitting <= 1'b1;
+                        scan_emit_idx <= 2'd0;
+                    end
+                end
+            end else if (scan_phase == SP_INDEX) begin
+                if (!idx_started) begin
+                    idx_started <= 1'b1;
+                    idx_start_pulse <= 1'b1;
+                end else if (idx_done) begin
+                    scan_phase <= SP_EMIT;
+                    if (idx_valid) begin
+                        index_mode <= 1'b1;
+                        src_valid  <= idx_valid_vec;
+                        scan_emitting <= 1'b1;
+                        scan_emit_idx <= 2'd0;
+                    end else if (scanner_valid != 4'd0) begin
+                        src_valid  <= scanner_valid;
+                        scan_emitting <= 1'b1;
+                        scan_emit_idx <= 2'd0;
+                    end else begin
+                        src_valid  <= 4'd0;
+                        scan_emitting <= 1'b0;
+                        scan_done <= 1'b1;
+                    end
                 end
             end else if (scan_emitting) begin
-                if (scanner_valid[scan_emit_idx]) begin
+                if (src_valid[scan_emit_idx]) begin
                     scan_found_valid <= 1'b1;
                     scan_found_index <= scan_emit_idx;
                     scan_found_total <= 1'b1;
@@ -506,13 +650,13 @@ module fat32_media_loader (
             if (load_launch_pending && use_streamer &&
                 !streamer_busy && (load_state == LD_IDLE)) begin
                 case (load_index_latched)
-                    2'd0: begin load_cluster <= scanner_cluster0; load_size <= scanner_size0; end
-                    2'd1: begin load_cluster <= scanner_cluster1; load_size <= scanner_size1; end
-                    2'd2: begin load_cluster <= scanner_cluster2; load_size <= scanner_size2; end
-                    default: begin load_cluster <= scanner_cluster3; load_size <= scanner_size3; end
+                    2'd0: begin load_cluster <= sel_cluster0; load_size <= sel_size0; end
+                    2'd1: begin load_cluster <= sel_cluster1; load_size <= sel_size1; end
+                    2'd2: begin load_cluster <= sel_cluster2; load_size <= sel_size2; end
+                    default: begin load_cluster <= sel_cluster3; load_size <= sel_size3; end
                 endcase
 
-                if (!scanner_valid[load_index_latched]) begin
+                if (!eff_valid[load_index_latched]) begin
                     bmp_error <= ERR_NO_RESOURCE;
                     load_error <= 1'b1;
                     load_state <= LD_IDLE;
