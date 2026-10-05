@@ -202,36 +202,62 @@ module fat32_media_loader (
     wire audio_cluster_valid = scanner_audio_valid &&
                                (scanner_audio_cluster >= 32'd2) &&
                                (scanner_spc != 8'd0);
-    wire [31:0] audio_start_lba_calc =
-        scanner_data_start +
-        ((scanner_audio_cluster - 32'd2) << spc_shift(scanner_spc));
-    wire [31:0] audio_total_sectors_calc =
-        (scanner_audio_size + 32'd511) >> 9;
-
-    wire audio_file_valid_calc = audio_cluster_valid &&
-                                 (scanner_audio_size != 32'd0);
-    wire [31:0] audio_start_lba_latched =
-        audio_cluster_valid ? audio_start_lba_calc : 32'd0;
-    wire [31:0] audio_total_sectors_latched =
-        (audio_file_valid_calc &&
-         (audio_total_sectors_calc != 32'd0)) ?
-        audio_total_sectors_calc : 32'd0;
 
     // 扫描结果跨模块直接参与 wav_stream_player 的播放使能和指针控制
     // 会形成超长组合路径；在扫描完成时锁存一次，保持语义不变。
+    //
+    // 第十二讲时序修正：audio_start_lba = data_start + ((cluster-2)<<shift)
+    // 原本是一条组合链（32bit 减法 → 桶形移位 → 32bit 加法 → 选择，TD final
+    // 报 8 级逻辑 / 10.244ns，在 sd_card_clk 100MHz 下 setup WNS -0.524ns）。
+    // 这里拆成两级寄存器：scanner_done 当拍只锁存 cluster-2、移位量、基址和
+    // 长度，下一拍再做移位+加法并写入结果寄存器。扫描结果是准静态的，
+    // 结果晚一拍对外语义不变（wav_stream_player 在扫描完成后才被使能）。
+    reg  [31:0] audio_cluster_m2_d;
+    reg  [2:0]  audio_spc_shift_d;
+    reg  [31:0] audio_data_start_d;
+    reg  [31:0] audio_size_d;
+    reg         audio_cluster_valid_d;
+    reg         audio_meta_pending;
+
+    wire [31:0] audio_start_lba_calc =
+        audio_data_start_d + (audio_cluster_m2_d << audio_spc_shift_d);
+    wire [31:0] audio_total_sectors_calc =
+        (audio_size_d + 32'd511) >> 9;
+    wire audio_file_valid_calc = audio_cluster_valid_d &&
+                                 (audio_size_d != 32'd0);
+
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             audio_file_valid_reg    <= 1'b0;
             audio_start_lba_reg     <= 32'd0;
             audio_total_sectors_reg <= 32'd0;
+            audio_cluster_m2_d      <= 32'd0;
+            audio_spc_shift_d       <= 3'd0;
+            audio_data_start_d      <= 32'd0;
+            audio_size_d            <= 32'd0;
+            audio_cluster_valid_d   <= 1'b0;
+            audio_meta_pending      <= 1'b0;
         end else if (scan_start) begin
             audio_file_valid_reg    <= 1'b0;
             audio_start_lba_reg     <= 32'd0;
             audio_total_sectors_reg <= 32'd0;
+            audio_meta_pending      <= 1'b0;
         end else if (scanner_done) begin
+            audio_cluster_m2_d    <= audio_cluster_valid ?
+                                     (scanner_audio_cluster - 32'd2) : 32'd0;
+            audio_spc_shift_d     <= spc_shift(scanner_spc);
+            audio_data_start_d    <= scanner_data_start;
+            audio_size_d          <= scanner_audio_size;
+            audio_cluster_valid_d <= audio_cluster_valid;
+            audio_meta_pending    <= 1'b1;
+        end else if (audio_meta_pending) begin
             audio_file_valid_reg    <= audio_file_valid_calc;
-            audio_start_lba_reg     <= audio_start_lba_latched;
-            audio_total_sectors_reg <= audio_total_sectors_latched;
+            audio_start_lba_reg     <= audio_cluster_valid_d ?
+                                       audio_start_lba_calc : 32'd0;
+            audio_total_sectors_reg <= (audio_file_valid_calc &&
+                                        (audio_total_sectors_calc != 32'd0)) ?
+                                       audio_total_sectors_calc : 32'd0;
+            audio_meta_pending      <= 1'b0;
         end
     end
 

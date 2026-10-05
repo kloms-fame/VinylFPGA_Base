@@ -6,7 +6,19 @@ module frame_fifo_read
 	parameter ADDR_BITS              = 21,
 	parameter BURST_BITS             = 9,
 	parameter FIFO_DEPTH             = 512,
-	parameter BURST_SIZE             = 128
+	parameter BURST_SIZE             = 128,
+	// 第十二讲彩点修正：SDRAM 读突发节奏参数。
+	// 依据《第八讲：四bank帧缓存架构》3.3/4.2 节，完赛工程 media_frame_reader 对
+	// SDRAM 控制器采取“避让刷新 + 突发间隔 + 忙判据”的读调度：
+	//   BURST_GAP_CYCLES = 12  ：两次读突发之间至少留 12 个空闲周期给自动刷新；
+	//   controller_busy  : Sdr_busy      —— 控制器忙时不新起突发；
+	//   refresh_active   : Sdr_init_ref_vld —— 刷新期间不新起突发。
+	// 原官方 frame_fifo_read 收到这两个信号但从未使用，突发可以在刷新窗口内开跑，
+	// 一旦读采样窗口被刷新命令挤掉，就会读出错误像素（表现为图片上的彩点）。
+	// FIFO_LOW_WATERMARK 是安全兜底：FIFO 快空时不再等待空闲窗口，宁可照原样发突发，
+	// 保证任何情况下都不会因为新增节流逻辑而欠载（worst case 退化为官方行为）。
+	parameter BURST_GAP_CYCLES       = 12,
+	parameter FIFO_LOW_WATERMARK     = 128
 )               
 (
 	input                            rst,                  
@@ -67,6 +79,14 @@ wire								rd_burst_finish;
 reg App_rd_en_r;
 reg App_rd_en_d0;
 
+// 两次读突发之间的空闲周期计数（App_rd_en 为低时累加，饱和在 BURST_GAP_CYCLES）
+reg [4:0] rd_gap_cnt;
+wire      rd_gap_ok = (rd_gap_cnt >= BURST_GAP_CYCLES);
+// 控制器空闲（既不在刷新窗口，也不忙）时优先起突发
+wire      ctrl_quiet = ~Sdr_init_ref_vld & ~Sdr_busy;
+// FIFO 低水位兜底：即使控制器一直忙也必须发突发，避免显示端欠载
+wire      fifo_low   = (wrusedw <= FIFO_LOW_WATERMARK);
+
 
 wire rd_vld;
 reg [3:0] rd_delay;
@@ -91,6 +111,7 @@ begin
 		read_len_d1    <=  ZERO[ADDR_BITS - 1:0];               //equivalent to read_len_d1 <= 0;
 		read_addr_index_d0 <= 2'b00;
 		read_addr_index_d1 <= 2'b00;
+		rd_gap_cnt         <= 5'd0;
 	end
 	else
 	begin
@@ -101,6 +122,12 @@ begin
 		read_len_d1    <=  read_len_d0; 
 		read_addr_index_d0 <= read_addr_index;
 		read_addr_index_d1 <= read_addr_index_d0;
+
+		// 读突发节奏计数：突发进行中清零，空闲时累加并饱和
+		if(App_rd_en)
+			rd_gap_cnt <= 5'd0;
+		else if(!rd_gap_ok)
+			rd_gap_cnt <= rd_gap_cnt + 1'b1;
 		
 	end 
 end
@@ -221,7 +248,11 @@ begin
 					state <= S_ACK;
 				end
 				//if the FIFO space is a burst read request, goto burst read state
-				else if(wrusedw < (FIFO_DEPTH - BURST_SIZE) && ~App_wr_busy)
+				//第十二讲彩点修正：除了 FIFO 空间和写忙判据，还要满足
+				//  (1) 与上一次读突发之间已间隔 BURST_GAP_CYCLES 个空闲周期；
+				//  (2) 控制器处于空闲窗口（非刷新、非忙），或 FIFO 已到低水位。
+				else if(wrusedw < (FIFO_DEPTH - BURST_SIZE) && ~App_wr_busy &&
+				        rd_gap_ok && (ctrl_quiet || fifo_low))
 				begin
 					state <= S_READ_BURST;
 					//rd_burst_len <= BURST_SIZE[BURST_BITS - 1:0];

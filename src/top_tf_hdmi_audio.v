@@ -159,6 +159,8 @@ reg [3:0]   media_state_code_sync2;
 reg [3:0]   media_state_code_sync3;
 reg         display_valid_sync1;
 reg         display_valid_sync2;
+reg         audio_play_enable_sync1;
+reg         audio_play_enable_sync2;
 reg         auto_enabled_sync1;
 reg         auto_enabled_sync2;
 reg [7:0]   osd_error_code_sync1;
@@ -228,6 +230,172 @@ sync_2ff u_sdram_init_sync (
     .async_in   (Sdr_init_done),
     .sync_out   (Sdr_init_done_sd)
 );
+
+// =========================================================================
+// 第十二讲彩点排查 诊断 D：SDRAM 帧缓存"已知图案写入 + 读回自检"
+//
+// 这一级隔离回答的问题是：帧缓存的“写一次、永远读”这条数据通路，
+// 在长时间运行中会不会自己把数据读错/存坏。
+//   唯一变量：诊断模式下显示的像素不再来自 SD 卡装载的照片，而是由 FPGA
+//             直接向 bank0 写入一个已知的水平渐变图案（R=x[7:0]，
+//             G=~x[7:0]，B=0x80），随后整帧反复读回。
+//   保持不变：时钟、复位、SDRAM IP、读写 FIFO、时序发生器、HDMI 核全部不变。
+//   预期A：7 段管计数长期保持 0（画面也无杂点）→ SDRAM 帧缓存数据通路干净，
+//          彩点来自像素域之后的显示链路。
+//   预期B：7 段管计数不再为 0（画面上同时把错误像素标成品红）→ 彩点根因
+//          就在 SDRAM 帧缓存读/存链路，可直接用它做修复回归。
+//
+// 自证（隔离是否真的生效）：
+//   - 诊断模式下 frame_read_write 的 .write_req/.write_en/.write_data/
+//     .write_addr_index 全部由本图案发生器驱动，SD 装载器的写端口被真正切断；
+//   - 图案送入 write_buf 异步 FIFO 后由原 frame_fifo_write 落盘，路径与
+//     真实加载完全一致，因此本测试同时覆盖写入与读回；
+//   - 读回数据在 video_clk 域与“按像素位置重建的期望值”逐像素比较，
+//     vout_data_raw 是 video_delay 的输出，也就是真正送进 HDMI 核之前的像素。
+//   - 整个测试不需要 SD 卡，所以“拔卡后仍出彩点”这条复现路径被完全继承。
+// =========================================================================
+`ifndef DIAG_SDRAM_PATTERN
+`define DIAG_SDRAM_PATTERN 0
+`endif
+
+wire pat_mode = `DIAG_SDRAM_PATTERN;
+
+// 图案写入器（sd_card_clk 域，握手与 sd_card_bmp 的写路径同构）
+reg         pat_wr_req;
+reg         pat_wr_en;
+reg  [31:0] pat_wr_data;
+reg  [9:0]  pat_x;
+reg  [8:0]  pat_y;
+reg  [5:0]  pat_div;
+reg  [1:0]  pat_state;
+reg  [15:0] pat_done_cnt;
+reg         pat_done;
+
+// 读回自检（video_clk 域）
+reg         pat_done_s1;
+reg         pat_done_s2;
+reg         pat_de_q;
+reg  [12:0] pat_line_cnt;
+reg         pat_chk_en;
+reg  [31:0] pat_err_cnt;
+
+wire [23:0] pat_expect = {osd_pixel_x[7:0], ~osd_pixel_x[7:0], 8'h80};
+wire        pat_bad    = pat_mode && pat_chk_en && de && (vout_data_raw != pat_expect);
+
+// 诊断模式下：显示固定 bank0、切断 SD 装载器写端口、用自检图案驱动写端口
+wire [1:0]  disp_buf_idx_eff  = pat_mode ? 2'd0 : disp_buf_idx;
+wire [1:0]  write_buf_idx_eff = pat_mode ? 2'd0 : write_buf_idx;
+wire        sd_write_req_eff  = pat_mode ? pat_wr_req  : sd_card_write_req;
+wire        sd_write_en_eff   = pat_mode ? pat_wr_en   : sd_card_write_en;
+wire [31:0] sd_write_data_eff = pat_mode ? pat_wr_data : sd_card_write_data;
+
+// 图案写完之前不发帧读请求，让写入和读回在时间上分开（与真实"先加载再显示"一致）
+wire        pat_read_gate_req = pat_mode && !pat_done_s2;
+wire        display_ok        = pat_mode ? pat_done_s2 : display_valid_sync2;
+
+// 诊断模式下把 OSD / 转场 / 波形逐级旁路，屏幕上只留 SDRAM 读回数据本身
+wire [23:0] trans_rgb_eff     = pat_mode ? vout_data : transition_rgb;
+wire [23:0] osd_rgb_eff       = pat_mode ? trans_rgb_eff : osd_rgb_out;
+wire [23:0] wave_rgb_eff      = pat_mode ? osd_rgb_eff : waveform_rgb_out;
+
+localparam PAT_IDLE   = 2'd0;
+localparam PAT_REQ    = 2'd1;
+localparam PAT_STREAM = 2'd2;
+localparam PAT_DONE   = 2'd3;
+
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+    if (!sdcard_rst_n) begin
+        pat_wr_req   <= 1'b0;
+        pat_wr_en    <= 1'b0;
+        pat_wr_data  <= 32'd0;
+        pat_x        <= 10'd0;
+        pat_y        <= 9'd0;
+        pat_div      <= 6'd0;
+        pat_state    <= PAT_IDLE;
+        pat_done_cnt <= 16'd0;
+        pat_done     <= 1'b0;
+    end else if (pat_mode) begin
+        pat_wr_en <= 1'b0;
+        case (pat_state)
+            PAT_IDLE: begin
+                if (Sdr_init_done_sd) begin
+                    pat_wr_req <= 1'b1;
+                    pat_state  <= PAT_REQ;
+                end
+            end
+            // 与 SD 装载器同样的写请求握手：sdr 侧 S_ACK 会异步清零写 FIFO，
+            // 因此必须等 ack 之后再多等 64 拍才允许第一个字进 FIFO。
+            PAT_REQ: begin
+                if (sd_card_write_req_ack_sync[1]) begin
+                    pat_wr_req <= 1'b0;
+                    pat_x      <= 10'd0;
+                    pat_y      <= 9'd0;
+                    pat_div    <= 6'd63;
+                    pat_state  <= PAT_STREAM;
+                end
+            end
+            // 1 字 / 32 拍（约 3.1M word/s），远低于 SDRAM 写突发吞吐，
+            // 保证 512 深写 FIFO 不会溢出。
+            PAT_STREAM: begin
+                if (pat_div != 6'd0)
+                    pat_div <= pat_div - 6'd1;
+                else begin
+                    pat_wr_en   <= 1'b1;
+                    pat_wr_data <= {pat_x[7:0], ~pat_x[7:0], 8'h80, 8'h00};
+                    pat_div     <= 6'd31;
+                    if (pat_x == 10'd639) begin
+                        pat_x <= 10'd0;
+                        if (pat_y == 9'd479)
+                            pat_state <= PAT_DONE;
+                        else
+                            pat_y <= pat_y + 9'd1;
+                    end else begin
+                        pat_x <= pat_x + 10'd1;
+                    end
+                end
+            end
+            // 最后一个字只是进了 FIFO，SDRAM 落盘还要几十微秒，多等 655us
+            PAT_DONE: begin
+                pat_wr_en <= 1'b0;
+                if (pat_done_cnt == 16'hFFFF)
+                    pat_done <= 1'b1;
+                else
+                    pat_done_cnt <= pat_done_cnt + 16'd1;
+            end
+            default: pat_state <= PAT_IDLE;
+        endcase
+    end
+end
+
+// 读回自检：等图案落盘并完整读回若干帧后，逐像素比对并按 6 位十六进制计数
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n) begin
+        pat_done_s1  <= 1'b0;
+        pat_done_s2  <= 1'b0;
+        pat_de_q     <= 1'b0;
+        pat_line_cnt <= 13'd0;
+        pat_chk_en   <= 1'b0;
+        pat_err_cnt  <= 32'd0;
+    end else if (pat_mode) begin
+        pat_done_s1 <= pat_done;
+        pat_done_s2 <= pat_done_s1;
+        pat_de_q    <= de;
+        if (!pat_done_s2) begin
+            pat_line_cnt <= 13'd0;
+            pat_chk_en   <= 1'b0;
+        end else if (!pat_chk_en) begin
+            // 等约 8 个整帧（4000 行）再开始计数，跳过首帧建立过程
+            if (pat_de_q && !de) begin
+                if (pat_line_cnt >= 13'd4000)
+                    pat_chk_en <= 1'b1;
+                else
+                    pat_line_cnt <= pat_line_cnt + 13'd1;
+            end
+        end else if (de && (vout_data_raw != pat_expect)) begin
+            pat_err_cnt <= pat_err_cnt + 32'd1;
+        end
+    end
+end
 
 // 保持你原来的 TF / SDRAM / video 时钟
 sys_pll sys_pll_m0(
@@ -352,20 +520,90 @@ seg_decoder seg_decoder_m0(
     .seg_data          (seg_data_0)
 );
 
-seg_scan seg_scan_m0(
-    .clk               (clk),
-    .rst_n             (rst_n),
+// 诊断 D：自检模式下 7 段管显示"读回不一致像素计数"的 6 位十六进制
+function [6:0] hex7seg;
+    input [3:0] v;
+    begin
+        case (v)
+            4'h0:    hex7seg = 7'b100_0000;
+            4'h1:    hex7seg = 7'b111_1001;
+            4'h2:    hex7seg = 7'b010_0100;
+            4'h3:    hex7seg = 7'b011_0000;
+            4'h4:    hex7seg = 7'b001_1001;
+            4'h5:    hex7seg = 7'b001_0010;
+            4'h6:    hex7seg = 7'b000_0010;
+            4'h7:    hex7seg = 7'b111_1000;
+            4'h8:    hex7seg = 7'b000_0000;
+            4'h9:    hex7seg = 7'b001_0000;
+            4'ha:    hex7seg = 7'b000_1000;
+            4'hb:    hex7seg = 7'b000_0011;
+            4'hc:    hex7seg = 7'b100_0110;
+            4'hd:    hex7seg = 7'b010_0001;
+            4'he:    hex7seg = 7'b000_0110;
+            default: hex7seg = 7'b000_1110;
+        endcase
+    end
+endfunction
+
+// 第十二讲时序修正：扫描器原先用 50MHz 原始 clk，而显示的 state_code 由
+// sd_card_clk(100MHz) 域产生，构成真实跨时钟域路径；TD final 时序把它报成
+// hold WNS -0.738ns（12 个终点，时钟偏斜 1.615ns）。这里把扫描器整体搬进
+// sd_card_clk 域并把 CLK_FREQ 同步改成 100MHz，刷新率仍为 200Hz/位，
+// 跨域路径消失，也不再需要额外的约束豁免。
+seg_scan #(
+    .CLK_FREQ          (100_000_000)
+) seg_scan_m0(
+    .clk               (sd_card_clk),
+    .rst_n             (sdcard_rst_n),
     .seg_sel           (seg_sel),
     .seg_data          (seg_data),
-    .seg_data_0        ({1'b1,7'b1111_111}),
-    .seg_data_1        ({1'b1,7'b1111_111}),
-    .seg_data_2        ({1'b1,7'b1111_111}),
-    .seg_data_3        ({1'b1,7'b1111_111}),
-    .seg_data_4        ({1'b1,7'b1111_111}),
-    .seg_data_5        ({1'b1,seg_data_0})
+    .seg_data_0        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[3:0])}   : {1'b1,7'b1111_111}),
+    .seg_data_1        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[7:4])}   : {1'b1,7'b1111_111}),
+    .seg_data_2        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[11:8])}  : {1'b1,7'b1111_111}),
+    .seg_data_3        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[15:12])} : {1'b1,7'b1111_111}),
+    .seg_data_4        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[19:16])} : {1'b1,7'b1111_111}),
+    .seg_data_5        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[23:20])} : {1'b1,seg_data_0})
 );
 
 // ===================== 原图像时序与帧缓存 =====================
+// ------------------------------------------------------------
+// 第十二讲彩点排查 诊断开关（默认 0，正式工程行为完全不变）
+//
+// DIAG_LOCAL_PATTERN = 1 时同时做两件事，用于“单变量隔离”：
+//   (1) 像素域改用本地彩条 local_pattern_rgb，不再使用 SDRAM 读回数据；
+//   (2) frame_read_write 的帧读请求输入被硬接 0（在消费者侧切断）。
+// 自证：video_read_req_eff 接 0 后，frame_fifo_read 的 S_IDLE 永远不满足
+// `read_req_d2 == 1'b1 && Sdr_init_done`（见 frame_fifo_read.v S_IDLE），
+// 状态机停在 S_IDLE，App_rd_en 恒为 0，SDRAM 帧读突发被真正切断，
+// 而不是“设置了诊断位但其实还在读”。
+// ------------------------------------------------------------
+`ifndef DIAG_LOCAL_PATTERN
+`define DIAG_LOCAL_PATTERN 0
+`endif
+
+wire        video_read_req_eff;
+reg  [23:0] local_pattern_rgb;
+
+// 实验B 切断 SDRAM 帧读；诊断D 在自检图案落盘前也不发帧读请求。
+assign video_read_req_eff = (`DIAG_LOCAL_PATTERN) ? 1'b0
+                          : (pat_read_gate_req ? 1'b0 : video_read_req);
+
+// 8~10 段竖彩条：大块纯色区域最容易暴露单像素彩点。
+always @(*) begin
+    case (osd_pixel_x[9:6])
+        4'd0:    local_pattern_rgb = 24'hFF_FF_FF;  // 白
+        4'd1:    local_pattern_rgb = 24'hFF_FF_00;  // 黄
+        4'd2:    local_pattern_rgb = 24'h00_FF_FF;  // 青
+        4'd3:    local_pattern_rgb = 24'h00_FF_00;  // 绿
+        4'd4:    local_pattern_rgb = 24'hFF_00_FF;  // 品红
+        4'd5:    local_pattern_rgb = 24'hFF_00_00;  // 红
+        4'd6:    local_pattern_rgb = 24'h00_00_FF;  // 蓝
+        4'd7:    local_pattern_rgb = 24'h00_00_00;  // 黑
+        4'd8:    local_pattern_rgb = 24'h80_80_80;  // 中灰
+        default: local_pattern_rgb = 24'h40_40_40;  // 深灰
+    endcase
+end
+
 video_timing_data video_timing_data_m0(
     .video_clk         (video_clk),
     .rst               (~video_rst_n),
@@ -391,7 +629,11 @@ video_delay video_delay_m0(
 );
 
 // 首图提交前黑屏；提交后一直显示当前显示缓冲区内容
-assign vout_data = display_valid ? vout_data_raw : 24'd0;
+// 诊断模式下直接输出本地彩条（不依赖 display_valid，便于上电即观察）。
+// 诊断D 把“读回数据与已知图案不一致”的像素直接标成品红，肉眼即可定位。
+assign vout_data = (`DIAG_LOCAL_PATTERN) ? local_pattern_rgb
+                 : (pat_bad ? 24'hff_00_ff
+                            : (display_ok ? vout_data_raw : 24'd0));
 
 // ===================== 第九讲：OSD状态字幕叠加 =====================
 // OSD 紧跟在黑屏屏蔽之后、video_rgb_to_axis 之前，纯组合替换像素，
@@ -450,7 +692,7 @@ promax_audio_waveform #(
     .de              (de),
     .rgb_in          (osd_rgb_out),
     .pixel_x         (osd_pixel_x),
-    .enable          (audio_play_enable),
+    .enable          (audio_play_enable_sync2),
     .pcm_tap_valid   (wav_sample_valid),
     .pcm_tap_left    (wav_sample_left),
     .rgb_out         (waveform_rgb_out),
@@ -474,14 +716,14 @@ frame_read_write #(
     .Sdr_rd_dout       (Sdr_rd_dout),
 
     .read_clk          (video_clk),
-    .read_req          (video_read_req),
+    .read_req          (video_read_req_eff),
     .read_req_ack      (video_read_req_ack),
     .read_finish       (),
     .read_addr_0       (BUF0_ADDR),
     .read_addr_1       (BUF1_ADDR),
     .read_addr_2       (BUF2_ADDR),
     .read_addr_3       (BUF3_ADDR),
-    .read_addr_index   (disp_buf_idx),
+    .read_addr_index   (disp_buf_idx_eff),
     .read_len          (FRAME_PIXELS),
     .read_en           (video_read_en),
     .read_data         (video_read_data),
@@ -492,17 +734,17 @@ frame_read_write #(
     .App_wr_dm         (App_wr_dm),
 
     .write_clk         (sd_card_clk),
-    .write_req         (sd_card_write_req),
+    .write_req         (sd_write_req_eff),
     .write_req_ack     (sd_card_write_req_ack),
     .write_finish      (frame_write_finish),
     .write_addr_0      (BUF0_ADDR),
     .write_addr_1      (BUF1_ADDR),
     .write_addr_2      (BUF2_ADDR),
     .write_addr_3      (BUF3_ADDR),
-    .write_addr_index  (write_buf_idx),
+    .write_addr_index  (write_buf_idx_eff),
     .write_len         (FRAME_PIXELS),
-    .write_en          (sd_card_write_en),
-    .write_data        (sd_card_write_data)
+    .write_en          (sd_write_en_eff),
+    .write_data        (sd_write_data_eff)
 );
 
 sdram U3(
@@ -532,6 +774,8 @@ always @(posedge video_clk or negedge video_rst_n) begin
         media_state_code_sync3 <= 4'd0;
         display_valid_sync1    <= 1'b0;
         display_valid_sync2    <= 1'b0;
+        audio_play_enable_sync1 <= 1'b0;
+        audio_play_enable_sync2 <= 1'b0;
         auto_enabled_sync1     <= 1'b0;
         auto_enabled_sync2     <= 1'b0;
         osd_error_code_sync1   <= 8'd0;
@@ -552,6 +796,8 @@ always @(posedge video_clk or negedge video_rst_n) begin
         media_state_code_sync3 <= media_state_code_sync2;
         display_valid_sync1    <= display_valid;
         display_valid_sync2    <= display_valid_sync1;
+        audio_play_enable_sync1 <= audio_play_enable;
+        audio_play_enable_sync2 <= audio_play_enable_sync1;
         auto_enabled_sync1     <= auto_play_en_out;
         auto_enabled_sync2     <= auto_enabled_sync1;
         vs_q                   <= vs;
@@ -752,7 +998,7 @@ video_rgb_to_axis_640x480 u_video_rgb_to_axis_640x480(
     .I_rst         (~video_rst_n),
     .I_vs          (vs),
     .I_de          (de),
-    .I_rgb         (waveform_rgb_out),
+    .I_rgb         (wave_rgb_eff),
     .O_video_user  (axis_s_user),
     .O_video_valid (axis_s_valid),
     .O_video_last  (axis_s_last),
@@ -782,6 +1028,8 @@ hdmi_1_4b_transmitter_core_wrapper #(
     .VBP                    ( 33         ),
     .VACTIVE                ( 480        ),
     .VIDEO_VIC              ( 1          ),
+    // 第十二讲彩点排查：主线保持 TPG 关闭。实验C 曾临时改为 "Enable"
+    // （产物 VinylFPGA_expC_tpg.bit），此处已恢复正式行为。
     .VIDEO_TPG              ( "Disable"  ),
     .VIDEO_FORMAT           ( "RGB"      ),
     .AUDIO_SAMPLE_RATE      ( "48K"      ),
