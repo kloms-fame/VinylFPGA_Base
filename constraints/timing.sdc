@@ -93,3 +93,20 @@ set_max_delay -from [get_clocks {hdmi_5x_clk}] \
 # SDRAM 移位采样时钟属于硬 IP 的 I/O 窗口，不做 fabric 跨时钟分析。
 set_false_path -from [get_clocks {ext_mem_clk}] -to [get_clocks {ext_mem_clk_sft}]
 set_false_path -from [get_clocks {ext_mem_clk_sft}] -to [get_clocks {ext_mem_clk}]
+
+# ------------------------------------------------------------
+# 9. S1：拓展板（J2）约束说明
+#
+#    S1 集成层（expansion_io_hub / ui_event_bus / exp_echo_reporter）整体
+#    运行在已约束的 50 MHz clk 域（见本文件第 1 节 create_clock），未新增任何
+#    时钟或 PLL 输出，因此不需要新增时钟约束。
+#
+#    exp_key_n / exp_dip_n / exp_enc*_a/b / exp_enc*_sw_n / exp_ir_rx 均为板外
+#    异步外设输入，已在 expansion_io_hub 内部逐路做两级同步（sync_bit）后才
+#    使用。这里沿用 J2 标定工程的做法：不为这些输入端口设置 input delay，也
+#    不用 set_false_path 掩盖真实跨时钟关系；待 S1 上板后按 TD check_timing
+#    报告再决定是否需要补充量化约束。
+#
+#    uart_tx 为 clk 域输出，输出延迟保持空白，与既有 SD / HDMI / 数码管输出
+#    的处理方式一致。
+# ------------------------------------------------------------

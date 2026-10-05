@@ -1,4 +1,24 @@
 
+// ==========================================================================
+// S1 拓展板实现（expansion_integration 及其全部子模块）随 top 一起编译：
+// 直接在本编译单元内 include，避免 TD 工程文件列表条目缺失/路径失效时把
+// expansion_integration 当成 black box。独立源文件仍保留，供 lint 与
+// iverilog 单模块仿真使用；每个文件都带模块级包含保护，因此即使 .al 同时
+// 单独列出这些文件，也不会重复定义。
+// ==========================================================================
+`include "io/sync_bit.v"
+`include "io/debounce_filter.v"
+`include "io/key_dip_monitor.v"
+`include "io/quadrature_decoder.v"
+`include "io/encoder_monitor.v"
+`include "io/ir_nec_decoder.v"
+`include "io/expansion_io_hub.v"
+`include "io/ui_event_bus.v"
+`include "io/exp_baud_tick.v"
+`include "io/exp_uart_tx.v"
+`include "io/exp_echo_reporter.v"
+`include "io/expansion_integration.v"
+
 module top(
     input                       clk,
     input                       rst_n,
@@ -22,7 +42,26 @@ module top(
     output                      sd_ncs,
     output                      sd_dclk,
     output                      sd_mosi,
-    input                       sd_miso
+    input                       sd_miso,
+
+    // ===================== S1：J2 拓展板（IDC40）输入 =====================
+    input  [11:0]               exp_key_n,       // KEY1..KEY12，低有效
+    input  [5:0]                exp_dip_n,       // DIP1..DIP6
+    input                       exp_enc1_a,      // EC1 A 相
+    input                       exp_enc1_b,      // EC1 B 相
+    input                       exp_enc1_sw_n,   // EC1 按压，低有效
+    input                       exp_enc2_a,      // EC2 A 相
+    input                       exp_enc2_b,      // EC2 B 相
+    input                       exp_enc2_sw_n,   // EC2 按压，低有效
+    input                       exp_ir_rx,       // NEC 红外接收
+
+    // ===================== S1：J2 拓展板输出 =====================
+    output [3:0]                exp_led_n,       // LED1..LED4，低有效点亮
+    output                      exp_ws2812_data, // WS2812 数据线（S1 静态全灭）
+    output [5:0]                exp_ext_o,       // EXT1..EXT6（S1 固定 0）
+
+    // ===================== S1：板载 USB 转串口 =====================
+    output                      uart_tx          // 115200 8N1 回显输出
 );
 
 parameter MEM_DATA_BITS = 32;
@@ -33,6 +72,10 @@ parameter BUF0_ADDR     = 24'd0;
 parameter BUF1_ADDR     = FRAME_PIXELS;
 parameter BUF2_ADDR     = FRAME_PIXELS * 24'd2;
 parameter BUF3_ADDR     = FRAME_PIXELS * 24'd3;
+
+// S1 硬件回显测试开关：1=串口周期上报按键状态（含事件计数），0=完全静默。
+// 只影响 exp_echo_reporter 的串口输出与 exp_led_n 回显，不改变主链路功能。
+parameter ECHO_TEST_ENABLE = 1'b1;
 
 wire Sdr_init_done;
 wire Sdr_init_ref_vld;
@@ -1490,6 +1533,49 @@ hdmi_phy_wrapper #(
     .O_tmds_ch1_p       (HDMI_D1_P),
     .O_tmds_ch2_p       (HDMI_D2_P),
     .O_tmds_clk_p       (HDMI_CLK_P)
+);
+
+// ==========================================================================
+// S1：拓展板移植集成（J2 / IDC40）
+//
+//   输入驱动整体移植自 J2 标定工程（资源/Expansion_Board_Test/src），处理顺序、
+//   时序参数与行为逐条保持不变；本层运行在板级 clk(50 MHz) 域，与标定工程
+//   sys_clk 同频，因此 8 ms 消抖 / 1 ms 正交稳定 / 50 MHz 红外解码无需换算，
+//   也不占用 sd_card_clk(100 MHz) 的时序预算。
+//
+//   S1 只验证物理通路，不把事件接到切歌/播放/歌词/MV 等后续业务。
+// ==========================================================================
+wire exp_rst_n;
+
+reset_sync u_exp_reset (
+    .clk        (clk),
+    .ext_rst_n  (ext_rst_n),
+    .rst_n_sync (exp_rst_n)
+);
+
+expansion_integration #(
+    .CLK_FREQ_HZ      (50_000_000),
+    .BAUD_RATE        (115_200),
+    .DEBOUNCE_CYCLES  (400_000),
+    .AB_STABLE_CYCLES (50_000),
+    .IR_CLK_FREQ_HZ   (50_000_000),
+    .ECHO_ENABLE      (ECHO_TEST_ENABLE)
+) u_expansion_integration (
+    .clk              (clk),
+    .rst_n            (exp_rst_n),
+    .exp_key_n        (exp_key_n),
+    .exp_dip_n        (exp_dip_n),
+    .exp_enc1_a       (exp_enc1_a),
+    .exp_enc1_b       (exp_enc1_b),
+    .exp_enc1_sw_n    (exp_enc1_sw_n),
+    .exp_enc2_a       (exp_enc2_a),
+    .exp_enc2_b       (exp_enc2_b),
+    .exp_enc2_sw_n    (exp_enc2_sw_n),
+    .exp_ir_rx        (exp_ir_rx),
+    .exp_led_n        (exp_led_n),
+    .exp_ws2812_data  (exp_ws2812_data),
+    .exp_ext_o        (exp_ext_o),
+    .uart_tx          (uart_tx)
 );
 
 endmodule
