@@ -33,7 +33,10 @@ def main():
              ('tb_fat32_index_loader', 'fat32_media_loader'),
              ('tb_s7_media_lifecycle', 'fat32_media_loader'),
              ('tb_fat32_media_loader', 'fat32_media_loader')]
-    for bench, module in cases:
+    cases = [(bench, module, False) for bench, module in cases]
+    cases.append(('tb_fat32_media_loader', 'fat32_media_loader', True))
+    for bench, module, stalls in cases:
+        case_name = bench + ('_stalls' if stalls else '')
         source = (ROOT / 'sim' / (bench + '.v')).read_text(encoding='utf-8')
         instance = re.search(r'\b' + module + r'\s+(?:#\(.*?\)\s*)?dut\s*\(.*?\n?\s*\);', source, re.S)
         assert instance, bench
@@ -57,6 +60,12 @@ def main():
         source = source[:instance.end()] + '\n' + reference + '\n' + '\n'.join(checks) + source[instance.end():]
         source = re.sub(r'(defparam\s+dut\.[^;]+;)',
                         lambda m: m[0] + '\n' + m[0].replace('dut.', 'reference_dut.'), source)
+        if stalls:
+            source = source.replace('    always #5 clk = ~clk;',
+                                    '    reg [2:0] gap=0; always @(posedge clk) gap<=gap+1;\n'
+                                    '    always #5 clk = ~clk;')
+            source = source.replace('end else if (reading) begin',
+                                    "end else if (reading && gap==3'd0) begin")
         if bench == 'tb_song_index_db':
             # Warm success after rejection is essential: no reset hides stale data.
             source = source.replace('        if (errors == 0)', '''
@@ -69,9 +78,9 @@ def main():
                 end
                 in_valid  = 1'b1;''')
         source = source.replace('$finish;', '$display("Compared %0d cycles",equivalence_cycles); $finish;')
-        generated = out / (bench + '.v')
+        generated = out / (case_name + '.v')
         generated.write_text(source, encoding='utf-8')
-        binary = out / (bench + '.vvp')
+        binary = out / (case_name + '.vvp')
         cmd = ['iverilog', '-g2005', '-I.', '-Isrc', '-Isrc/include', '-Isrc/SD', '-s', bench, '-o', str(binary)]
         for directory in [ROOT / 'src', *[d for d in (ROOT / 'src').iterdir() if d.is_dir() and d.name != 'IP']]:
             cmd += ['-y', str(directory)]
@@ -85,9 +94,9 @@ def main():
             r = subprocess.run(['vvp', str(binary)], cwd=ROOT, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=150)
             log += r.stdout + r.stderr
             ok = r.returncode == 0 and 'PASS' in log and 'FAIL' not in log and 'Compared ' in log
-        (out / (bench + '.log')).write_text(log, encoding='utf-8')
-        results[bench] = ok
-        print(bench, 'PASS' if ok else 'FAIL', '\n'.join(line for line in log.splitlines() if 'PASS' in line or 'Compared ' in line), flush=True)
+        (out / (case_name + '.log')).write_text(log, encoding='utf-8')
+        results[case_name] = ok
+        print(case_name, 'PASS' if ok else 'FAIL', '\n'.join(line for line in log.splitlines() if 'PASS' in line or 'Compared ' in line), flush=True)
         if not ok:
             print(log[-5000:], flush=True)
     (out / 'results.json').write_text(json.dumps(results, indent=2), encoding='utf-8')

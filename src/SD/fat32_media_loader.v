@@ -211,8 +211,8 @@ module fat32_media_loader #(
     // 使逐像素判断不再在 100 MHz 路径里重算 32 位加法，功能等价。
     reg [31:0] pixel_end;
     reg [31:0] dib_size;
-    reg [31:0] width;
-    reg [31:0] height;
+    reg [15:0] width;
+    reg [15:0] height;
     reg [15:0] planes;
     reg [15:0] bit_count;
     reg [31:0] compression;
@@ -291,7 +291,7 @@ module fat32_media_loader #(
                         (data_offset >= 32'd54) &&
                         (data_offset < file_len) &&
                         pixel_geom_ready &&
-                        (file_len >= (data_offset + required_pixel_bytes_q));
+                        (file_len >= pixel_end);
 
     function [2:0] spc_shift;
         input [7:0] value;
@@ -695,12 +695,12 @@ module fat32_media_loader #(
             data_offset <= 32'd54;
             pixel_end <= 32'd0;
             dib_size <= 32'd0;
-            width <= 32'd0;
-            height <= 32'd0;
+            width <= 16'd0;
+            height <= 16'd0;
             planes <= 16'd0;
             bit_count <= 16'd0;
             compression <= 32'd0;
-            header_byte_cnt <= 32'd0;
+            header_byte_cnt <= 6'd0;
             pixel_byte_cnt <= 32'd0;
             pixel_count <= 32'd0;
             rgb_byte_cnt <= 3'd0;
@@ -741,7 +741,7 @@ module fat32_media_loader #(
                 end else begin
                     write_req <= 1'b1;
                     load_state <= LD_WAIT_WRITE;
-                    header_byte_cnt <= 32'd0;
+                    header_byte_cnt <= 6'd0;
                     pixel_byte_cnt <= 32'd0;
                     pixel_count <= 32'd0;
                     rgb_byte_cnt <= 3'd0;
@@ -749,7 +749,10 @@ module fat32_media_loader #(
                     // bmp_width/bmp_height 是常量输入，到 54 字节头校验时
                     // 已有 50+ 拍余量，乘法器完全不进入 header_valid 路径。
                     expected_pixel_count_q <= {16'd0, bmp_width} * {16'd0, bmp_height};
-                    required_pixel_bytes_q <= ({16'd0, bmp_width} * {16'd0, bmp_height}) * 32'd3;
+                    // Exact modulo-2^32 multiply by three; avoid a second multiplier.
+                    required_pixel_bytes_q <=
+                        (({16'd0, bmp_width} * {16'd0, bmp_height}) << 1) +
+                         ({16'd0, bmp_width} * {16'd0, bmp_height});
                     pixel_geom_ready      <= 1'b1;
                 end
             end
@@ -763,43 +766,44 @@ module fat32_media_loader #(
             // 3. 解析 BMP 前 54 字节。只消费 LD_HEADER 阶段的有效字节。
             if (streamer_valid && (load_state == LD_HEADER)) begin
                 case (header_byte_cnt)
-                    32'd0:  header0 <= streamer_byte;
-                    32'd1:  header1 <= streamer_byte;
-                    32'd2:  file_len[7:0] <= streamer_byte;
-                    32'd3:  file_len[15:8] <= streamer_byte;
-                    32'd4:  file_len[23:16] <= streamer_byte;
-                    32'd5:  file_len[31:24] <= streamer_byte;
-                    32'd10: data_offset[7:0] <= streamer_byte;
-                    32'd11: data_offset[15:8] <= streamer_byte;
-                    32'd12: data_offset[23:16] <= streamer_byte;
-                    32'd13: data_offset[31:24] <= streamer_byte;
-                    32'd14: dib_size[7:0] <= streamer_byte;
-                    32'd15: dib_size[15:8] <= streamer_byte;
-                    32'd16: dib_size[23:16] <= streamer_byte;
-                    32'd17: dib_size[31:24] <= streamer_byte;
-                    32'd18: width[7:0] <= streamer_byte;
-                    32'd19: width[15:8] <= streamer_byte;
-                    32'd20: width[23:16] <= streamer_byte;
-                    32'd21: width[31:24] <= streamer_byte;
-                    32'd22: height[7:0] <= streamer_byte;
-                    32'd23: height[15:8] <= streamer_byte;
-                    32'd24: height[23:16] <= streamer_byte;
-                    32'd25: height[31:24] <= streamer_byte;
-                    32'd26: planes[7:0] <= streamer_byte;
-                    32'd27: planes[15:8] <= streamer_byte;
-                    32'd28: bit_count[7:0] <= streamer_byte;
-                    32'd29: bit_count[15:8] <= streamer_byte;
-                    32'd30: compression[7:0] <= streamer_byte;
-                    32'd31: compression[15:8] <= streamer_byte;
-                    32'd32: compression[23:16] <= streamer_byte;
-                    32'd33: compression[31:24] <= streamer_byte;
+                    6'd0:  header0 <= streamer_byte;
+                    6'd1:  header1 <= streamer_byte;
+                    6'd2:  file_len[7:0] <= streamer_byte;
+                    6'd3:  file_len[15:8] <= streamer_byte;
+                    6'd4:  file_len[23:16] <= streamer_byte;
+                    6'd5:  file_len[31:24] <= streamer_byte;
+                    6'd10: data_offset[7:0] <= streamer_byte;
+                    6'd11: data_offset[15:8] <= streamer_byte;
+                    6'd12: data_offset[23:16] <= streamer_byte;
+                    6'd13: data_offset[31:24] <= streamer_byte;
+                    6'd14: dib_size[7:0] <= streamer_byte;
+                    6'd15: dib_size[15:8] <= streamer_byte;
+                    6'd16: dib_size[23:16] <= streamer_byte;
+                    6'd17: dib_size[31:24] <= streamer_byte;
+                    6'd18: width[7:0] <= streamer_byte;
+                    6'd19: width[15:8] <= streamer_byte;
+                    6'd22: height[7:0] <= streamer_byte;
+                    6'd23: height[15:8] <= streamer_byte;
+                    6'd26: planes[7:0] <= streamer_byte;
+                    6'd27: planes[15:8] <= streamer_byte;
+                    6'd28: bit_count[7:0] <= streamer_byte;
+                    6'd29: bit_count[15:8] <= streamer_byte;
+                    6'd30: compression[7:0] <= streamer_byte;
+                    6'd31: compression[15:8] <= streamer_byte;
+                    6'd32: compression[23:16] <= streamer_byte;
+                    6'd33: compression[31:24] <= streamer_byte;
                     default: ;
                 endcase
 
-                if (header_byte_cnt == 32'd53) begin
+                // All header fields are complete by byte 33. Prepare the
+                // existing end register one byte before validation, including
+                // the original modulo-2^32 wrap. No output or handshake moves.
+                if (header_byte_cnt == 6'd52)
+                    pixel_end <= data_offset + required_pixel_bytes;
+
+                if (header_byte_cnt == 6'd53) begin
                     if (header_valid) begin
                         pixel_byte_cnt <= data_offset;
-                        pixel_end <= data_offset + required_pixel_bytes;
                         rgb_byte_cnt <= 3'd0;
                         load_state <= LD_DATA;
                     end else begin
@@ -808,7 +812,7 @@ module fat32_media_loader #(
                         load_state <= LD_IDLE;
                     end
                 end else begin
-                    header_byte_cnt <= header_byte_cnt + 32'd1;
+                    header_byte_cnt <= header_byte_cnt + 6'd1;
                 end
             end
 

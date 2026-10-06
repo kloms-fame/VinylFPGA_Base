@@ -78,7 +78,7 @@ for raw in telemetry.read_text(encoding='utf-8',errors='replace').splitlines():
     lines.extend(item['text'] for item in message.get('lines',[]) if item.get('direction')=='rx')
 stats=[dict(re.findall(r'(UR|BL|VF|OV|ERR|VER)=([0-9A-Fa-f]+)',line)) for line in lines if line.startswith('STAT ')]
 boot=any('BOOT' in line or 'VINYL' in line for line in lines)
-ok=watch.returncode==0 and len(stats)>=3 and all(s.get('ERR')=='00' and s.get('OV')=='0000' for s in stats[-3:])
+ok=watch.returncode==0 and boot and len(stats)>=3 and all(s.get('ERR')=='00' and s.get('OV')=='0000' for s in stats[-3:])
 result=dict(round=a.round,bit_sha256=digest,download=True,bridge_exit=watch.returncode,
             boot_observed=boot,received_lines=lines,stat_count=len(stats),last_stats=stats[-3:],
             smoke_pass=ok,physical_controls_tested=False)

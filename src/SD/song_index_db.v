@@ -46,14 +46,14 @@ module song_index_db #(
     output reg  [2:0]  song_count,
     output reg  [15:0] song_flags,   // 每首歌 4bit {mv,lrc,pcm,cover}
     // 每首歌 {bytes[63:32], first_cluster[31:0]}
-    output reg  [63:0] song_cover0,
-    output reg  [63:0] song_cover1,
-    output reg  [63:0] song_cover2,
-    output reg  [63:0] song_cover3,
-    output reg  [63:0] song_audio0,
-    output reg  [63:0] song_audio1,
-    output reg  [63:0] song_audio2,
-    output reg  [63:0] song_audio3,
+    output wire [63:0] song_cover0,
+    output wire [63:0] song_cover1,
+    output wire [63:0] song_cover2,
+    output wire [63:0] song_cover3,
+    output wire [63:0] song_audio0,
+    output wire [63:0] song_audio1,
+    output wire [63:0] song_audio2,
+    output wire [63:0] song_audio3,
     output wire [63:0] song_mv0, song_mv1, song_mv2, song_mv3
 );
     `include "song_index_defs.vh"
@@ -76,7 +76,6 @@ module song_index_db #(
     reg [15:0] hdr_version;
     reg [15:0] hdr_entry_size;
     reg [15:0] hdr_count;
-    reg [15:0] hdr_max;
     reg [31:0] hdr_crc_exp;
     reg [31:0] crc_calc;
     reg [8:0]  byte_idx;
@@ -125,6 +124,19 @@ module song_index_db #(
     assign song_mv1=(valid && hdr_version==2 && e_has_mv[1]) ? e_mv[1] : 64'd0;
     assign song_mv2=(valid && hdr_version==2 && e_has_mv[2]) ? e_mv[2] : 64'd0;
     assign song_mv3=(valid && hdr_version==2 && e_has_mv[3]) ? e_mv[3] : 64'd0;
+    // Payload is consumed only after valid, at the unchanged P_FIN edge.
+    // The loader clears index_mode before starting a reload. Invalid payloads
+    // are zero; no second 512-bit output bank is needed. busy/song_flags keep
+    // their module API and are already pruned when unconnected in the product.
+    assign song_cover0 = valid ? {e_cov_by[0], e_cov_cl[0]} : 64'd0;
+    assign song_cover1 = valid ? {e_cov_by[1], e_cov_cl[1]} : 64'd0;
+    assign song_cover2 = valid ? {e_cov_by[2], e_cov_cl[2]} : 64'd0;
+    assign song_cover3 = valid ? {e_cov_by[3], e_cov_cl[3]} : 64'd0;
+    assign song_audio0 = valid ? {e_aud_by[0], e_aud_cl[0]} : 64'd0;
+    assign song_audio1 = valid ? {e_aud_by[1], e_aud_cl[1]} : 64'd0;
+    assign song_audio2 = valid ? {e_aud_by[2], e_aud_cl[2]} : 64'd0;
+    assign song_audio3 = valid ? {e_aud_by[3], e_aud_cl[3]} : 64'd0;
+
     // P_CHK 阶段每拍只比较一首歌
     wire cover_entry_bad =
         !e_has_cover[chk_idx] ||
@@ -155,14 +167,7 @@ module song_index_db #(
             err            <= SIDX_ERR_NONE;
             song_count     <= 3'd0;
             song_flags     <= 16'd0;
-            song_cover0    <= 64'd0;
-            song_cover1    <= 64'd0;
-            song_cover2    <= 64'd0;
-            song_cover3    <= 64'd0;
-            song_audio0    <= 64'd0;
-            song_audio1    <= 64'd0;
-            song_audio2    <= 64'd0;
-            song_audio3    <= 64'd0;
+
             chk_idx        <= 3'd0;
             chk_ok         <= 1'b0;
             fin_err        <= SIDX_ERR_NONE;
@@ -170,7 +175,6 @@ module song_index_db #(
             hdr_version    <= 16'd0;
             hdr_entry_size <= 16'd0;
             hdr_count      <= 16'd0;
-            hdr_max        <= 16'd0;
             hdr_crc_exp    <= 32'd0;
             crc_calc       <= 32'hFFFFFFFF;
             byte_idx       <= 9'd0;
@@ -202,7 +206,6 @@ module song_index_db #(
                     hdr_version    <= 16'd0;
                     hdr_entry_size <= 16'd0;
                     hdr_count      <= 16'd0;
-                    hdr_max        <= 16'd0;
                     hdr_crc_exp    <= 32'd0;
                     crc_calc       <= 32'hFFFFFFFF;
                     byte_idx       <= 9'd0;
@@ -239,8 +242,6 @@ module song_index_db #(
                             6'd11: hdr_entry_size[15:8]<= in_byte;
                             6'd12: hdr_count[7:0]      <= in_byte;
                             6'd13: hdr_count[15:8]     <= in_byte;
-                            6'd14: hdr_max[7:0]        <= in_byte;
-                            6'd15: hdr_max[15:8]       <= in_byte;
                             6'd16: hdr_crc_exp[7:0]    <= in_byte;
                             6'd17: hdr_crc_exp[15:8]   <= in_byte;
                             6'd18: hdr_crc_exp[23:16]  <= in_byte;
@@ -316,14 +317,7 @@ module song_index_db #(
                                     {(e_has_mv[2] && hdr_version==2), 1'b0, e_has_audio[2], e_has_cover[2]},
                                     {(e_has_mv[1] && hdr_version==2), 1'b0, e_has_audio[1], e_has_cover[1]},
                                     {(e_has_mv[0] && hdr_version==2), 1'b0, e_has_audio[0], e_has_cover[0]}};
-                    song_cover0 <= {e_cov_by[0], e_cov_cl[0]};
-                    song_cover1 <= {e_cov_by[1], e_cov_cl[1]};
-                    song_cover2 <= {e_cov_by[2], e_cov_cl[2]};
-                    song_cover3 <= {e_cov_by[3], e_cov_cl[3]};
-                    song_audio0 <= {e_aud_by[0], e_aud_cl[0]};
-                    song_audio1 <= {e_aud_by[1], e_aud_cl[1]};
-                    song_audio2 <= {e_aud_by[2], e_aud_cl[2]};
-                    song_audio3 <= {e_aud_by[3], e_aud_cl[3]};
+
                 end
             end
             default: phase <= P_IDLE;
