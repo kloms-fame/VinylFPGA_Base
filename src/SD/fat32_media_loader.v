@@ -205,6 +205,9 @@ module fat32_media_loader #(
     reg [7:0]  header1;
     reg [31:0] file_len;
     reg [31:0] data_offset;
+    // S7-03 时序收口：进入 LD_DATA 时一次寄存 data_offset + required_pixel_bytes，
+    // 使逐像素判断不再在 100 MHz 路径里重算 32 位加法，功能等价。
+    reg [31:0] pixel_end;
     reg [31:0] dib_size;
     reg [31:0] width;
     reg [31:0] height;
@@ -667,6 +670,7 @@ module fat32_media_loader #(
             header1 <= 8'd0;
             file_len <= 32'd0;
             data_offset <= 32'd54;
+            pixel_end <= 32'd0;
             dib_size <= 32'd0;
             width <= 32'd0;
             height <= 32'd0;
@@ -763,6 +767,7 @@ module fat32_media_loader #(
                 if (header_byte_cnt == 32'd53) begin
                     if (header_valid) begin
                         pixel_byte_cnt <= data_offset;
+                        pixel_end <= data_offset + required_pixel_bytes;
                         rgb_byte_cnt <= 3'd0;
                         load_state <= LD_DATA;
                     end else begin
@@ -780,8 +785,7 @@ module fat32_media_loader #(
                 if (pixel_byte_cnt < data_offset) begin
                     pixel_byte_cnt <= pixel_byte_cnt + 32'd1;
                 end else if ((pixel_byte_cnt < file_len) &&
-                             (pixel_byte_cnt <
-                              (data_offset + required_pixel_bytes))) begin
+                             (pixel_byte_cnt < pixel_end)) begin
                     case (rgb_byte_cnt)
                         3'd0: begin
                             bmp_data[7:0] <= streamer_byte;

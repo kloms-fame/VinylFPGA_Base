@@ -14,6 +14,7 @@
 `include "io/ir_nec_decoder.v"
 `include "io/expansion_io_hub.v"
 `include "io/ui_event_bus.v"
+`include "io/ui_command_router.v"
 `include "io/exp_baud_tick.v"
 `include "io/exp_uart_tx.v"
 `include "io/exp_echo_reporter.v"
@@ -339,6 +340,11 @@ wire        ui_event_valid;
 wire [3:0]  ui_event_code;
 wire [15:0] ui_event_arg;
 wire [15:0] ui_event_aux;
+// S7-03：运行时状态 / 使能冻结输出（clk 域）
+wire        blank_active;   // 消隐激活（DIP4 自动 + 遥控息屏手动）
+wire        led_enable;     // DIP3 LED 总使能（S7-05 接入执行器）
+wire        ws_enable;      // DIP6 WS 总使能（S7-05 接入执行器）
+wire        restart_req;    // 重启确认后一拍脉冲（软复位请求）
 wire        brw_ev_prev_tgl;
 wire        brw_ev_next_tgl;
 wire        brw_ev_confirm_tgl;
@@ -519,7 +525,30 @@ wire mem_rst_n;
 wire video_rst_n;
 wire Sdr_init_done_sd;
 
-assign ext_rst_n = rst_n & sys_pll_lock & video_pll_lock;
+// S7-03：重启确认软复位（clk 域）。restart_req 触发拉低 soft_rst_n 一段时间，
+// 经 ext_rst_n 异步断言、各域 reset_sync 同步释放；计数器用外部 rst_n 复位，
+// 避免被自身触发的域复位卡死在低电平。640 ns（32 拍 @ 50 MHz）已足够最慢
+// video_clk 域完成异步断言 + 两级同步释放，用 5 位计数器替代 16 位长计数器。
+localparam integer SOFT_RST_CYCLES = 32; // 640 ns @ 50 MHz
+localparam integer SOFT_RST_W      = $clog2(SOFT_RST_CYCLES);
+reg soft_rst_n;
+reg [SOFT_RST_W-1:0] soft_rst_cnt;
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        soft_rst_n   <= 1'b1;
+        soft_rst_cnt <= {SOFT_RST_W{1'b0}};
+    end else if (restart_req) begin
+        soft_rst_n   <= 1'b0;
+        soft_rst_cnt <= {SOFT_RST_W{1'b0}};
+    end else if (!soft_rst_n) begin
+        if (soft_rst_cnt >= (SOFT_RST_CYCLES - 1))
+            soft_rst_n <= 1'b1;
+        else
+            soft_rst_cnt <= soft_rst_cnt + 1'b1;
+    end
+end
+
+assign ext_rst_n = rst_n & sys_pll_lock & video_pll_lock & soft_rst_n;
 // S7-02：媒体监督器复位与域复位合并，仅复位 SD 媒体子系统（sd_card_bmp/sd_card_top）。
 assign sd_media_rst_n = sdcard_rst_n & media_sd_rst_n;
 
@@ -2006,7 +2035,22 @@ lrc_osd u_lrc_osd (
     .hit      (lrc_hit)
 );
 
-assign final_rgb = (s2_boot_on && boot_active) ? boot_rgb : lrc_rgb;
+// S7-03：消隐（clk 域 blank_active）跨到 video_clk 域，末级像素替换为纯黑。
+// 消隐只改像素，不动 HS/VS/DE 与 HDMI 音频数据岛，HDMI/音频锁定与节拍不变。
+reg blank_v1, blank_v2;
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n) begin
+        blank_v1 <= 1'b0;
+        blank_v2 <= 1'b0;
+    end else begin
+        blank_v1 <= blank_active;
+        blank_v2 <= blank_v1;
+    end
+end
+wire blank_active_vid = blank_v2;
+
+assign final_rgb = blank_active_vid ? 24'h000000 :
+                   (s2_boot_on && boot_active) ? boot_rgb : lrc_rgb;
 
 video_rgb_to_axis_640x480 u_video_rgb_to_axis_640x480(
     .I_clk         (video_clk),
@@ -2156,7 +2200,11 @@ expansion_integration #(
     .ui_event_valid   (ui_event_valid),
     .ui_event_code    (ui_event_code),
     .ui_event_arg     (ui_event_arg),
-    .ui_event_aux     (ui_event_aux)
+    .ui_event_aux     (ui_event_aux),
+    .blank_active     (blank_active),
+    .led_enable       (led_enable),
+    .ws_enable        (ws_enable),
+    .restart_req      (restart_req)
 );
 
 // ==========================================================================

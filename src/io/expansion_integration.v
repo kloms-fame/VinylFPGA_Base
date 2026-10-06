@@ -76,13 +76,19 @@ module expansion_integration #(
     input  wire        osd_err_valid,      // 错误码变化单拍脉冲
     input  wire [7:0]  osd_err_code,       // 已同步错误码
 
-    // ===================== S3：选曲事件出口（最小新增）=====================
-    // ui_event_bus 的单拍事件流原样引出，供 S3 的 ui_event_bridge 解码成
-    // prev/next/confirm/mode。bus 侧语义与串口回显完全一致，不二次加工。
+    // ===================== S3：选曲事件出口（S7-03 起由 ui_command_router 净化后输出）=====================
+    // 原为 ui_event_bus 单拍事件流；S7-03 起改为 ui_command_router 的"业务命令流"
+    // （红外已翻译、DIP5 已使能门控、消隐唤醒已吞首键）。下游 ui_event_bridge 语义不变。
     output wire        ui_event_valid,
     output wire [3:0]  ui_event_code,
     output wire [15:0] ui_event_arg,
-    output wire [15:0] ui_event_aux
+    output wire [15:0] ui_event_aux,
+
+    // ===================== S7-03：运行时状态 / 使能冻结输出 =====================
+    output wire        blank_active,       // 消隐激活（DIP4 自动 + 遥控息屏手动）
+    output wire        led_enable,         // DIP3 LED 总使能（S7-05 接入执行器）
+    output wire        ws_enable,          // DIP6 WS 总使能（S7-05 接入执行器）
+    output wire        restart_req         // 重启确认后一拍脉冲（软复位请求）
 );
 
     // 事件编码常量（与 ui_event_bus / exp_echo_reporter 各取一份，module 作用域）
@@ -115,6 +121,11 @@ module expansion_integration #(
     wire [3:0]  ev_code;
     wire [15:0] ev_arg;
     wire [15:0] ev_aux;
+    wire        ev_overflow_bus;   // ui_event_bus 逐源 pending 溢出单拍脉冲
+    wire        cmd_valid;
+    wire [3:0]  cmd_code;
+    wire [15:0] cmd_arg;
+    wire [15:0] cmd_aux;
 
     // ---- S7-01B：health_monitor <-> exp_echo_reporter 的中间信号 ----
     wire        stat_req;
@@ -198,7 +209,8 @@ module expansion_integration #(
         .ev_valid           (ev_valid),
         .ev_code            (ev_code),
         .ev_arg             (ev_arg),
-        .ev_aux             (ev_aux)
+        .ev_aux             (ev_aux),
+        .ev_overflow        (ev_overflow_bus)
     );
 
     // DIP1 is reserved as the user's PRESENT declaration (up=1).
@@ -240,11 +252,30 @@ module expansion_integration #(
     wire report_valid = ev_valid && io_ready &&
                         ((ev_code == EV_DIP_CHANGE) || (exp_actions_ready && dip_level[0]));
 
-    // ---- S3：事件流原样引出（供顶层 ui_event_bridge 解码选曲事件）----
-    assign ui_event_valid = action_valid;
-    assign ui_event_code  = ev_code;
-    assign ui_event_arg   = ev_arg;
-    assign ui_event_aux   = ev_aux;
+    // ---- S7-03：业务命令路由（红外白名单/repeat、DIP5 使能、消隐唤醒、重启确认）----
+    ui_command_router u_ui_command_router (
+        .clk                (clk),
+        .rst_n              (rst_n),
+        .ev_valid           (action_valid),
+        .ev_code            (ev_code),
+        .ev_arg             (ev_arg),
+        .ev_aux             (ev_aux),
+        .dip_level          (dip_level),
+        .cmd_valid          (cmd_valid),
+        .cmd_code           (cmd_code),
+        .cmd_arg            (cmd_arg),
+        .cmd_aux            (cmd_aux),
+        .blank_active       (blank_active),
+        .led_enable         (led_enable),
+        .ws_enable          (ws_enable),
+        .restart_req        (restart_req)
+    );
+
+    // ---- S3：事件流引出（S7-03 起改为 router 的业务命令流，供顶层 ui_event_bridge）----
+    assign ui_event_valid = cmd_valid;
+    assign ui_event_code  = cmd_code;
+    assign ui_event_arg   = cmd_arg;
+    assign ui_event_aux   = cmd_aux;
 
     // ---- S7-01B：健康遥测汇聚（被动旁路，clk 域）----
     health_monitor #(
@@ -260,7 +291,7 @@ module expansion_integration #(
         .video_failed  (mv_failed),
         .osd_err_valid (osd_err_valid),
         .osd_err_code  (osd_err_code),
-        .ev_overflow   (ev_ovf_pulse),
+        .ev_overflow   (ev_ovf_pulse | ev_overflow_bus),
         .stat_req      (stat_req),
         .err_req       (err_req),
         .err_code      (err_code),
@@ -339,6 +370,7 @@ module expansion_integration #(
     // 处理：① 明确排除 EV_DIP_CHANGE（拨码是静态配置，不是操作，且上电必然报一次）；
     //       ② 再加 500 ms 上电保护窗，屏蔽所有输入通道的消抖收敛瞬态。
     wire ev_is_dip = (ev_code == EV_DIP_CHANGE);
+    wire ev_is_ir  = (ev_code == EV_IR_FRAME) || (ev_code == EV_IR_REPEAT);
 
     localparam integer SKIP_GUARD_CYCLES = CLK_FREQ_HZ / 2;   // 500 ms
     reg [26:0] skip_guard_cnt;
@@ -356,7 +388,9 @@ module expansion_integration #(
         end
     end
 
-    assign ui_ev_valid = ((action_valid & ~ev_is_dip) | (|board_key_fall_pulse))
+    // S7-03：DIP5 关闭时红外既不执行业务、也不作为 Boot 跳过源（红外业务使能门控）。
+    wire ir_boot_ok = !ev_is_ir || dip_level[4];
+    assign ui_ev_valid = ((action_valid & ~ev_is_dip & ir_boot_ok) | (|board_key_fall_pulse))
                          & skip_guard_done;
 
     // ---- 操作反馈音：复用 J2 标定工程 buzzer_feedback ----
@@ -396,7 +430,7 @@ module expansion_integration #(
         .encoder_source        (encoder_source_any),
         .encoder_switch        (encoder_switch_any),
         .encoder_switch_source (encoder_switch_source_any),
-        .ir_event              (ir_event & ~ir_repeat_event),
+        .ir_event              (ir_event & ~ir_repeat_event & dip_level[4]),
         .ir_action             (2'd0),
         .buzzer_n              (board_buzzer_n),
         .busy                  ()

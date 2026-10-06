@@ -72,9 +72,12 @@ module ui_event_bridge (
     wire ev_confirm = is_enc1_down | key_ok;
     wire ev_mode    = key_mode;
 
-    // S5：EC1 旋转（仅编码器本身）与 KEY04/KEY05
-    wire ev_enc_cw  = enc1_inc;
-    wire ev_enc_ccw = enc1_dec;
+    // S5：EC1 旋转与 KEY03/KEY01（S7-03 起 KEY01/03 在 PLAY 等价上一/下一曲，
+    // 与 EC1 旋转同源进入 play_ctrl 的切曲路径；浏览态仍走 prev/next 不变）
+    wire key01_prev = is_key_down && (ev_arg == 16'd0);  // KEY01 左 = 上一曲
+    wire key03_next = is_key_down && (ev_arg == 16'd2);  // KEY03 右 = 下一曲
+    wire ev_enc_cw  = enc1_inc | key03_next;
+    wire ev_enc_ccw = enc1_dec | key01_prev;
     wire ev_key_up  = is_key_down && (ev_arg == 16'd3);   // KEY04 上
     wire ev_key_dn  = is_key_down && (ev_arg == 16'd4);   // KEY05 下
 
