@@ -46,6 +46,7 @@
 `include "video/mv_frame_scheduler.v"
 `include "display/vinyl_renderer.v"
 `include "video/s6_video_layer.v"
+`include "SD/media_supervisor.v"
 
 module top(
     input                       clk,
@@ -194,6 +195,15 @@ reg [23:0] media_status_v1, media_status_v2;
 reg [23:0] media_status_c1, media_status_c2, media_status_clk;
 wire        osd_error_toggle;
 wire        switch_abort_toggle;
+
+// S7-02：媒体故障恢复监督器信号（sd_card_clk 域）
+wire        media_sd_rst_n;       // 监督器驱动的 SD 媒体子系统复位（低有效）
+wire [7:0]  media_err_code;       // 集中错误码 Err-01..09（sticky）
+wire        media_err_toggle;     // 错误码变化翻转标志（跨域捆绑握手）
+wire [7:0]  media_epoch;          // 恢复代次
+wire [15:0] media_cnt_sd_reset;   // SD 复位计数（饱和，遥测预留）
+wire [15:0] media_cnt_sector_err; // 扇区错误计数（饱和，遥测预留）
+wire        sd_media_rst_n;       // 合并后的 SD 媒体子系统复位（低有效）
 
 // 第十讲：图片转场控制与像素应用
 wire        key_next_transition_press;
@@ -447,6 +457,14 @@ reg         osd_error_toggle_sync2;
 reg         osd_error_toggle_seen;
 reg         osd_error_update_pending;
 reg [7:0]   osd_error_code_frame;
+// S7-02：media_supervisor 错误码 -> video_clk 域同步（数据 2FF + toggle 边沿）
+reg [7:0]   media_err_code_sync1;
+reg [7:0]   media_err_code_sync2;
+reg         media_err_toggle_sync1;
+reg         media_err_toggle_sync2;
+reg         media_err_toggle_seen;
+reg         media_err_update_pending;
+reg [7:0]   media_err_code_frame;
 // S7-01B：错误码/欠载/低水位/流式/MV失败 -> clk 域的同步链
 reg [7:0]   osd_error_code_c1;
 reg [7:0]   osd_error_code_c2;
@@ -455,6 +473,14 @@ reg         osd_error_toggle_c2;
 reg         osd_error_toggle_cseen;
 reg         osd_err_valid_clk;
 reg [7:0]   osd_err_code_clk;
+// S7-02：media_supervisor 错误码 -> clk 域同步（数据 2FF + toggle 边沿）
+reg [7:0]   media_err_code_c1;
+reg [7:0]   media_err_code_c2;
+reg         media_err_toggle_c1;
+reg         media_err_toggle_c2;
+reg         media_err_toggle_cseen;
+reg         media_err_valid_clk;
+reg [7:0]   media_err_code_clk;
 reg         underrun_tgl;          // video_clk 域：欠载脉冲转电平翻转
 reg         underrun_tgl_c1;
 reg         underrun_tgl_c2;
@@ -497,6 +523,8 @@ wire video_rst_n;
 wire Sdr_init_done_sd;
 
 assign ext_rst_n = rst_n & sys_pll_lock & video_pll_lock;
+// S7-02：媒体监督器复位与域复位合并，仅复位 SD 媒体子系统（sd_card_bmp/sd_card_top）。
+assign sd_media_rst_n = sdcard_rst_n & media_sd_rst_n;
 
 // 每个实际时钟域独立做“异步复位、同步释放”。
 reset_sync u_sdcard_reset (
@@ -760,7 +788,7 @@ sd_card_bmp #(
     .SCAN_TARGET_COUNT (3'd4)
 ) sd_card_bmp_m0(
     .clk               (sd_card_clk),
-    .rst               (~sdcard_rst_n),
+    .rst               (~sd_media_rst_n),
     .sdr_init_done     (Sdr_init_done_sd),
     // 第十讲：KEY1先进入转场控制器，淡出完成后再用next_event触发切换。
     .key_next          (1'b1),
@@ -808,6 +836,31 @@ sd_card_bmp #(
     .audio_sec_byte_index(wav_sec_byte_index),
     .audio_sec_done    (media_sec_done),
     .audio_sec_error   (wav_sec_error)
+);
+
+// ===================== S7-02：媒体故障恢复监督器 =====================
+// 纯监督旁路 + SD 媒体子系统复位驱动。观测媒体挂载完成与扇区事务错误，
+// 在挂载失败/读超时时按参数化期限与重试上限复位恢复，并输出集中错误码。
+media_supervisor #(
+    .CLK_FREQ_HZ         (100_000_000),
+    .MOUNT_TIMEOUT_MS    (5000),
+    .SECTOR_TIMEOUT_MS   (250),
+    .MOUNT_RETRY_MAX     (3),
+    .REMOUNT_COOLDOWN_MS (30000),
+    .RESET_PULSE_CYCLES  (100)
+) u_media_supervisor (
+    .clk            (sd_card_clk),
+    .rst_n          (sdcard_rst_n),
+    .media_ready    (media_status_sd[23]),
+    .sector_error   (wav_sec_error),
+    .sector_done    (media_sec_done),
+    .sector_busy    (media_sec_busy),
+    .sd_rst_n       (media_sd_rst_n),
+    .media_err_code (media_err_code),
+    .media_err_toggle(media_err_toggle),
+    .media_epoch    (media_epoch),
+    .cnt_sd_reset   (media_cnt_sd_reset),
+    .cnt_sector_err (media_cnt_sector_err)
 );
 
 // 第十讲：KEY1外部消抖后送转场控制器，避免被sd_card_bmp内部硬切逻辑抢先响应。
@@ -1290,6 +1343,10 @@ always @(posedge video_clk or negedge video_rst_n) begin
         adjusted_pixel_x <= adjusted_pixel_x + 10'd1;
 end
 
+// S7-02：集中错误码优先于既有 OSD 错误码，用于最小屏幕状态提示。
+wire [7:0] osd_err_code_frame_eff =
+    (media_err_code_frame != 8'd0) ? media_err_code_frame : osd_error_code_frame;
+
 osd_overlay_24 #(
     .OSD_X(8),
     .OSD_Y(8)
@@ -1298,11 +1355,11 @@ osd_overlay_24 #(
     .rst_n        (video_rst_n),
     .vsync        (vs),
     .de           (adjusted_de),
-    .rgb_in       ((!display_valid_sync2 && osd_error_code_frame != 0) ? 24'h201018 : adjusted_rgb),
+    .rgb_in       ((!display_valid_sync2 && osd_err_code_frame_eff != 0) ? 24'h201018 : adjusted_rgb),
     .pixel_x      (adjusted_pixel_x),
     .active_index (media_id),
     .auto_enabled (auto_enabled_sync2),
-    .error_code   (osd_error_code_frame),
+    .error_code   (osd_err_code_frame_eff),
     .brightness   (brightness_frame),
     .contrast     (contrast_frame),
     .menu_active  (menu_active_frame),
@@ -1520,6 +1577,13 @@ always @(posedge video_clk or negedge video_rst_n) begin
         osd_error_toggle_seen  <= 1'b0;
         osd_error_update_pending <= 1'b0;
         osd_error_code_frame   <= 8'd0;
+        media_err_code_sync1   <= 8'd0;
+        media_err_code_sync2   <= 8'd0;
+        media_err_toggle_sync1 <= 1'b0;
+        media_err_toggle_sync2 <= 1'b0;
+        media_err_toggle_seen  <= 1'b0;
+        media_err_update_pending <= 1'b0;
+        media_err_code_frame   <= 8'd0;
         vs_q                   <= 1'b1;
         transition_armed       <= 1'b0;
         index_change_pending   <= 1'b0;
@@ -1552,6 +1616,19 @@ always @(posedge video_clk or negedge video_rst_n) begin
         end else if (osd_error_update_pending) begin
             osd_error_code_frame    <= osd_error_code_sync2;
             osd_error_update_pending <= 1'b0;
+        end
+
+        // S7-02：media_supervisor 错误码同步到 video 域，供最小屏幕状态提示。
+        media_err_code_sync1   <= media_err_code;
+        media_err_code_sync2   <= media_err_code_sync1;
+        media_err_toggle_sync1 <= media_err_toggle;
+        media_err_toggle_sync2 <= media_err_toggle_sync1;
+        if (media_err_toggle_sync2 != media_err_toggle_seen) begin
+            media_err_toggle_seen   <= media_err_toggle_sync2;
+            media_err_update_pending <= 1'b1;
+        end else if (media_err_update_pending) begin
+            media_err_code_frame    <= media_err_code_sync2;
+            media_err_update_pending <= 1'b0;
         end
 
         // 第十讲：首图提交只用于“武装”转场控制器，不触发转场。
@@ -1639,6 +1716,13 @@ always @(posedge clk or negedge exp_rst_n) begin
         osd_error_toggle_cseen <= 1'b0;
         osd_err_valid_clk    <= 1'b0;
         osd_err_code_clk     <= 8'd0;
+        media_err_code_c1    <= 8'd0;
+        media_err_code_c2    <= 8'd0;
+        media_err_toggle_c1  <= 1'b0;
+        media_err_toggle_c2  <= 1'b0;
+        media_err_toggle_cseen <= 1'b0;
+        media_err_valid_clk  <= 1'b0;
+        media_err_code_clk   <= 8'd0;
     end else begin
         underrun_tgl_c1      <= underrun_tgl;
         underrun_tgl_c2      <= underrun_tgl_c1;
@@ -1658,10 +1742,24 @@ always @(posedge clk or negedge exp_rst_n) begin
             osd_err_valid_clk      <= 1'b1;
             osd_err_code_clk       <= osd_error_code_c2;
         end
+        media_err_code_c1    <= media_err_code;
+        media_err_code_c2    <= media_err_code_c1;
+        media_err_toggle_c1  <= media_err_toggle;
+        media_err_toggle_c2  <= media_err_toggle_c1;
+        media_err_valid_clk  <= 1'b0;
+        if (media_err_toggle_c2 != media_err_toggle_cseen) begin
+            media_err_toggle_cseen <= media_err_toggle_c2;
+            media_err_valid_clk    <= 1'b1;
+            media_err_code_clk     <= media_err_code_c2;
+        end
     end
 end
 
 wire underrun_pulse_clk = underrun_tgl_c1 ^ underrun_tgl_c2;
+
+// S7-02：合并媒体错误与既有 OSD 错误，集中错误码优先，交给 health_monitor 上报。
+wire        merged_err_valid = osd_err_valid_clk | media_err_valid_clk;
+wire [7:0]  merged_err_code  = (media_err_code_clk != 8'd0) ? media_err_code_clk : osd_err_code_clk;
 
 // Silent 48 kHz samples cover startup, browsing, pause and track prefetch.
 // Legacy tone is allowed only after boot when no audio resource was found.
@@ -2058,8 +2156,8 @@ expansion_integration #(
     .wav_buffer_low   (wav_buffer_low_c2),
     .wav_stream_active(wav_stream_active_c2),
     .mv_failed        (mv_failed_c2),
-    .osd_err_valid    (osd_err_valid_clk),
-    .osd_err_code     (osd_err_code_clk),
+    .osd_err_valid    (merged_err_valid),
+    .osd_err_code     (merged_err_code),
     .ui_event_valid   (ui_event_valid),
     .ui_event_code    (ui_event_code),
     .ui_event_arg     (ui_event_arg),
