@@ -8,7 +8,7 @@
 // （经独立 toggle 跨域）与母板按键兜底脉冲，按当前视图路由成既有主链路
 // 已经能消费的控制脉冲。**不重写**缩略图布局、bank 预加载或取数握手。
 //
-// 路由规则（S3 冻结约定）：
+// 路由规则（S3 冻结约定，S7-03b 更新 KEY07/KEY11 归属）：
 //   全屏态 view_mode=0：
 //     next   -> fs_next   （既有"下一张"路径，经转场在整帧边界切换）
 //     prev   -> fs_prev   （新增 prev_event，复用 sd_card_bmp 既有"上一张"分支）
@@ -18,6 +18,11 @@
 //     prev   -> thumb_left （焦点 -1）
 //     confirm-> thumb_confirm（确认焦点并返回全屏）
 //     mode   -> thumb_mode （进入/退出缩略图）
+//  播放态 mode_play=1：
+//     KEY07(切歌模式) -> play_stop + thumb_mode：直接退出播放并落到 2x2 缩略图选曲
+//     KEY11(拓展1=返回主界面) -> play_stop + go_home：退出播放并回全屏主界面
+//   说明：旧版 KEY07 在播放态先回主界面、再按一次才进缩略图；S7-03b 起 KEY07
+//         在主界面与播放界面都可直接进入缩略图选曲，KEY11 专责返回主界面。
 //
 // 母板兜底：mb_next/mb_mode/mb_left/mb_confirm 是 S0~S2 已上板验收的单拍
 // 脉冲（KEY1 短/长、KEY2 短/长），与事件脉冲同为 sd 域单拍，直接 OR 并入，
@@ -102,6 +107,14 @@ module browse_fsm #(
     wire mode_any    = j2_mode    | mb_mode;
     wire left_any    = j2_prev    | mb_left;
 
+    // S7-03b：切歌模式(mode)两种来源分流。
+    //   j2_grid      = J2 KEY07 切歌模式：任意态(全屏/缩略图/播放)进入或退出缩略图。
+    //   mb_grid      = 母板 KEY1 长按兜底：保持 S0–S2 既有路由，仅非播放态进/出缩略图。
+    //   mb_stop_home = 母板 KEY1 长按在播放态：保持既有"退出播放并回主界面全屏"。
+    wire j2_grid      = j2_mode & ~home_event;
+    wire mb_grid      = mb_mode & ~mode_play & ~home_event;
+    wire mb_stop_home = mb_mode &  mode_play;
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             fs_next       <= 1'b0;
@@ -119,11 +132,15 @@ module browse_fsm #(
             thumb_right   <= next_any &  view_mode & ~mode_play;
             thumb_left    <= left_any &  view_mode & ~mode_play;
             thumb_confirm <= confirm_any & view_mode & ~mode_play;
-            // This domain owns mode routing: KEY7 is either stop/home OR grid.
-            thumb_mode    <= mode_any && !mode_play && !home_event;
+            // S7-03b：KEY07 在浏览与播放两态都可直接进入/退出 2x2 缩略图；
+            //   播放态同拍产生 play_stop 退出播放（落点即缩略图视图）。
+            //   KEY11(home_event) 停止播放并强制 go_home 回主界面全屏。
+            //   thumb_mode / play_stop / go_home 同在 sd_card_clk 单域同拍生成，
+            //   旧版"退出播放"与"翻转视图"两条独立跨域路径的竞态不复存在。
+            thumb_mode    <= j2_grid | mb_grid;
             play_start    <= confirm_any && !view_mode && !mode_play && !home_event && !mode_any;
             play_stop     <= home_event || (mode_any && mode_play);
-            go_home       <= home_event || (mode_any && mode_play);
+            go_home       <= home_event || mb_stop_home;
         end
     end
 endmodule

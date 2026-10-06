@@ -43,8 +43,7 @@ module tb_s7_top;
  if(!dut.play_active_sd || dut.thumb_mode_sd || !dut.stream_enable_sd) $fatal(1,"FAIL home confirmation did not play directly");
  if(!dut.waveform_enable_frame) $fatal(1,"FAIL PLAY waveform missing");
  key(6);cycles(30);
- if(dut.play_active_sd || dut.thumb_mode_sd) $fatal(1,"FAIL KEY7 PLAY must only return home");
- key(6);cycles(30);if(!dut.thumb_mode_sd) $fatal(1,"FAIL second KEY7 must open grid");
+ if(!dut.thumb_mode_sd || dut.play_active_sd) $fatal(1,"FAIL KEY7 PLAY must directly open grid and stop");
  cycles(60);if(dut.waveform_enable_frame) $fatal(1,"FAIL grid waveform still enabled");
  key(2);key(1);settled();
  if(!dut.play_active_sd || dut.thumb_mode_sd || dut.play_sel_song_sd!=1 || dut.disp_buf_idx!=1)

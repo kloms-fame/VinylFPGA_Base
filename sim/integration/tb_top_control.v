@@ -13,7 +13,7 @@ always @(negedge pixclk) begin
  vs=(frames%30!=0);
 end
 reg confirm=0, mode=0, right=0;
-reg stop_tgl=0, cf_tgl=0;
+reg stop_tgl=0, cf_tgl=0, home_tgl=0;
 reg [23:0] status=24'hFF0000;
 reg wav_active=0;
 reg skip=0;
@@ -30,6 +30,7 @@ initial begin
  force dut.vs=vs;
  force dut.brw_thumb_confirm=confirm; force dut.brw_thumb_right=right;
  force dut.brw_ev_mode_tgl=stop_tgl; force dut.brw_ev_confirm_tgl=cf_tgl;
+ force dut.brw_ev_home_tgl=home_tgl;
  force dut.boot_skip_toggle_clk=skip;
  force dut.media_status_sd=status;
  force dut.osd_error_code=8'd0;
@@ -74,14 +75,16 @@ initial begin
  cf_tgl=0; repeat(20) @(negedge pixclk);
  if(dut.paused_sd || dut.mix_sample_left!==16'd2345) $fatal(1,"FAIL resume");
  stop_tgl=0; repeat(150) @(negedge pixclk);
- if(dut.play_active_sd || dut.thumb_mode_sd || dut.mix_sample_left!==16'd0)
-   $fatal(1,"FAIL single KEY7 must stop/home/silence");
- stop_tgl=1; repeat(150) @(negedge pixclk);
+ if(dut.play_active_sd || !dut.thumb_mode_sd || dut.mix_sample_left!==16'd0)
+   $fatal(1,"FAIL single KEY7 must enter grid/stop/silence");
+ home_tgl=1; repeat(150) @(negedge pixclk);
+ if(dut.play_active_sd || dut.thumb_mode_sd)
+   $fatal(1,"FAIL KEY11 must return to home fullscreen");
  confirm=1; @(negedge sdclk); confirm=0;
  repeat(150) @(negedge pixclk);
  if(!dut.play_active_sd || dut.thumb_mode_sd || dut.fade_busy || dut.mix_sample_left!==16'd2345)
    $fatal(1,"FAIL same-song reselect after KEY7");
- $display("PASS same-bank exit/re-entry, EC1 pause/resume and KEY7 home then grid");
+ $display("PASS same-bank exit/re-entry, EC1 pause/resume, KEY7 grid and KEY11 home");
  // Select a different bank through the real fade -> held select -> ack chain.
  stop_tgl=0; repeat(150) @(negedge pixclk);
  stop_tgl=1; repeat(150) @(negedge pixclk);

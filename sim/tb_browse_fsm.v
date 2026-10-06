@@ -8,6 +8,8 @@
 //   2) 缩略图态：next->焦点+1 / prev->焦点-1 / confirm->确认 / mode->退出视图
 //   3) 母板兜底脉冲在全屏/缩略图两种视图下都仍然生效
 //   4) J2_BROWSE_ENABLE=0 时事件侧被旁路，母板兜底不受影响（回滚开关）
+//   5) S7-03b：播放态 KEY07(切歌模式) 直接进缩略图 + play_stop，不回主界面；
+//              播放态 KEY11(拓展1) 停止播放 + go_home 回主界面全屏，不进缩略图
 //
 // 事件以"电平翻转"进入（与 ui_event_bridge 一致），本测试台用 100 MHz 单
 // 时钟同时驱动两侧，仍能验证 2FF 同步 + 边沿检测只产出单拍脉冲。
@@ -22,16 +24,17 @@ module tb_browse_fsm;
 
     // ---------------- J2 enable DUT ----------------
     reg  ev_prev_tgl = 1'b0, ev_next_tgl = 1'b0, ev_confirm_tgl = 1'b0, ev_mode_tgl = 1'b0;
+    reg  ev_home_tgl = 1'b0;
     reg  mb_next = 1'b0, mb_mode = 1'b0, mb_left = 1'b0, mb_confirm = 1'b0;
     reg  view_mode = 1'b0;
     reg  mode_play = 1'b0;
-    wire play_start, play_stop;
+    wire play_start, play_stop, go_home;
     wire fs_next, fs_prev, thumb_right, thumb_left, thumb_confirm, thumb_mode;
 
-    reg [3:0] c_start, c_stop;
+    reg [3:0] c_start, c_stop, c_home;
     reg [3:0] c_fs_next, c_fs_prev, c_right, c_left, c_conf, c_mode;
 
-    browse_fsm #(.J2_BROWSE_ENABLE(1'b1)) dut (.ev_home_tgl(1'b0),
+    browse_fsm #(.J2_BROWSE_ENABLE(1'b1)) dut (.ev_home_tgl(ev_home_tgl),
         .clk            (clk),
         .rst_n          (rst_n),
         .ev_prev_tgl    (ev_prev_tgl),
@@ -50,13 +53,14 @@ module tb_browse_fsm;
         .thumb_left     (thumb_left),
         .thumb_confirm  (thumb_confirm),
         .thumb_mode     (thumb_mode),
-        .play_start(play_start), .play_stop(play_stop)
+        .play_start(play_start), .play_stop(play_stop), .go_home(go_home)
     );
 
     always @(posedge clk) begin
         if (rst_n) begin
             if (play_start) c_start <= c_start + 1;
             if (play_stop) c_stop <= c_stop + 1;
+            if (go_home)   c_home  <= c_home  + 1;
             if (fs_next)       c_fs_next <= c_fs_next + 1'b1;
             if (fs_prev)       c_fs_prev <= c_fs_prev + 1'b1;
             if (thumb_right)   c_right   <= c_right   + 1'b1;
@@ -108,7 +112,7 @@ module tb_browse_fsm;
     task clear_counts;
         begin
             c_fs_next = 0; c_fs_prev = 0; c_right = 0;
-            c_left = 0; c_conf = 0; c_mode = 0; c_start=0; c_stop=0;
+            c_left = 0; c_conf = 0; c_mode = 0; c_start=0; c_stop=0; c_home=0;
         end
     endtask
 
@@ -173,6 +177,19 @@ module tb_browse_fsm;
         end
     endtask
 
+    // 触发 KEY11（拓展1 = 返回主界面）电平翻转事件
+    task fire_home;
+        input [5:0] exp;
+        input [8*28:1] name;
+        begin
+            clear_counts;
+            @(negedge clk);
+            ev_home_tgl = ~ev_home_tgl;
+            repeat (12) @(posedge clk);
+            check_pulses(exp, name);
+        end
+    endtask
+
     initial begin
         repeat (4) @(posedge clk);
         rst_n = 1'b1;
@@ -200,11 +217,16 @@ module tb_browse_fsm;
         fire_mpulse(2'd3, 6'b000010, "thumbnail mb_confirm fallback");
         fire_mpulse(2'd1, 6'b000001, "thumbnail mb_mode fallback");
 
-        // KEY7 exits PLAY to home; the next KEY7 can open the grid.
+        // S7-03b：播放态 KEY7 直接进缩略图选曲（不再先回主界面），同拍退出播放。
         view_mode = 1'b0;
         mode_play = 1'b1;
-        fire_event(2'd3, 6'b000000, "playing KEY7 returns home once");
-        if(c_stop!=1) $fatal(1,"FAIL missing play_stop");
+        fire_event(2'd3, 6'b000001, "playing KEY7 opens grid once");
+        if(c_stop!=1) $fatal(1,"FAIL playing KEY7 must stop playback once");
+        if(c_home[0]) $fatal(1,"FAIL playing KEY7 must not go home");
+        // S7-03b：播放态 KEY11(拓展1) 返回主界面全屏，不进缩略图。
+        fire_home(6'b000000, "playing KEY11 returns home");
+        if(c_stop!=1) $fatal(1,"FAIL playing KEY11 must stop playback once");
+        if(c_home[0]!=1'b1) $fatal(1,"FAIL playing KEY11 must go home");
         fire_event(2'd1, 6'b000000, "playing navigation stays gated");
         mode_play = 1'b0;
 
