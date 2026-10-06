@@ -58,7 +58,7 @@ module tb_s5_play;
     wire [1:0] pc_sel;
     wire [7:0] pc_vol;
 
-    play_ctrl u_pc (
+    play_ctrl u_pc (.stop_request(1'b0),.media_lost(1'b0),.stream_end(1'b0),.end_mode_tgl(1'b0),
         .clk(clk), .rst_n(rst_n),
         .song_total(pc_total), .song_confirm(pc_confirm_pulse), .focus_index(pc_focus),
         .enc_cw_tgl(pc_enc_cw), .enc_ccw_tgl(pc_enc_ccw), .confirm_tgl(pc_confirm),

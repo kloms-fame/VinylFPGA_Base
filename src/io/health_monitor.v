@@ -38,7 +38,7 @@ module health_monitor #(
     // ---- 输出给 exp_echo_reporter ----
     output reg         stat_req,         // 周期 STAT 请求脉冲
     output reg         err_req,          // 错误变化 ERR 请求脉冲
-    output reg  [7:0]  err_code,         // 最近错误码（sticky）
+    output reg  [7:0]  err_code,         // current error; explicit zero reports recovery
     output reg  [15:0] cnt_underrun,     // 饱和：音频欠载次数
     output reg  [15:0] cnt_buffer_low,   // 饱和：播放中缓冲进入低水位次数
     output reg  [15:0] cnt_video_fail,   // 饱和：MV 取帧失败次数
@@ -99,8 +99,8 @@ module health_monitor #(
             if (ev_overflow && cnt_ev_overflow != 16'hFFFF)
                 cnt_ev_overflow <= cnt_ev_overflow + 16'd1;
 
-            // ---- sticky 最近错误码：出现新的非零错误码时锁存并请求上报 ----
-            if (osd_err_valid && (osd_err_code != 8'd0) &&
+            // ---- Current fault: zero is an explicit recovery event; counters retain history. ----
+            if (osd_err_valid &&
                 (osd_err_code != err_code)) begin
                 err_code <= osd_err_code;
                 err_req  <= 1'b1;

@@ -7,6 +7,7 @@ module mv_stream_player #(
  parameter integer FRAME_SECTORS=300
 )(
  input wire clk, rst_n,
+ input wire abort_request,
  input wire request_toggle, input wire [31:0] request_lba,
  input wire [1:0] request_bank,
  output reg done_toggle, output reg failed,
@@ -33,7 +34,7 @@ module mv_stream_player #(
                       rgb565[4:0],rgb565[4:2],8'd0};
  assign writer_active = (state != IDLE);
  assign write_req = (state == ACK);
- assign sector_req = (state == REQ) && !sector_busy;
+ assign sector_req = (state == REQ) && !sector_busy && !abort_request;
  assign pixel_valid = (state == READ) && sector_valid && sector_byte_index[0] && !failed;
  always @(posedge clk or negedge rst_n) begin
   if(!rst_n) req_sync<=0; else req_sync<={req_sync[1:0],request_toggle};
@@ -54,13 +55,13 @@ module mv_stream_player #(
    IDLE: if(req_sync[2]!=request_seen) state<=ACK;
    ACK: if(ack_sync[2]) state<=CLEAR;
    CLEAR: if(!ack_sync[2]) state<=REQ;
-   REQ: if(!sector_busy) state<=READ;
+   REQ: if(abort_request) state<=COMPLETE; else if(!sector_busy) state<=READ;
    READ: if(sector_done) begin
-    if(sector_error!=0 || byte_count!=10'd512) state<=COMPLETE;
+    if(abort_request || sector_error!=0 || byte_count!=10'd512) state<=COMPLETE;
     else if(sector_count==FRAME_SECTORS-1) state<=DRAIN;
     else state<=REQ;
    end
-   DRAIN: if(finish_sync[2]!=finish_mark) state<=COMPLETE;
+   DRAIN: if(abort_request || finish_sync[2]!=finish_mark) state<=COMPLETE;
    COMPLETE: state<=IDLE;
    default: state<=IDLE;
   endcase
@@ -72,6 +73,7 @@ module mv_stream_player #(
  always @(posedge clk or negedge rst_n) begin
   if(!rst_n) failed<=0;
   else if(state==IDLE && req_sync[2]!=request_seen) failed<=0;
+  else if(abort_request && state!=IDLE) failed<=1;
   else if(state==READ && sector_done && (sector_error!=0 || byte_count!=10'd512)) failed<=1;
  end
  always @(posedge clk or negedge rst_n) begin

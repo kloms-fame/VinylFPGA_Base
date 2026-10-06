@@ -17,6 +17,12 @@ qor = (dest/'final.qor').read_text(encoding='gbk')
 for field in ('Setup WNS','Hold WNS','Setup TNS','Hold TNS'):
     m = re.search(re.escape(field)+r'\s*\|\s*(-?\d+)',qor)
     assert m and int(m[1])>=0, 'Routed timing must pass'
+checks = (dest/'final.constraints').read_text(encoding='gbk')
+# Positive slack is insufficient when a combinational feedback path was cut
+# by static timing. Require these structural checks before generating a bit.
+for label in ('no clock', 'invalid constraint', 'combinational loops'):
+    m = re.search(r'checking '+re.escape(label)+r'\((\d+)\)', checks)
+    assert m and int(m[1]) == 0, 'Unresolved timing structure: '+label
 hashes=json.loads((dest/'inputs.sha256.json').read_text())
 for rel, expected in hashes.items():
     assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==expected, 'Current input differs: '+rel

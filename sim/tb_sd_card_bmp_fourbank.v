@@ -69,7 +69,7 @@ module tb_sd_card_bmp_fourbank;
         .select_req          (select_req),
         .select_index        (select_index),
         .select_ack          (select_ack),
-        .key_auto            (key_auto),
+        .auto_inhibit(1'b0),.key_auto            (key_auto),
         .state_code          (state_code),
         .bmp_width           (16'd2),
         .bmp_height          (16'd2),
@@ -314,6 +314,7 @@ endmodule
 module fat32_media_loader (
     input  wire        clk,
     input  wire        rst,
+    output wire storage_done, output wire [7:0] storage_error,
     output reg         ready,
     input  wire        scan_start,
     output reg         scan_done,

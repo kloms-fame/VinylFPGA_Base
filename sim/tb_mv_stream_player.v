@@ -6,7 +6,7 @@ reg [7:0] data=0,error=0; reg [8:0] idx=0;
 wire complete,failed,active,wr_req,pv,sr;
 wire [31:0] pd,lba; wire [1:0] bank;
 integer pixels=0,i,s;
-mv_stream_player #(.FRAME_SECTORS(2)) dut(.clk(clk),.rst_n(rst_n),
+mv_stream_player #(.FRAME_SECTORS(2)) dut(.abort_request(1'b0),.clk(clk),.rst_n(rst_n),
  .request_toggle(req),.request_lba(32'd2000),.request_bank(2'd2),
  .done_toggle(complete),.failed(failed),.writer_active(active),.write_req(wr_req),
  .write_ack(ack),.write_finish_toggle(fin),.write_bank(bank),.pixel_valid(pv),.pixel_data(pd),

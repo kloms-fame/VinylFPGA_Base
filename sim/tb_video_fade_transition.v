@@ -9,6 +9,7 @@ module tb_video_fade_transition;
     reg direction_in = 1'b0;
     reg apply_reverse = 1'b0;
     reg bypass_next_event_in = 1'b0;
+    reg [1:0] effect_mode=2;
     reg player_active = 1'b0;
     reg frame_start = 1'b0;
     reg index_commit = 1'b0;
@@ -49,6 +50,7 @@ module tb_video_fade_transition;
         .ctrl_rst_n(ctrl_rst_n),
         .next_event_in(next_event_in),
         .direction_in(direction_in),
+        .effect_mode(effect_mode),
         .next_event_out(next_event_out),
         .fade_busy(fade_busy),
         .pix_clk(pix_clk),
@@ -71,6 +73,7 @@ module tb_video_fade_transition;
         .ctrl_rst_n(ctrl_rst_n),
         .next_event_in(bypass_next_event_in),
         .direction_in(direction_in),
+        .effect_mode(effect_mode),
         .next_event_out(bypass_next_event_out),
         .fade_busy(bypass_fade_busy),
         .pix_clk(pix_clk),
@@ -203,7 +206,7 @@ module tb_video_fade_transition;
             errors = errors + 1;
         end
         pix_pulse_index(2'd2);
-        if (!wipe_active || transition_kind[0] !== 1'b0) $fatal(1, "FAIL CCW direction not captured");
+        if (wipe_active) $fatal(1, "FAIL fade unexpectedly includes wipe");
         wait_fade_active(1'b0);
         if (alpha_out !== 8'd255) begin
             $display("FAIL: manual fade-in did not return alpha to 255");
@@ -211,7 +214,7 @@ module tb_video_fade_transition;
         end
 
         repeat (8) @(negedge ctrl_clk);
-        direction_in = 1'b1;
+        direction_in = 1'b1; effect_mode=1;
         ctrl_pulse();
         wait_fade_active(1'b1);
         wait(next_event_out);
@@ -219,17 +222,13 @@ module tb_video_fade_transition;
         if (!wipe_active || transition_kind[0] !== 1'b1) $fatal(1, "FAIL CW direction not captured");
         wait_fade_active(1'b0);
 
-        // Automatic slideshow: index commit in IDLE starts a wipe reveal.
-        pix_pulse_index(2'd3);
-        if (wipe_active !== 1'b1) begin
-            $display("FAIL: automatic index commit did not start wipe");
-            errors = errors + 1;
-        end
-        wait_fade_active(1'b0);
-        if (wipe_active !== 1'b0) begin
-            $display("FAIL: wipe did not finish");
-            errors = errors + 1;
-        end
+        // An unrelated bank commit must not manufacture a manual transition.
+        pix_pulse_index(2'd0);
+        if(wipe_active || fade_active) $fatal(1,"FAIL unsolicited transition");
+        repeat(8) @(negedge ctrl_clk);
+        effect_mode=0;ctrl_pulse();wait(next_event_out);
+        pix_pulse_index(2'd1);repeat(8) @(negedge ctrl_clk);
+        if(fade_busy || alpha_out!=255 || wipe_active) $fatal(1,"FAIL cut mode");
 
         // Pixel-domain arithmetic: alpha and wipe boundary.
         apply_alpha = 8'd255;
@@ -294,7 +293,7 @@ module tb_video_fade_transition;
         if (apply_rgb_out !== 24'd0) $fatal(1, "FAIL reverse wipe left region");
 
         if (errors == 0)
-            $display("PASS: tb_video_fade_transition manual/auto/wipe arithmetic");
+            $display("PASS: tb_video_fade_transition fade/page/cut and pixel arithmetic");
         else
             $display("FAIL: tb_video_fade_transition errors=%0d", errors);
         $finish;

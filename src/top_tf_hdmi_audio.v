@@ -37,6 +37,9 @@
 // ==========================================================================
 `include "audio/timebase_48k.v"
 `include "audio/play_ctrl.v"
+`include "audio/stream_session.v"
+`include "io/cover_navigation.v"
+`include "SD/media_probe.v"
 // Keep S4/S5 dependencies visible even if the GUI project list is stale.
 `include "SD/song_index_db.v"
 `include "display/lrc_lines_rom.v"
@@ -188,6 +191,7 @@ wire [23:0] waveform_rgb_out;
 wire        osd_de_out;
 wire        osd_active;
 wire        waveform_active;
+reg         waveform_enable_frame;
 wire        display_valid;
 wire        auto_play_en_out;
 wire [7:0]  osd_error_code;
@@ -207,7 +211,6 @@ wire        sd_media_rst_n;       // 合并后的 SD 媒体子系统复位（低
 wire        key_next_transition_press;
 wire        fade_next_event;
 wire        fade_busy;
-reg fade_prev_hold_sd; // Direction held throughout fade/SD commit handshake
 wire [7:0]  fade_alpha;
 wire        fade_active;
 wire        wipe_active;
@@ -287,9 +290,9 @@ wire        fade_start_event_sd;    // 送 video_fade_transition 的淡出请求
 wire        key2_to_sd;             // 缩略图模式下屏蔽原 KEY2 功能
 reg         key2_thumb_lock_sd;     // 锁定到 KEY2 松开，防止确认后误触发上一张
 
-reg         thumb_select_pending_sd;
-reg         thumb_select_hold_sd;
-reg  [1:0]  thumb_select_index_hold_sd;
+wire        thumb_select_pending_sd;
+wire        thumb_select_hold_sd;
+wire [1:0]  thumb_select_index_hold_sd;
 wire        thumb_select_req_sd;
 wire [1:0]  thumb_select_index_sd;
 wire        sd_select_ack;
@@ -349,6 +352,27 @@ wire        brw_ev_prev_tgl;
 wire        brw_ev_next_tgl;
 wire        brw_ev_confirm_tgl;
 wire        brw_ev_mode_tgl;
+wire brw_ev_home_tgl,brw_ev_effect_tgl,brw_ev_end_mode_tgl;
+wire brw_play_start,brw_play_stop,brw_go_home;
+wire [1:0] play_end_mode;
+wire play_restart_request,cover_busy,cover_direction;
+wire wav_reader_idle,wav_sample_consumed;
+wire stream_enable_sd;
+reg [1:0] stream_enable_vid;
+reg [2:0] eof_sync;
+reg [2:0] effect_sync;
+reg [1:0] effect_mode;
+reg [3:0] ui_modes_v1,ui_modes_v2;
+
+wire media_video_rst_n;
+wire storage_done;
+wire [7:0] storage_error;
+wire probe_card_req,probe_card_busy,probe_card_valid,probe_card_done;
+wire [31:0] probe_card_lba;
+wire media_mount_ok = media_status_sd[23] && media_preloaded_sd &&
+                     (|image_ready_sd) && media_status_sd[15:0]==16'd0 && osd_error_code==0;
+wire play_media_lost = !media_sd_rst_n || media_err_code!=0;
+
 // sd 域：browse_fsm 还原/路由出的控制脉冲。
 wire        brw_fs_next;        // 全屏：下一张
 wire        brw_fs_prev;        // 全屏：上一张
@@ -376,7 +400,7 @@ reg         play_active_v1, play_active_v2;
 reg         paused_v1, paused_v2;
 reg  [7:0]  play_volume_v1, play_volume_v2;
 // 切曲 -> video 域时基复位（电平翻转 + 边沿检测）
-reg         play_track_tgl_sd;
+wire        play_track_tgl_sd;
 reg         play_track_tgl_v1, play_track_tgl_v2, play_track_tgl_v3;
 wire        play_track_restart_vid = play_track_tgl_v2 ^ play_track_tgl_v3;
 wire        play_running_vid = play_active_v2 & ~paused_v2;
@@ -524,6 +548,10 @@ wire sdcard_rst_n;
 wire mem_rst_n;
 wire video_rst_n;
 wire Sdr_init_done_sd;
+always @(posedge video_clk or negedge video_rst_n) begin
+ if(!video_rst_n) begin ui_modes_v1<=0; ui_modes_v2<=0; end
+ else begin ui_modes_v1<={play_end_mode,effect_mode}; ui_modes_v2<=ui_modes_v1; end
+end
 
 // S7-03：重启确认软复位（clk 域）。restart_req 触发拉低 soft_rst_n 一段时间，
 // 经 ext_rst_n 异步断言、各域 reset_sync 同步释放；计数器用外部 rst_n 复位，
@@ -551,6 +579,20 @@ end
 assign ext_rst_n = rst_n & sys_pll_lock & video_pll_lock & soft_rst_n;
 // S7-02：媒体监督器复位与域复位合并，仅复位 SD 媒体子系统（sd_card_bmp/sd_card_top）。
 assign sd_media_rst_n = sdcard_rst_n & media_sd_rst_n;
+reset_sync u_media_video_reset(.clk(video_clk),
+ .ext_rst_n(video_rst_n & media_sd_rst_n),.rst_n_sync(media_video_rst_n));
+always @(posedge video_clk or negedge media_video_rst_n) begin
+ if(!media_video_rst_n) stream_enable_vid<=0;
+ else stream_enable_vid<={stream_enable_vid[0],stream_enable_sd};
+end
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+ if(!sdcard_rst_n) begin eof_sync<=0; effect_sync<=0; effect_mode<=0; end
+ else begin
+  eof_sync<={eof_sync[1:0],wav_stream_end};
+  effect_sync<={effect_sync[1:0],brw_ev_effect_tgl};
+  if(effect_sync[2]^effect_sync[1]) effect_mode<=(effect_mode==2)?0:effect_mode+1'b1;
+ end
+end
 
 // 每个实际时钟域独立做“异步复位、同步释放”。
 reset_sync u_sdcard_reset (
@@ -818,11 +860,12 @@ sd_card_bmp #(
     .sdr_init_done     (Sdr_init_done_sd),
     // 第十讲：KEY1先进入转场控制器，淡出完成后再用next_event触发切换。
     .key_next          (1'b1),
-    .next_event        (fade_next_event && !thumb_select_pending_sd && !fade_prev_hold_sd),
-    .prev_event        (fade_next_event && !thumb_select_pending_sd && fade_prev_hold_sd),
+    .next_event        (1'b0),
+    .prev_event        (1'b0),
     .select_req        (thumb_select_req_sd),
     .select_index      (thumb_select_index_sd),
     .select_ack        (sd_select_ack),
+    .auto_inhibit      (play_active_sd),
     .key_auto          (key2_to_sd),
     .state_code        (state_code),
     .bmp_width         (16'd640),
@@ -830,6 +873,8 @@ sd_card_bmp #(
     .song_sel          (play_sel_song_sd),
     .display_valid     (display_valid),
     .auto_play_en_out  (auto_play_en_out),
+    .storage_done      (storage_done),
+    .storage_error     (storage_error),
     .media_status      (media_status_sd),
     .osd_error_code    (osd_error_code),
     .osd_error_toggle  (osd_error_toggle),
@@ -854,31 +899,39 @@ sd_card_bmp #(
     .audio_start_lba   (audio_start_lba),
     .audio_total_sectors(audio_total_sectors),
     .audio_play_enable (audio_play_enable),
-    .audio_sec_req     (media_sec_req),
-    .audio_sec_lba     (media_sec_lba),
-    .audio_sec_busy    (media_sec_busy),
-    .audio_sec_valid   (media_sec_valid),
+    .audio_sec_req     (probe_card_req),
+    .audio_sec_lba     (probe_card_lba),
+    .audio_sec_busy    (probe_card_busy),
+    .audio_sec_valid   (probe_card_valid),
     .audio_sec_byte    (wav_sec_byte),
     .audio_sec_byte_index(wav_sec_byte_index),
-    .audio_sec_done    (media_sec_done),
+    .audio_sec_done    (probe_card_done),
     .audio_sec_error   (wav_sec_error)
 );
 
+media_probe u_media_probe(
+ .clk(sd_card_clk),.rst_n(sd_media_rst_n),.ready(media_mount_ok),
+ .client_req(media_sec_req),.client_lba(media_sec_lba),
+ .client_busy(media_sec_busy),.client_valid(media_sec_valid),.client_done(media_sec_done),
+ .card_req(probe_card_req),.card_lba(probe_card_lba),
+ .card_busy(probe_card_busy),.card_valid(probe_card_valid),.card_done(probe_card_done));
 // ===================== S7-02：媒体故障恢复监督器 =====================
-// 纯监督旁路 + SD 媒体子系统复位驱动。观测媒体挂载完成与扇区事务错误，
-// 在挂载失败/读超时时按参数化期限与重试上限复位恢复，并输出集中错误码。
+// Validated media lifecycle; every storage client participates in reset/recovery.
 media_supervisor #(
     .CLK_FREQ_HZ         (100_000_000),
-    .MOUNT_TIMEOUT_MS    (5000),
+    // Mount success includes all four cover banks. Allow initialization/FAT
+    // walks and slow-card preload; per-sector failure still times out at 250 ms.
+    .MOUNT_TIMEOUT_MS    (15000),
     .MOUNT_RETRY_MAX     (3),
-    .REMOUNT_COOLDOWN_MS (30000),
+    .REMOUNT_COOLDOWN_MS (3000),
     .RESET_PULSE_CYCLES  (100)
 ) u_media_supervisor (
     .clk            (sd_card_clk),
     .rst_n          (sdcard_rst_n),
-    .media_ready    (media_status_sd[23]),
-    .sector_error   (wav_sec_error),
-    .sector_done    (media_sec_done),
+    .media_ready    (media_mount_ok),
+    .mount_error    (osd_error_code),
+    .sector_error   (storage_error),
+    .sector_done    (storage_done),
     .sector_busy    (media_sec_busy),
     .sd_rst_n       (media_sd_rst_n),
     .media_err_code (media_err_code),
@@ -927,14 +980,20 @@ play_ctrl u_play_ctrl (
     .clk           (sd_card_clk),
     .rst_n         (sdcard_rst_n),
     .song_total    (song_total_sd),
-    .song_confirm  (thumb_confirm_event_sd),
-    .focus_index   (thumb_focus_index_sd),
+    .song_confirm  (thumb_confirm_event_sd || (brw_play_start && media_mount_ok && !cover_busy)),
+    .focus_index   (thumb_confirm_event_sd ? thumb_focus_index_sd : disp_buf_idx),
     .enc_cw_tgl    (brw_ev_enc_cw_tgl),
     .enc_ccw_tgl   (brw_ev_enc_ccw_tgl),
     .confirm_tgl   (brw_ev_confirm_tgl),
     .key_up_tgl    (brw_ev_key_up_tgl),
     .key_down_tgl  (brw_ev_key_down_tgl),
-    .stop_tgl      (brw_ev_mode_tgl),
+    .stop_tgl      (1'b0),
+    .stop_request  (brw_play_stop),
+    .media_lost    (play_media_lost),
+    .stream_end    (eof_sync[2] && stream_enable_sd),
+    .end_mode_tgl  (brw_ev_end_mode_tgl),
+    .end_mode      (play_end_mode),
+    .restart_request(play_restart_request),
     .play_active   (play_active_sd),
     .paused        (paused_sd),
     .sel_song      (play_sel_song_sd),
@@ -947,31 +1006,14 @@ play_ctrl u_play_ctrl (
 wire play_fs_next_sd = play_track_step_sd &  play_track_dir_sd;
 wire play_fs_prev_sd = play_track_step_sd & ~play_track_dir_sd;
 
-// S5：切曲时短暂松开 play_enable，让 wav_stream_player 回到 WS_IDLE 并按
-// 新的 start_lba 重新起播（该播放器的读 FSM 只在 IDLE 接受新起点）。
-reg [3:0] s5_mute_cnt;
-always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
-    if (!sdcard_rst_n)
-        s5_mute_cnt <= 4'd0;
-    else if (play_track_step_sd)
-        s5_mute_cnt <= 4'd12;
-    else if (s5_mute_cnt != 4'd0)
-        s5_mute_cnt <= s5_mute_cnt - 4'd1;
-end
-wire s5_mute = (s5_mute_cnt != 4'd0);
-
-// 播放使能：进入播放态才起播；暂停不停请求（保住 FIFO 指针，恢复续播）。
-assign audio_play_enable_gated = S5_PLAY_ENABLE
-    ? (audio_play_enable && play_active_sd && !s5_mute)
-    : audio_play_enable;
-
-// S5：切曲 -> video 域时基复位的电平翻转
-always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
-    if (!sdcard_rst_n)
-        play_track_tgl_sd <= 1'b0;
-    else if (play_track_step_sd)
-        play_track_tgl_sd <= ~play_track_tgl_sd;
-end
+// Restart transaction: drain clients and acknowledge read-side pointer reset.
+stream_session u_stream_session(
+ .clk(sd_card_clk),.rst_n(sd_media_rst_n),
+ .requested(audio_play_enable && play_active_sd && media_mount_ok && !cover_busy),
+ .restart(play_restart_request),.storage_busy(wav_sec_busy),
+ .video_busy(mv_writer_active),.reader_idle(wav_reader_idle),
+ .enable(stream_enable_sd),.start_toggle(play_track_tgl_sd));
+assign audio_play_enable_gated = S5_PLAY_ENABLE ? stream_enable_sd : audio_play_enable;
 
 // S3：全屏"下一张"入口 = 母板 KEY1 短按(兜底) 或 J2 EC1 顺时针/方向键(next)。
 // browse_fsm 已按 view_mode 拆好：缩略图态走 brw_thumb_right，不会在此重复触发。
@@ -980,7 +1022,7 @@ assign key2_to_sd            = (thumb_mode_sd || key2_thumb_lock_sd) ? 1'b1 : ke
 // S3：缩略图"确认"入口 = 母板 KEY2 长按(兜底) 或 J2 EC1 按压/KEY02(中)。
 // Reject unavailable/busy selections before either playback or display accepts them.
 assign thumb_confirm_event_sd = brw_thumb_confirm && image_ready_sd[thumb_focus_index_sd] &&
-                                !fade_busy && !thumb_select_pending_sd && !thumb_select_hold_sd;
+                                media_mount_ok && !cover_busy && !brw_go_home;
 assign thumb_select_req_sd   = thumb_select_hold_sd;
 assign thumb_select_index_sd = thumb_select_index_hold_sd;
 
@@ -995,6 +1037,10 @@ browse_fsm #(
     .ev_next_tgl     (brw_ev_next_tgl),
     .ev_confirm_tgl  (brw_ev_confirm_tgl),
     .ev_mode_tgl     (brw_ev_mode_tgl),
+    .ev_home_tgl     (brw_ev_home_tgl),
+    .play_start      (brw_play_start),
+    .play_stop       (brw_play_stop),
+    .go_home         (brw_go_home),
     .mb_next         (key_next_transition_press),
     .mb_mode         (key_view_hold),
     .mb_left         (key2_thumb_press),
@@ -1018,7 +1064,8 @@ thumbnail_controller u_thumbnail_controller (
     .key_right       (brw_thumb_right),
     .key_left        (brw_thumb_left),
     .key_confirm     (thumb_confirm_event_sd),
-    .key_mode        (brw_thumb_mode),
+    .key_mode        (brw_thumb_mode && media_mount_ok),
+    .go_home         (brw_go_home || play_media_lost),
     .image_complete  (image_ready_sd),
     .frame_start     (frame_start_sd),
     .view_mode       (thumb_mode_sd),
@@ -1053,54 +1100,34 @@ always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
         key2_thumb_lock_sd <= 1'b1;
 end
 
-// 快速选择：确认后在淡出完成的 next_event 边界发出保持请求，直到
-// sd_card_bmp 的 select_ack 接受，避免预加载忙时丢失一次选图请求。
-always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
-    if (!sdcard_rst_n) begin
-        thumb_select_pending_sd    <= 1'b0;
-        thumb_select_hold_sd       <= 1'b0;
-        thumb_select_index_hold_sd <= 2'd0;
-    end else begin
-        // The real displayed bank is disp_buf_idx (controller.active_index may be stale).
-        // Confirming it only exits the grid and starts playback; no black dwell needed.
-        if (thumb_confirm_event_sd && (!display_valid || thumb_focus_index_sd != disp_buf_idx))
-            thumb_select_pending_sd <= 1'b1;
-
-        if (thumb_select_pending_sd)
-            thumb_select_index_hold_sd <= thumb_active_index_sd;
-
-        if (fade_next_event && thumb_select_pending_sd) begin
-            thumb_select_hold_sd    <= 1'b1;
-            thumb_select_pending_sd <= 1'b0;
-        end
-
-        if (sd_select_ack)
-            thumb_select_hold_sd <= 1'b0;
-    end
-end
-
+// Accumulate desired bank while a previous transition is in flight.
 wire key_prev_request_sd = brw_fs_prev | play_fs_prev_sd;
-always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
-    if (!sdcard_rst_n)
-        fade_prev_hold_sd <= 1'b0;
-    else if (fade_start_event_sd && !fade_busy)
-        fade_prev_hold_sd <= key_prev_request_sd && !key_next_request_sd;
-end
-assign fade_start_event_sd = key_next_request_sd || key_prev_request_sd ||
-                             (thumb_transition_req_sd && thumb_select_pending_sd);
+cover_navigation u_cover_navigation(
+ .clk(sd_card_clk),.rst_n(sd_media_rst_n),.ready(media_mount_ok),
+ .count(song_total_sd),.displayed(disp_buf_idx),
+ .next_step(brw_fs_next),.prev_step(brw_fs_prev),
+ .choose(thumb_confirm_event_sd || play_track_step_sd),
+ .chosen(thumb_confirm_event_sd ? thumb_focus_index_sd : play_sel_song_sd),
+ .chosen_direction(thumb_confirm_event_sd ? (thumb_focus_index_sd>=disp_buf_idx) : play_track_dir_sd),
+ .transition_busy(fade_busy),.transition_commit(fade_next_event),.select_ack(sd_select_ack),
+ .transition_start(fade_start_event_sd),.direction(cover_direction),
+ .select_req(thumb_select_hold_sd),.select_index(thumb_select_index_hold_sd),.busy(cover_busy));
+// Retained observation name for existing control benches.
+assign thumb_select_pending_sd = cover_busy;
 
 video_fade_transition #(
-    .FADE_FRAMES (16)
+    .FADE_FRAMES (8)
 ) u_video_fade_transition (
     .ctrl_clk        (sd_card_clk),
-    .ctrl_rst_n      (sdcard_rst_n),
+    .ctrl_rst_n      (sd_media_rst_n),
     .next_event_in   (fade_start_event_sd),
-    .direction_in    (!(key_prev_request_sd && !key_next_request_sd)),
+    .direction_in    (cover_direction),
+    .effect_mode     (effect_mode),
     .next_event_out  (fade_next_event),
     .fade_busy       (fade_busy),
 
     .pix_clk         (video_clk),
-    .pix_rst_n       (video_rst_n),
+    .pix_rst_n       (media_video_rst_n),
     .player_active   (display_valid_sync2),
     .frame_start     (frame_start),
     .index_commit    (index_commit_pulse),
@@ -1189,6 +1216,7 @@ always @(posedge video_clk or negedge video_rst_n) begin
         view_mode_sd_sync1 <= 1'b0;
         view_mode_sd_sync2 <= 1'b0;
         view_mode_frame    <= 1'b0;
+        waveform_enable_frame <= 1'b0;
         thumb_focus_sync1  <= 2'd0;
         thumb_focus_sync2  <= 2'd0;
         thumb_focus_frame  <= 2'd0;
@@ -1200,6 +1228,9 @@ always @(posedge video_clk or negedge video_rst_n) begin
 
         if (frame_start) begin
             view_mode_frame   <= view_mode_sd_sync2;
+            // Commit visibility with the view, including cached bars/baseline.
+            waveform_enable_frame <= audio_play_enable_sync2 &&
+                                     play_active_v2 && !view_mode_sd_sync2;
             thumb_focus_frame <= thumb_focus_sync2;
         end
     end
@@ -1367,7 +1398,7 @@ end
 
 // S7-02：集中错误码优先于既有 OSD 错误码，用于最小屏幕状态提示。
 wire [7:0] osd_err_code_frame_eff =
-    (media_err_code_frame != 8'd0) ? media_err_code_frame : osd_error_code_frame;
+    media_err_code_frame;
 
 osd_overlay_24 #(
     .OSD_X(8),
@@ -1381,6 +1412,8 @@ osd_overlay_24 #(
     .pixel_x      (adjusted_pixel_x),
     .active_index (media_id),
     .auto_enabled (auto_enabled_sync2),
+    .end_mode     (ui_modes_v2[3:2]),
+    .effect_mode  (ui_modes_v2[1:0]),
     .error_code   (osd_err_code_frame_eff),
     .brightness   (brightness_frame),
     .contrast     (contrast_frame),
@@ -1405,7 +1438,7 @@ promax_audio_waveform #(
     .de              (adjusted_de),
     .rgb_in          (osd_rgb_out),
     .pixel_x         (adjusted_pixel_x),
-    .enable          (audio_play_enable_sync2),
+    .enable          (waveform_enable_frame),
     .pcm_tap_valid   (wav_sample_valid),
     .pcm_tap_left    (wav_sample_left),
     .rgb_out         (waveform_rgb_out),
@@ -1780,18 +1813,17 @@ end
 wire underrun_pulse_clk = underrun_tgl_c1 ^ underrun_tgl_c2;
 
 // S7-02：合并媒体错误与既有 OSD 错误，集中错误码优先，交给 health_monitor 上报。
-wire        merged_err_valid = osd_err_valid_clk | media_err_valid_clk;
+wire        merged_err_valid = media_err_valid_clk;
 // 集中错误码优先：媒体错误脉冲当拍抢占；其余时刻保留 OSD/FAT 错误，
 // 避免 sticky 的媒体错误码长期遮蔽后续不同的 OSD 错误。
-wire [7:0]  merged_err_code  = media_err_valid_clk ? media_err_code_clk : osd_err_code_clk;
+wire [7:0]  merged_err_code  = media_err_code_clk;
 
 // Silent 48 kHz samples cover startup, browsing, pause and track prefetch.
-// Legacy tone is allowed only after boot when no audio resource was found.
+// Media failures are silent; the legacy generator supplies zero-sample cadence.
 wire media_audio_available = media_status_v2[20] && (|media_status_v2[19:16]);
-wire audio_silent = boot_active ||
-                    (S5_PLAY_ENABLE && (paused_v2 || thumb_view ||
-                     (media_audio_available && (!play_active_v2 || !wav_stream_active)))) ||
-                    (!wav_stream_active && media_audio_available);
+wire audio_silent = boot_active || (S5_PLAY_ENABLE &&
+                    (paused_v2 || thumb_view || !play_active_v2 ||
+                     !stream_enable_vid[1] || !wav_stream_active));
 
 // 16点正弦 LUT 峰值约 12000，200/255 缩放后仍保留足够余量，避免削波爆音。
 // S5：音量改由播放态控制（KEY04/05，带饱和钳位）；暂停时压到 0 静音。
@@ -1827,7 +1859,7 @@ wav_stream_player #(
     .SAMPLES_PER_SECTOR(256)
 ) u_wav_stream_player (
     .wr_clk            (sd_card_clk),
-    .wr_rst_n          (sdcard_rst_n),
+    .wr_rst_n          (sd_media_rst_n),
     .play_enable       (audio_play_enable_gated),
     .start_lba         (audio_start_lba),
     .total_sectors     (audio_total_sectors),
@@ -1841,7 +1873,7 @@ wav_stream_player #(
     .sd_error          (wav_sec_error),
 
     .rd_clk            (video_clk),
-    .rd_rst_n          (video_rst_n),
+    .rd_rst_n          (media_video_rst_n),
     .sample_tick       (wav_sample_tick_eff),
     .sample_out        (wav_sample_left),
     .sample_valid      (wav_sample_valid),
@@ -1849,6 +1881,8 @@ wav_stream_player #(
     .sample_counter    (wav_sample_counter),
     .stream_active     (wav_stream_active),
     .stream_end        (wav_stream_end),
+    .reader_idle       (wav_reader_idle),
+    .sample_consumed   (wav_sample_consumed),
     .buffer_low        (wav_buffer_low),
     .underrun_pulse    (wav_underrun_pulse)
 );
@@ -1979,7 +2013,7 @@ always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
  else mv_audio_low_sync<={mv_audio_low_sync[0],wav_buffer_low};
 end
 mv_sector_mux u_mv_sector_mux(
- .clk(sd_card_clk),.rst_n(sdcard_rst_n),.audio_req(wav_sec_req),.audio_lba(wav_sec_lba),
+ .clk(sd_card_clk),.rst_n(sd_media_rst_n),.audio_req(wav_sec_req),.audio_lba(wav_sec_lba),
  .video_req(mv_sec_req),.video_lba(mv_sec_lba),
  .allow_video(!audio_play_enable_gated || !mv_audio_low_sync[1]),
  .audio_busy(wav_sec_busy),.video_busy(mv_sec_busy),
@@ -1988,7 +2022,7 @@ mv_sector_mux u_mv_sector_mux(
  .sector_req(media_sec_req),.sector_lba(media_sec_lba),.sector_busy(media_sec_busy),
  .sector_valid(media_sec_valid),.sector_done(media_sec_done));
 mv_stream_player u_mv_stream_player(
- .clk(sd_card_clk),.rst_n(sdcard_rst_n),.request_toggle(mv_req_tgl),
+ .clk(sd_card_clk),.rst_n(sd_media_rst_n),.abort_request(!stream_enable_sd),.request_toggle(mv_req_tgl),
  .request_lba(mv_request_lba),.request_bank(mv_request_bank),
  .done_toggle(mv_done_tgl),.failed(mv_failed),.writer_active(mv_writer_active),
  .write_req(mv_write_req),.write_ack(sd_card_write_req_ack),
@@ -2008,10 +2042,10 @@ end
 assign s6_frame_read_req=video_read_req &&
  (!S6_VIDEO_ENABLE || (!play_active_v2 && !mv_read_active) || s6_read_wait>=32);
 s6_video_layer #(.ENABLE(S6_VIDEO_ENABLE)) u_s6_video_layer(
- .clk(video_clk),.rst_n(video_rst_n),.frame_start(frame_start),
+ .clk(video_clk),.rst_n(media_video_rst_n),.frame_start(frame_start),
  .play_active(S5_PLAY_ENABLE && play_active_v2),.paused(paused_v2),
  .restart(play_track_restart_vid),.diagnostic(pat_mode),
- .covers_ready(media_preloaded_vid),.metadata_async(mv_metadata_sd),.time_ms(lyric_time_ms),
+ .covers_ready(media_preloaded_vid && stream_enable_vid[1]),.metadata_async(mv_metadata_sd),.time_ms(lyric_time_ms),
  .visual_toggle(mv_visual_tgl),.raw_read_en(video_read_en),.out_de(de),.out_x(osd_pixel_x),
  .adjusted_de(adjusted_de),.adjusted_x(adjusted_pixel_x),.rgb_in(wave_rgb_eff),.rgb_out(s6_rgb),
  .mv_read_active(mv_read_active),.mv_read_bank(mv_read_bank),
@@ -2224,6 +2258,9 @@ ui_event_bridge u_ui_event_bridge (
     .next_tgl     (brw_ev_next_tgl),
     .confirm_tgl  (brw_ev_confirm_tgl),
     .mode_tgl     (brw_ev_mode_tgl),
+    .home_tgl     (brw_ev_home_tgl),
+    .effect_tgl   (brw_ev_effect_tgl),
+    .end_mode_tgl (brw_ev_end_mode_tgl),
     .enc_cw_tgl   (brw_ev_enc_cw_tgl),
     .enc_ccw_tgl  (brw_ev_enc_ccw_tgl),
     .key_up_tgl   (brw_ev_key_up_tgl),
@@ -2286,8 +2323,8 @@ end
 // ==========================================================================
 timebase_48k u_timebase_48k (
     .clk          (video_clk),
-    .rst_n        (video_rst_n),
-    .sample_tick  (wav_sample_tick_eff),
+    .rst_n        (media_video_rst_n),
+    .sample_tick  (wav_sample_consumed),
     .running      (play_running_vid),
     .restart      (play_track_restart_vid),
     .sample_count (),

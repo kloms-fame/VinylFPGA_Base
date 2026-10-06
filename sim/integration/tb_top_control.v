@@ -32,6 +32,7 @@ initial begin
  force dut.brw_ev_mode_tgl=stop_tgl; force dut.brw_ev_confirm_tgl=cf_tgl;
  force dut.boot_skip_toggle_clk=skip;
  force dut.media_status_sd=status;
+ force dut.osd_error_code=8'd0;
  force dut.sd_card_bmp_m0.sd_init_done=1'b1;
  force dut.sd_card_bmp_m0.scan_done=1'b1;
  force dut.sd_card_bmp_m0.scan_kicked=1'b1;
@@ -41,6 +42,10 @@ initial begin
  force dut.sd_card_bmp_m0.display_valid=1'b1;
  force dut.sd_card_bmp_m0.load_busy=1'b0;
  force dut.wav_stream_active=wav_active;
+ // Storage writer and read-idle handshake are outside this control-only bench.
+ force dut.wav_sec_busy=1'b0; force dut.mv_writer_active=1'b0;
+ force dut.wav_reader_idle=1'b1;
+ force dut.audio_play_enable=1'b1;
  force dut.arp_sample_valid=1'b1;
  force dut.arp_sample_left=16'sd1234; force dut.arp_sample_right=16'sd1234;
  force dut.wav_scaled_valid=1'b1;
@@ -62,21 +67,23 @@ initial begin
  if(dut.thumb_mode_sd || dut.thumb_select_pending_sd || dut.fade_busy || !dut.play_active_sd)
    $fatal(1,"FAIL same-bank confirm did not exit cleanly");
  wav_active=1; repeat(12) @(negedge pixclk);
- if(dut.mix_sample_left!==16'd2345) $fatal(1,"FAIL song did not resume");
+ if(dut.mix_sample_left!==16'd2345) $fatal(1,"FAIL song did not resume enable=%b session=%b mount=%b silent=%b mix=%d play=%b",dut.audio_play_enable,dut.stream_enable_sd,dut.media_mount_ok,dut.audio_silent,dut.mix_sample_left,dut.play_active_sd);
  cf_tgl=1; repeat(20) @(negedge pixclk);
  if(!dut.paused_sd || dut.wav_sample_tick_eff || dut.mix_sample_left!==16'd0)
    $fatal(1,"FAIL pause must freeze and send zero samples");
  cf_tgl=0; repeat(20) @(negedge pixclk);
  if(dut.paused_sd || dut.mix_sample_left!==16'd2345) $fatal(1,"FAIL resume");
  stop_tgl=0; repeat(150) @(negedge pixclk);
- if(dut.play_active_sd || !dut.thumb_mode_sd || dut.mix_sample_left!==16'd0)
-   $fatal(1,"FAIL single KEY7 must stop/open grid/silence");
+ if(dut.play_active_sd || dut.thumb_mode_sd || dut.mix_sample_left!==16'd0)
+   $fatal(1,"FAIL single KEY7 must stop/home/silence");
+ stop_tgl=1; repeat(150) @(negedge pixclk);
  confirm=1; @(negedge sdclk); confirm=0;
  repeat(150) @(negedge pixclk);
  if(!dut.play_active_sd || dut.thumb_mode_sd || dut.fade_busy || dut.mix_sample_left!==16'd2345)
    $fatal(1,"FAIL same-song reselect after KEY7");
- $display("PASS same-bank exit/re-entry, EC1 pause/resume and single KEY7 silent grid");
+ $display("PASS same-bank exit/re-entry, EC1 pause/resume and KEY7 home then grid");
  // Select a different bank through the real fade -> held select -> ack chain.
+ stop_tgl=0; repeat(150) @(negedge pixclk);
  stop_tgl=1; repeat(150) @(negedge pixclk);
  right=1; @(negedge sdclk); right=0;
  repeat(5) @(negedge sdclk);
@@ -85,16 +92,17 @@ initial begin
  if(dut.disp_buf_idx!==2'd1 || dut.fade_busy || dut.fade_alpha!==8'd255 || dut.thumb_select_hold_sd)
    $fatal(1,"FAIL cross-bank select/ack/fade completion bank=%d busy=%b",dut.disp_buf_idx,dut.fade_busy);
  stop_tgl=0; repeat(150) @(negedge pixclk);
+ stop_tgl=1; repeat(150) @(negedge pixclk);
  confirm=1; @(negedge sdclk); confirm=0;
  repeat(150) @(negedge pixclk);
  if(dut.disp_buf_idx!==2'd1 || dut.fade_busy || dut.thumb_mode_sd || dut.thumb_select_pending_sd)
    $fatal(1,"FAIL current nonzero bank reselect");
  $display("PASS different-bank fade handshake and current bank1 reselect");
- // Metadata absent after boot: retain documented no-card tone.
+ // Missing metadata must silence the former fallback tone.
  status=24'd0; wav_active=0;
  repeat(15) @(negedge pixclk);
- if(dut.mix_sample_left!==16'd1234) $fatal(1,"FAIL no-card fallback tone lost");
- $display("PASS no-card fallback; TEST_PASS top_control");
+ if(dut.mix_sample_left!==16'd0) $fatal(1,"FAIL no-card fallback not silent");
+ $display("PASS no-card silence; TEST_PASS top_control");
  $finish;
 end
 initial begin #2000000; $fatal(1,"FAIL top control watchdog"); end

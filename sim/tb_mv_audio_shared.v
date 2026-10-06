@@ -32,7 +32,7 @@ wav_stream_player #(.ADDR_WIDTH(10)) audio(.wr_clk(sdclk),.wr_rst_n(rst_n),.play
 mv_sector_mux mux(.clk(sdclk),.rst_n(rst_n),.audio_req(ar),.audio_lba(al),.video_req(vr),.video_lba(vl),
  .allow_video(!low_sync[1]),.audio_busy(ab),.video_busy(vb),.audio_valid(av),.video_valid(vv),
  .audio_done(ad),.video_done(vd),.sector_req(sreq),.sector_lba(sl),.sector_busy(busy),.sector_valid(valid),.sector_done(done));
-mv_stream_player #(.FRAME_SECTORS(20)) video(.clk(sdclk),.rst_n(rst_n),.request_toggle(mreq),
+mv_stream_player #(.FRAME_SECTORS(20)) video(.abort_request(1'b0),.clk(sdclk),.rst_n(rst_n),.request_toggle(mreq),
  .request_lba(32'd1000),.request_bank(2'd1),.done_toggle(mdone),.failed(mfailed),.write_req(wr),.write_ack(wr),
  .write_finish_toggle(fin),.write_bank(wbank),.pixel_valid(wp),.pixel_data(pixel),.sector_req(vr),.sector_lba(vl),
  .sector_busy(vb),.sector_valid(vv),.sector_byte(b),.sector_byte_index(idx),.sector_done(vd),.sector_error(8'd0));

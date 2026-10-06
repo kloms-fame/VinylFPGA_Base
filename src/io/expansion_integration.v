@@ -281,7 +281,7 @@ module expansion_integration #(
     health_monitor #(
         .CLK_FREQ_HZ   (CLK_FREQ_HZ),
         .STAT_PERIOD_MS(2000),
-        .FW_VERSION    (32'h0701_0001)
+        .FW_VERSION    (32'h0703_0002)
     ) u_health_monitor (
         .clk           (clk),
         .rst_n         (rst_n),

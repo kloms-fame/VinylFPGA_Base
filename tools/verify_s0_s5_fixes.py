@@ -4,7 +4,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "sim/fix_20261006"
 OUT.mkdir(exist_ok=True)
-libs = ["src", "src/SD", "src/io", "src/display", "src/audio", "src/boot"]
+libs = ["src", "src/SD", "src/io", "src/display", "src/audio", "src/boot", "src/video"]
 def run(name, top_control=False):
     src = ROOT / "sim/integration" / (name + ".v") if top_control else ROOT / "sim" / (name + ".v")
     args = ["iverilog", "-g2005", "-I", "src", "-I", "src/include", "-I", "src/SD"]

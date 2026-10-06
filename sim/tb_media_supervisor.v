@@ -29,7 +29,7 @@ module tb_media_supervisor;
         .MOUNT_RETRY_MAX     (3),
         .REMOUNT_COOLDOWN_MS (12),
         .RESET_PULSE_CYCLES  (4)
-    ) dut (
+    ) dut (.mount_error(8'd0),
         .clk            (clk),
         .rst_n          (rst_n),
         .media_ready    (media_ready),
@@ -92,7 +92,7 @@ module tb_media_supervisor;
         media_ready = 1'b1;
         wait (sd_rst_n === 1'b1);
         wait_cycles(40);
-        check(media_err_code === 8'h01, "err sticky after recovery");
+        check(media_err_code === 8'h00, "active error clear after recovery");
         saved_cnt = rst_fall_cnt;
         wait_cycles(40);
         check(rst_fall_cnt === saved_cnt, "recovery stops reset");

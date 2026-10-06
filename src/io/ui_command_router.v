@@ -126,8 +126,10 @@ module ui_command_router #(
         ir_x_volup   = 1'b0;
         if (is_ir_frame && ir_frame_ok) begin
             case (ir_addr)
-                IR_PREV   : begin ir_x_valid=1'b1; ir_x_evcode=EV_ENC_STEP; ir_x_dir=1'b1; end
-                IR_NEXT   : begin ir_x_valid=1'b1; ir_x_evcode=EV_ENC_STEP; ir_x_dir=1'b0; end
+                // Remote navigation is a single key action, not an encoder
+                // absolute count. Keep it out of encoder delta reconstruction.
+                IR_PREV   : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=3'd0; end
+                IR_NEXT   : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=3'd2; end
                 IR_PLAY   : begin ir_x_valid=1'b1; ir_x_evcode=EV_ENC_SW;   end
                 IR_VOLUP  : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=3'd3; ir_x_vol=1'b1; ir_x_volup=1'b1; end
                 IR_VOLDN  : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=3'd4; ir_x_vol=1'b1; ir_x_volup=1'b0; end

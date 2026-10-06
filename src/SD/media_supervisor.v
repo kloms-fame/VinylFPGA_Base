@@ -3,21 +3,11 @@
 // =============================================================================
 // media_supervisor —— S7-02 媒体故障恢复监督器（sd_card_clk 域）
 //
-// 职责：把媒体存储失败变成有界事务，不让系统永久停在 busy。纯监督旁路 +
-//       仅驱动 SD 媒体子系统复位，不触碰 wav/mv/视频/时钟主链数据流时序。
-//
-// 两个独立看门狗：
-//   1) 挂载看门狗：media_ready(=media_status_sd[23], scan_done) 未在
-//      MOUNT_TIMEOUT_MS 内出现 -> Err-01 挂载失败；连续 MOUNT_RETRY_MAX 次后
-//      进入 REMOUNT_COOLDOWN_MS 冷却再重挂（无专用卡检测脚时以协议超时判卡，
-//      重插卡后在下一次重挂窗口内自动恢复）。
-//   2) 扇区事务看门狗：sector_done 伴随 sector_error!=0（由 sd_sector_adapter
-//      的 SECTOR_TIMEOUT_CYCLES 超时产生）-> Err-05 读超时；底层 SD 控制器此刻
-//      已被卡死，立即复位恢复。
-//
-// 集中错误码（本模块负责 01/05，其余由既有 FAT/OSD 错误路径承载）：
-//   Err-01 挂载失败 / Err-05 读超时
-// =============================================================================
+// SD-domain lifecycle supervision. media_ready means validated metadata AND
+// completed cover preload, never scan_done alone. Top distributes sd_rst_n to
+// the loader, WAV/MV clients, mux and synchronized pixel-domain media reset.
+// Specific FAT/index/read errors survive retry resets and clear only on success.
+// No physical detect pin: idle probes and bounded sector timeouts detect loss.
 module media_supervisor #(
     parameter integer CLK_FREQ_HZ         = 100_000_000,
     parameter integer MOUNT_TIMEOUT_MS    = 5000,    // 挂载总期限
@@ -29,14 +19,15 @@ module media_supervisor #(
     input  wire        rst_n,
 
     // ---- 观测输入（全部 sd_card_clk 域）----
-    input  wire        media_ready,   // = media_status_sd[23]（scan_done）
-    input  wire [7:0]  sector_error,  // = wav_sec_error（adapter 扇区错误）
-    input  wire        sector_done,   // = media_sec_done（扇区完成脉冲）
+    input  wire        media_ready,   // validated mount + complete cover preload
+    input  wire [7:0]  mount_error,   // validated FAT/index/load error; zero while mounting
+    input  wire [7:0]  sector_error,  // physical adapter error (all clients)
+    input  wire        sector_done,   // physical adapter completion (all clients)
     input  wire        sector_busy,   // = media_sec_busy（扇区事务忙，冗余观测）
 
     // ---- 控制/上报输出 ----
     output reg         sd_rst_n,        // 低有效，复位 SD 媒体子系统
-    output reg  [7:0]  media_err_code,  // 集中错误码（sticky，最近非零）
+    output reg  [7:0]  media_err_code,  // current fault, retained until successful recovery
     output reg         media_err_toggle // 错误码变化翻转标志（跨域捆绑握手）
 );
 
@@ -86,6 +77,11 @@ module media_supervisor #(
             media_err_code  <= ERR_NONE;
             media_err_toggle<= 1'b0;
         end else begin
+            if ((state == ST_WAIT_MOUNT) && (mount_error != 8'd0) &&
+                (mount_error != media_err_code)) begin
+                media_err_code <= mount_error;
+                media_err_toggle <= ~media_err_toggle;
+            end
             // ---- 扇区事务错误（最高优先级）：adapter 超时返回 -> 复位恢复 ----
             if (sector_done && (sector_error != 8'd0)) begin
                 if (media_err_code != ERR_RD_TMO) begin
@@ -105,10 +101,15 @@ module media_supervisor #(
                     if (media_ready) begin
                         mount_cnt     <= {MOUNT_W{1'b0}};
                         mount_attempt <= 3'd0;
+                        if (media_err_code != ERR_NONE) begin
+                            media_err_code <= ERR_NONE;
+                            media_err_toggle <= ~media_err_toggle;
+                        end
                     end else if (ms_tick) begin
                         if (mount_cnt >= (MOUNT_TIMEOUT_MS - 1)) begin
                             mount_cnt <= {MOUNT_W{1'b0}};
-                            if (media_err_code != ERR_MOUNT) begin
+                            // Preserve the concrete CRC/FAT/read failure during retry.
+                            if (media_err_code == ERR_NONE && mount_error == 8'd0) begin
                                 media_err_code   <= ERR_MOUNT;
                                 media_err_toggle <= ~media_err_toggle;
                             end

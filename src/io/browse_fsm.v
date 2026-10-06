@@ -12,7 +12,7 @@
 //   全屏态 view_mode=0：
 //     next   -> fs_next   （既有"下一张"路径，经转场在整帧边界切换）
 //     prev   -> fs_prev   （新增 prev_event，复用 sd_card_bmp 既有"上一张"分支）
-//     confirm-> thumb_mode（EC1 按压 / KEY02 进入 2x2 选曲视图）
+//     confirm-> play_start（EC1 按压 / KEY02 直接播放当前封面）
 //  缩略图态 view_mode=1：
 //     next   -> thumb_right（焦点 +1）
 //     prev   -> thumb_left （焦点 -1）
@@ -36,6 +36,7 @@ module browse_fsm #(
     input  wire        ev_next_tgl,
     input  wire        ev_confirm_tgl,
     input  wire        ev_mode_tgl,
+    input  wire        ev_home_tgl,
 
     input  wire        mb_next,        // 母板 KEY1 短按（sd 域单拍）
     input  wire        mb_mode,        // 母板 KEY1 长按（sd 域单拍）
@@ -43,20 +44,29 @@ module browse_fsm #(
     input  wire        mb_confirm,     // 母板 KEY2 长按（sd 域单拍，缩略图确认）
 
     input  wire        view_mode,      // 1=2x2 缩略图选曲视图
-    input  wire        mode_play,      // 1=播放态：本模块完全不产生导航脉冲
+    input  wire        mode_play,      // 1=播放态：导航交给 play_ctrl，KEY7 只生成 stop/home
 
     output reg         fs_next,        // 全屏：下一张
     output reg         fs_prev,        // 全屏：上一张
     output reg         thumb_right,    // 缩略图：焦点 +1
     output reg         thumb_left,     // 缩略图：焦点 -1
     output reg         thumb_confirm,  // 缩略图：确认焦点
-    output reg         thumb_mode      // 进入/退出缩略图视图
+    output reg         thumb_mode,
+    output reg         play_start,
+    output reg         play_stop,
+    output reg         go_home
 );
     // ---- CDC：目标域同步 + 边沿检测（单拍）----
     reg prev_s1,    prev_s2,    prev_s3;
     reg next_s1,    next_s2,    next_s3;
     reg confirm_s1, confirm_s2, confirm_s3;
     reg mode_s1,    mode_s2,    mode_s3;
+    reg [2:0] home_sync;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) home_sync <= 3'b000;
+        else home_sync <= {home_sync[1:0], ev_home_tgl};
+    end
+    wire home_event = home_sync[2] ^ home_sync[1];
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -100,16 +110,20 @@ module browse_fsm #(
             thumb_left    <= 1'b0;
             thumb_confirm <= 1'b0;
             thumb_mode    <= 1'b0;
+            play_start <= 1'b0;
+            play_stop <= 1'b0;
+            go_home <= 1'b0;
         end else begin
             fs_next       <= next_any & ~view_mode & ~mode_play;
             fs_prev       <= prev_any & ~view_mode & ~mode_play;
             thumb_right   <= next_any &  view_mode & ~mode_play;
             thumb_left    <= left_any &  view_mode & ~mode_play;
             thumb_confirm <= confirm_any & view_mode & ~mode_play;
-            // 显式 mode 事件始终可切换视图；全屏下的 confirm 进入选曲视图。
-            // KEY07 exits PLAY and opens the grid on this same event.
-            // Gating it with the old play_active value lost the first press.
-            thumb_mode    <= j2_mode | ((mb_mode | (j2_confirm & ~view_mode)) & ~mode_play);
+            // This domain owns mode routing: KEY7 is either stop/home OR grid.
+            thumb_mode    <= mode_any && !mode_play && !home_event;
+            play_start    <= confirm_any && !view_mode && !mode_play && !home_event && !mode_any;
+            play_stop     <= home_event || (mode_any && mode_play);
+            go_home       <= home_event || (mode_any && mode_play);
         end
     end
 endmodule

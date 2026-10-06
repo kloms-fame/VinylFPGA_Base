@@ -20,7 +20,7 @@ module tb_thumbnail_controller;
     integer errors = 0;
     integer i;
 
-    thumbnail_controller dut (
+    thumbnail_controller dut (.go_home(1'b0),
         .clk             (clk),
         .rst_n           (rst_n),
         .key_right       (key_right),

@@ -104,7 +104,8 @@ module tb_s3_browse_integration;
     reg  view_mode = 1'b0;
     wire fs_next, fs_prev, thumb_right, thumb_left, thumb_confirm, thumb_mode;
 
-    browse_fsm #(.J2_BROWSE_ENABLE(1'b1)) u_browse (
+    wire play_start;
+    browse_fsm #(.J2_BROWSE_ENABLE(1'b1)) u_browse (.ev_home_tgl(1'b0),
         .clk            (clk),
         .rst_n          (rst_n),
         .ev_prev_tgl    (ev_prev_tgl),
@@ -122,12 +123,14 @@ module tb_s3_browse_integration;
         .thumb_right    (thumb_right),
         .thumb_left     (thumb_left),
         .thumb_confirm  (thumb_confirm),
-        .thumb_mode     (thumb_mode)
+        .thumb_mode     (thumb_mode), .play_start(play_start)
     );
 
+    reg [4:0] c_start;
     reg [4:0] c_next, c_prev, c_right, c_left, c_conf, c_mode;
     always @(posedge clk) begin
         if (rst_n) begin
+            if(play_start) c_start<=c_start+1;
             if (fs_next)       c_next <= c_next + 1'b1;
             if (fs_prev)       c_prev <= c_prev + 1'b1;
             if (thumb_right)   c_right <= c_right + 1'b1;
@@ -138,7 +141,7 @@ module tb_s3_browse_integration;
     end
 
     task clear_counts;
-        begin c_next=0; c_prev=0; c_right=0; c_left=0; c_conf=0; c_mode=0; end
+        begin c_start=0; c_next=0; c_prev=0; c_right=0; c_left=0; c_conf=0; c_mode=0; end
     endtask
 
     // 正交一圈：顺时针(dir=0/next) 用 11->10->00->01->11；逆时针(dir=1/prev) 反向。
@@ -212,7 +215,8 @@ module tb_s3_browse_integration;
         view_mode = 1'b0;
         clear_counts; quad_turn(1'b0); check(5'd1,5'd0,5'd0,5'd0,5'd0,5'd0, "fullscreen EC1 CW -> next");
         clear_counts; quad_turn(1'b1); check(5'd0,5'd1,5'd0,5'd0,5'd0,5'd0, "fullscreen EC1 CCW -> prev");
-        clear_counts; enc_sw_press();   check(5'd0,5'd0,5'd0,5'd0,5'd0,5'd1, "fullscreen EC1 press -> enter grid");
+        clear_counts; enc_sw_press();   check(5'd0,5'd0,5'd0,5'd0,5'd0,5'd0, "fullscreen EC1 press -> PLAY");
+        if(c_start!=1) $fatal(1,"FAIL EC1 did not start PLAY");
 
         // ---- 缩略图态：EC1/方向键移动焦点、EC1/KEY02 确认 ----
         view_mode = 1'b1;

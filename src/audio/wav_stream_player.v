@@ -44,6 +44,8 @@ module wav_stream_player #(
     output reg  [31:0] sample_counter,
     output wire        stream_active,
     output wire        stream_end,
+    output wire        reader_idle,
+    output wire        sample_consumed,
     output wire        buffer_low,
     output reg         underrun_pulse   // S7-01B：流式播放中读侧欠载单拍脉冲（video_clk 域）
 );
@@ -54,12 +56,14 @@ module wav_stream_player #(
     reg [ADDR_WIDTH-1:0] wr_ptr;
     reg [ADDR_WIDTH-1:0] rd_ptr;
 
-    reg [2:0] wstate_sync1;
-    reg [2:0] wstate_sync2;
+    reg finished_wr;
+    reg [1:0] finished_sync;
     reg       play_enable_sync1;
     reg       play_enable_sync2;
     reg       stream_active_rd;
     reg       stream_end_rd;
+    reg stream_fault_wr;
+    reg [1:0] fault_sync;
 
     reg [ADDR_WIDTH-1:0] wr_gray;
     reg [ADDR_WIDTH-1:0] wr_gray_sync1;
@@ -90,8 +94,10 @@ module wav_stream_player #(
     wire [ADDR_WIDTH-1:0] wr_ptr_in_rd = from_gray(wr_gray_sync2);
     wire [ADDR_WIDTH-1:0] rd_ptr_in_wr = from_gray(rd_gray_sync2);
 
-    wire [ADDR_WIDTH:0] level_wr = {1'b0, wr_ptr} - {1'b0, rd_ptr_in_wr};
-    wire [ADDR_WIDTH:0] level_rd = {1'b0, wr_ptr_in_rd} - {1'b0, rd_ptr};
+    wire [ADDR_WIDTH-1:0] distance_wr = wr_ptr - rd_ptr_in_wr;
+    wire [ADDR_WIDTH-1:0] distance_rd = wr_ptr_in_rd - rd_ptr;
+    wire [ADDR_WIDTH:0] level_wr = {1'b0, distance_wr};
+    wire [ADDR_WIDTH:0] level_rd = {1'b0, distance_rd};
 
     localparam [2:0] WS_IDLE  = 3'd0;
     localparam [2:0] WS_REQ   = 3'd1;
@@ -110,8 +116,9 @@ module wav_stream_player #(
     // 仍为 4096 x 16bit，读数据在消费沿更新，不增加 sample_valid 延迟。
     wire buffer_write = wr_rst_n && play_enable &&
                         (wstate == WS_FILL) && sd_valid && lo_pending;
-    wire buffer_available = (level_rd >= SAMPLES_PER_SECTOR) ||
-                            ((wstate_sync2 == WS_END) && (level_rd > 0));
+    wire buffer_available = play_enable_sync2 && !fault_sync[1] &&
+                            ((level_rd >= SAMPLES_PER_SECTOR) ||
+                            (finished_sync[1] && (level_rd > 0)));
     wire buffer_read = rd_rst_n && sample_tick && sample_ready && buffer_available;
     reg [15:0] buffer_data;
     reg sample_has_data;
@@ -130,12 +137,16 @@ module wav_stream_player #(
     always @(posedge rd_clk or negedge rd_rst_n) begin
         if (!rd_rst_n)
             sample_has_data <= 1'b0;
+        else if (!play_enable_sync2 || fault_sync[1])
+            sample_has_data <= 1'b0;
         else if (sample_tick && sample_ready)
             sample_has_data <= buffer_available;
     end
     assign sample_out = sample_has_data ? buffer_data : 16'sd0;
 
-    assign sd_req = (wstate == WS_REQ);
+    assign reader_idle = !play_enable_sync2 && rd_ptr==0 && !sample_has_data;
+    assign sample_consumed = buffer_read;
+    assign sd_req = play_enable && (wstate == WS_REQ);
     // stream_active/stream_end 必须由读时钟域给出：写侧完成最后一个扇区后，
     // 读侧还要把 BRAM 里的残余样本排空，之后才允许声源选择器切回琶音。
     assign stream_active = stream_active_rd;
@@ -152,13 +163,18 @@ module wav_stream_player #(
             lo_byte       <= 8'd0;
             rd_gray_sync1 <= {ADDR_WIDTH{1'b0}};
             rd_gray_sync2 <= {ADDR_WIDTH{1'b0}};
-            rd_gray       <= {ADDR_WIDTH{1'b0}};
+            wr_gray       <= {ADDR_WIDTH{1'b0}};
+            stream_fault_wr <= 1'b0;
+            finished_wr <= 1'b0;
+            sd_lba <= 32'd0;
         end else begin
-            rd_gray       <= to_gray(rd_ptr);
+            wr_gray       <= to_gray(wr_ptr);
             rd_gray_sync1 <= rd_gray;
             rd_gray_sync2 <= rd_gray_sync1;
 
             if (!play_enable) begin
+                stream_fault_wr <= 1'b0;
+                finished_wr <= 1'b0;
                 wstate       <= WS_IDLE;
                 cur_lba      <= 32'd0;
                 sectors_read <= 32'd0;
@@ -194,20 +210,27 @@ module wav_stream_player #(
 
                     if (sd_done) begin
                         if (sd_error != 8'd0) begin
+                            stream_fault_wr <= 1'b1;
                             wstate <= WS_END;
                         end else begin
                             sectors_read <= sectors_read + 1'b1;
                             cur_lba      <= cur_lba + 1'b1;
-                            if ((sectors_read + 1'b1) >= total_sectors)
-                                wstate <= WS_END;
-                            else if (level_wr >= BUFFER_HIGH_WATER)
-                                wstate <= WS_WAIT;
-                            else
-                                wstate <= WS_REQ;
+                            // Commit counters before comparing. Combining the
+                            // 32-bit increment, compare and state mux exceeded
+                            // the routed 100 MHz setup budget.
+                            wstate <= WS_DONE;
                         end
                     end
                 end
-                WS_DONE: wstate <= WS_REQ;
+                WS_DONE: begin
+                    if (sectors_read >= total_sectors) begin
+                        wstate <= WS_END;
+                        finished_wr <= 1'b1;
+                    end else if (level_wr >= BUFFER_HIGH_WATER)
+                        wstate <= WS_WAIT;
+                    else
+                        wstate <= WS_REQ;
+                end
                 WS_END: begin
                     if (!play_enable)
                         wstate <= WS_IDLE;
@@ -230,29 +253,29 @@ module wav_stream_player #(
             underrun_pulse <= 1'b0;
             wr_gray_sync1  <= {ADDR_WIDTH{1'b0}};
             wr_gray_sync2  <= {ADDR_WIDTH{1'b0}};
-            wr_gray        <= {ADDR_WIDTH{1'b0}};
-            wstate_sync1   <= 3'd0;
-            wstate_sync2   <= 3'd0;
+            rd_gray        <= {ADDR_WIDTH{1'b0}};
+            fault_sync <= 2'b00;
+            finished_sync <= 2'd0;
             play_enable_sync1 <= 1'b0;
             play_enable_sync2 <= 1'b0;
             stream_active_rd  <= 1'b0;
             stream_end_rd     <= 1'b0;
         end else begin
             underrun_pulse <= 1'b0;
-            wr_gray       <= to_gray(wr_ptr);
+            rd_gray       <= to_gray(rd_ptr);
+            fault_sync <= {fault_sync[0],stream_fault_wr};
             wr_gray_sync1 <= wr_gray;
             wr_gray_sync2 <= wr_gray_sync1;
-            wstate_sync1  <= wstate;
-            wstate_sync2  <= wstate_sync1;
+            finished_sync <= {finished_sync[0],finished_wr};
             play_enable_sync1 <= play_enable;
             play_enable_sync2 <= play_enable_sync1;
 
             sample_valid <= 1'b0;
 
-            if (!play_enable_sync2) begin
+            if (!play_enable_sync2 || fault_sync[1]) begin
                 stream_active_rd <= 1'b0;
                 stream_end_rd    <= 1'b0;
-            end else if (wstate_sync2 == WS_END) begin
+            end else if (finished_sync[1]) begin
                 if (level_rd == 0) begin
                     stream_active_rd <= 1'b0;
                     stream_end_rd    <= 1'b1;
@@ -276,13 +299,13 @@ module wav_stream_player #(
                     // 可用样本。此时输出静音，同时打一拍欠载脉冲供 S7-01B 遥测。
                     // 门控 sample_counter!=0：播放起始阶段缓冲尚未充满时不应
                     // 计为欠载，避免每次起播都产生一次误报。
-                    if (stream_active_rd && (wstate_sync2 != WS_END) &&
+                    if (stream_active_rd && !finished_sync[1] &&
                         (sample_counter != 32'd0))
                         underrun_pulse <= 1'b1;
                 end
             end
 
-            if (!play_enable) begin
+            if (!play_enable_sync2) begin
                 rd_ptr         <= {ADDR_WIDTH{1'b0}};
                 sample_counter <= 32'd0;
             end

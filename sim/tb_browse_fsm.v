@@ -4,7 +4,7 @@
 // S3 回归：browse_fsm（主界面选歌事件适配层）
 //
 // 覆盖：
-//   1) 全屏态：next->fs_next / prev->fs_prev / confirm->进入缩略图 / mode->切换视图
+//   1) 全屏态：next->fs_next / prev->fs_prev / confirm->播放当前歌曲 / mode->切换视图
 //   2) 缩略图态：next->焦点+1 / prev->焦点-1 / confirm->确认 / mode->退出视图
 //   3) 母板兜底脉冲在全屏/缩略图两种视图下都仍然生效
 //   4) J2_BROWSE_ENABLE=0 时事件侧被旁路，母板兜底不受影响（回滚开关）
@@ -25,11 +25,13 @@ module tb_browse_fsm;
     reg  mb_next = 1'b0, mb_mode = 1'b0, mb_left = 1'b0, mb_confirm = 1'b0;
     reg  view_mode = 1'b0;
     reg  mode_play = 1'b0;
+    wire play_start, play_stop;
     wire fs_next, fs_prev, thumb_right, thumb_left, thumb_confirm, thumb_mode;
 
+    reg [3:0] c_start, c_stop;
     reg [3:0] c_fs_next, c_fs_prev, c_right, c_left, c_conf, c_mode;
 
-    browse_fsm #(.J2_BROWSE_ENABLE(1'b1)) dut (
+    browse_fsm #(.J2_BROWSE_ENABLE(1'b1)) dut (.ev_home_tgl(1'b0),
         .clk            (clk),
         .rst_n          (rst_n),
         .ev_prev_tgl    (ev_prev_tgl),
@@ -47,11 +49,14 @@ module tb_browse_fsm;
         .thumb_right    (thumb_right),
         .thumb_left     (thumb_left),
         .thumb_confirm  (thumb_confirm),
-        .thumb_mode     (thumb_mode)
+        .thumb_mode     (thumb_mode),
+        .play_start(play_start), .play_stop(play_stop)
     );
 
     always @(posedge clk) begin
         if (rst_n) begin
+            if (play_start) c_start <= c_start + 1;
+            if (play_stop) c_stop <= c_stop + 1;
             if (fs_next)       c_fs_next <= c_fs_next + 1'b1;
             if (fs_prev)       c_fs_prev <= c_fs_prev + 1'b1;
             if (thumb_right)   c_right   <= c_right   + 1'b1;
@@ -68,7 +73,7 @@ module tb_browse_fsm;
     wire off_fs_next, off_fs_prev, off_right, off_left, off_conf, off_mode;
     reg [3:0] o_fs_next, o_fs_prev, o_right, o_left, o_conf, o_mode;
 
-    browse_fsm #(.J2_BROWSE_ENABLE(1'b0)) dut_off (
+    browse_fsm #(.J2_BROWSE_ENABLE(1'b0)) dut_off (.ev_home_tgl(1'b0),
         .clk            (clk),
         .rst_n          (rst_n),
         .ev_prev_tgl    (off_prev_tgl),
@@ -103,7 +108,7 @@ module tb_browse_fsm;
     task clear_counts;
         begin
             c_fs_next = 0; c_fs_prev = 0; c_right = 0;
-            c_left = 0; c_conf = 0; c_mode = 0;
+            c_left = 0; c_conf = 0; c_mode = 0; c_start=0; c_stop=0;
         end
     endtask
 
@@ -177,7 +182,8 @@ module tb_browse_fsm;
         view_mode = 1'b0;
         fire_event(2'd1, 6'b100000, "fullscreen next event");
         fire_event(2'd0, 6'b010000, "fullscreen prev event");
-        fire_event(2'd2, 6'b000001, "fullscreen confirm enters grid");
+        fire_event(2'd2, 6'b000000, "fullscreen confirm starts PLAY");
+        if(c_start!=1) $fatal(1,"FAIL missing play_start");
         fire_event(2'd3, 6'b000001, "fullscreen mode toggles grid");
         fire_mpulse(2'd0, 6'b100000, "fullscreen mb_next fallback");
         fire_mpulse(2'd1, 6'b000001, "fullscreen mb_mode fallback");
@@ -194,10 +200,11 @@ module tb_browse_fsm;
         fire_mpulse(2'd3, 6'b000010, "thumbnail mb_confirm fallback");
         fire_mpulse(2'd1, 6'b000001, "thumbnail mb_mode fallback");
 
-        // KEY7 must enter the grid on the same event that exits playback.
+        // KEY7 exits PLAY to home; the next KEY7 can open the grid.
         view_mode = 1'b0;
         mode_play = 1'b1;
-        fire_event(2'd3, 6'b000001, "playing KEY7 enters grid once");
+        fire_event(2'd3, 6'b000000, "playing KEY7 returns home once");
+        if(c_stop!=1) $fatal(1,"FAIL missing play_stop");
         fire_event(2'd1, 6'b000000, "playing navigation stays gated");
         mode_play = 1'b0;
 

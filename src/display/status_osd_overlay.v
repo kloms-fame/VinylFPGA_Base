@@ -9,6 +9,7 @@ module status_osd_overlay #(
     input  wire        frame_start,
     input  wire [1:0]  active_index,
     input  wire        auto_enabled,
+    input  wire [1:0]  end_mode, effect_mode,
     input  wire [7:0]  error_code,
     input  wire [7:0]  brightness,
     input  wire [7:0]  contrast,
@@ -22,6 +23,7 @@ module status_osd_overlay #(
     output wire        osd_pixel
 );
     reg [1:0] index_q;
+    reg [1:0] end_q,effect_q;
     reg auto_q;
     reg [7:0] error_q;
     reg [7:0] brightness_q;
@@ -38,6 +40,7 @@ module status_osd_overlay #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             index_q <= 2'd0;
+            end_q<=0; effect_q<=0;
             auto_q <= 1'b0;
             error_q <= 8'd0;
             brightness_q <= 8'd255;
@@ -45,6 +48,7 @@ module status_osd_overlay #(
             menu_active_q <= 1'b0;
         end else if (frame_start) begin
             index_q <= active_index;
+            end_q<=end_mode; effect_q<=effect_mode;
             auto_q <= auto_enabled;
             error_q <= error_code;
             brightness_q <= brightness;
@@ -102,6 +106,22 @@ module status_osd_overlay #(
 
             if ((pixel_x - OSD_X) % 8 < 5 && char_row < 7)
                 osd_hit = glyph_row[4 - ((pixel_x - OSD_X) % 8)];
+        end
+
+        // Third row: E0/E1/E2 (end policy), F0/F1/F2 (cover effect).
+        if (pixel_x >= OSD_X && pixel_x < OSD_X + 32 &&
+            pixel_y >= OSD_Y + 32 && pixel_y < OSD_Y + 40) begin
+            char_row = pixel_y - (OSD_Y + 32);
+            case ((pixel_x - OSD_X) / 8)
+                0: char_value=4'he;
+                1: char_value={2'b00,end_q};
+                2: char_value=4'hf;
+                3: char_value={2'b00,effect_q};
+                default: char_value=0;
+            endcase
+            glyph_row=font_row(char_value,char_row);
+            if ((pixel_x - OSD_X) % 8 < 5 && char_row < 7)
+                menu_hit=glyph_row[4-((pixel_x-OSD_X)%8)];
         end
 
         // 第二行在参数菜单打开时显示 BxxCyy（十六进制）。

@@ -25,6 +25,7 @@ module sd_card_bmp #(
     input                       select_req,            // 第十五讲：快速选图请求（保持到 select_ack）
     input  [1:0]                select_index,          // 第十五讲：快速选图目标 bank
     output reg                  select_ack,            // 第十五讲：快速选图请求已接受
+    input                       auto_inhibit,
     input                       key_auto,              // KEY2：短按自动轮播开关 / 长按上一张
     output reg [3:0]            state_code,            // 数码管显示：当前图片编号 1~4
     input  [15:0]               bmp_width,
@@ -49,6 +50,8 @@ module sd_card_bmp #(
     input                       SD_MISO,
 
     // 第十一讲：AUDIO.PCM 元数据与音频扇区客户端。
+    output wire storage_done,
+    output wire [7:0] storage_error,
     output wire [23:0]          media_status,            // SD-domain diagnostic snapshot
     output wire media_preloaded,
     output wire [63:0] mv_metadata, // S6 selected song; zero for v1/absent MV
@@ -284,6 +287,7 @@ module sd_card_bmp #(
             wrfin_tgl_sync    <= {wrfin_tgl_sync[1:0], write_finish_toggle};
             key_auto_stable_d <= key_auto_stable;
 
+            if (auto_inhibit) auto_play_en <= 1'b0;
             scan_start_pulse  <= 1'b0;
             load_start_pulse  <= 1'b0;
             select_ack        <= 1'b0;
@@ -436,7 +440,7 @@ module sd_card_bmp #(
                     end
 
                     // ---- 自动轮播计时器 ----
-                    if (scan_done_eff && auto_play_en && display_valid && !load_busy && 
+                    if (!auto_inhibit && scan_done_eff && auto_play_en && display_valid && !load_busy &&
                         first_image_committed && (img_found_count > 3'd1)) begin
                         if (auto_tick)
                             auto_cnt <= 32'd0;
@@ -518,7 +522,7 @@ module sd_card_bmp #(
                     end
                     // 优先级3：自动轮播。已加载bank直接切换，避免重新读卡。
                     else if (scan_done_eff && display_valid && !load_busy &&
-                             auto_play_en && auto_tick && (img_found_count > 3'd1)) begin
+                             !auto_inhibit && auto_play_en && auto_tick && (img_found_count > 3'd1)) begin
                         auto_cnt <= 32'd0;
                         if (ready_lut(next_from_current)) begin
                             img_idx      <= next_from_current;
@@ -659,6 +663,8 @@ module sd_card_bmp #(
         .ready                  (bmp_ready),
         .scan_start             (scan_start_pulse),
         .scan_done              (scan_done),
+        .storage_done           (storage_done),
+        .storage_error          (storage_error),
         .media_status           (media_status),
         .media_error            (media_error),
         .scan_found_valid       (scan_found_valid),

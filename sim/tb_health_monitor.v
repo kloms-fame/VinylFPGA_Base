@@ -145,12 +145,12 @@ module tb_health_monitor;
             $display("FAIL err_code new=%h", err_code);
             errors = errors + 1;
         end
-        // 零错误码不覆盖 sticky
+        // 显式恢复事件清除当前错误；历史计数保留。
         osd_err_code = 8'h00;
         @(negedge clk); osd_err_valid = 1'b1;
         @(negedge clk); osd_err_valid = 1'b0;
         repeat (2) @(posedge clk);
-        if (err_code !== 8'h0B) begin
+        if (err_code !== 8'h00) begin
             $display("FAIL err_code zero=%h", err_code);
             errors = errors + 1;
         end

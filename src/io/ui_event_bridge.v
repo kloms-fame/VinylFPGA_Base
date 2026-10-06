@@ -34,6 +34,9 @@ module ui_event_bridge (
     output reg         next_tgl,
     output reg         confirm_tgl,
     output reg         mode_tgl,
+    output reg         home_tgl,
+    output reg         effect_tgl,
+    output reg         end_mode_tgl,
     // ---- S5：播放控制额外需要的"原始"事件（与上面 4 路并存）----
     // enc_cw/enc_ccw 只取 EC1 旋转本身（播放态 = 切曲）；
     // key_up/key_down 取 KEY04/KEY05（播放态 = 音量±，方向键上下）。
@@ -67,8 +70,8 @@ module ui_event_bridge (
     wire key_ok   = is_key_down &&  (ev_arg == 16'd1);
     wire key_mode = is_key_down &&  (ev_arg == 16'd6);
 
-    wire ev_prev    = enc1_dec | key_prev;
-    wire ev_next    = enc1_inc | key_next;
+    wire ev_prev    = key_prev;
+    wire ev_next    = key_next;
     wire ev_confirm = is_enc1_down | key_ok;
     wire ev_mode    = key_mode;
 
@@ -76,10 +79,34 @@ module ui_event_bridge (
     // 与 EC1 旋转同源进入 play_ctrl 的切曲路径；浏览态仍走 prev/next 不变）
     wire key01_prev = is_key_down && (ev_arg == 16'd0);  // KEY01 左 = 上一曲
     wire key03_next = is_key_down && (ev_arg == 16'd2);  // KEY03 右 = 下一曲
-    wire ev_enc_cw  = enc1_inc | key03_next;
-    wire ev_enc_ccw = enc1_dec | key01_prev;
+    wire ev_enc_cw  = key03_next;
+    wire ev_enc_ccw = key01_prev;
     wire ev_key_up  = is_key_down && (ev_arg == 16'd3);   // KEY04 上
     wire ev_key_dn  = is_key_down && (ev_arg == 16'd4);   // KEY05 下
+
+    // The event arbiter coalesces encoder pulses but carries the latest count.
+    // Replay the modular delta, separated by eight source clocks for toggle CDC.
+    reg [15:0] enc_target,enc_delivered;
+    reg enc_seen;
+    reg [2:0] enc_gap;
+    wire [15:0] enc_delta=enc_target-enc_delivered;
+    wire emit_encoder=(enc_gap==0) && enc_seen && (enc_delta!=0) && !ev_valid;
+    always @(posedge clk or negedge rst_n) begin
+        if(!rst_n) begin enc_target<=0;enc_delivered<=0;enc_seen<=0;enc_gap<=0;end
+        else begin
+            if(enc_gap!=0) enc_gap<=enc_gap-1'b1;
+            if(ev_valid && is_enc1_step) begin
+                enc_target<=ev_arg;
+                if(!enc_seen) begin
+                    enc_seen<=1;
+                    enc_delivered<=enc1_dec ? ev_arg+16'd1 : ev_arg-16'd1;
+                end
+            end else if(emit_encoder) begin
+                enc_delivered<=enc_delta[15] ? enc_delivered-16'd1 : enc_delivered+16'd1;
+                enc_gap<=7;
+            end
+        end
+    end
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -87,11 +114,19 @@ module ui_event_bridge (
             next_tgl    <= 1'b0;
             confirm_tgl <= 1'b0;
             mode_tgl    <= 1'b0;
+            home_tgl    <= 1'b0;
+            effect_tgl  <= 1'b0;
+            end_mode_tgl<= 1'b0;
             enc_cw_tgl  <= 1'b0;
             enc_ccw_tgl <= 1'b0;
             key_up_tgl  <= 1'b0;
             key_down_tgl<= 1'b0;
         end else begin
+            if (ev_valid && is_key_down && ev_arg == 16'd10) home_tgl <= ~home_tgl;
+            if (ev_valid && is_key_down && ev_arg == 16'd8) effect_tgl <= ~effect_tgl;
+            if (ev_valid && is_key_down && ev_arg == 16'd11) end_mode_tgl <= ~end_mode_tgl;
+            if (emit_encoder && enc_delta[15]) begin prev_tgl<=~prev_tgl;enc_ccw_tgl<=~enc_ccw_tgl;end
+            if (emit_encoder && !enc_delta[15]) begin next_tgl<=~next_tgl;enc_cw_tgl<=~enc_cw_tgl;end
             if (ev_valid && ev_prev)    prev_tgl    <= ~prev_tgl;
             if (ev_valid && ev_next)    next_tgl    <= ~next_tgl;
             if (ev_valid && ev_confirm) confirm_tgl <= ~confirm_tgl;

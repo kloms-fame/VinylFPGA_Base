@@ -19,6 +19,7 @@ module thumbnail_controller (
     input  wire        key_left,
     input  wire        key_confirm,
     input  wire        key_mode,
+    input  wire        go_home,
     input  wire [3:0]  image_complete,
     input  wire        frame_start,
     output reg         view_mode,
@@ -60,6 +61,12 @@ module thumbnail_controller (
             if (frame_start && trans_pend) begin
                 transition_req <= 1'b1;
                 trans_pend     <= 1'b0;
+            end
+            // Escape is independent of cover availability and pending display work.
+            if (go_home) begin
+                view_mode <= 1'b0;
+                trans_pend <= 1'b0;
+                transition_req <= 1'b0;
             end
         end
     end

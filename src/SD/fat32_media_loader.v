@@ -26,6 +26,8 @@ module fat32_media_loader #(
     input  wire        scan_start,
     output reg         scan_done,
     output wire [23:0] media_status, // {done,index,idx_present,audio,cover_mask,idx_err,fs_err}
+    output wire storage_done,
+    output wire [7:0] storage_error,
     output wire [7:0] media_error,  // Full diagnostic byte; independent of load retry pulse
     output reg         scan_found_valid,
     output reg  [1:0]  scan_found_index,
@@ -383,6 +385,8 @@ module fat32_media_loader #(
         end
     end
 
+    assign storage_done = arb_sector_done;
+    assign storage_error = arb_sector_error;
     assign media_status = {scan_done, index_mode, scanner_index_valid,
                            audio_file_valid_reg, src_valid, idx_error, scanner_error};
     assign media_error = !scan_done ? 8'd0 :
