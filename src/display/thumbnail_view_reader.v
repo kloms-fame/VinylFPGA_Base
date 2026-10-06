@@ -68,6 +68,10 @@ module thumbnail_view_reader #(
     localparam integer TOTAL_BURSTS   = 2 * BURSTS_PER_THUMB;   // 左右两格
     localparam integer THUMB_ROWS     = THUMB_HEIGHT;
     localparam [7:0]   BURST_WORD_LAST = BURST_SIZE - 1;
+    // S7-04：BURST_SIZE 以参数形式给出，但当前唯一例化点固定 128(=1<<7)。
+    // 用 localparam 显式折算成移位量，既让综合器生成移位而不是 21 位乘法器，
+    // 又在参数被改动时自动回退为正确的移位量，不会静默算错地址。
+    localparam integer BURST_SIZE_LSH = 7;   // log2(128)
 
     // ---------------------------------------------------------------------
     // 1. 显示行计数（与 osd_overlay_24 同一口径：vs 起始清零，de 下降沿加一）
@@ -163,6 +167,7 @@ module thumbnail_view_reader #(
     reg  [1:0]  req_right_index_sync2_mem;
     reg         task_active_mem;
     reg  [9:0]  task_src_y_mem;
+    reg  [ADDR_WIDTH-1:0] task_src_row_off_mem;
     reg         task_left_mem;
     reg         task_right_mem;
     reg  [1:0]  task_left_index_mem;
@@ -256,10 +261,29 @@ module thumbnail_view_reader #(
                                     (burst_idx_mem - BURSTS_PER_THUMB);
     wire [ADDR_WIDTH-1:0] cur_burst_in_thumb_ext =
         {{(ADDR_WIDTH-4){1'b0}}, cur_burst_in_thumb};
+
+    // S7-04 资源/时序优化：源行偏移 task_src_y_mem * DISPLAY_WIDTH 在整个
+    // 行任务内是常量（左右两格、10 个突发共用同一 src_y），原先每个突发都在
+    // 组合路径上重算一次 10x21 乘法器，既浪费 LUT，又把 ext_mem_clk 125MHz
+    // 的突发启动路径拉长（布局布线后该域 5 条违例全部起自 burst_word_mem）。
+    // 改为在 capture_task 时一次寄存，突发启动路径只剩移位与加法。
+    // 数值完全等价，功能与时序行为不变。
+    wire [ADDR_WIDTH-1:0] task_src_row_off_next =
+        req_src_y_sync2_mem * DISPLAY_WIDTH;
+
+    // 参数自检：移位实现仅在 BURST_SIZE==128 时成立，参数被改动时立即报错，
+    // 避免地址静默算错。
+    initial begin
+        if (BURST_SIZE != (1 << BURST_SIZE_LSH)) begin
+            $display("ERROR: thumbnail_view_reader requires BURST_SIZE==128 for the shift-based address path");
+            $finish;
+        end
+    end
+
     wire [ADDR_WIDTH-1:0] cur_burst_base =
         bank_base(cur_bank)
-        + (task_src_y_mem * DISPLAY_WIDTH)
-        + (cur_burst_in_thumb_ext * BURST_SIZE);
+        + task_src_row_off_mem
+        + (cur_burst_in_thumb_ext << BURST_SIZE_LSH);
 
     always @(posedge mem_clk or negedge mem_rst_n) begin
         if (!mem_rst_n) begin
@@ -281,6 +305,7 @@ module thumbnail_view_reader #(
             req_right_index_sync2_mem <= 2'd1;
             task_active_mem     <= 1'b0;
             task_src_y_mem      <= 10'd0;
+            task_src_row_off_mem<= {ADDR_WIDTH{1'b0}};
             task_left_mem       <= 1'b0;
             task_right_mem      <= 1'b0;
             task_left_index_mem <= 2'd0;
@@ -337,6 +362,7 @@ module thumbnail_view_reader #(
                 ack_toggle_mem     <= req_toggle_sync2_mem;
                 task_active_mem    <= 1'b1;
                 task_src_y_mem     <= req_src_y_sync2_mem;
+                task_src_row_off_mem <= task_src_row_off_next;
                 task_left_mem      <= req_left_sync2_mem;
                 task_right_mem     <= req_right_sync2_mem;
                 task_left_index_mem<= req_left_index_sync2_mem;

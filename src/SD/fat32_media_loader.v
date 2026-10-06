@@ -259,8 +259,26 @@ module fat32_media_loader #(
 
     wire [31:0] expected_pixel_count;
     wire [31:0] required_pixel_bytes;
-    assign expected_pixel_count = {16'd0, bmp_width} * {16'd0, bmp_height};
-    assign required_pixel_bytes = expected_pixel_count * 32'd3;
+    // S7-04 资源/时序优化：原写法把 required_pixel_bytes 写成组合表达式
+    //   {16'd0,bmp_width} * {16'd0,bmp_height} * 3
+    // 它在 100MHz 域上生成 32x32 乘法器 + 32 位加法器串，并且直接串进
+    //   header_valid: file_len >= (data_offset + required_pixel_bytes)
+    // 这正是 S7-03 布局布线后 sd_card_clk 域唯一违例路径
+    //   (WNS -0.125ns, data_offset_reg -> ... -> bmp_error_reg) 的来源。
+    //
+    // 改法：把两个乘积拆成“比较用”和“计数用”两路，并在数据段开始前
+    // 一次性寄存。bmp_width/bmp_height 在整个文件加载期间是常量（顶层固定
+    // 接 640/480），因此提前一拍算出与原表达式逐位相同的值不改变任何行为；
+    // 同时 header_valid 判定时这两个值已经是寄存器输出，组合加法器串被切断。
+    // 注意：必须保留 bmp_width/bmp_height 的可参数化语义——仿真台
+    // tb_fat32_index_loader 用的是 64x4，不是 640x480。
+    reg  [31:0] expected_pixel_count_q;
+    reg  [31:0] required_pixel_bytes_q;
+    reg         pixel_geom_ready;
+
+    assign expected_pixel_count = expected_pixel_count_q;
+    assign required_pixel_bytes = required_pixel_bytes_q;
+
     wire header_valid = (header0 == "B") && (header1 == "M") &&
                         (dib_size >= 32'd40) &&
                         (width[15:0] == bmp_width) &&
@@ -270,7 +288,8 @@ module fat32_media_loader #(
                         (compression == 32'd0) &&
                         (data_offset >= 32'd54) &&
                         (data_offset < file_len) &&
-                        (file_len >= (data_offset + required_pixel_bytes));
+                        pixel_geom_ready &&
+                        (file_len >= (data_offset + required_pixel_bytes_q));
 
     function [2:0] spc_shift;
         input [7:0] value;
@@ -681,6 +700,9 @@ module fat32_media_loader #(
             pixel_byte_cnt <= 32'd0;
             pixel_count <= 32'd0;
             rgb_byte_cnt <= 3'd0;
+            expected_pixel_count_q <= 32'd0;
+            required_pixel_bytes_q <= 32'd0;
+            pixel_geom_ready <= 1'b0;
             load_cluster <= 32'd0;
             load_size <= 32'd0;
             write_req <= 1'b0;
@@ -719,6 +741,12 @@ module fat32_media_loader #(
                     pixel_byte_cnt <= 32'd0;
                     pixel_count <= 32'd0;
                     rgb_byte_cnt <= 3'd0;
+                    // S7-04：几何常量在加载请求被接受时就一次算定。
+                    // bmp_width/bmp_height 是常量输入，到 54 字节头校验时
+                    // 已有 50+ 拍余量，乘法器完全不进入 header_valid 路径。
+                    expected_pixel_count_q <= {16'd0, bmp_width} * {16'd0, bmp_height};
+                    required_pixel_bytes_q <= ({16'd0, bmp_width} * {16'd0, bmp_height}) * 32'd3;
+                    pixel_geom_ready      <= 1'b1;
                 end
             end
 
@@ -825,6 +853,14 @@ module fat32_media_loader #(
                 write_req <= 1'b0;
                 load_state <= LD_IDLE;
             end
+
+            // S7-04：几何常量只对本次加载有效。离开本次加载后清除，保证下一次
+            // 加载必须重新算定，不会有陈旧值通过 header 校验。
+            // 注意排除“本拍刚接受加载请求”这一种情况：那一拍load_state 仍是
+            // LD_IDLE，若在此清零会覆盖上面刚写入的 1'b1（后赋值优先）。
+            if ((load_state == LD_IDLE) && !(load_launch_pending && use_streamer &&
+                                             !streamer_busy && eff_valid[load_index_latched]))
+                pixel_geom_ready <= 1'b0;
         end
     end
 
