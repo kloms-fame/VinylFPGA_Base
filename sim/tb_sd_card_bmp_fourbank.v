@@ -340,6 +340,7 @@ module fat32_media_loader (
     input  wire        sd_sec_read_end,
     output reg         bmp_data_wr_en,
     output reg  [23:0] bmp_data,
+    output wire [63:0] mv_metadata,
     output wire        audio_file_valid,
     output wire [31:0] audio_start_lba,
     output wire [31:0] audio_total_sectors,

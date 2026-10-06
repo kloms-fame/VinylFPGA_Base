@@ -50,6 +50,8 @@ module sd_card_bmp #(
 
     // 第十一讲：AUDIO.PCM 元数据与音频扇区客户端。
     output wire [23:0]          media_status,            // SD-domain diagnostic snapshot
+    output wire media_preloaded,
+    output wire [63:0] mv_metadata, // S6 selected song; zero for v1/absent MV
     output wire                 audio_file_valid,
     output wire [31:0]          audio_start_lba,
     output wire [31:0]          audio_total_sectors,
@@ -150,6 +152,7 @@ module sd_card_bmp #(
     assign auto_tick          = (auto_cnt >= (AUTO_PLAY_CYCLES - 1'b1));
     assign scan_done_eff      = scan_done | scan_abort;
     assign auto_play_en_out   = auto_play_en;
+    assign media_preloaded = preload_done && scan_done_eff;
     assign preload_done       = (img_found_count == 3'd0) ||
                                 (preload_idx >= img_found_count);
     // 第十三讲：把内部 bank 就绪标记只读引出给顶层缩略图视图使用，
@@ -679,6 +682,7 @@ module sd_card_bmp #(
         .sd_sec_read_end        (sd_sec_read_end),
         .bmp_data_wr_en         (bmp_data_wr_en),
         .bmp_data               (bmp_data),
+        .mv_metadata            (mv_metadata),
         .audio_file_valid       (audio_file_valid),
         .audio_start_lba        (audio_start_lba),
         .audio_total_sectors    (audio_total_sectors),

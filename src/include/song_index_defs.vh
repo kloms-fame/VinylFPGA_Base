@@ -7,7 +7,7 @@
 // ---- 头部 64 字节 ----
 //   偏移  长度  字段
 //   0     8     magic = "VINYLIDX"
-//   8     2     version = 1
+//   8     2     version = 1 (legacy) or 2 (S6 MV extension)
 //   10    2     entry_size = 64
 //   12    2     song_count（1..MAX_SONGS，超限必须报错，不得静默越界）
 //   14    2     max_songs（写入端声明，读取端仅作参考校验）
@@ -26,7 +26,12 @@
 //   24    4     audio_crc32（记录值）
 //   28    4     audio_start_sector_hint（PC 侧解析出的物理起始 LBA，便于追溯）
 //   32    24    title（ASCII，NUL 补齐；RTL 不消费）
-//   56    8     reserved
+//   56    8     v1: reserved; v2: MV descriptor when flags.bit3=1:
+//              +56 u32 physical first LBA (contiguous file, PC verified)
+//              +60 u16 frame_count (1..65535)
+//              +62 u8 fps (10); +63 u8 codec (1=RGB565LE 320x240)
+//              Each frame is 153600 bytes / 300 sectors, top-down row-major.
+//              v1 reserved bytes NEVER activate MV. Entry CRC includes these bytes.
 //
 // 说明：RTL 只按 first_cluster 走 FAT 链取数（复用 fat32_file_streamer），
 //       因此封面天然支持碎片；audio_start_sector_hint 仅供 PC 侧追溯与 S5 使用。

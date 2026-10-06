@@ -53,7 +53,8 @@ module song_index_db #(
     output reg  [63:0] song_audio0,
     output reg  [63:0] song_audio1,
     output reg  [63:0] song_audio2,
-    output reg  [63:0] song_audio3
+    output reg  [63:0] song_audio3,
+    output wire [63:0] song_mv0, song_mv1, song_mv2, song_mv3
 );
     `include "song_index_defs.vh"
 
@@ -104,6 +105,26 @@ module song_index_db #(
     wire        crc_in_span = crc_span_ok && (off >= 32'd64) && (off < crc_end);
     wire [31:0] crc_final   = crc_calc ^ 32'hFFFFFFFF;
 
+    // S6 v2: reserved entry bytes become {codec,fps,count16,lba32}.
+    reg [63:0] e_mv [0:3];
+    reg [3:0] e_has_mv;
+    integer m;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            e_has_mv <= 0;
+            for(m=0;m<4;m=m+1) e_mv[m]<=0;
+        end else if(start && phase==P_IDLE) begin
+            e_has_mv <= 0;
+            for(m=0;m<4;m=m+1) e_mv[m]<=0;
+        end else if(phase==P_STREAM && in_valid && in_entries) begin
+            if(entry_off==0) e_has_mv[entry_sel]<=in_byte[3];
+            if(entry_off>=56) e_mv[entry_sel]<={in_byte,e_mv[entry_sel][63:8]};
+        end
+    end
+    assign song_mv0=(valid && hdr_version==2 && e_has_mv[0]) ? e_mv[0] : 64'd0;
+    assign song_mv1=(valid && hdr_version==2 && e_has_mv[1]) ? e_mv[1] : 64'd0;
+    assign song_mv2=(valid && hdr_version==2 && e_has_mv[2]) ? e_mv[2] : 64'd0;
+    assign song_mv3=(valid && hdr_version==2 && e_has_mv[3]) ? e_mv[3] : 64'd0;
     // P_CHK 阶段每拍只比较一首歌
     wire cover_entry_bad =
         !e_has_cover[chk_idx] ||
@@ -250,7 +271,7 @@ module song_index_db #(
                         fin_err <= SIDX_ERR_STREAM;
                     else if (!magic_ok)
                         fin_err <= SIDX_ERR_MAGIC;
-                    else if (hdr_version != SIDX_VERSION)
+                    else if (hdr_version != SIDX_VERSION && hdr_version != 16'd2)
                         fin_err <= SIDX_ERR_VERSION;
                     else if (hdr_entry_size != SIDX_ENTRY_SIZE)
                         fin_err <= SIDX_ERR_ENTRY_SIZE;
@@ -291,10 +312,10 @@ module song_index_db #(
                     valid       <= 1'b1;
                     err         <= SIDX_ERR_NONE;
                     song_count  <= hdr_count[2:0];
-                    song_flags  <= {{2'b0, e_has_audio[3], e_has_cover[3]},
-                                    {2'b0, e_has_audio[2], e_has_cover[2]},
-                                    {2'b0, e_has_audio[1], e_has_cover[1]},
-                                    {2'b0, e_has_audio[0], e_has_cover[0]}};
+                    song_flags  <= {{(e_has_mv[3] && hdr_version==2), 1'b0, e_has_audio[3], e_has_cover[3]},
+                                    {(e_has_mv[2] && hdr_version==2), 1'b0, e_has_audio[2], e_has_cover[2]},
+                                    {(e_has_mv[1] && hdr_version==2), 1'b0, e_has_audio[1], e_has_cover[1]},
+                                    {(e_has_mv[0] && hdr_version==2), 1'b0, e_has_audio[0], e_has_cover[0]}};
                     song_cover0 <= {e_cov_by[0], e_cov_cl[0]};
                     song_cover1 <= {e_cov_by[1], e_cov_cl[1]};
                     song_cover2 <= {e_cov_by[2], e_cov_cl[2]};

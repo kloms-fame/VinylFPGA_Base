@@ -40,6 +40,11 @@
 `include "display/lrc_lines_rom.v"
 `include "display/lrc_font_rom.v"
 `include "display/lrc_osd.v"
+`include "video/mv_sector_mux.v"
+`include "video/mv_stream_player.v"
+`include "video/mv_frame_scheduler.v"
+`include "display/vinyl_renderer.v"
+`include "video/s6_video_layer.v"
 
 module top(
     input                       clk,
@@ -132,6 +137,30 @@ parameter S3_J2_BROWSE_ENABLE = 1'b1;
 //                   EC1 按压暂停/恢复、EC1 旋转切曲、KEY04/05 音量。
 // =0：整层旁路，音频回到 S0~S4 的"扫描完成即播放"行为（回滚开关）。
 parameter S5_PLAY_ENABLE = 1'b1;
+parameter S6_VIDEO_ENABLE = 1'b1;
+// SDRAM word addresses: covers [0,1228800), MV [1228800,1459200).
+localparam [20:0] MV_ADDR0=21'd1228800, MV_ADDR1=21'd1305600, MV_ADDR2=21'd1382400;
+wire [63:0] mv_metadata_sd;
+wire media_preloaded_sd, media_preloaded_vid;
+wire mv_visual_tgl, mv_req_tgl, mv_done_tgl, mv_failed;
+wire [31:0] mv_request_lba;
+wire [1:0] mv_request_bank, mv_write_bank, mv_read_bank;
+wire mv_writer_active,mv_write_req,mv_pixel_valid;
+wire mv_writer_mem;
+wire frw_write_busy;
+reg [5:0] mv_thumb_drain;
+wire mv_thumb_read_busy;
+wire [31:0] mv_pixel_data;
+wire mv_sec_req,mv_sec_busy,mv_sec_valid,mv_sec_done;
+wire [31:0] mv_sec_lba;
+wire media_sec_req,media_sec_busy,media_sec_valid,media_sec_done;
+wire [31:0] media_sec_lba;
+wire mv_read_active,mv_fifo_read_allowed,mv_window_visible;
+wire [23:0] s6_rgb;
+reg [1:0] mv_audio_low_sync;
+reg [5:0] s6_read_wait;
+wire s6_frame_read_req;
+
 
 wire exp_rst_n; // 50 MHz reset, asynchronous assertion / synchronized release
 wire Sdr_init_done;
@@ -739,24 +768,26 @@ sd_card_bmp #(
     .image_ready_out   (image_ready_sd),
 
     .write_req         (sd_card_write_req),
-    .write_req_ack     (sd_card_write_req_ack_sync[1]),
+    .write_req_ack     (sd_card_write_req_ack_sync[1] && !mv_writer_active),
     .write_en          (sd_card_write_en),
     .write_data        (sd_card_write_data),
     .SD_nCS            (sd_ncs),
     .SD_DCLK           (sd_dclk),
     .SD_MOSI           (sd_mosi),
     .SD_MISO           (sd_miso),
+    .mv_metadata       (mv_metadata_sd),
+    .media_preloaded    (media_preloaded_sd),
     .audio_file_valid  (audio_file_valid),
     .audio_start_lba   (audio_start_lba),
     .audio_total_sectors(audio_total_sectors),
     .audio_play_enable (audio_play_enable),
-    .audio_sec_req     (wav_sec_req),
-    .audio_sec_lba     (wav_sec_lba),
-    .audio_sec_busy    (wav_sec_busy),
-    .audio_sec_valid   (wav_sec_valid),
+    .audio_sec_req     (media_sec_req),
+    .audio_sec_lba     (media_sec_lba),
+    .audio_sec_busy    (media_sec_busy),
+    .audio_sec_valid   (media_sec_valid),
     .audio_sec_byte    (wav_sec_byte),
     .audio_sec_byte_index(wav_sec_byte_index),
-    .audio_sec_done    (wav_sec_done),
+    .audio_sec_done    (media_sec_done),
     .audio_sec_error   (wav_sec_error)
 );
 
@@ -1087,7 +1118,7 @@ assign thumb_view = view_mode_frame & ~pat_mode;
 // 第十三讲：缩略图视图下同样不发整帧读请求，把 SDRAM 读口让给按坐标取像。
 assign video_read_req_eff = (`DIAG_LOCAL_PATTERN) ? 1'b0
                           : (pat_read_gate_req ? 1'b0
-                          : (thumb_view ? 1'b0 : video_read_req));
+                          : (thumb_view ? 1'b0 : s6_frame_read_req));
 
 // 缩略图模式关断帧读 FIFO 的消费使能，使 frame_fifo_read 填满后停在
 // S_CHECK_FIFO（App_rd_en 拉低），读口得以安全换手。
@@ -1102,7 +1133,7 @@ always @(posedge video_clk or negedge video_rst_n) begin
         frw_resume <= 1'b1;
 end
 
-assign frw_read_en_gated = video_read_en & frw_resume;
+assign frw_read_en_gated = video_read_en & frw_resume & mv_fifo_read_allowed;
 
 // 8~10 段竖彩条：大块纯色区域最容易暴露单像素彩点。
 always @(*) begin
@@ -1156,7 +1187,7 @@ assign vout_data = (`DIAG_LOCAL_PATTERN) ? local_pattern_rgb
 //   - 其余区域输出黑（与教程 thumbnail_layout 的 thumb_de 语义一致）；
 //   - 完全不碰 de/vs 节拍，也不影响 HDMI 音频数据岛调度。
 assign view_rgb = thumb_view ? (thumb_active ? thumb_rgb : 24'd0)
-                             : vout_data;
+                             : ((mv_read_active && !mv_window_visible) ? 24'd0 : vout_data);
 
 // ===================== 第十四讲：亮度/对比度像素调节 =====================
 // 控制域参数先做两级同步，再在 frame_start 整帧锁存。默认值
@@ -1284,10 +1315,15 @@ promax_audio_waveform #(
 );
 
 frame_read_write #(
+    .DYNAMIC_LINEAR   (1),
+    .EXTERNAL_READ_BUSY(S6_VIDEO_ENABLE),
     .WRITE_V_FLIP     (1),
     .FRAME_WIDTH      (640),
     .FRAME_HEIGHT     (480)
 ) frame_read_write_m0(
+    .linear_write      (mv_writer_active),
+    .external_read_busy(mv_thumb_read_busy),
+    .app_write_busy    (frw_write_busy),
     .mem_clk           (ext_mem_clk),
     .rst               (~mem_rst_n),
     .Sdr_init_done     (Sdr_init_done),
@@ -1305,12 +1341,12 @@ frame_read_write #(
     .read_req          (video_read_req_eff),
     .read_req_ack      (video_read_req_ack),
     .read_finish       (),
-    .read_addr_0       (BUF0_ADDR),
-    .read_addr_1       (BUF1_ADDR),
-    .read_addr_2       (BUF2_ADDR),
-    .read_addr_3       (BUF3_ADDR),
-    .read_addr_index   (disp_buf_idx_eff),
-    .read_len          (FRAME_PIXELS),
+    .read_addr_0       (mv_read_active ? MV_ADDR0 : BUF0_ADDR),
+    .read_addr_1       (mv_read_active ? MV_ADDR1 : BUF1_ADDR),
+    .read_addr_2       (mv_read_active ? MV_ADDR2 : BUF2_ADDR),
+    .read_addr_3       (mv_read_active ? MV_ADDR0 : BUF3_ADDR),
+    .read_addr_index   (mv_read_active ? mv_read_bank : disp_buf_idx_eff),
+    .read_len          (mv_read_active ? 24'd76800 : FRAME_PIXELS),
     .read_en           (frw_read_en_gated),
     .read_data         (video_read_data),
 
@@ -1320,17 +1356,17 @@ frame_read_write #(
     .App_wr_dm         (App_wr_dm),
 
     .write_clk         (sd_card_clk),
-    .write_req         (sd_write_req_eff),
+    .write_req         (mv_writer_active ? mv_write_req : sd_write_req_eff),
     .write_req_ack     (sd_card_write_req_ack),
     .write_finish      (frame_write_finish),
-    .write_addr_0      (BUF0_ADDR),
-    .write_addr_1      (BUF1_ADDR),
-    .write_addr_2      (BUF2_ADDR),
-    .write_addr_3      (BUF3_ADDR),
-    .write_addr_index  (write_buf_idx_eff),
-    .write_len         (FRAME_PIXELS),
-    .write_en          (sd_write_en_eff),
-    .write_data        (sd_write_data_eff)
+    .write_addr_0      (mv_writer_mem ? MV_ADDR0 : BUF0_ADDR),
+    .write_addr_1      (mv_writer_mem ? MV_ADDR1 : BUF1_ADDR),
+    .write_addr_2      (mv_writer_mem ? MV_ADDR2 : BUF2_ADDR),
+    .write_addr_3      (mv_writer_mem ? MV_ADDR0 : BUF3_ADDR),
+    .write_addr_index  (mv_writer_active ? mv_write_bank : write_buf_idx_eff),
+    .write_len         (mv_writer_active ? 24'd76800 : FRAME_PIXELS),
+    .write_en          (mv_writer_active ? mv_pixel_valid : sd_write_en_eff),
+    .write_data        (mv_writer_active ? mv_pixel_data : sd_write_data_eff)
 );
 
 sdram U3(
@@ -1399,7 +1435,17 @@ sdram_rd_arbiter #(
 // 更容易撞上刷新窗口；这里复用同一套边界，只在仲裁完成且控制器空闲时
 // 才允许从地址 FIFO 发出一笔取像请求。
 wire thumb_ctrl_quiet = ~Sdr_init_ref_vld & ~Sdr_busy & Sdr_init_done;
-assign thumb_mem_enable = rd_arb_mem_idle & rd_arb_mode_active & thumb_ctrl_quiet;
+assign mv_thumb_read_busy=thumb_rd_req || (mv_thumb_drain!=0);
+// S6: a draining MV write can overlap a return to the existing thumbnail UI.
+// Neither reader nor writer may start a burst while the other owns SDRAM.
+// Include the same 64-cycle return drain margin used by sdram_rd_arbiter.
+always @(posedge ext_mem_clk or negedge mem_rst_n) begin
+ if(!mem_rst_n) mv_thumb_drain<=0;
+ else if(thumb_rd_req || thumb_rd_valid) mv_thumb_drain<=63;
+ else if(mv_thumb_drain!=0) mv_thumb_drain<=mv_thumb_drain-1'b1;
+end
+assign thumb_mem_enable = rd_arb_mem_idle & rd_arb_mode_active & thumb_ctrl_quiet &
+                         ~(S6_VIDEO_ENABLE && frw_write_busy);
 
 thumbnail_view_reader #(
     .DISPLAY_WIDTH  (640),
@@ -1729,6 +1775,56 @@ boot_layer #(
 // S2 总开关（含诊断模式旁路）：=0 或不生效时整层旁路，回到 S1 像素。
 wire s2_boot_on = S2_BOOT_ENABLE && !pat_mode;
 
+// S6 reuses the existing SD client and frame FIFOs. No new clocks or IO.
+sync_2ff u_mv_preloaded_sync(.clk(video_clk),.rst_n(video_rst_n),
+ .async_in(media_preloaded_sd),.sync_out(media_preloaded_vid));
+sync_2ff u_mv_writer_sync(.clk(ext_mem_clk),.rst_n(mem_rst_n),
+ .async_in(mv_writer_active),.sync_out(mv_writer_mem));
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+ if(!sdcard_rst_n) mv_audio_low_sync<=2'b11;
+ else mv_audio_low_sync<={mv_audio_low_sync[0],wav_buffer_low};
+end
+mv_sector_mux u_mv_sector_mux(
+ .clk(sd_card_clk),.rst_n(sdcard_rst_n),.audio_req(wav_sec_req),.audio_lba(wav_sec_lba),
+ .video_req(mv_sec_req),.video_lba(mv_sec_lba),
+ .allow_video(!audio_play_enable_gated || !mv_audio_low_sync[1]),
+ .audio_busy(wav_sec_busy),.video_busy(mv_sec_busy),
+ .audio_valid(wav_sec_valid),.video_valid(mv_sec_valid),
+ .audio_done(wav_sec_done),.video_done(mv_sec_done),
+ .sector_req(media_sec_req),.sector_lba(media_sec_lba),.sector_busy(media_sec_busy),
+ .sector_valid(media_sec_valid),.sector_done(media_sec_done));
+mv_stream_player u_mv_stream_player(
+ .clk(sd_card_clk),.rst_n(sdcard_rst_n),.request_toggle(mv_req_tgl),
+ .request_lba(mv_request_lba),.request_bank(mv_request_bank),
+ .done_toggle(mv_done_tgl),.failed(mv_failed),.writer_active(mv_writer_active),
+ .write_req(mv_write_req),.write_ack(sd_card_write_req_ack),
+ .write_finish_toggle(frame_write_toggle_mem),.write_bank(mv_write_bank),
+ .pixel_valid(mv_pixel_valid),.pixel_data(mv_pixel_data),
+ .sector_req(mv_sec_req),.sector_lba(mv_sec_lba),.sector_busy(mv_sec_busy),
+ .sector_valid(mv_sec_valid),.sector_byte(wav_sec_byte),.sector_byte_index(wav_sec_byte_index),
+ .sector_done(mv_sec_done),.sector_error(wav_sec_error));
+// Original timing issues read_req before delayed vs/frame_start. In PLAY wait
+// 32 pixels (1.28 us of vertical blank) for committed MV base and length.
+// BROWSE keeps its original request and full-frame read sequence.
+always @(posedge video_clk or negedge video_rst_n) begin
+ if(!video_rst_n) s6_read_wait<=0;
+ else if(!video_read_req) s6_read_wait<=0;
+ else if(s6_read_wait!=63) s6_read_wait<=s6_read_wait+1'b1;
+end
+assign s6_frame_read_req=video_read_req &&
+ (!S6_VIDEO_ENABLE || (!play_active_v2 && !mv_read_active) || s6_read_wait>=32);
+s6_video_layer #(.ENABLE(S6_VIDEO_ENABLE)) u_s6_video_layer(
+ .clk(video_clk),.rst_n(video_rst_n),.frame_start(frame_start),
+ .play_active(S5_PLAY_ENABLE && play_active_v2),.paused(paused_v2),
+ .restart(play_track_restart_vid),.diagnostic(pat_mode),
+ .covers_ready(media_preloaded_vid),.metadata_async(mv_metadata_sd),.time_ms(lyric_time_ms),
+ .visual_toggle(mv_visual_tgl),.raw_read_en(video_read_en),.out_de(de),.out_x(osd_pixel_x),
+ .adjusted_de(adjusted_de),.adjusted_x(adjusted_pixel_x),.rgb_in(wave_rgb_eff),.rgb_out(s6_rgb),
+ .mv_read_active(mv_read_active),.mv_read_bank(mv_read_bank),
+ .fifo_read_allowed(mv_fifo_read_allowed),.mv_window_visible(mv_window_visible),
+ .request_toggle(mv_req_tgl),.request_lba(mv_request_lba),.request_bank(mv_request_bank),
+ .done_toggle(mv_done_tgl),.failed(mv_failed));
+
 // ===================== S5：单行歌词叠加（末级，开机 Logo 之下）================
 wire [23:0] lrc_rgb;
 wire        lrc_hit;
@@ -1740,7 +1836,7 @@ lrc_osd u_lrc_osd (
     .pixel_x  (adjusted_pixel_x),
     .enable   (S5_PLAY_ENABLE && play_active_v2 && !pat_mode),
     .time_ms  (lyric_time_ms),
-    .rgb_in   (wave_rgb_eff),
+    .rgb_in   (s6_rgb),
     .rgb_out  (lrc_rgb),
     .hit      (lrc_hit)
 );
@@ -1912,6 +2008,7 @@ ui_event_bridge u_ui_event_bridge (
     .enc_cw_tgl   (brw_ev_enc_cw_tgl),
     .enc_ccw_tgl  (brw_ev_enc_ccw_tgl),
     .key_up_tgl   (brw_ev_key_up_tgl),
+    .visual_tgl   (mv_visual_tgl),
     .key_down_tgl (brw_ev_key_down_tgl)
 );
 

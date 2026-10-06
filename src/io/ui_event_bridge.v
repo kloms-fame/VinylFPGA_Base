@@ -40,10 +40,15 @@ module ui_event_bridge (
     output reg         enc_cw_tgl,
     output reg         enc_ccw_tgl,
     output reg         key_up_tgl,
+    output reg         visual_tgl,
     output reg         key_down_tgl
 );
     `include "exp_event_defs.vh"
 
+    always @(posedge clk or negedge rst_n) begin
+        if(!rst_n) visual_tgl<=1'b0;
+        else if(ev_valid && ev_code==EV_KEY_DOWN && ev_arg==16'd7) visual_tgl<=~visual_tgl;
+    end
     wire is_enc1_step = (ev_code == EV_ENC_STEP) && (ev_aux[1] == 1'b0);
     wire is_key_down  = (ev_code == EV_KEY_DOWN);
 

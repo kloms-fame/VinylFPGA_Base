@@ -1,0 +1,11 @@
+{
+  "format": "RGB565LE",
+  "width": 320,
+  "height": 240,
+  "fps": 10,
+  "frames": 300,
+  "frame_bytes": 153600,
+  "sectors_per_frame": 300,
+  "sha256": "491644a183a76e3b5f48cd66d6f4307a01b50dcacf8fdb28d18ff820f1a2d7c5",
+  "order": "top-down row-major; lexicographic input filenames"
+}

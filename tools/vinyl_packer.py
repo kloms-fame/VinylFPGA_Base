@@ -83,6 +83,10 @@ class IndexSong:
     audio_name: str = ""
     lyric_name: str = ""
     mv_name: str = ""
+    mv_lba: int = 0
+    mv_frames: int = 0
+    mv_fps: int = 10
+    mv_sha256: str = ""
     flags: int = 0
     cover_cluster: int = 0
     cover_bytes: int = 0
@@ -362,6 +366,11 @@ def build_entry(song: IndexSong) -> bytes:
     struct.pack_into("<I", buf, 28, song.audio_lba)
     title = song.title.encode("ascii", "replace")[:23]
     buf[32:32 + len(title)] = title
+    if song.flags & FLAG_MV:
+        if not (0 < song.mv_frames <= 65535 and song.mv_fps == 10 and
+                0 < song.mv_lba <= 0xFFFFFFFF - song.mv_frames * 300):
+            raise PackError("MV requires 1..65535 frames, 10 fps and non-overflowing LBA")
+        struct.pack_into("<IHBB", buf, 56, song.mv_lba, song.mv_frames, song.mv_fps, 1)
     return bytes(buf)
 
 
@@ -373,7 +382,7 @@ def build_index(songs: list) -> bytes:
 
     header = bytearray(HEADER_SIZE)
     header[0:8] = MAGIC
-    struct.pack_into("<H", header, 8, VERSION)
+    struct.pack_into("<H", header, 8, 2 if any(s.flags & FLAG_MV for s in songs) else VERSION)
     struct.pack_into("<H", header, 10, ENTRY_SIZE)
     struct.pack_into("<H", header, 12, len(songs))
     struct.pack_into("<H", header, 14, MAX_SONGS)
@@ -390,7 +399,7 @@ def parse_index(data: bytes) -> dict:
     if data[0:8] != MAGIC:
         raise PackError("索引 magic 不匹配（缺少 VINYLIDX）")
     version, entry_size, count, max_songs = struct.unpack_from("<HHHH", data, 8)
-    if version != VERSION:
+    if version not in (1, 2):
         raise PackError(f"索引版本 {version} != {VERSION}")
     if entry_size != ENTRY_SIZE:
         raise PackError(f"条目长度 {entry_size} != {ENTRY_SIZE}")
@@ -408,10 +417,19 @@ def parse_index(data: bytes) -> dict:
         flags, cov_cl, cov_by, cov_crc, aud_cl, aud_by, aud_crc, aud_lba = \
             struct.unpack_from("<IIIIIIII", data, o)
         title = data[o + 32:o + 56].split(b"\x00", 1)[0].decode("ascii", "replace")
+        mv_lba, mv_frames, mv_fps, mv_codec = struct.unpack_from("<IHBB", data, o + 56)
+        if version == 2 and flags & FLAG_MV:
+            if not (mv_lba and mv_frames and mv_fps == 10 and mv_codec == 1 and
+                    mv_lba + mv_frames * 300 <= 0xFFFFFFFF):
+                raise PackError(f"song {i}: invalid MV metadata")
+        else:
+            mv_lba = mv_frames = mv_fps = mv_codec = 0
         songs.append({"flags": flags, "cover_cluster": cov_cl, "cover_bytes": cov_by,
                       "cover_crc32": cov_crc, "audio_cluster": aud_cl,
                       "audio_bytes": aud_by, "audio_crc32": aud_crc,
-                      "audio_lba": aud_lba, "title": title})
+                      "audio_lba": aud_lba, "title": title,
+                      "mv_lba": mv_lba, "mv_frames": mv_frames,
+                      "mv_fps": mv_fps, "mv_codec": mv_codec})
     return {"version": version, "entry_size": entry_size, "count": count,
             "max_songs": max_songs, "entries_crc32": entries_crc, "songs": songs}
 
@@ -510,6 +528,17 @@ def cmd_pack(args) -> int:
                         "如需先出索引，可加 --allow-fragmented-audio 并记录风险")
                 s.audio_lba = s.audio_runs[0][0]
 
+            if s.mv_name:
+                mv = img.find_root_file(s.mv_name)
+                if not mv.size or mv.size % 153600:
+                    raise PackError(f"{s.mv_name}: MV must contain whole 320x240 RGB565 frames")
+                runs = img.cluster_runs(mv.first_cluster)
+                if len(runs) != 1:
+                    raise PackError(f"{s.mv_name}: fragmented MV is not supported; copy again contiguously")
+                s.mv_lba, s.mv_frames = runs[0][0], mv.size // 153600
+                s.mv_sha256 = hashlib.sha256(img.read_file(mv.first_cluster, mv.size)).hexdigest()
+                s.flags |= FLAG_MV
+
         blob = build_index(songs)
         parsed = parse_index(blob)          # 自检：写卡前先过一遍 RTL 同款校验
 
@@ -561,6 +590,11 @@ def cmd_pack(args) -> int:
             report["songs"].append({
                 "index": i,
                 "title": s.title,
+                "mv": ({"name": s.mv_name, "start_lba": s.mv_lba,
+                        "frames": s.mv_frames, "fps": s.mv_fps,
+                        "bytes": s.mv_frames * 153600, "sha256": s.mv_sha256,
+                        "format": "RGB565LE 320x240 top-down row-major"}
+                       if s.mv_name else None),
                 "cover": {"name": s.cover_name, "first_cluster": s.cover_cluster,
                           "bytes": s.cover_bytes,
                           "sectors": (s.cover_bytes + 511) // 512,
@@ -595,7 +629,8 @@ def cmd_info(args) -> int:
     for i, s in enumerate(info["songs"]):
         print(f"  [{i}] flags=0x{s['flags']:X} cover_clu={s['cover_cluster']} "
               f"cover_bytes={s['cover_bytes']} audio_clu={s['audio_cluster']} "
-              f"audio_bytes={s['audio_bytes']} title={s['title']!r}")
+              f"audio_bytes={s['audio_bytes']} title={s['title']!r} "
+              f"mv_lba={s['mv_lba']} mv_frames={s['mv_frames']} mv_fps={s['mv_fps']}")
     return 0
 
 
@@ -609,6 +644,17 @@ def cmd_verify(args) -> int:
         print(f"VERIFY_OK 索引可解析：曲目 {info['count']}，"
               f"entries_crc32=0x{info['entries_crc32']:08X}")
         for i, s in enumerate(info["songs"]):
+            if s["mv_frames"]:
+                matches = [e for e in img.root_entries() if e.first_cluster >= 2 and
+                           img.cluster_lba(e.first_cluster) == s["mv_lba"]]
+                if len(matches) != 1 or matches[0].size != s["mv_frames"] * 153600:
+                    raise PackError(f"songs[{i}].mv LBA/length does not match a root file")
+                mv = matches[0]
+                if len(img.cluster_runs(mv.first_cluster)) != 1:
+                    raise PackError(f"songs[{i}].mv fragmented")
+                digest = hashlib.sha256(img.read_file(mv.first_cluster,mv.size)).hexdigest()
+                print(f"VERIFY_OK 曲目 {i}: MV {mv.name} frames={s['mv_frames']} "
+                      f"fps=10 SHA256={digest}")
             cov = img.read_file(s["cover_cluster"], s["cover_bytes"])
             _check_cover(cov, f"songs[{i}].cover", width, height)
             got = zlib.crc32(cov) & 0xFFFFFFFF

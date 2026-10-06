@@ -2,6 +2,7 @@
 module frame_fifo_write
 #
 (
+	parameter DYNAMIC_LINEAR         = 0,
 	parameter MEM_DATA_BITS          = 32,
 	parameter ADDR_BITS              = 21,
 	parameter BURST_BITS             = 9,
@@ -11,6 +12,7 @@ module frame_fifo_write
 	parameter FRAME_HEIGHT           = 480
 )               
 (
+	input                            linear_write,
 	input                            rst,                  
 	input                            mem_clk,                    // external memory controller user interface clock
 	input							 Sdr_init_done,
@@ -70,6 +72,16 @@ reg[1:0]                            write_addr_index_d0;
 reg[1:0]                            write_addr_index_d1;
 reg[3:0]                            state;                       //state machine
 reg [ADDR_BITS - 1:0]	 App_wr_addr_r;
+reg linear_d0, linear_d1, linear_latch;
+always @(posedge mem_clk or posedge rst) begin
+ if(rst) linear_d0<=0; else linear_d0<=DYNAMIC_LINEAR ? linear_write : 1'b0;
+end
+always @(posedge mem_clk or posedge rst) begin
+ if(rst) linear_d1<=0; else linear_d1<=linear_d0;
+end
+always @(posedge mem_clk or posedge rst) begin
+ if(rst) linear_latch<=0; else if(state==S_ACK) linear_latch<=linear_d1;
+end
 reg [15:0]                            wr_x;                       // current x position in one input row
 
 reg [BURST_BITS - 1:0]				burst_cnt;
@@ -137,17 +149,17 @@ begin
 			begin
 				wr_x <= 16'd0;
 				if(write_addr_index_d1 == 2'd0)
-					App_wr_addr_r <= WRITE_V_FLIP ? (write_addr_0 + VFLIP_FIRST_ADDR_OFFSET) : write_addr_0;
+					App_wr_addr_r <= (WRITE_V_FLIP && !linear_d1) ? (write_addr_0 + VFLIP_FIRST_ADDR_OFFSET) : write_addr_0;
 				else if(write_addr_index_d1 == 2'd1)
-					App_wr_addr_r <= WRITE_V_FLIP ? (write_addr_1 + VFLIP_FIRST_ADDR_OFFSET) : write_addr_1;
+					App_wr_addr_r <= (WRITE_V_FLIP && !linear_d1) ? (write_addr_1 + VFLIP_FIRST_ADDR_OFFSET) : write_addr_1;
 				else if(write_addr_index_d1 == 2'd2)
-					App_wr_addr_r <= WRITE_V_FLIP ? (write_addr_2 + VFLIP_FIRST_ADDR_OFFSET) : write_addr_2;
+					App_wr_addr_r <= (WRITE_V_FLIP && !linear_d1) ? (write_addr_2 + VFLIP_FIRST_ADDR_OFFSET) : write_addr_2;
 				else if(write_addr_index_d1 == 2'd3)
-					App_wr_addr_r <= WRITE_V_FLIP ? (write_addr_3 + VFLIP_FIRST_ADDR_OFFSET) : write_addr_3;
+					App_wr_addr_r <= (WRITE_V_FLIP && !linear_d1) ? (write_addr_3 + VFLIP_FIRST_ADDR_OFFSET) : write_addr_3;
 			end
 		else if(App_wr_en)
 			begin
-				if(WRITE_V_FLIP)
+				if(WRITE_V_FLIP && !linear_latch)
 				begin
 					if(wr_x == VFLIP_LINE_LAST_X)
 					begin

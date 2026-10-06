@@ -2,6 +2,8 @@
 module frame_read_write
 #
 (
+	parameter DYNAMIC_LINEAR         = 0,
+	parameter EXTERNAL_READ_BUSY     = 0,
 	parameter MEM_DATA_BITS          = 32,
 	parameter READ_DATA_BITS         = 32,
 	parameter WRITE_DATA_BITS        = 32,
@@ -13,6 +15,9 @@ module frame_read_write
 	parameter FRAME_HEIGHT           = 480
 ) 
 (
+	input                            linear_write,
+	input                            external_read_busy,
+	output                           app_write_busy,
 	input                            rst,                  
 	input                            mem_clk,                    // external memory controller user interface clock
 	input							 Sdr_init_done,
@@ -85,7 +90,8 @@ wire O_wr_busy;
 wire O_rd_busy;
 
 assign App_wr_busy = O_wr_busy;//下个时钟写指令拉高
-assign App_rd_busy = O_rd_busy;//读指令还没有过去十个时钟;因为写指令优先，不需要在意下个时钟是否是读指令
+assign app_write_busy = O_wr_busy;
+assign App_rd_busy = O_rd_busy | (EXTERNAL_READ_BUSY ? external_read_busy : 1'b0);//读指令还没有过去十个时钟;因为写指令优先，不需要在意下个时钟是否是读指令
 assign App_wr_dm = 4'b0000;
 
 //instantiate an asynchronous FIFO 
@@ -111,12 +117,14 @@ frame_fifo_write
 	.ADDR_BITS                  (ADDR_BITS                ),
 	.BURST_BITS                 (BURST_BITS               ),
 	.BURST_SIZE                 (BURST_SIZE               ),
+	.DYNAMIC_LINEAR             (DYNAMIC_LINEAR           ),
 	.WRITE_V_FLIP               (WRITE_V_FLIP             ),
 	.FRAME_WIDTH                (FRAME_WIDTH              ),
 	.FRAME_HEIGHT               (FRAME_HEIGHT             )
 ) 
 frame_fifo_write_m0              
 (  
+    .linear_write(linear_write),
 	.rst                        (rst                      ),
 	.mem_clk                    (mem_clk                  ),
     .Sdr_init_done				(Sdr_init_done),

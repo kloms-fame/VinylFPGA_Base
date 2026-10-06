@@ -48,6 +48,9 @@ module fat32_file_streamer #(
     localparam ST_FAT_PARSE  = 4'd5;
     localparam ST_FAT_COMMIT = 4'd6;
     localparam ST_FINISH     = 4'd7;
+    localparam ST_ADDR_SHIFT = 4'd8;
+    localparam ST_ADDR_ADD   = 4'd9;
+    localparam ST_FAT_CHECK  = 4'd10;
 
     localparam integer CHAIN_COUNT_WIDTH = $clog2(MAX_VISITED_CLUSTERS + 1);
 
@@ -66,22 +69,25 @@ module fat32_file_streamer #(
     reg        final_chain_check;
 
     wire [27:0] fat_value = {fat_byte3[3:0], fat_byte2, fat_byte1, fat_byte0};
-
-    // 首簇地址直接按 BPB 的 2 次幂扇区数选择固定移位，避免
-    // “编码成 shift -> 桶形移位”串联；默认值仍与 cluster_shift 一致。
-    wire [31:0] first_cluster_delta = first_cluster - 32'd2;
-    reg [31:0] first_cluster_offset;
-    always @* begin
-        case (sectors_per_cluster)
-            8'd2:   first_cluster_offset = first_cluster_delta << 1;
-            8'd4:   first_cluster_offset = first_cluster_delta << 2;
-            8'd8:   first_cluster_offset = first_cluster_delta << 3;
-            8'd16:  first_cluster_offset = first_cluster_delta << 4;
-            8'd32:  first_cluster_offset = first_cluster_delta << 5;
-            8'd64:  first_cluster_offset = first_cluster_delta << 6;
-            8'd128: first_cluster_offset = first_cluster_delta << 7;
-            default:first_cluster_offset = first_cluster_delta;
-        endcase
+    // S6 timing closure: keep subtract, variable shift and LBA addition in
+    // separate cycles. Byte order/FAT semantics and sector arbitration stay put.
+    reg [31:0] cluster_delta, cluster_offset;
+    reg fat_eoc_q, fat_range_q, fat_self_q;
+    always @(posedge clk or negedge rst_n) begin
+        if(!rst_n) cluster_offset<=0;
+        else if(state==ST_ADDR_SHIFT) cluster_offset<=cluster_delta << spc_shift;
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if(!rst_n) fat_eoc_q<=0;
+        else if(state==ST_FAT_PARSE) fat_eoc_q<=(fat_value>=28'hffffff8);
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if(!rst_n) fat_range_q<=0;
+        else if(state==ST_FAT_PARSE) fat_range_q<=((fat_value<2)||(fat_value>max_cluster));
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if(!rst_n) fat_self_q<=0;
+        else if(state==ST_FAT_PARSE) fat_self_q<=(fat_value==current_cluster[27:0]);
     end
 
     assign file_busy = (state != ST_IDLE);
@@ -117,9 +123,8 @@ module fat32_file_streamer #(
             chain_count <= chain_count + 1'b1;
             current_cluster <= cluster_value;
             sector_in_cluster <= 8'd0;
-            sector_lba <= data_start_lba +
-                          ((cluster_value - 2) << spc_shift);
-            state <= ST_DATA_REQ;
+            cluster_delta <= cluster_value - 32'd2;
+            state <= ST_ADDR_SHIFT;
         end
     endtask
 
@@ -145,6 +150,7 @@ module fat32_file_streamer #(
             fat_byte3 <= 8'd0;
             chain_count <= 0;
             final_chain_check <= 1'b0;
+            cluster_delta <= 32'd0;
         end else begin
             file_done <= 1'b0;
             file_valid <= 1'b0;
@@ -186,8 +192,8 @@ module fat32_file_streamer #(
                         finish_with_error(ERR_CLUSTER_RANGE);
                     end else begin
                         current_cluster <= first_cluster;
-                        sector_lba <= data_start_lba + first_cluster_offset;
-                        state <= ST_DATA_REQ;
+                        cluster_delta <= first_cluster - 32'd2;
+                        state <= ST_ADDR_SHIFT;
                     end
                 end
                 ST_DATA_REQ: if (!sector_busy) begin
@@ -225,24 +231,25 @@ module fat32_file_streamer #(
                         state <= ST_FAT_PARSE;
                 end
                 ST_FAT_PARSE: begin
-                    // 先把 FAT 值锁存一级，下一拍再计算数据 LBA。这样
-                    // “FAT 比较/校验”和“32 位地址计算”不会挤在同一拍。
                     next_cluster <= {4'd0, fat_value};
+                    state <= ST_FAT_CHECK;
+                end
+                ST_FAT_CHECK: begin
                     if (final_chain_check) begin
                         final_chain_check <= 1'b0;
-                        if (fat_value >= 28'hffffff8)
+                        if (fat_eoc_q)
                             state <= ST_FINISH;
-                        else if ((fat_value < 2) || (fat_value > max_cluster))
+                        else if (fat_range_q)
                             finish_with_error(ERR_CLUSTER_RANGE);
                         else
                             finish_with_error(ERR_FAT_LOOP);
-                    end else if (fat_value >= 28'hffffff8) begin
+                    end else if (fat_eoc_q) begin
                         finish_with_error(ERR_EARLY_EOF);
-                    end else if ((fat_value < 2) || (fat_value > max_cluster)) begin
+                    end else if (fat_range_q) begin
                         finish_with_error(ERR_CLUSTER_RANGE);
                     end else if (chain_count >= MAX_VISITED_CLUSTERS) begin
                         finish_with_error(ERR_VISITED_EXHAUSTED);
-                    end else if (fat_value == current_cluster[27:0]) begin
+                    end else if (fat_self_q) begin
                         finish_with_error(ERR_FAT_LOOP);
                     end else begin
                         state <= ST_FAT_COMMIT;
@@ -250,6 +257,11 @@ module fat32_file_streamer #(
                 end
                 ST_FAT_COMMIT: begin
                     advance_to_next_cluster(next_cluster);
+                end
+                ST_ADDR_SHIFT: state <= ST_ADDR_ADD;
+                ST_ADDR_ADD: begin
+                    sector_lba <= data_start_lba + cluster_offset;
+                    state <= ST_DATA_REQ;
                 end
                 ST_FINISH: begin
                     file_done <= 1'b1;

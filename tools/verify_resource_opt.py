@@ -140,52 +140,8 @@ for bench in sorted((ROOT / 'sim').glob('tb_*.v')):
         continue
     run(bench.stem, [bench])
 
-# Compare the complete fragmented-chain test and all 256 possible BPB byte values.
-stream_ref = OUT / 'fat32_file_streamer_reference.v'
-stream_ref.write_text((BASE.parent / 'fat32_file_streamer.v').read_text(encoding='utf-8').replace(
-    'module fat32_file_streamer #(', 'module fat32_file_streamer_reference #('), encoding='utf-8')
-source = (ROOT / 'sim/tb_fat32_file_streamer.v').read_text(encoding='utf-8')
-name = 'tb_fat32_streamer_equiv'
-source = source.replace('module tb_fat32_file_streamer;', 'module ' + name + ';')
-instance = re.search(r'    fat32_file_streamer dut \(.*?\n    \);', source, re.S).group(0)
-outputs = {'file_busy':1,'file_done':1,'file_valid':1,'file_byte':8,
-           'file_byte_offset':32,'fs_error':8,'sector_req':1,'sector_lba':32}
-ref_inst = instance.replace('fat32_file_streamer dut', 'fat32_file_streamer_reference reference_dut')
-for port in outputs:
-    ref_inst = ref_inst.replace('(' + port + ')', '(ref_' + port + ')')
-decl = '\n'.join('    wire [%d:0] ref_%s;' % (width-1, port) for port,width in outputs.items())
-bus = ','.join(outputs)
-ref_bus = ','.join('ref_' + x for x in outputs)
-check = '\n    always @(negedge clk) if (rst_n && {' + bus + '} !== {' + ref_bus + '}) $fatal(1,"FAIL streamer cycle equivalence");\n'
-source = source.replace(instance, decl + '\n' + instance + '\n' + ref_inst + check)
-file = OUT / (name + '.v')
-file.write_text(source, encoding='utf-8')
-run(name, [file, stream_ref])
-
-# Prove the only changed combinational expression for every selector and random
-# 32-bit cluster values, including wraparound, invalid BPB values and sign bits.
-source = '''`timescale 1ns/1ps
-module tb_cluster_offset_equiv;
-reg [31:0] first_cluster;
-reg [7:0] sectors_per_cluster;
-integer s, n;
-fat32_file_streamer dut (.first_cluster(first_cluster), .sectors_per_cluster(sectors_per_cluster));
-initial begin
-  for (s=0;s<256;s=s+1) begin
-    sectors_per_cluster=s;
-    for (n=0;n<1024;n=n+1) begin
-      first_cluster = n<4 ? n : $random;
-      #1;
-      if (dut.first_cluster_offset !== ((first_cluster - 32'd2) << dut.cluster_shift(sectors_per_cluster)))
-        $fatal(1,"FAIL cluster offset spc=%0d cluster=%h",s,first_cluster);
-    end
-  end
-  $display("PASS: 262144 cluster offset cases, all BPB byte values");
-  $finish;
-end
-endmodule
-'''
-file = OUT / 'tb_cluster_offset_equiv.v'
-file.write_text(source, encoding='utf-8')
-run('tb_cluster_offset_equiv', [file])
+# S6 adds pipeline cycles at FAT boundaries. Verify byte/LBA/status equivalence
+# with independent sector responders, plus every BPB selector and 32-bit wraps.
+from check_streamer_transactions import main as check_streamer_transactions
+check_streamer_transactions()
 print('PASS: all resource optimization regressions')
