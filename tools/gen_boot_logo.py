@@ -211,25 +211,62 @@ def emit_rom(s: Scheme) -> str:
         words = s.idx.reshape(-1)
         assert words.size % 2 == 0
         packed = (words[0::2].astype(np.uint16) & 0xF) | ((words[1::2].astype(np.uint16) & 0xF) << 4)
+        # TD rounds each inferred ROM to a power-of-two depth. Partition the
+        # required 1K-word blocks into descending powers of two (10 -> 8 + 2)
+        # so the tail does not double the entire memory. Both banks read on
+        # the same edge; registered bank/parity selection adds no cycle.
+        blocks_left = (packed.size + 1023) // 1024
+        banks = []
+        offset = 0
+        while blocks_left:
+            blocks = 1 << (int(blocks_left).bit_length() - 1)
+            capacity = blocks * 1024
+            length = min(capacity, packed.size - offset)
+            banks.append((offset, length, capacity.bit_length() - 1))
+            offset += length
+            blocks_left -= blocks
         lines += [
-            "    // 每字 2 像素（低半字 = 偶数像素）",
+            "    // 每字 2 像素；按 2 的幂分组，避免末尾使整个 ROM 深度翻倍。",
             "    localparam integer WORDS = LOGO_W*LOGO_H/2;",
-            "    reg [2*PIXEL_BITS-1:0] word_mem [0:WORDS-1];",
-            "    initial begin",
         ]
-        for i in range(0, packed.size, 16):
-            chunk = packed[i : i + 16]
-            lines.append("        " + " ".join(
-                "word_mem[{0}] = {1}'h{2:02X};".format(i + j, 2 * pb, int(v))
-                for j, v in enumerate(chunk)))
+        for bank, (offset, length, address_bits) in enumerate(banks):
+            read_bits = min(address_bits, s.addr_bits - 1)
+            lines += [
+                f"    reg [2*PIXEL_BITS-1:0] word_mem_{bank} [0:{length-1}];",
+                "    initial begin",
+            ]
+            for i in range(0, length, 16):
+                chunk = packed[offset+i : offset+min(i+16, length)]
+                lines.append("        " + " ".join(
+                    f"word_mem_{bank}[{i+j}] = {2*pb}'h{int(v):02X};"
+                    for j, v in enumerate(chunk)))
+            lines += [
+                "    end",
+                f"    reg [2*PIXEL_BITS-1:0] word_{bank}_q;",
+                "    always @(posedge clk) begin",
+                f"        word_{bank}_q <= word_mem_{bank}[pix_index[{read_bits}:1]];",
+                "    end",
+                "",
+            ]
+        select_bits = max(1, (len(banks)-1).bit_length())
+        lines += [f"    reg [{select_bits-1}:0] bank_q;",
+                  "    always @(posedge clk) begin",
+                  f"        bank_q <= {select_bits}'d0;"]
+        for bank, (offset, _, _) in enumerate(banks[1:], 1):
+            lines += [f"        if (pix_index >= {s.addr_bits}'d{offset*2}) bank_q <= {select_bits}'d{bank};"]
+        lines += ["    end", "",
+                  "    wire [2*PIXEL_BITS-1:0] word_q ="]
+        for bank in range(len(banks)-1):
+            lines += [f"        (bank_q == {select_bits}'d{bank}) ? word_{bank}_q :"]
+        lines += [f"        word_{len(banks)-1}_q;", "",
+                  "    reg valid_q;",
+                  "    always @(posedge clk) begin",
+                  "        valid_q <= (pix_index < 2*WORDS);",
+                  "    end", "",
+                  "    reg sel_q;",
+                  "    always @(posedge clk) begin",
+                  "        sel_q <= pix_index[0];"]
         lines += [
-            "    end",
-            "",
-            "    reg [2*PIXEL_BITS-1:0] word_q;",
-            "    reg                    sel_q;",
-            "    always @(posedge clk) begin",
-            "        word_q <= word_mem[pix_index[ADDR_BITS-1:1]];",
-            "        sel_q  <= pix_index[0];",
             "    end",
             "",
             "    wire [PIXEL_BITS-1:0] idx_q = sel_q ? word_q[2*PIXEL_BITS-1:PIXEL_BITS]",
@@ -248,6 +285,10 @@ def emit_rom(s: Scheme) -> str:
     lines += [
         "            default : rgb = 24'h000000;",
         "        endcase",
+    ]
+    if pb <= 4:
+        lines += ["        if (!valid_q) rgb = 24'h000000;"]
+    lines += [
         "    end",
         "",
         "endmodule",

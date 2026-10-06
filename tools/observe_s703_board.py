@@ -76,11 +76,18 @@ for raw in telemetry.read_text(encoding='utf-8',errors='replace').splitlines():
     except json.JSONDecodeError:
         continue
     lines.extend(item['text'] for item in message.get('lines',[]) if item.get('direction')=='rx')
-stats=[dict(re.findall(r'(UR|BL|VF|OV|ERR|VER)=([0-9A-Fa-f]+)',line)) for line in lines if line.startswith('STAT ')]
-boot=any('BOOT' in line or 'VINYL' in line for line in lines)
-ok=watch.returncode==0 and boot and len(stats)>=3 and all(s.get('ERR')=='00' and s.get('OV')=='0000' for s in stats[-3:])
+# The bridge starts before downloading: exclude the previous image's tail.
+boots=[i for i,line in enumerate(lines) if line.startswith('VINYL EXPHUB')]
+session_lines=lines[boots[-1]:] if boots else []
+stats=[dict(re.findall(r'(UR|BL|VF|OV|ERR|VER)=([0-9A-Fa-f]+)',line)) for line in session_lines if line.startswith('STAT ')]
+boot=bool(boots) and 'BOOT DONE' in session_lines
+health_zero=bool(stats) and all(all(s.get(k)==('00' if k=='ERR' else '0000')
+                                  for k in ('UR','BL','VF','OV','ERR')) for s in stats)
+control_lines=[line for line in session_lines if line.startswith(('KEY ','DIP ','ENC','IR ')) and not line.startswith('DIP INIT')]
+ok=watch.returncode==0 and boot and len(stats)>=3 and health_zero
 result=dict(round=a.round,bit_sha256=digest,download=True,bridge_exit=watch.returncode,
             boot_observed=boot,received_lines=lines,stat_count=len(stats),last_stats=stats[-3:],
+            all_health_counters_zero=health_zero,observed_control_events=control_lines,
             smoke_pass=ok,physical_controls_tested=False)
 (folder/(a.tag+'_result.json')).write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
 print(json.dumps({k:v for k,v in result.items() if k!='received_lines'},indent=2),flush=True)
