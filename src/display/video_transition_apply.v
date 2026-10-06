@@ -11,6 +11,7 @@ module video_transition_apply #(
     input  wire [7:0]  alpha,
     input  wire [7:0]  brightness,
     input  wire        wipe_active,
+    input  wire        wipe_reverse, // 1 reveals right -> left, 0 left -> right
     input  wire [4:0]  wipe_ramp,
     input  wire [9:0]  pixel_x,
     output wire [23:0] rgb_out
@@ -38,7 +39,8 @@ module video_transition_apply #(
     };
 
     wire [10:0] wipe_boundary = wipe_ramp * WIPE_STEP;
-    wire        show_new      = (pixel_x < wipe_boundary);
+    wire [9:0] wipe_x = wipe_reverse ? (10'd639 - pixel_x) : pixel_x;
+    wire        show_new      = (wipe_x < wipe_boundary);
 
     // 擦除模式也需要应用亮度；brightness=255 时保持原教程/第十讲的
     // “新画面原样、旧区域黑场”行为不变。

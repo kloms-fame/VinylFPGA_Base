@@ -18,7 +18,24 @@ module key_dip_monitor #(
 );
     wire [DIP_COUNT-1:0] dip_fall_pulse;
     wire [DIP_COUNT-1:0] dip_rise_pulse;
+    // Reset settling establishes initial configuration, not a user action.
+    localparam integer SETTLE_CYCLES = DEBOUNCE_CYCLES + 8;
+    localparam integer SETTLE_W = $clog2(SETTLE_CYCLES + 1);
+    reg [SETTLE_W-1:0] settle_count;
+    reg dip_initialized;
     integer              i;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            settle_count <= 0;
+            dip_initialized <= 1'b0;
+        end else if (!dip_initialized) begin
+            if (settle_count == SETTLE_CYCLES-1)
+                dip_initialized <= 1'b1;
+            else
+                settle_count <= settle_count + 1'b1;
+        end
+    end
 
     genvar key_index;
     generate
@@ -54,7 +71,7 @@ module key_dip_monitor #(
         end
     endgenerate
 
-    assign dip_change_pulse = dip_fall_pulse | dip_rise_pulse;
+    assign dip_change_pulse = (dip_fall_pulse | dip_rise_pulse) & {DIP_COUNT{dip_initialized}};
 
     always @* begin
         dip_change_index = 3'd0;

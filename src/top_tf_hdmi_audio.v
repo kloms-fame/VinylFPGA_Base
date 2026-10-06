@@ -35,6 +35,10 @@
 // ==========================================================================
 `include "audio/timebase_48k.v"
 `include "audio/play_ctrl.v"
+// Keep S4/S5 dependencies visible even if the GUI project list is stale.
+`include "SD/song_index_db.v"
+`include "display/lrc_lines_rom.v"
+`include "display/lrc_font_rom.v"
 `include "display/lrc_osd.v"
 
 module top(
@@ -113,6 +117,9 @@ parameter BUZZER_FEEDBACK_ENABLE = 1'b1;
 // 图源：doc/资源/VinylFPGA_640x480.jpg，由 tools/gen_boot_logo.py 生成
 //      src/boot/boot_logo_rom.v + src/include/boot_logo_geom.vh。
 parameter S2_BOOT_ENABLE = 1'b1;
+parameter integer BOOT_HOLD_MS = 6000;
+parameter integer BOOT_SKIP_MIN_MS = 4000;
+parameter integer BOOT_TIMEOUT_MS = 8000;
 
 // ===================== S3：主界面选歌（J2 事件迁移） =====================
 // S3_J2_BROWSE_ENABLE=1：EC1 旋转/方向键/EC1 按压/KEY07 事件接入选曲业务；
@@ -126,6 +133,7 @@ parameter S3_J2_BROWSE_ENABLE = 1'b1;
 // =0：整层旁路，音频回到 S0~S4 的"扫描完成即播放"行为（回滚开关）。
 parameter S5_PLAY_ENABLE = 1'b1;
 
+wire exp_rst_n; // 50 MHz reset, asynchronous assertion / synchronized release
 wire Sdr_init_done;
 wire Sdr_init_ref_vld;
 wire Sdr_busy;
@@ -151,6 +159,9 @@ wire        waveform_active;
 wire        display_valid;
 wire        auto_play_en_out;
 wire [7:0]  osd_error_code;
+wire [23:0] media_status_sd; // Slow scan metadata, settled before serial reporting
+reg [23:0] media_status_v1, media_status_v2;
+reg [23:0] media_status_c1, media_status_c2, media_status_clk;
 wire        osd_error_toggle;
 wire        switch_abort_toggle;
 
@@ -158,6 +169,7 @@ wire        switch_abort_toggle;
 wire        key_next_transition_press;
 wire        fade_next_event;
 wire        fade_busy;
+reg fade_prev_hold_sd; // Direction held throughout fade/SD commit handshake
 wire [7:0]  fade_alpha;
 wire        fade_active;
 wire        wipe_active;
@@ -704,8 +716,8 @@ sd_card_bmp #(
     .sdr_init_done     (Sdr_init_done_sd),
     // 第十讲：KEY1先进入转场控制器，淡出完成后再用next_event触发切换。
     .key_next          (1'b1),
-    .next_event        (fade_next_event && !thumb_select_pending_sd),
-    .prev_event        (brw_fs_prev | play_fs_prev_sd),
+    .next_event        (fade_next_event && !thumb_select_pending_sd && !fade_prev_hold_sd),
+    .prev_event        (fade_next_event && !thumb_select_pending_sd && fade_prev_hold_sd),
     .select_req        (thumb_select_req_sd),
     .select_index      (thumb_select_index_sd),
     .select_ack        (sd_select_ack),
@@ -716,6 +728,7 @@ sd_card_bmp #(
     .song_sel          (play_sel_song_sd),
     .display_valid     (display_valid),
     .auto_play_en_out  (auto_play_en_out),
+    .media_status      (media_status_sd),
     .osd_error_code    (osd_error_code),
     .osd_error_toggle  (osd_error_toggle),
     .switch_abort_toggle(switch_abort_toggle),
@@ -789,7 +802,7 @@ play_ctrl u_play_ctrl (
     .clk           (sd_card_clk),
     .rst_n         (sdcard_rst_n),
     .song_total    (song_total_sd),
-    .song_confirm  (brw_thumb_confirm),
+    .song_confirm  (thumb_confirm_event_sd),
     .focus_index   (thumb_focus_index_sd),
     .enc_cw_tgl    (brw_ev_enc_cw_tgl),
     .enc_ccw_tgl   (brw_ev_enc_ccw_tgl),
@@ -840,7 +853,9 @@ end
 assign key_next_request_sd   = brw_fs_next | play_fs_next_sd;
 assign key2_to_sd            = (thumb_mode_sd || key2_thumb_lock_sd) ? 1'b1 : key2_eff_n;
 // S3：缩略图"确认"入口 = 母板 KEY2 长按(兜底) 或 J2 EC1 按压/KEY02(中)。
-assign thumb_confirm_event_sd = brw_thumb_confirm;
+// Reject unavailable/busy selections before either playback or display accepts them.
+assign thumb_confirm_event_sd = brw_thumb_confirm && image_ready_sd[thumb_focus_index_sd] &&
+                                !fade_busy && !thumb_select_pending_sd && !thumb_select_hold_sd;
 assign thumb_select_req_sd   = thumb_select_hold_sd;
 assign thumb_select_index_sd = thumb_select_index_hold_sd;
 
@@ -921,7 +936,9 @@ always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
         thumb_select_hold_sd       <= 1'b0;
         thumb_select_index_hold_sd <= 2'd0;
     end else begin
-        if (thumb_confirm_event_sd)
+        // The real displayed bank is disp_buf_idx (controller.active_index may be stale).
+        // Confirming it only exits the grid and starts playback; no black dwell needed.
+        if (thumb_confirm_event_sd && (!display_valid || thumb_focus_index_sd != disp_buf_idx))
             thumb_select_pending_sd <= 1'b1;
 
         if (thumb_select_pending_sd)
@@ -937,7 +954,14 @@ always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
     end
 end
 
-assign fade_start_event_sd = key_next_request_sd ||
+wire key_prev_request_sd = brw_fs_prev | play_fs_prev_sd;
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+    if (!sdcard_rst_n)
+        fade_prev_hold_sd <= 1'b0;
+    else if (fade_start_event_sd && !fade_busy)
+        fade_prev_hold_sd <= key_prev_request_sd && !key_next_request_sd;
+end
+assign fade_start_event_sd = key_next_request_sd || key_prev_request_sd ||
                              (thumb_transition_req_sd && thumb_select_pending_sd);
 
 video_fade_transition #(
@@ -946,6 +970,7 @@ video_fade_transition #(
     .ctrl_clk        (sd_card_clk),
     .ctrl_rst_n      (sdcard_rst_n),
     .next_event_in   (fade_start_event_sd),
+    .direction_in    (!(key_prev_request_sd && !key_next_request_sd)),
     .next_event_out  (fade_next_event),
     .fade_busy       (fade_busy),
 
@@ -1184,6 +1209,7 @@ video_transition_apply #(
     .alpha       (fade_alpha),
     .brightness  (brightness_frame),
     .wipe_active (wipe_active),
+    .wipe_reverse(transition_kind[0]),
     .wipe_ramp   (wipe_ramp),
     .pixel_x     (osd_pixel_x),
     .rgb_out     (transition_rgb)
@@ -1222,7 +1248,7 @@ osd_overlay_24 #(
     .rst_n        (video_rst_n),
     .vsync        (vs),
     .de           (adjusted_de),
-    .rgb_in       (adjusted_rgb),
+    .rgb_in       ((!display_valid_sync2 && osd_error_code_frame != 0) ? 24'h201018 : adjusted_rgb),
     .pixel_x      (adjusted_pixel_x),
     .active_index (media_id),
     .auto_enabled (auto_enabled_sync2),
@@ -1496,16 +1522,48 @@ assign media_id = (display_valid_sync2 &&
                 ? (media_state_code_sync2[1:0] - 2'd1)
                 : 2'd0;
 
+// Scan diagnostics are quasi-static. Serial snapshot waits for two identical
+// synchronized samples; video consumes only single-bit status flags.
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n) begin
+        media_status_v1 <= 24'd0;
+        media_status_v2 <= 24'd0;
+    end else begin
+        media_status_v1 <= media_status_sd;
+        media_status_v2 <= media_status_v1;
+    end
+end
+always @(posedge clk or negedge exp_rst_n) begin
+    if (!exp_rst_n) begin
+        media_status_c1 <= 24'd0;
+        media_status_c2 <= 24'd0;
+        media_status_clk <= 24'd0;
+    end else begin
+        media_status_c1 <= media_status_sd;
+        media_status_c2 <= media_status_c1;
+        if (media_status_c1 == media_status_c2)
+            media_status_clk <= media_status_c2;
+    end
+end
+
+// Silent 48 kHz samples cover startup, browsing, pause and track prefetch.
+// Legacy tone is allowed only after boot when no audio resource was found.
+wire media_audio_available = media_status_v2[20] && (|media_status_v2[19:16]);
+wire audio_silent = boot_active ||
+                    (S5_PLAY_ENABLE && (paused_v2 || thumb_view ||
+                     (media_audio_available && (!play_active_v2 || !wav_stream_active)))) ||
+                    (!wav_stream_active && media_audio_available);
+
 // 16点正弦 LUT 峰值约 12000，200/255 缩放后仍保留足够余量，避免削波爆音。
 // S5：音量改由播放态控制（KEY04/05，带饱和钳位）；暂停时压到 0 静音。
-wire [7:0] audio_volume_eff = (S5_PLAY_ENABLE && paused_v2) ? 8'd0 :
+wire [7:0] audio_volume_eff = audio_silent ? 8'd0 :
                               (S5_PLAY_ENABLE ? play_volume_v2 : 8'd200);
 assign audio_volume = audio_volume_eff;
 
 // S5：暂停时冻结播放器采样节拍（音频位置与歌词时基同时停住），
 // 并用 force_arpeggio 保持 48 kHz 静音流，避免 HDMI 音频饿死。
 wire wav_sample_tick_eff = wav_sample_tick & ~(S5_PLAY_ENABLE & paused_v2);
-wire audio_force_arp     =  S5_PLAY_ENABLE & paused_v2;
+wire audio_force_arp     = audio_silent; // Tone generator supplies cadence, output samples are zero
 
 // 48kHz WAV 采样节拍。video_clk=25MHz，与 pcm_media_tone 使用同一
 // 分数累加器算法，保证 WAV 与原琶音音源的采样率一致。
@@ -1611,8 +1669,8 @@ audio_source_mux u_audio_source_mux (
     .wav_active     (wav_stream_active),
     .arp_valid      (arp_sample_valid),
     .arp_ready      (arp_sample_ready),
-    .arp_left       (arp_sample_left),
-    .arp_right      (arp_sample_right),
+    .arp_left       (audio_silent ? 16'sd0 : arp_sample_left),
+    .arp_right      (audio_silent ? 16'sd0 : arp_sample_right),
     .force_arpeggio (audio_force_arp),
     .out_valid      (mix_sample_valid),
     .out_ready      (mix_sample_ready),
@@ -1652,8 +1710,9 @@ audio_arc_calculate #(
 boot_layer #(
     .BOOT_ENABLE  (S2_BOOT_ENABLE),
     .CLK_FREQ_HZ  (25_000_000),   // video_clk
-    .HOLD_MS      (1500),         // Logo 最短显示 1.5 s
-    .TIMEOUT_MS   (8000),         // 无事件/无首图时 8 s 兜底进入浏览态
+    .HOLD_MS      (BOOT_HOLD_MS),         // Default: 6 s from stable video reset release
+    .SKIP_MIN_MS  (BOOT_SKIP_MIN_MS), // Ignore early skip until monitor acquisition budget
+    .TIMEOUT_MS   (BOOT_TIMEOUT_MS),         // 无事件/无首图时 8 s 兜底进入浏览态
     .BREATH_FLOOR (192)           // 呼吸最暗增益 192/256
 ) u_boot_layer (
     .clk               (video_clk),
@@ -1785,7 +1844,6 @@ hdmi_phy_wrapper #(
 //
 //   S1 只验证物理通路，不把事件接到切歌/播放/歌词/MV 等后续业务。
 // ==========================================================================
-wire exp_rst_n;
 
 reset_sync u_exp_reset (
     .clk        (clk),
@@ -1827,6 +1885,7 @@ expansion_integration #(
     .uart_tx          (uart_tx),
     .ui_ev_valid      (ui_ev_valid),
     .boot_active      (boot_active_s2),
+    .media_status     (media_status_clk),
     .ui_event_valid   (ui_event_valid),
     .ui_event_code    (ui_event_code),
     .ui_event_arg     (ui_event_arg),

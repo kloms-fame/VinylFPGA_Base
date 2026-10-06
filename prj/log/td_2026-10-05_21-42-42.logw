@@ -8,3 +8,47 @@
 
    Run on =     RENNICK
 ============================================================
+HDL-8007 ERROR: cannot open include file 'lrc_geom.vh' in ../src/display/lrc_osd.v(1)
+HDL-8007 ERROR: cannot open include file 'lrc_geom.vh' in ../src/display/lrc_osd.v(29)
+HDL-8007 ERROR: 'LRC_FONT_ADDR_W' is not declared in ../src/display/lrc_osd.v(58)
+HDL-8007 ERROR: range must be bounded by constant expressions in ../src/display/lrc_osd.v(58)
+HDL-8007 ERROR: 'LRC_LINE_COUNT' is not declared in ../src/display/lrc_osd.v(97)
+HDL-8007 ERROR: 'LRC_OSD_X' is not declared in ../src/display/lrc_osd.v(137)
+HDL-8007 ERROR: 'LRC_OSD_Y' is not declared in ../src/display/lrc_osd.v(138)
+HDL-8007 ERROR: 'LRC_CHARS_PER_LINE' is not declared in ../src/display/lrc_osd.v(140)
+HDL-8007 ERROR: 'LRC_GLYPH_W' is not declared in ../src/display/lrc_osd.v(140)
+HDL-8007 ERROR: 'LRC_GLYPH_H' is not declared in ../src/display/lrc_osd.v(141)
+HDL-8007 ERROR: 'LRC_FONT_ADDR_W' is not declared in ../src/display/lrc_osd.v(169)
+HDL-8007 ERROR: range must be bounded by constant expressions in ../src/display/lrc_osd.v(169)
+HDL-8007 ERROR: 'LRC_COLOR' is not declared in ../src/display/lrc_osd.v(171)
+HDL-8007 ERROR: ignore module module due to previous errors in ../src/display/lrc_osd.v(17)
+HDL-7225 CRITICAL-WARNING: 'play_fs_prev_sd' is already implicitly declared on line 708 in ../src/top_tf_hdmi_audio.v(810)
+HDL-8007 ERROR: ignore module module due to previous errors in ../src/top_tf_hdmi_audio.v(40)
+HDL-5007 WARNING: The file ../src/display/lrc_osd.v will not be compiled since it is not included by any other files. Set it as 'global include' if it should be compiled.
+HDL-5007 WARNING: The file ../src/top_tf_hdmi_audio.v will not be compiled since it is not included by any other files. Set it as 'global include' if it should be compiled.
+HDL-8007 ERROR: cannot open include file 'song_index_defs.vh' in ../src/SD/song_index_db.v(1)
+HDL-8007 ERROR: cannot open include file 'lrc_geom.vh' in ../src/display/lrc_osd.v(1)
+HDL-8007 ERROR: cannot open include file 'song_index_defs.vh' in ../src/SD/song_index_db.v(58)
+HDL-8007 ERROR: 'SIDX_MAX_SONGS' is not declared in ../src/SD/song_index_db.v(103)
+HDL-8007 ERROR: 'SIDX_ERR_NONE' is not declared in ../src/SD/song_index_db.v(134)
+HDL-8007 ERROR: 'SIDX_ERR_NONE' is not declared in ../src/SD/song_index_db.v(147)
+HDL-8007 ERROR: 'SIDX_ERR_NONE' is not declared in ../src/SD/song_index_db.v(174)
+HDL-8007 ERROR: 'SIDX_ERR_NONE' is not declared in ../src/SD/song_index_db.v(179)
+HDL-8007 ERROR: 'SIDX_MAGIC_0' is not declared in ../src/SD/song_index_db.v(207)
+HDL-8007 ERROR: 'SIDX_MAGIC_1' is not declared in ../src/SD/song_index_db.v(208)
+HDL-8007 ERROR: 'SIDX_MAGIC_2' is not declared in ../src/SD/song_index_db.v(209)
+HDL-8007 ERROR: 'SIDX_MAGIC_3' is not declared in ../src/SD/song_index_db.v(210)
+HDL-8007 ERROR: 'SIDX_MAGIC_4' is not declared in ../src/SD/song_index_db.v(211)
+HDL-8007 ERROR: 'SIDX_MAGIC_5' is not declared in ../src/SD/song_index_db.v(212)
+HDL-8007 ERROR: 'SIDX_MAGIC_6' is not declared in ../src/SD/song_index_db.v(213)
+HDL-8007 ERROR: 'SIDX_MAGIC_7' is not declared in ../src/SD/song_index_db.v(214)
+HDL-8007 ERROR: 'SIDX_FLAG_COVER' is not declared in ../src/SD/song_index_db.v(234)
+HDL-8007 ERROR: 'SIDX_FLAG_AUDIO' is not declared in ../src/SD/song_index_db.v(235)
+HDL-8007 ERROR: 'SIDX_ERR_STREAM' is not declared in ../src/SD/song_index_db.v(250)
+HDL-8007 ERROR: 'SIDX_ERR_MAGIC' is not declared in ../src/SD/song_index_db.v(252)
+HDL-8007 ERROR: 'SIDX_VERSION' is not declared in ../src/SD/song_index_db.v(253)
+HDL-5007 WARNING: The file ../src/SD/song_index_db.v will not be compiled since it is not included by any other files. Set it as 'global include' if it should be compiled.
+HDL-5007 WARNING: The file ../src/display/lrc_font_rom.v will not be compiled since it is not included by any other files. Set it as 'global include' if it should be compiled.
+HDL-5007 WARNING: The file ../src/display/lrc_lines_rom.v will not be compiled since it is not included by any other files. Set it as 'global include' if it should be compiled.
+HDL-5007 WARNING: The file ../src/display/lrc_osd.v will not be compiled since it is not included by any other files. Set it as 'global include' if it should be compiled.
+HDL-5007 WARNING: The file ../src/top_tf_hdmi_audio.v will not be compiled since it is not included by any other files. Set it as 'global include' if it should be compiled.

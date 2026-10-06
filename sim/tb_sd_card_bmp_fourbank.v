@@ -272,6 +272,8 @@ module tb_sd_card_bmp_fourbank;
         select_index = 2'd0;
         select_req   = 1'b1;
         wait (select_ack === 1'b1);
+        // Real top drops the held request on the next rising edge after ack.
+        @(posedge clk);
         @(negedge clk);
         select_req = 1'b0;
         repeat (5) @(posedge clk);
@@ -315,6 +317,8 @@ module fat32_media_loader (
     output reg         ready,
     input  wire        scan_start,
     output reg         scan_done,
+    output wire [23:0] media_status,
+    output wire [7:0] media_error,
     output reg         scan_found_valid,
     output reg  [1:0]  scan_found_index,
     output reg         scan_found_total,
@@ -354,6 +358,8 @@ module fat32_media_loader (
     reg       streaming;
     reg [2:0] pixel_count;
 
+    assign media_status = {scan_done, 3'b011, 4'hF, 16'd0};
+    assign media_error = 8'd0;
     assign state_code = 4'd1;
     assign sd_sec_read = 1'b0;
     assign sd_sec_read_addr = 32'd0;

@@ -62,7 +62,7 @@ module tb_s2_boot_guard;
         .sw1 (sw1), .sw2 (sw2), .sw3 (sw3), .sw4 (sw4),
         .exp_led_n (exp_led_n), .exp_ws2812_data (exp_ws2812_data), .exp_ext_o (exp_ext_o),
         .board_buzzer_n (board_buzzer_n), .uart_tx (uart_tx),
-        .ui_ev_valid (ui_ev_valid), .boot_active (boot_active)
+        .media_status (24'd0), .ui_ev_valid (ui_ev_valid), .boot_active (boot_active)
     );
 
     integer guard_pulses = 0;

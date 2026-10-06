@@ -25,7 +25,7 @@ module tb_s3_browse_integration;
 
     // ---- J2 物理输入 ----
     reg [11:0] exp_key_n = 12'hFFF;
-    reg [5:0]  exp_dip_n = 6'h00;
+    reg [5:0]  exp_dip_n = 6'h01;
     reg        exp_enc1_a = 1'b1;
     reg        exp_enc1_b = 1'b1;
     reg        exp_enc1_sw_n = 1'b1;
@@ -79,6 +79,7 @@ module tb_s3_browse_integration;
         .uart_tx         (uart_tx),
         .ui_ev_valid     (ui_ev_valid),
         .boot_active     (1'b0),
+        .media_status    (24'd0),
         .ui_event_valid  (ui_event_valid),
         .ui_event_code   (ui_event_code),
         .ui_event_arg    (ui_event_arg),
@@ -204,6 +205,8 @@ module tb_s3_browse_integration;
         repeat (6) @(posedge clk);
         exp_enc1_a = 1'b1; exp_enc1_b = 1'b1;
         repeat (AB_STABLE_CYCLES + 6) @(posedge clk);
+
+        repeat (DEBOUNCE_CYCLES + AB_STABLE_CYCLES + 24) @(posedge clk);
 
         // ---- 全屏态：EC1 旋转直接切换封面 ----
         view_mode = 1'b0;

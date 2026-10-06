@@ -24,6 +24,7 @@ module tb_browse_fsm;
     reg  ev_prev_tgl = 1'b0, ev_next_tgl = 1'b0, ev_confirm_tgl = 1'b0, ev_mode_tgl = 1'b0;
     reg  mb_next = 1'b0, mb_mode = 1'b0, mb_left = 1'b0, mb_confirm = 1'b0;
     reg  view_mode = 1'b0;
+    reg  mode_play = 1'b0;
     wire fs_next, fs_prev, thumb_right, thumb_left, thumb_confirm, thumb_mode;
 
     reg [3:0] c_fs_next, c_fs_prev, c_right, c_left, c_conf, c_mode;
@@ -40,7 +41,7 @@ module tb_browse_fsm;
         .mb_left        (mb_left),
         .mb_confirm     (mb_confirm),
         .view_mode      (view_mode),
-        .mode_play      (1'b0),
+        .mode_play      (mode_play),
         .fs_next        (fs_next),
         .fs_prev        (fs_prev),
         .thumb_right    (thumb_right),
@@ -192,6 +193,13 @@ module tb_browse_fsm;
         fire_mpulse(2'd2, 6'b000100, "thumbnail mb_left fallback");
         fire_mpulse(2'd3, 6'b000010, "thumbnail mb_confirm fallback");
         fire_mpulse(2'd1, 6'b000001, "thumbnail mb_mode fallback");
+
+        // KEY7 must enter the grid on the same event that exits playback.
+        view_mode = 1'b0;
+        mode_play = 1'b1;
+        fire_event(2'd3, 6'b000001, "playing KEY7 enters grid once");
+        fire_event(2'd1, 6'b000000, "playing navigation stays gated");
+        mode_play = 1'b0;
 
         // ---- 回滚开关：J2_BROWSE_ENABLE=0 ----
         off_view_mode = 1'b0;

@@ -23,6 +23,8 @@ module tb_fat32_index_loader;
     reg [1:0] load_index = 2'd0;
     reg use_song = 1'b0;
 
+    wire [7:0] media_error;
+    wire [23:0] media_status;
     wire        ready;
     wire        scan_done;
     wire        scan_found_valid;
@@ -64,6 +66,8 @@ module tb_fat32_index_loader;
         .ready                  (ready),
         .scan_start             (scan_start),
         .scan_done              (scan_done),
+        .media_error            (media_error),
+        .media_status           (media_status),
         .scan_found_valid       (scan_found_valid),
         .scan_found_index       (scan_found_index),
         .scan_found_total       (scan_found_total),
@@ -256,6 +260,8 @@ module tb_fat32_index_loader;
         use_song = 1'b0;
         rescan;
         check(found == 4, "用例2 索引 CRC 错 -> 回退 PIC1~4 仍 4 张");
+        check(audio_file_valid === 1'b1, "bad index must restore legacy AUDIO.PCM metadata");
+        check(audio_start_lba === 32'd44, "legacy audio fallback LBA=44");
         do_load(2'd0);
         check(pix == 256, "用例2 回退后仍能取满 256 像素");
         check(load_error === 1'b0, "用例2 回退后无加载错误");
@@ -276,6 +282,9 @@ module tb_fat32_index_loader;
         rescan;
         check(scan_done === 1'b1, "用例4 坏索引仍结束扫描（不挂死）");
         check(found == 0, "用例4 无索引且无 PIC -> 0 张（错误可见）");
+
+        check(media_error === 8'h34, "bad index CRC must reach diagnostic byte 34");
+        check(media_status[23:16] === 8'hB0, "double-bad index: done, index present, zero covers, legacy audio retained");
 
         if (errors == 0)
             $display("TEST_PASS fat32_index_loader_s4");

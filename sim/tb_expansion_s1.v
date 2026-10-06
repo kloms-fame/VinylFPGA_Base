@@ -27,6 +27,8 @@ module tb_expansion_s1;
     reg        exp_enc2_b    = 1'b1;
     reg        exp_enc2_sw_n = 1'b1;
     reg        exp_ir_rx     = 1'b1;
+    reg [23:0] media_status = 24'd0;
+    reg boot_active = 1'b1;
     reg        tb_sw1        = 1'b1;   // 母板拨码 SW1（用于反馈音检查）
 
     wire [3:0] exp_led_n;
@@ -78,6 +80,8 @@ module tb_expansion_s1;
         .exp_ws2812_data  (exp_ws2812_data),
         .exp_ext_o        (exp_ext_o),
         .board_buzzer_n   (board_buzzer_n),
+        .boot_active      (boot_active),
+        .media_status     (media_status),
         .uart_tx          (uart_tx)
     );
 
@@ -260,7 +264,11 @@ module tb_expansion_s1;
 
         // 5) DIP1 变化
         exp_dip_n[0] = 1'b0;
+        wait_match("EXPHUB ABSENT", 13, "", 0, "dip1-presence-off");
         wait_match("DIP 1 0", 7, "", 0, "dip1-low");
+        exp_dip_n[0] = 1'b1;
+        wait_match("EXPHUB PRESENT", 14, "", 0, "dip1-presence-on");
+        wait_match("DIP 1 1", 7, "", 0, "dip1-high");
 
         // 6) EC1 正向一格（11 -> 10 -> 00 -> 01 -> 11）
         exp_enc1_a = 1'b1; exp_enc1_b = 1'b0; repeat (8) @(posedge clk);
@@ -272,6 +280,18 @@ module tb_expansion_s1;
         // 7) NEC 红外实帧（地址 BA / 命令 FF），同一行同时校验码与命令字
         ir_frame(32'hBA45FF00);
         wait_match("IR BA45FF00", 11, "CMD FF", 6, "ir-frame");
+
+        // Runtime diagnostics are transmitted by the FPGA after scan completion.
+        media_status = 24'hFF0000;
+        wait_match("INFO DONE=1", 11, "PIC=F AUD=1", 11, "media-info");
+        wait_match("VERIFY IDX=00", 13, "FS=00 PRES=1", 12, "media-verify-good");
+        media_status = 24'hB03400;
+        // Drop boot during a pending report: BOOT DONE must not be lost.
+        repeat (100) @(posedge clk);
+        boot_active = 1'b0;
+        wait_match("INFO DONE=1", 11, "PIC=0 AUD=1", 11, "media-info-broken");
+        wait_match("VERIFY IDX=34", 13, "FS=00 PRES=1", 12, "media-verify-crc");
+        wait_match("BOOT DONE", 9, "", 0, "boot-done-queued");
 
         // 8) 静止期必须完全无输出（回归原来的周期刷屏问题）
         begin : idle_silence

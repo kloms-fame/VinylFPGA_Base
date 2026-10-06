@@ -1,0 +1,21 @@
+{
+  "songs": [
+    {
+      "title": "Track 1",
+      "cover": "SONG1.BMP",
+      "audio": "AUDIO.PCM"
+    },
+    {
+      "title": "Track 2",
+      "cover": "SONG2.BMP"
+    },
+    {
+      "title": "Track 3",
+      "cover": "SONG3.BMP"
+    },
+    {
+      "title": "Track 4",
+      "cover": "SONG4.BMP"
+    }
+  ]
+}

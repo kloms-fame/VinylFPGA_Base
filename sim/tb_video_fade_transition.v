@@ -6,6 +6,8 @@ module tb_video_fade_transition;
     reg ctrl_rst_n = 1'b0;
     reg pix_rst_n = 1'b0;
     reg next_event_in = 1'b0;
+    reg direction_in = 1'b0;
+    reg apply_reverse = 1'b0;
     reg bypass_next_event_in = 1'b0;
     reg player_active = 1'b0;
     reg frame_start = 1'b0;
@@ -46,6 +48,7 @@ module tb_video_fade_transition;
         .ctrl_clk(ctrl_clk),
         .ctrl_rst_n(ctrl_rst_n),
         .next_event_in(next_event_in),
+        .direction_in(direction_in),
         .next_event_out(next_event_out),
         .fade_busy(fade_busy),
         .pix_clk(pix_clk),
@@ -67,6 +70,7 @@ module tb_video_fade_transition;
         .ctrl_clk(ctrl_clk),
         .ctrl_rst_n(ctrl_rst_n),
         .next_event_in(bypass_next_event_in),
+        .direction_in(direction_in),
         .next_event_out(bypass_next_event_out),
         .fade_busy(bypass_fade_busy),
         .pix_clk(pix_clk),
@@ -89,6 +93,7 @@ module tb_video_fade_transition;
         .alpha(apply_alpha),
         .brightness(apply_brightness),
         .wipe_active(apply_wipe_active),
+        .wipe_reverse(apply_reverse),
         .wipe_ramp(apply_wipe_ramp),
         .pixel_x(apply_pixel_x),
         .rgb_out(apply_rgb_out)
@@ -198,11 +203,21 @@ module tb_video_fade_transition;
             errors = errors + 1;
         end
         pix_pulse_index(2'd2);
+        if (!wipe_active || transition_kind[0] !== 1'b0) $fatal(1, "FAIL CCW direction not captured");
         wait_fade_active(1'b0);
         if (alpha_out !== 8'd255) begin
             $display("FAIL: manual fade-in did not return alpha to 255");
             errors = errors + 1;
         end
+
+        repeat (8) @(negedge ctrl_clk);
+        direction_in = 1'b1;
+        ctrl_pulse();
+        wait_fade_active(1'b1);
+        wait(next_event_out);
+        pix_pulse_index(2'd3);
+        if (!wipe_active || transition_kind[0] !== 1'b1) $fatal(1, "FAIL CW direction not captured");
+        wait_fade_active(1'b0);
 
         // Automatic slideshow: index commit in IDLE starts a wipe reveal.
         pix_pulse_index(2'd3);
@@ -269,6 +284,14 @@ module tb_video_fade_transition;
             $display("FAIL: wipe right side was not black");
             errors = errors + 1;
         end
+
+        apply_reverse = 1'b1;
+        apply_pixel_x = 10'd600;
+        #1;
+        if (apply_rgb_out !== apply_rgb_in) $fatal(1, "FAIL reverse wipe right edge");
+        apply_pixel_x = 10'd599;
+        #1;
+        if (apply_rgb_out !== 24'd0) $fatal(1, "FAIL reverse wipe left region");
 
         if (errors == 0)
             $display("PASS: tb_video_fade_transition manual/auto/wipe arithmetic");

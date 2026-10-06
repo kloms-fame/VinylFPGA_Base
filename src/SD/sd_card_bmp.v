@@ -49,6 +49,7 @@ module sd_card_bmp #(
     input                       SD_MISO,
 
     // 第十一讲：AUDIO.PCM 元数据与音频扇区客户端。
+    output wire [23:0]          media_status,            // SD-domain diagnostic snapshot
     output wire                 audio_file_valid,
     output wire [31:0]          audio_start_lba,
     output wire [31:0]          audio_total_sectors,
@@ -88,6 +89,7 @@ module sd_card_bmp #(
     wire [3:0]  bmp_internal_state;
     wire [3:0]  bmp_error;
     wire        load_error;
+    wire [7:0]  media_error;
     wire        preload_done;
 
     reg         scan_start_pulse;
@@ -344,8 +346,8 @@ module sd_card_bmp #(
                     boot_failed           <= 1'b0;
                     load_error_seen       <= 1'b0;
                     retry_count           <= 2'd0;
-                    if (osd_error_code != 8'd0) begin
-                        osd_error_code   <= 8'd0;
+                    if (osd_error_code != media_error) begin
+                        osd_error_code   <= media_error;
                         osd_error_toggle <= ~osd_error_toggle;
                     end
                     if (!display_valid || load_for_display) begin
@@ -445,7 +447,7 @@ module sd_card_bmp #(
                     // 优先级0（第十五讲）：缩略图快速选择。select_req 默认恒为0，
                     // 以下原有仲裁路径在旧功能下保持原行为。
                     if (scan_done_eff && display_valid && !load_busy &&
-                        select_req && (img_found_count != 3'd0)) begin
+                        select_req && !select_ack && (img_found_count != 3'd0)) begin
                         auto_cnt <= 32'd0;
                         if (ready_lut(select_index)) begin
                             img_idx      <= select_index;
@@ -552,6 +554,13 @@ module sd_card_bmp #(
                     end
                 end
 
+                // Report scan/index errors even when no BMP load was launched.
+                // Keep legacy load_error retry semantics separate from diagnostics.
+                if (media_error != 8'd0 && osd_error_code != media_error) begin
+                    osd_error_code <= media_error;
+                    osd_error_toggle <= ~osd_error_toggle;
+                end
+
                 // 6. 稳定性错误恢复（最高优先级，放在本轮普通调度之后覆盖写）
                 //    扫描超时：重试一次；仍失败则强制结束扫描，避免永久停在 scan_done=0。
                 //    加载错误：重试当前图一次；仍失败则保留上一帧并跳过。
@@ -647,6 +656,8 @@ module sd_card_bmp #(
         .ready                  (bmp_ready),
         .scan_start             (scan_start_pulse),
         .scan_done              (scan_done),
+        .media_status           (media_status),
+        .media_error            (media_error),
         .scan_found_valid       (scan_found_valid),
         .scan_found_index       (scan_found_index),
         .scan_found_total       (scan_found_total),

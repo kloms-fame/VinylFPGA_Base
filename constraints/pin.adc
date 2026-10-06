@@ -75,7 +75,7 @@ set_pin_assignment	{ exp_key_n[8] }	{ LOCATION = L4; IOSTANDARD = LVCMOS33; PULL
 set_pin_assignment	{ exp_key_n[9] }	{ LOCATION = L5; IOSTANDARD = LVCMOS33; PULLTYPE = PULLUP; }
 set_pin_assignment	{ exp_key_n[10] }	{ LOCATION = J12; IOSTANDARD = LVCMOS33; PULLTYPE = PULLUP; }
 set_pin_assignment	{ exp_key_n[11] }	{ LOCATION = K11; IOSTANDARD = LVCMOS33; PULLTYPE = PULLUP; }
-set_pin_assignment	{ exp_dip_n[0] }	{ LOCATION = L3; IOSTANDARD = LVCMOS33; PULLTYPE = PULLUP; }
+set_pin_assignment	{ exp_dip_n[0] }	{ LOCATION = L3; IOSTANDARD = LVCMOS33; PULLTYPE = PULLDOWN; }
 set_pin_assignment	{ exp_dip_n[1] }	{ LOCATION = J3; IOSTANDARD = LVCMOS33; PULLTYPE = PULLUP; }
 set_pin_assignment	{ exp_dip_n[2] }	{ LOCATION = J4; IOSTANDARD = LVCMOS33; PULLTYPE = PULLUP; }
 set_pin_assignment	{ exp_dip_n[3] }	{ LOCATION = H4; IOSTANDARD = LVCMOS33; PULLTYPE = PULLUP; }

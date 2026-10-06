@@ -107,7 +107,9 @@ module browse_fsm #(
             thumb_left    <= left_any &  view_mode & ~mode_play;
             thumb_confirm <= confirm_any & view_mode & ~mode_play;
             // 显式 mode 事件始终可切换视图；全屏下的 confirm 进入选曲视图。
-            thumb_mode    <= (mode_any | (j2_confirm & ~view_mode)) & ~mode_play;
+            // KEY07 exits PLAY and opens the grid on this same event.
+            // Gating it with the old play_active value lost the first press.
+            thumb_mode    <= j2_mode | ((mb_mode | (j2_confirm & ~view_mode)) & ~mode_play);
         end
     end
 endmodule

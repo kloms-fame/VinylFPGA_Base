@@ -66,6 +66,7 @@ module expansion_integration #(
     // boot_active：video 域 Boot 状态（1=STATE_BOOT），仅用于串口可观测性，
     //              不参与任何业务逻辑。
     input  wire        boot_active,
+    input  wire [23:0] media_status, // Already synchronized by top
 
     // ===================== S3：选曲事件出口（最小新增）=====================
     // ui_event_bus 的单拍事件流原样引出，供 S3 的 ui_event_bridge 解码成
@@ -181,8 +182,47 @@ module expansion_integration #(
         .ev_aux             (ev_aux)
     );
 
+    // DIP1 is reserved as the user's PRESENT declaration (up=1).
+    // L3 uses a weak FPGA pulldown; expansion-board pullup must dominate it.
+    // Settle after hotplug before forwarding actions; absence never fabricates KEY UP.
+    localparam integer PRESENT_SETTLE = DEBOUNCE_CYCLES + AB_STABLE_CYCLES + 16;
+    localparam integer PRESENT_W = $clog2(PRESENT_SETTLE + 1);
+    reg [PRESENT_W-1:0] present_count;
+    reg io_ready;
+    reg exp_present;
+    reg exp_actions_ready;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            present_count <= 0;
+            io_ready <= 1'b0;
+            exp_present <= 1'b0;
+            exp_actions_ready <= 1'b0;
+        end else if (!io_ready) begin
+            if (present_count == PRESENT_SETTLE-1) begin
+                io_ready <= 1'b1;
+                exp_present <= dip_level[0];
+                exp_actions_ready <= dip_level[0];
+                present_count <= 0;
+            end else
+                present_count <= present_count + 1'b1;
+        end else if (exp_present != dip_level[0]) begin
+            exp_present <= dip_level[0];
+            exp_actions_ready <= 1'b0;
+            present_count <= 0;
+        end else if (exp_present && !exp_actions_ready) begin
+            if (present_count == PRESENT_SETTLE-1)
+                exp_actions_ready <= 1'b1;
+            else
+                present_count <= present_count + 1'b1;
+        end
+    end
+    wire action_valid = ev_valid && exp_actions_ready && dip_level[0];
+    // DIP state changes still report while the declaration is off.
+    wire report_valid = ev_valid && io_ready &&
+                        ((ev_code == EV_DIP_CHANGE) || (exp_actions_ready && dip_level[0]));
+
     // ---- S3：事件流原样引出（供顶层 ui_event_bridge 解码选曲事件）----
-    assign ui_event_valid = ev_valid;
+    assign ui_event_valid = action_valid;
     assign ui_event_code  = ev_code;
     assign ui_event_arg   = ev_arg;
     assign ui_event_aux   = ev_aux;
@@ -195,11 +235,15 @@ module expansion_integration #(
     ) u_exp_echo_reporter (
         .clk        (clk),
         .rst_n      (rst_n),
-        .ev_valid   (ev_valid),
+        .ev_valid   (report_valid),
         .ev_code    (ev_code),
         .ev_arg     (ev_arg),
         .ev_aux     (ev_aux),
         .boot_active(boot_active),
+        .media_status(media_status),
+        .io_ready   (io_ready),
+        .exp_present(exp_present),
+        .dip_state  (dip_level),
         .uart_tx    (uart_tx)
     );
 
@@ -259,7 +303,7 @@ module expansion_integration #(
         end
     end
 
-    assign ui_ev_valid = ((ev_valid & ~ev_is_dip) | (|board_key_fall_pulse))
+    assign ui_ev_valid = ((action_valid & ~ev_is_dip) | (|board_key_fall_pulse))
                          & skip_guard_done;
 
     // ---- 操作反馈音：复用 J2 标定工程 buzzer_feedback ----

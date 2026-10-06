@@ -57,6 +57,13 @@ module ui_event_bus #(
     reg [15:0] arb_arg;
     reg [15:0] arb_aux;
     integer    i;
+    // Preserve simultaneous DIP changes while higher-priority inputs arbitrate.
+    reg [DIP_COUNT-1:0] dip_pending;
+    reg [DIP_COUNT-1:0] dip_pending_level;
+    reg [DIP_COUNT-1:0] dip_consumed;
+    wire [DIP_COUNT-1:0] dip_waiting = dip_pending | dip_change_pulse;
+    wire [DIP_COUNT-1:0] dip_value = (dip_level & dip_change_pulse) |
+                                    (dip_pending_level & ~dip_change_pulse);
 
     // 单拍仲裁：组合挑一路事件（与 J2 event_reporter 的优先级写法一致）
     always @* begin
@@ -64,6 +71,7 @@ module ui_event_bus #(
         arb_code  = EV_NONE;
         arb_arg   = 16'd0;
         arb_aux   = 16'd0;
+        dip_consumed = 0;
 
         // 按键按下 / 释放（低有效已在 hub 归一为脉冲）
         for (i = 0; i < KEY_COUNT; i = i + 1) begin
@@ -82,10 +90,13 @@ module ui_event_bus #(
         end
 
         // 拨码变化：携带变化点索引与当前电平（上拨=1，不二次取反）
-        if (!arb_valid && (dip_change_pulse != {DIP_COUNT{1'b0}})) begin
-            arb_valid = 1'b1;
-            arb_code  = EV_DIP_CHANGE;
-            arb_arg   = {13'd0, dip_level[dip_change_index], dip_change_index};
+        for (i = 0; i < DIP_COUNT; i = i + 1) begin
+            if (!arb_valid && dip_waiting[i]) begin
+                arb_valid = 1'b1;
+                arb_code  = EV_DIP_CHANGE;
+                arb_arg   = {12'd0, dip_value[i], i[2:0]};
+                dip_consumed[i] = 1'b1;
+            end
         end
 
         // 编码器步进：arg=计数，aux={enc_id, direction}
@@ -144,11 +155,15 @@ module ui_event_bus #(
             ev_code  <= EV_NONE;
             ev_arg   <= 16'd0;
             ev_aux   <= 16'd0;
+            dip_pending <= 0;
+            dip_pending_level <= 0;
         end else begin
             ev_valid <= arb_valid;
             ev_code  <= arb_code;
             ev_arg   <= arb_arg;
             ev_aux   <= arb_aux;
+            dip_pending <= dip_waiting & ~dip_consumed;
+            dip_pending_level <= dip_value;
         end
     end
 

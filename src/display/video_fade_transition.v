@@ -14,6 +14,7 @@ module video_fade_transition #(
     input  wire       ctrl_clk,
     input  wire       ctrl_rst_n,
     input  wire       next_event_in,
+    input  wire       direction_in, // 1=CW/next: reveal right to left; held with request
     output wire       next_event_out,
     output wire       fade_busy,
 
@@ -52,6 +53,7 @@ module video_fade_transition #(
 
             // ---- shared registers (declared before both always blocks) ----
             reg req_toggle;
+            reg direction_hold; // Bundled with req_toggle until the transition finishes
             reg ack_seen;
             reg commit_sync1, commit_sync2;
             reg busy_sync1, busy_sync2;
@@ -62,6 +64,7 @@ module video_fade_transition #(
             reg req_sync1, req_sync2, req_seen;
             reg commit_toggle;
             reg wipe_mode;
+            reg direction_sync1, direction_sync2;
             reg [1:0] wipe_kind;
 
             wire fade_running = (state != S_IDLE);
@@ -92,7 +95,11 @@ module video_fade_transition #(
                     commit_toggle <= 1'b0;
                     wipe_mode <= 1'b0;
                     wipe_kind <= 2'd0;
+                    direction_sync1 <= 1'b0;
+                    direction_sync2 <= 1'b0;
                 end else begin
+                    direction_sync1 <= direction_hold;
+                    direction_sync2 <= direction_sync1;
                     req_sync1 <= req_toggle;
                     req_sync2 <= req_sync1;
 
@@ -101,6 +108,7 @@ module video_fade_transition #(
                         if (req_sync2 != req_seen) begin
                             req_seen <= req_sync2;
                             if (player_active) begin
+                                wipe_kind <= {1'b0, direction_sync2};
                                 state <= S_OUT;
                                 ramp <= FADE_FRAMES[CNT_W-1:0];
                             end
@@ -111,7 +119,7 @@ module video_fade_transition #(
                             state <= S_IN;
                             ramp <= {CNT_W{1'b0}};
                             wipe_mode <= 1'b1;
-                            wipe_kind <= active_index;
+                            wipe_kind <= 2'd1; // Automatic next also reveals from the right
                         end
                     end
                     S_OUT: begin
@@ -132,7 +140,7 @@ module video_fade_transition #(
                         if (index_commit) begin
                             state <= S_IN;
                             ramp <= {CNT_W{1'b0}};
-                            wipe_mode <= 1'b0;
+                            wipe_mode <= 1'b1; // Manual direction is captured at request acceptance
                         end
                     end
                     S_IN: begin
@@ -156,6 +164,7 @@ module video_fade_transition #(
             always @(posedge ctrl_clk or negedge ctrl_rst_n) begin
                 if (!ctrl_rst_n) begin
                     req_toggle <= 1'b0;
+                    direction_hold <= 1'b0;
                     ack_seen <= 1'b0;
                     commit_sync1 <= 1'b0;
                     commit_sync2 <= 1'b0;
@@ -169,8 +178,10 @@ module video_fade_transition #(
                     // Events during an active fade are dropped; the display
                     // is already transitioning and control cannot accept a
                     // second request before the black dwell anyway.
-                    if (next_event_in && !busy_sync2)
+                    if (next_event_in && !busy_sync2) begin
                         req_toggle <= ~req_toggle;
+                        direction_hold <= direction_in;
+                    end
                     if (commit_sync2 != ack_seen)
                         ack_seen <= commit_sync2;
                 end

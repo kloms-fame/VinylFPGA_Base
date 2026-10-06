@@ -29,7 +29,8 @@
 module boot_layer #(
     parameter         BOOT_ENABLE      = 1'b1,        // 总开关（=0 时整层旁路）
     parameter integer CLK_FREQ_HZ      = 25_000_000, // video_clk
-    parameter integer HOLD_MS          = 1500,       // 最短显示时间
+    parameter integer HOLD_MS          = 6000,       // 最短显示时间
+    parameter integer SKIP_MIN_MS      = 0,          // Top reserves HDMI acquisition window
     parameter integer TIMEOUT_MS       = 8000,       // 无人操作/无图时的兜底
     parameter integer BREATH_FLOOR     = 192          // 呼吸最暗增益（/256）
 )(
@@ -143,7 +144,7 @@ module boot_layer #(
 
             // 只在帧边界提交状态跳转，避免半帧切换造成撕裂
             if (frame_start && boot_active) begin
-                if (skip_latched || hold_ok || timeout_ok) begin
+                if ((skip_latched && boot_ms >= SKIP_MIN_MS) || hold_ok || timeout_ok) begin
                     boot_active  <= 1'b0;   // -> STATE_BROWSE
                     skip_latched <= 1'b0;
                 end

@@ -108,7 +108,10 @@ class Fat32Image:
 
     # -- 生命周期 ----------------------------------------------------------
     def close(self) -> None:
-        self.fh.close()
+        try:
+            self.fh.close()
+        except OSError:
+            pass
 
     def __enter__(self):
         return self
@@ -132,13 +135,23 @@ class Fat32Image:
             raise PackError("当前为只读模式")
         self.fh.seek(lba * self.bytes_per_sector)
         self.fh.write(data)
-        self.fh.flush()
+        try:
+            self.fh.flush()
+        except OSError:
+            # Windows raw volume 句柄 flush 可能 EBADF，
+            # 数据已进入 OS 缓存；不阻断写入流程。
+            pass
 
     # -- BPB ---------------------------------------------------------------
     def _parse_bpb(self) -> None:
         self.bytes_per_sector = 512     # BPB 解析期间先用默认值读 LBA0
-        self.fh.seek(0, 2)
-        total_size = self.fh.tell()
+        try:
+            self.fh.seek(0, 2)
+            total_size = self.fh.tell()
+        except OSError:
+            # Windows raw volume 设备（\\.\X:）不支持 seek end，
+            # 总大小延后用 BPB total_sectors 推算。
+            total_size = None
 
         boot = self.read_sector(0)
         if boot[510:512] != b"\x55\xaa":
@@ -194,6 +207,8 @@ class Fat32Image:
         self.data_start_lba = self.fat_start_lba + self.fat_span
         data_sectors = self.total_sectors - reserved - self.fat_span
         self.max_cluster = (data_sectors >> self.spc_shift) + 1
+        if total_size is None:
+            total_size = self.total_sectors * bps
         self.image_bytes = total_size
 
         if self.data_start_lba * bps > total_size:

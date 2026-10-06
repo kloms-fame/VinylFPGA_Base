@@ -25,6 +25,8 @@ module fat32_media_loader #(
 
     input  wire        scan_start,
     output reg         scan_done,
+    output wire [23:0] media_status, // {done,index,idx_present,audio,cover_mask,idx_err,fs_err}
+    output wire [7:0] media_error,  // Full diagnostic byte; independent of load retry pulse
     output reg         scan_found_valid,
     output reg  [1:0]  scan_found_index,
     output reg         scan_found_total,
@@ -213,8 +215,11 @@ module fat32_media_loader #(
 
     reg [1:0]  scan_emit_idx;
     reg        scan_emitting;
+    reg stream_start_q;
+    reg [31:0] stream_first_cluster_q;
+    reg [31:0] stream_file_size_q;
 
-    assign ready = !scanner_busy && !streamer_busy &&
+    assign ready = !scanner_busy && !streamer_busy && !stream_start_q &&
                    (load_state == LD_IDLE) &&
                    !scan_launch_pending && !load_launch_pending;
     // 只在 SDRAM 写区握手完成的那一拍启动一次文件读取。该组合脉冲
@@ -227,6 +232,22 @@ module fat32_media_loader #(
     wire [31:0] stream_first_cluster = idx_stream_mode ? scanner_index_cluster
                                                        : load_cluster;
     wire [31:0] stream_file_size     = idx_stream_mode ? 32'd512 : load_size;
+
+    // Break the source mux -> cluster subtract/shift/add timing path.
+    // Capture one transaction; the streamer starts one clk later with stable metadata.
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            stream_start_q <= 1'b0;
+            stream_first_cluster_q <= 32'd0;
+            stream_file_size_q <= 32'd0;
+        end else begin
+            stream_start_q <= stream_start_any && !streamer_busy && !stream_start_q;
+            if (stream_start_any && !streamer_busy && !stream_start_q) begin
+                stream_first_cluster_q <= stream_first_cluster;
+                stream_file_size_q <= stream_file_size;
+            end
+        end
+    end
 
     wire [31:0] expected_pixel_count;
     wire [31:0] required_pixel_bytes;
@@ -315,7 +336,8 @@ module fat32_media_loader #(
             audio_size_d          <= idx_aud_bytes;
             audio_cluster_valid_d <= idx_aud_valid;
             audio_meta_pending    <= 1'b1;
-        end else if (scanner_done && !idx_take) begin
+        end else if ((scanner_done && !idx_take) || (idx_done && !idx_valid)) begin
+            // A rejected index must restore legacy audio as well as PIC covers.
             audio_cluster_m2_d    <= audio_cluster_valid ?
                                      (scanner_audio_cluster - 32'd2) : 32'd0;
             audio_spc_shift_d     <= spc_shift(scanner_spc);
@@ -334,6 +356,12 @@ module fat32_media_loader #(
         end
     end
 
+    assign media_status = {scan_done, index_mode, scanner_index_valid,
+                           audio_file_valid_reg, src_valid, idx_error, scanner_error};
+    assign media_error = !scan_done ? 8'd0 :
+                         (scanner_error != 0) ? scanner_error :
+                         (idx_started && !idx_valid) ? idx_error :
+                         (src_valid == 0) ? 8'h22 : 8'd0;
     assign audio_file_valid = audio_file_valid_reg;
     assign audio_start_lba = audio_start_lba_reg;
     assign audio_total_sectors = audio_total_sectors_reg;
@@ -412,9 +440,9 @@ module fat32_media_loader #(
     fat32_file_streamer u_file_streamer (
         .clk                 (clk),
         .rst_n               (~rst),
-        .file_start          (stream_start_any && !streamer_busy),
-        .first_cluster       (stream_first_cluster),
-        .file_size           (stream_file_size),
+        .file_start          (stream_start_q),
+        .first_cluster       (stream_first_cluster_q),
+        .file_size           (stream_file_size_q),
         .sectors_per_cluster (scanner_spc),
         .fat_start_lba       (scanner_fat_start),
         .data_start_lba      (scanner_data_start),

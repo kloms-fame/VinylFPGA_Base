@@ -34,29 +34,41 @@ module exp_echo_reporter #(
 
     // S2：Boot 状态（video 域电平，已在顶层同步到本域）
     input  wire        boot_active,
+    input  wire [23:0] media_status, // {done,index,idx_present,audio,cover_mask,idx_err,fs_err}
+    input  wire        io_ready,
+    input  wire        exp_present,
+    input  wire [5:0]  dip_state,
 
     output wire        uart_tx
 );
     `include "exp_event_defs.vh"
 
-    localparam [2:0] ST_BANNER = 3'd0,
+    localparam [3:0] ST_BANNER = 3'd0,
                      ST_IDLE   = 3'd1,
                      ST_EVENT  = 3'd2,
                      ST_SEND   = 3'd3,
                      ST_BOOT   = 3'd4,
-                     ST_BOOTDN = 3'd5;
+                     ST_BOOTDN = 4'd5,
+                     ST_INFO = 4'd6, ST_VERIFY = 4'd7,
+                     ST_PRESENT = 4'd8, ST_DIPINIT = 4'd9;
 
     localparam integer MSG_MAX = 96;
 
     reg [7:0]  msg [0:MSG_MAX-1];
     reg [7:0]  msg_len;
     reg [7:0]  tx_index;
-    reg [2:0]  state;
-    reg [2:0]  state_after_send;
+    reg [3:0]  state;
+    reg [3:0]  state_after_send;
     reg        tx_start;
     reg [7:0]  tx_data;
     reg        tx_issued;
     reg        boot_active_q;
+    reg        boot_done_pending;
+    reg        presence_reported;
+    reg        present_reported;
+    reg        media_reported;
+    reg [23:0] media_report;
+    reg [5:0]  dip_initial;
 
     // 事件小队列（深度 8）；溢出只翻标志，不覆盖已有事件
     reg [3:0]  q_code [0:7];
@@ -96,6 +108,12 @@ module exp_echo_reporter #(
         .busy  (tx_busy),
         .done  (tx_done)
     );
+
+    wire pop_event = ECHO_ENABLE && state == ST_IDLE && !boot_done_pending &&
+                     !(io_ready && (!presence_reported || present_reported != exp_present)) &&
+                     !((media_status[23] || !boot_active) &&
+                       (!media_reported || media_report != media_status)) && q_count != 0;
+    wire push_event = ECHO_ENABLE && ev_valid && ((q_count < 8) || pop_event);
 
     // ---- 报文拼装工具（阻塞式，参考 J2 event_reporter 的写法）----
     function [7:0] hex_digit;
@@ -273,6 +291,46 @@ module exp_echo_reporter #(
         end
     endtask
 
+    task fmt_info;
+        begin
+            put_byte("I"); put_byte("N"); put_byte("F"); put_byte("O"); put_byte(" ");
+            put_byte("D"); put_byte("O"); put_byte("N"); put_byte("E"); put_byte("="); put_bit(media_report[23]);
+            put_byte(" "); put_byte("I"); put_byte("D"); put_byte("X"); put_byte("="); put_bit(media_report[22]);
+            put_byte(" "); put_byte("P"); put_byte("I"); put_byte("C"); put_byte("="); put_byte(hex_digit(media_report[19:16]));
+            put_byte(" "); put_byte("A"); put_byte("U"); put_byte("D"); put_byte("="); put_bit(media_report[20]);
+            put_crlf();
+        end
+    endtask
+    task fmt_verify;
+        begin
+            put_byte("V"); put_byte("E"); put_byte("R"); put_byte("I"); put_byte("F"); put_byte("Y"); put_byte(" ");
+            put_byte("I"); put_byte("D"); put_byte("X"); put_byte("="); put_hex8(media_report[15:8]);
+            put_byte(" "); put_byte("F"); put_byte("S"); put_byte("="); put_hex8(media_report[7:0]);
+            put_byte(" "); put_byte("P"); put_byte("R"); put_byte("E"); put_byte("S"); put_byte("="); put_bit(media_report[21]);
+            put_crlf();
+        end
+    endtask
+    task fmt_present;
+        begin
+            put_byte("E"); put_byte("X"); put_byte("P"); put_byte("H"); put_byte("U"); put_byte("B"); put_byte(" ");
+            if (present_reported) begin
+                put_byte("P"); put_byte("R"); put_byte("E"); put_byte("S"); put_byte("E"); put_byte("N"); put_byte("T");
+            end else begin
+                put_byte("A"); put_byte("B"); put_byte("S"); put_byte("E"); put_byte("N"); put_byte("T");
+            end
+            put_crlf();
+        end
+    endtask
+    task fmt_dip_initial;
+        begin
+            put_byte("D"); put_byte("I"); put_byte("P"); put_byte(" ");
+            put_byte("I"); put_byte("N"); put_byte("I"); put_byte("T"); put_byte(" ");
+            put_bit(dip_initial[5]); put_bit(dip_initial[4]); put_bit(dip_initial[3]);
+            put_bit(dip_initial[2]); put_bit(dip_initial[1]); put_bit(dip_initial[0]);
+            put_crlf();
+        end
+    endtask
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state          <= ST_BANNER;
@@ -283,6 +341,12 @@ module exp_echo_reporter #(
             tx_issued      <= 1'b0;
             state_after_send <= ST_IDLE;
             boot_active_q  <= 1'b0;
+            boot_done_pending <= 1'b0;
+            presence_reported <= 1'b0;
+            present_reported <= 1'b0;
+            media_reported <= 1'b0;
+            media_report <= 24'd0;
+            dip_initial <= 6'd0;
             q_rd           <= 3'd0;
             q_wr           <= 3'd0;
             q_count        <= 4'd0;
@@ -294,18 +358,22 @@ module exp_echo_reporter #(
             tx_start    <= 1'b0;
             boot_active_q <= boot_active;
 
-            // ---- 事件入队 + 按键事件计数 ----
-            if (ev_valid) begin
-                if (q_count < 4'd8) begin
-                    q_code[q_wr] <= ev_code;
-                    q_arg[q_wr]  <= ev_arg;
-                    q_aux[q_wr]  <= ev_aux;
-                    q_wr         <= q_wr + 3'd1;
-                    q_count      <= q_count + 4'd1;
-                end else begin
-                    q_overflow <= ~q_overflow;
-                end
-            end
+            // Latch BOOT DONE even while a UART message is in flight.
+            if (boot_active_q && !boot_active)
+                boot_done_pending <= 1'b1;
+            if (push_event) begin
+                q_code[q_wr] <= ev_code;
+                q_arg[q_wr] <= ev_arg;
+                q_aux[q_wr] <= ev_aux;
+                q_wr <= q_wr + 3'd1;
+            end else if (ev_valid && ECHO_ENABLE)
+                q_overflow <= 1'b1;
+            // Simultaneous enqueue/dequeue keeps occupancy, rather than losing one.
+            case ({push_event, pop_event})
+                2'b10: q_count <= q_count + 4'd1;
+                2'b01: q_count <= q_count - 4'd1;
+                default: ;
+            endcase
 
             // ---- 上报状态机 ----
             case (state)
@@ -333,19 +401,46 @@ module exp_echo_reporter #(
 
                 ST_IDLE: begin
                     tx_issued <= 1'b0;
-                    if (ECHO_ENABLE && boot_active_q && !boot_active) begin
+                    if (ECHO_ENABLE && boot_done_pending) begin
                         // S2：离开 STATE_BOOT（首图就绪 / 用户事件 / 兜底超时）
+                        boot_done_pending <= 1'b0;
                         state <= ST_BOOTDN;
-                    end else if (ECHO_ENABLE && (q_count != 4'd0)) begin
+                    end else if (ECHO_ENABLE && io_ready &&
+                                 (!presence_reported || present_reported != exp_present)) begin
+                        dip_initial <= dip_state;
+                        present_reported <= exp_present;
+                        state_after_send <= presence_reported ? ST_IDLE : ST_DIPINIT;
+                        presence_reported <= 1'b1;
+                        state <= ST_PRESENT;
+                    end else if (ECHO_ENABLE && (media_status[23] || !boot_active) &&
+                                 (!media_reported || media_report != media_status)) begin
+                        media_report <= media_status;
+                        media_reported <= 1'b1;
+                        state <= ST_INFO;
+                    end else if (pop_event) begin
                         cur_code <= q_code[q_rd];
                         cur_arg  <= q_arg[q_rd];
                         cur_aux  <= q_aux[q_rd];
                         q_rd     <= q_rd + 3'd1;
-                        q_count  <= q_count - 4'd1;
                         state    <= ST_EVENT;
                     end
                 end
 
+                ST_PRESENT: begin
+                    msg_len = 8'd0; fmt_present(); tx_index <= 0; state <= ST_SEND;
+                end
+                ST_DIPINIT: begin
+                    msg_len = 8'd0; fmt_dip_initial(); tx_index <= 0;
+                    state_after_send <= ST_IDLE; state <= ST_SEND;
+                end
+                ST_INFO: begin
+                    msg_len = 8'd0; fmt_info(); tx_index <= 0;
+                    state_after_send <= ST_VERIFY; state <= ST_SEND;
+                end
+                ST_VERIFY: begin
+                    msg_len = 8'd0; fmt_verify(); tx_index <= 0;
+                    state_after_send <= ST_IDLE; state <= ST_SEND;
+                end
                 ST_EVENT: begin
                     msg_len = 8'd0;
                     case (cur_code)
