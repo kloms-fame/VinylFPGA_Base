@@ -1,0 +1,3308 @@
+[
+  {
+    "round": "S7_acceptance_fix_20261006_v5_s7",
+    "metrics": {
+      "lut": 16185,
+      "reg": 10191,
+      "bram": 46,
+      "bram32k": 0,
+      "dsp": 16,
+      "#slices": 8753,
+      "Setup WNS": 128,
+      "Setup TNS": 0,
+      "Hold WNS": 19,
+      "Hold TNS": 0,
+      "Num of violated S-EP": 0,
+      "Num of violated H-EP": 0
+    },
+    "clocks": {
+      "sd_card_clk": {
+        "period_ns": 9.872,
+        "fmax_mhz": 101.297
+      },
+      "video_clk": {
+        "period_ns": 27.704,
+        "fmax_mhz": 36.096
+      },
+      "clk": {
+        "period_ns": 18.427,
+        "fmax_mhz": 54.268
+      },
+      "ext_mem_clk": {
+        "period_ns": 7.308,
+        "fmax_mhz": 136.836
+      },
+      "hdmi_5x_clk": {
+        "period_ns": 4.036,
+        "fmax_mhz": 247.77
+      }
+    },
+    "hierarchy": [
+      {
+        "path": "top",
+        "depth": 0,
+        "module": "top",
+        "lut": 16185,
+        "ff": 10252,
+        "bram": 46,
+        "dsp": 16,
+        "le": 16833
+      },
+      {
+        "path": "top/U3",
+        "depth": 1,
+        "module": "sdram",
+        "lut": 317,
+        "ff": 380,
+        "bram": 0,
+        "dsp": 0,
+        "le": 394
+      },
+      {
+        "path": "top/U3/u2_ram",
+        "depth": 2,
+        "module": "sdr_as_ram",
+        "lut": 317,
+        "ff": 380,
+        "bram": 0,
+        "dsp": 0,
+        "le": 394
+      },
+      {
+        "path": "top/U3/u2_ram/u1_init_ref",
+        "depth": 3,
+        "module": "sdr_init_ref",
+        "lut": 82,
+        "ff": 78,
+        "bram": 0,
+        "dsp": 0,
+        "le": 85
+      },
+      {
+        "path": "top/U3/u2_ram/u2_wrrd",
+        "depth": 3,
+        "module": "sdr_wrrd",
+        "lut": 235,
+        "ff": 302,
+        "bram": 0,
+        "dsp": 0,
+        "le": 309
+      },
+      {
+        "path": "top/frame_read_write_m0",
+        "depth": 1,
+        "module": "frame_read_write",
+        "lut": 574,
+        "ff": 385,
+        "bram": 4,
+        "dsp": 0,
+        "le": 602
+      },
+      {
+        "path": "top/frame_read_write_m0/frame_fifo_read_m0",
+        "depth": 2,
+        "module": "frame_fifo_read",
+        "lut": 130,
+        "ff": 83,
+        "bram": 0,
+        "dsp": 0,
+        "le": 130
+      },
+      {
+        "path": "top/frame_read_write_m0/frame_fifo_write_m0",
+        "depth": 2,
+        "module": "frame_fifo_write",
+        "lut": 208,
+        "ff": 107,
+        "bram": 0,
+        "dsp": 0,
+        "le": 213
+      },
+      {
+        "path": "top/frame_read_write_m0/read_buf",
+        "depth": 2,
+        "module": "rfifo_32_32_512",
+        "lut": 89,
+        "ff": 90,
+        "bram": 2,
+        "dsp": 0,
+        "le": 112
+      },
+      {
+        "path": "top/frame_read_write_m0/read_buf/ram_inst",
+        "depth": 3,
+        "module": "ram_infer_rfifo_32_32_512",
+        "lut": 0,
+        "ff": 0,
+        "bram": 2,
+        "dsp": 0,
+        "le": 0
+      },
+      {
+        "path": "top/frame_read_write_m0/read_buf/rd_to_wr_cross_inst",
+        "depth": 3,
+        "module": "fifo_cross_domain_addr_process_al_rfifo_32_32_512",
+        "lut": 28,
+        "ff": 41,
+        "bram": 0,
+        "dsp": 0,
+        "le": 41
+      },
+      {
+        "path": "top/frame_read_write_m0/read_buf/wr_to_rd_cross_inst",
+        "depth": 3,
+        "module": "fifo_cross_domain_addr_process_al_rfifo_32_32_512",
+        "lut": 18,
+        "ff": 24,
+        "bram": 0,
+        "dsp": 0,
+        "le": 24
+      },
+      {
+        "path": "top/frame_read_write_m0/write_buf",
+        "depth": 2,
+        "module": "wfifo_32_32_512",
+        "lut": 115,
+        "ff": 92,
+        "bram": 2,
+        "dsp": 0,
+        "le": 115
+      },
+      {
+        "path": "top/frame_read_write_m0/write_buf/ram_inst",
+        "depth": 3,
+        "module": "ram_infer_wfifo_32_32_512",
+        "lut": 0,
+        "ff": 0,
+        "bram": 2,
+        "dsp": 0,
+        "le": 0
+      },
+      {
+        "path": "top/frame_read_write_m0/write_buf/rd_to_wr_cross_inst",
+        "depth": 3,
+        "module": "fifo_cross_domain_addr_process_al_wfifo_32_32_512",
+        "lut": 34,
+        "ff": 34,
+        "bram": 0,
+        "dsp": 0,
+        "le": 34
+      },
+      {
+        "path": "top/frame_read_write_m0/write_buf/wr_to_rd_cross_inst",
+        "depth": 3,
+        "module": "fifo_cross_domain_addr_process_al_wfifo_32_32_512",
+        "lut": 34,
+        "ff": 34,
+        "bram": 0,
+        "dsp": 0,
+        "le": 34
+      },
+      {
+        "path": "top/sd_card_bmp_m0",
+        "depth": 1,
+        "module": "sd_card_bmp",
+        "lut": 4966,
+        "ff": 3843,
+        "bram": 0,
+        "dsp": 1,
+        "le": 5268
+      },
+      {
+        "path": "top/sd_card_bmp_m0/fat32_media_loader_m0",
+        "depth": 2,
+        "module": "fat32_media_loader",
+        "lut": 4492,
+        "ff": 3531,
+        "bram": 0,
+        "dsp": 1,
+        "le": 4772
+      },
+      {
+        "path": "top/sd_card_bmp_m0/fat32_media_loader_m0/u_file_streamer",
+        "depth": 3,
+        "module": "fat32_file_streamer",
+        "lut": 557,
+        "ff": 305,
+        "bram": 0,
+        "dsp": 0,
+        "le": 563
+      },
+      {
+        "path": "top/sd_card_bmp_m0/fat32_media_loader_m0/u_sd_sector_adapter",
+        "depth": 3,
+        "module": "sd_sector_adapter",
+        "lut": 131,
+        "ff": 81,
+        "bram": 0,
+        "dsp": 0,
+        "le": 131
+      },
+      {
+        "path": "top/sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db",
+        "depth": 3,
+        "module": "song_index_db",
+        "lut": 1332,
+        "ff": 1354,
+        "bram": 0,
+        "dsp": 0,
+        "le": 1490
+      },
+      {
+        "path": "top/sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner",
+        "depth": 3,
+        "module": "fat32_volume_scanner",
+        "lut": 1182,
+        "ff": 1020,
+        "bram": 0,
+        "dsp": 0,
+        "le": 1284
+      },
+      {
+        "path": "top/sd_card_bmp_m0/sd_card_top_m0",
+        "depth": 2,
+        "module": "sd_card_top",
+        "lut": 260,
+        "ff": 181,
+        "bram": 0,
+        "dsp": 0,
+        "le": 282
+      },
+      {
+        "path": "top/sd_card_bmp_m0/sd_card_top_m0/sd_card_cmd_m0",
+        "depth": 3,
+        "module": "sd_card_cmd",
+        "lut": 139,
+        "ff": 66,
+        "bram": 0,
+        "dsp": 0,
+        "le": 139
+      },
+      {
+        "path": "top/sd_card_bmp_m0/sd_card_top_m0/sd_card_sec_read_write_m0",
+        "depth": 3,
+        "module": "sd_card_sec_read_write",
+        "lut": 60,
+        "ff": 77,
+        "bram": 0,
+        "dsp": 0,
+        "le": 82
+      },
+      {
+        "path": "top/sd_card_bmp_m0/sd_card_top_m0/spi_master_m0",
+        "depth": 3,
+        "module": "spi_master",
+        "lut": 61,
+        "ff": 38,
+        "bram": 0,
+        "dsp": 0,
+        "le": 61
+      },
+      {
+        "path": "top/sd_card_bmp_m0/u_key_auto",
+        "depth": 2,
+        "module": "key_press_debounce",
+        "lut": 44,
+        "ff": 22,
+        "bram": 0,
+        "dsp": 0,
+        "le": 44
+      },
+      {
+        "path": "top/seg_scan_m0",
+        "depth": 1,
+        "module": "seg_scan",
+        "lut": 60,
+        "ff": 26,
+        "bram": 0,
+        "dsp": 0,
+        "le": 60
+      },
+      {
+        "path": "top/sys_pll_m0",
+        "depth": 1,
+        "module": "sys_pll",
+        "lut": 1,
+        "ff": 0,
+        "bram": 0,
+        "dsp": 0,
+        "le": 1
+      },
+      {
+        "path": "top/u_audio_arc_calculate",
+        "depth": 1,
+        "module": "audio_arc_calculate",
+        "lut": 48,
+        "ff": 50,
+        "bram": 0,
+        "dsp": 0,
+        "le": 66
+      },
+      {
+        "path": "top/u_boot_layer",
+        "depth": 1,
+        "module": "boot_layer",
+        "lut": 159,
+        "ff": 55,
+        "bram": 16,
+        "dsp": 3,
+        "le": 160
+      },
+      {
+        "path": "top/u_boot_layer/u_boot_logo_rom",
+        "depth": 2,
+        "module": "boot_logo_rom",
+        "lut": 44,
+        "ff": 8,
+        "bram": 16,
+        "dsp": 0,
+        "le": 44
+      },
+      {
+        "path": "top/u_brightness_contrast_adjust",
+        "depth": 1,
+        "module": "brightness_contrast_adjust",
+        "lut": 23,
+        "ff": 23,
+        "bram": 0,
+        "dsp": 3,
+        "le": 23
+      },
+      {
+        "path": "top/u_browse_fsm",
+        "depth": 1,
+        "module": "browse_fsm",
+        "lut": 16,
+        "ff": 22,
+        "bram": 0,
+        "dsp": 0,
+        "le": 22
+      },
+      {
+        "path": "top/u_cover_navigation",
+        "depth": 1,
+        "module": "cover_navigation",
+        "lut": 14,
+        "ff": 10,
+        "bram": 0,
+        "dsp": 0,
+        "le": 14
+      },
+      {
+        "path": "top/u_expansion_integration",
+        "depth": 1,
+        "module": "expansion_integration",
+        "lut": 3488,
+        "ff": 1663,
+        "bram": 0,
+        "dsp": 0,
+        "le": 3515
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor",
+        "depth": 2,
+        "module": "key_dip_monitor",
+        "lut": 326,
+        "ff": 189,
+        "bram": 0,
+        "dsp": 0,
+        "le": 327
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_dip_filter[0]$u_debounce",
+        "depth": 3,
+        "module": "debounce_filter",
+        "lut": 48,
+        "ff": 29,
+        "bram": 0,
+        "dsp": 0,
+        "le": 48
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_dip_filter[0]$u_debounce/u_sync_bit",
+        "depth": 4,
+        "module": "sync_bit",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_dip_filter[1]$u_debounce",
+        "depth": 3,
+        "module": "debounce_filter",
+        "lut": 36,
+        "ff": 19,
+        "bram": 0,
+        "dsp": 0,
+        "le": 36
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_dip_filter[2]$u_debounce",
+        "depth": 3,
+        "module": "debounce_filter",
+        "lut": 43,
+        "ff": 25,
+        "bram": 0,
+        "dsp": 0,
+        "le": 43
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_dip_filter[3]$u_debounce",
+        "depth": 3,
+        "module": "debounce_filter",
+        "lut": 41,
+        "ff": 23,
+        "bram": 0,
+        "dsp": 0,
+        "le": 41
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_key_filter[0]$u_debounce",
+        "depth": 3,
+        "module": "debounce_filter",
+        "lut": 40,
+        "ff": 23,
+        "bram": 0,
+        "dsp": 0,
+        "le": 41
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_key_filter[0]$u_debounce/u_sync_bit",
+        "depth": 4,
+        "module": "sync_bit",
+        "lut": 0,
+        "ff": 1,
+        "bram": 0,
+        "dsp": 0,
+        "le": 1
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_key_filter[1]$u_debounce",
+        "depth": 3,
+        "module": "debounce_filter",
+        "lut": 45,
+        "ff": 26,
+        "bram": 0,
+        "dsp": 0,
+        "le": 45
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_key_filter[1]$u_debounce/u_sync_bit",
+        "depth": 4,
+        "module": "sync_bit",
+        "lut": 1,
+        "ff": 1,
+        "bram": 0,
+        "dsp": 0,
+        "le": 1
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_key_filter[2]$u_debounce",
+        "depth": 3,
+        "module": "debounce_filter",
+        "lut": 42,
+        "ff": 23,
+        "bram": 0,
+        "dsp": 0,
+        "le": 42
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_key_filter[2]$u_debounce/u_sync_bit",
+        "depth": 4,
+        "module": "sync_bit",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_expansion_integration/u_buzzer_feedback",
+        "depth": 2,
+        "module": "buzzer_feedback",
+        "lut": 177,
+        "ff": 96,
+        "bram": 0,
+        "dsp": 0,
+        "le": 177
+      },
+      {
+        "path": "top/u_expansion_integration/u_exp_echo_reporter",
+        "depth": 2,
+        "module": "exp_echo_reporter",
+        "lut": 925,
+        "ff": 381,
+        "bram": 0,
+        "dsp": 0,
+        "le": 932
+      },
+      {
+        "path": "top/u_expansion_integration/u_exp_echo_reporter/u_baud_tick",
+        "depth": 3,
+        "module": "exp_baud_tick",
+        "lut": 39,
+        "ff": 30,
+        "bram": 0,
+        "dsp": 0,
+        "le": 46
+      },
+      {
+        "path": "top/u_expansion_integration/u_exp_echo_reporter/u_uart_tx",
+        "depth": 3,
+        "module": "exp_uart_tx",
+        "lut": 20,
+        "ff": 11,
+        "bram": 0,
+        "dsp": 0,
+        "le": 20
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub",
+        "depth": 2,
+        "module": "expansion_io_hub",
+        "lut": 1486,
+        "ff": 709,
+        "bram": 0,
+        "dsp": 0,
+        "le": 1488
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_encoder_monitor",
+        "depth": 3,
+        "module": "encoder_monitor",
+        "lut": 297,
+        "ff": 121,
+        "bram": 0,
+        "dsp": 0,
+        "le": 297
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_encoder_monitor/u_enc1",
+        "depth": 4,
+        "module": "quadrature_decoder",
+        "lut": 106,
+        "ff": 42,
+        "bram": 0,
+        "dsp": 0,
+        "le": 106
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_encoder_monitor/u_enc1_sw",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 41,
+        "ff": 21,
+        "bram": 0,
+        "dsp": 0,
+        "le": 41
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_encoder_monitor/u_enc2",
+        "depth": 4,
+        "module": "quadrature_decoder",
+        "lut": 109,
+        "ff": 37,
+        "bram": 0,
+        "dsp": 0,
+        "le": 109
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_encoder_monitor/u_enc2_sw",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 41,
+        "ff": 21,
+        "bram": 0,
+        "dsp": 0,
+        "le": 41
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_ir_nec_decoder",
+        "depth": 3,
+        "module": "ir_nec_decoder",
+        "lut": 306,
+        "ff": 169,
+        "bram": 0,
+        "dsp": 0,
+        "le": 306
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor",
+        "depth": 3,
+        "module": "key_dip_monitor",
+        "lut": 883,
+        "ff": 419,
+        "bram": 0,
+        "dsp": 0,
+        "le": 885
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_dip_filter[0]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 42,
+        "ff": 23,
+        "bram": 0,
+        "dsp": 0,
+        "le": 42
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_dip_filter[1]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 44,
+        "ff": 25,
+        "bram": 0,
+        "dsp": 0,
+        "le": 44
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_dip_filter[2]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 46,
+        "ff": 24,
+        "bram": 0,
+        "dsp": 0,
+        "le": 46
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_dip_filter[2]$u_debounce/u_sync_bit",
+        "depth": 5,
+        "module": "sync_bit",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_dip_filter[3]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 41,
+        "ff": 24,
+        "bram": 0,
+        "dsp": 0,
+        "le": 41
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_dip_filter[4]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 40,
+        "ff": 24,
+        "bram": 0,
+        "dsp": 0,
+        "le": 41
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_dip_filter[4]$u_debounce/u_sync_bit",
+        "depth": 5,
+        "module": "sync_bit",
+        "lut": 0,
+        "ff": 1,
+        "bram": 0,
+        "dsp": 0,
+        "le": 1
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_dip_filter[5]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 45,
+        "ff": 24,
+        "bram": 0,
+        "dsp": 0,
+        "le": 45
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[0]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 56,
+        "ff": 27,
+        "bram": 0,
+        "dsp": 0,
+        "le": 56
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[0]$u_debounce/u_sync_bit",
+        "depth": 5,
+        "module": "sync_bit",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[10]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 53,
+        "ff": 25,
+        "bram": 0,
+        "dsp": 0,
+        "le": 53
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[10]$u_debounce/u_sync_bit",
+        "depth": 5,
+        "module": "sync_bit",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[11]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 58,
+        "ff": 22,
+        "bram": 0,
+        "dsp": 0,
+        "le": 58
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[1]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 52,
+        "ff": 24,
+        "bram": 0,
+        "dsp": 0,
+        "le": 52
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[1]$u_debounce/u_sync_bit",
+        "depth": 5,
+        "module": "sync_bit",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[2]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 48,
+        "ff": 22,
+        "bram": 0,
+        "dsp": 0,
+        "le": 48
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[3]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 52,
+        "ff": 22,
+        "bram": 0,
+        "dsp": 0,
+        "le": 52
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[4]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 50,
+        "ff": 25,
+        "bram": 0,
+        "dsp": 0,
+        "le": 50
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[5]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 48,
+        "ff": 21,
+        "bram": 0,
+        "dsp": 0,
+        "le": 48
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[6]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 50,
+        "ff": 20,
+        "bram": 0,
+        "dsp": 0,
+        "le": 51
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[6]$u_debounce/u_sync_bit",
+        "depth": 5,
+        "module": "sync_bit",
+        "lut": 0,
+        "ff": 1,
+        "bram": 0,
+        "dsp": 0,
+        "le": 1
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[7]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 52,
+        "ff": 21,
+        "bram": 0,
+        "dsp": 0,
+        "le": 52
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[8]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 52,
+        "ff": 23,
+        "bram": 0,
+        "dsp": 0,
+        "le": 52
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[9]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 54,
+        "ff": 23,
+        "bram": 0,
+        "dsp": 0,
+        "le": 54
+      },
+      {
+        "path": "top/u_expansion_integration/u_health_monitor",
+        "depth": 2,
+        "module": "health_monitor",
+        "lut": 160,
+        "ff": 107,
+        "bram": 0,
+        "dsp": 0,
+        "le": 162
+      },
+      {
+        "path": "top/u_expansion_integration/u_ui_command_router",
+        "depth": 2,
+        "module": "ui_command_router",
+        "lut": 158,
+        "ff": 58,
+        "bram": 0,
+        "dsp": 0,
+        "le": 158
+      },
+      {
+        "path": "top/u_expansion_integration/u_ui_event_bus",
+        "depth": 2,
+        "module": "ui_event_bus",
+        "lut": 181,
+        "ff": 74,
+        "bram": 0,
+        "dsp": 0,
+        "le": 181
+      },
+      {
+        "path": "top/u_hdmi2phy_wrapper",
+        "depth": 1,
+        "module": "hdmi_phy_wrapper",
+        "lut": 38,
+        "ff": 38,
+        "bram": 0,
+        "dsp": 0,
+        "le": 39
+      },
+      {
+        "path": "top/u_hdmi2phy_wrapper/u0_lane_lvds_8_1",
+        "depth": 2,
+        "module": "lane_lvds_10_1",
+        "lut": 14,
+        "ff": 15,
+        "bram": 0,
+        "dsp": 0,
+        "le": 15
+      },
+      {
+        "path": "top/u_hdmi2phy_wrapper/u1_lane_lvds_8_1",
+        "depth": 2,
+        "module": "lane_lvds_10_1",
+        "lut": 10,
+        "ff": 10,
+        "bram": 0,
+        "dsp": 0,
+        "le": 10
+      },
+      {
+        "path": "top/u_hdmi2phy_wrapper/u2_lane_lvds_8_1",
+        "depth": 2,
+        "module": "lane_lvds_10_1",
+        "lut": 12,
+        "ff": 12,
+        "bram": 0,
+        "dsp": 0,
+        "le": 12
+      },
+      {
+        "path": "top/u_hdmi2phy_wrapper/u3_lane_lvds_8_1",
+        "depth": 2,
+        "module": "lane_lvds_10_1",
+        "lut": 2,
+        "ff": 1,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper",
+        "depth": 1,
+        "module": "hdmi_1_4b_transmitter_core_wrapper",
+        "lut": 1694,
+        "ff": 1503,
+        "bram": 16,
+        "dsp": 0,
+        "le": 1830
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u0_reset_sync",
+        "depth": 2,
+        "module": "hdmi_1_4b_tx_reset_sync",
+        "lut": 3,
+        "ff": 7,
+        "bram": 0,
+        "dsp": 0,
+        "le": 9
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_edid_wrapper",
+        "depth": 2,
+        "module": "hdmi_edid_wrapper",
+        "lut": 285,
+        "ff": 159,
+        "bram": 2,
+        "dsp": 0,
+        "le": 294
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_edid_wrapper/u_hdmi_edid_read_controller",
+        "depth": 3,
+        "module": "hdmi_edid_read_controller",
+        "lut": 17,
+        "ff": 11,
+        "bram": 0,
+        "dsp": 0,
+        "le": 17
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_edid_wrapper/u_iic_master_wrapper",
+        "depth": 3,
+        "module": "iic_master_wrapper",
+        "lut": 268,
+        "ff": 148,
+        "bram": 2,
+        "dsp": 0,
+        "le": 277
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_edid_wrapper/u_iic_master_wrapper/u_iic_bit_transmitter",
+        "depth": 4,
+        "module": "iic_bit_transmitter",
+        "lut": 94,
+        "ff": 34,
+        "bram": 0,
+        "dsp": 0,
+        "le": 94
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_edid_wrapper/u_iic_master_wrapper/u_iic_receiver_controller",
+        "depth": 4,
+        "module": "iic_receiver_controller",
+        "lut": 4,
+        "ff": 0,
+        "bram": 0,
+        "dsp": 0,
+        "le": 4
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_edid_wrapper/u_iic_master_wrapper/u_iic_transmitter_controller",
+        "depth": 4,
+        "module": "iic_transmitter_controller",
+        "lut": 170,
+        "ff": 114,
+        "bram": 2,
+        "dsp": 0,
+        "le": 179
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_edid_wrapper/u_iic_master_wrapper/u_iic_transmitter_controller/u_iic_w11_d1024_fifo",
+        "depth": 5,
+        "module": "iic_w11_d1024_fifo",
+        "lut": 45,
+        "ff": 52,
+        "bram": 2,
+        "dsp": 0,
+        "le": 54
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper",
+        "depth": 2,
+        "module": "hdmi_tx_controller_wrapper",
+        "lut": 1406,
+        "ff": 1337,
+        "bram": 14,
+        "dsp": 0,
+        "le": 1527
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u0_hdmi_tmds_encode",
+        "depth": 3,
+        "module": "hdmi_tmds_encode",
+        "lut": 160,
+        "ff": 169,
+        "bram": 0,
+        "dsp": 0,
+        "le": 212
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u1_hdmi_tmds_encode",
+        "depth": 3,
+        "module": "hdmi_tmds_encode",
+        "lut": 155,
+        "ff": 123,
+        "bram": 0,
+        "dsp": 0,
+        "le": 165
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u2_hdmi_tmds_encode",
+        "depth": 3,
+        "module": "hdmi_tmds_encode",
+        "lut": 165,
+        "ff": 117,
+        "bram": 0,
+        "dsp": 0,
+        "le": 175
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_data_distribution",
+        "depth": 3,
+        "module": "hdmi_data_distribution",
+        "lut": 27,
+        "ff": 29,
+        "bram": 0,
+        "dsp": 0,
+        "le": 29
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_assemble",
+        "depth": 3,
+        "module": "hdmi_island_data_assemble",
+        "lut": 382,
+        "ff": 407,
+        "bram": 0,
+        "dsp": 0,
+        "le": 409
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_gen",
+        "depth": 3,
+        "module": "hdmi_island_data_gen",
+        "lut": 360,
+        "ff": 359,
+        "bram": 11,
+        "dsp": 0,
+        "le": 379
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_gen/U_audio_sample_packet_2_channel",
+        "depth": 4,
+        "module": "audio_sample_packet_2_channel",
+        "lut": 175,
+        "ff": 165,
+        "bram": 11,
+        "dsp": 0,
+        "le": 178
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_gen/U_audio_sample_packet_2_channel/u_w96_d1024_fifo",
+        "depth": 5,
+        "module": "w96_d1024_fifo",
+        "lut": 57,
+        "ff": 58,
+        "bram": 11,
+        "dsp": 0,
+        "le": 59
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_gen/U_audio_sample_packet_2_channel/u_BCH_64_56_encode",
+        "depth": 5,
+        "module": "BCH_64_56_encode",
+        "lut": 11,
+        "ff": 8,
+        "bram": 0,
+        "dsp": 0,
+        "le": 11
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_gen/u_audio_clock_regeneration_packet",
+        "depth": 4,
+        "module": "audio_clock_regeneration_packet",
+        "lut": 48,
+        "ff": 61,
+        "bram": 0,
+        "dsp": 0,
+        "le": 64
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_gen/u_audio_clock_regeneration_packet/u_BCH_64_56_encode",
+        "depth": 5,
+        "module": "BCH_64_56_encode",
+        "lut": 11,
+        "ff": 8,
+        "bram": 0,
+        "dsp": 0,
+        "le": 11
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_video_data_assemble",
+        "depth": 3,
+        "module": "hdmi_video_data_assemble",
+        "lut": 32,
+        "ff": 28,
+        "bram": 0,
+        "dsp": 0,
+        "le": 32
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_video_source",
+        "depth": 3,
+        "module": "hdmi_video_source",
+        "lut": 52,
+        "ff": 38,
+        "bram": 0,
+        "dsp": 0,
+        "le": 52
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_video_axi_stream_receiver",
+        "depth": 3,
+        "module": "video_axi_stream_receiver",
+        "lut": 73,
+        "ff": 67,
+        "bram": 3,
+        "dsp": 0,
+        "le": 74
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_video_axi_stream_receiver/u_w24_d1024_fifo",
+        "depth": 4,
+        "module": "w24_d1024_fifo",
+        "lut": 71,
+        "ff": 66,
+        "bram": 3,
+        "dsp": 0,
+        "le": 72
+      },
+      {
+        "path": "top/u_key_next_transition",
+        "depth": 1,
+        "module": "key_press_hold",
+        "lut": 86,
+        "ff": 50,
+        "bram": 0,
+        "dsp": 0,
+        "le": 86
+      },
+      {
+        "path": "top/u_key_thumb_left_confirm",
+        "depth": 1,
+        "module": "key_press_hold",
+        "lut": 97,
+        "ff": 51,
+        "bram": 0,
+        "dsp": 0,
+        "le": 97
+      },
+      {
+        "path": "top/u_lrc_osd",
+        "depth": 1,
+        "module": "lrc_osd",
+        "lut": 655,
+        "ff": 90,
+        "bram": 0,
+        "dsp": 0,
+        "le": 655
+      },
+      {
+        "path": "top/u_lrc_osd/u_font_rom",
+        "depth": 2,
+        "module": "lrc_font_rom",
+        "lut": 424,
+        "ff": 0,
+        "bram": 0,
+        "dsp": 0,
+        "le": 424
+      },
+      {
+        "path": "top/u_media_probe",
+        "depth": 1,
+        "module": "media_probe",
+        "lut": 54,
+        "ff": 35,
+        "bram": 0,
+        "dsp": 0,
+        "le": 54
+      },
+      {
+        "path": "top/u_media_supervisor",
+        "depth": 1,
+        "module": "media_supervisor",
+        "lut": 135,
+        "ff": 75,
+        "bram": 0,
+        "dsp": 0,
+        "le": 135
+      },
+      {
+        "path": "top/u_media_video_reset",
+        "depth": 1,
+        "module": "reset_sync",
+        "lut": 2,
+        "ff": 1,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_mem_reset",
+        "depth": 1,
+        "module": "reset_sync",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_mv_preloaded_sync",
+        "depth": 1,
+        "module": "sync_2ff",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_mv_sector_mux",
+        "depth": 1,
+        "module": "mv_sector_mux",
+        "lut": 4,
+        "ff": 3,
+        "bram": 0,
+        "dsp": 0,
+        "le": 4
+      },
+      {
+        "path": "top/u_mv_stream_player",
+        "depth": 1,
+        "module": "mv_stream_player",
+        "lut": 121,
+        "ff": 80,
+        "bram": 0,
+        "dsp": 0,
+        "le": 121
+      },
+      {
+        "path": "top/u_mv_writer_sync",
+        "depth": 1,
+        "module": "sync_2ff",
+        "lut": 0,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_osd_overlay_24",
+        "depth": 1,
+        "module": "osd_overlay_24",
+        "lut": 20,
+        "ff": 11,
+        "bram": 0,
+        "dsp": 0,
+        "le": 21
+      },
+      {
+        "path": "top/u_osd_overlay_24/u_osd",
+        "depth": 2,
+        "module": "status_osd_overlay",
+        "lut": 20,
+        "ff": 11,
+        "bram": 0,
+        "dsp": 0,
+        "le": 21
+      },
+      {
+        "path": "top/u_param_menu_controller",
+        "depth": 1,
+        "module": "param_menu_controller",
+        "lut": 308,
+        "ff": 172,
+        "bram": 0,
+        "dsp": 0,
+        "le": 308
+      },
+      {
+        "path": "top/u_pcm_volume_fade",
+        "depth": 1,
+        "module": "pcm_volume_fade",
+        "lut": 0,
+        "ff": 0,
+        "bram": 0,
+        "dsp": 1,
+        "le": 0
+      },
+      {
+        "path": "top/u_play_ctrl",
+        "depth": 1,
+        "module": "play_ctrl",
+        "lut": 26,
+        "ff": 26,
+        "bram": 0,
+        "dsp": 0,
+        "le": 28
+      },
+      {
+        "path": "top/u_promax_audio_waveform",
+        "depth": 1,
+        "module": "promax_audio_waveform",
+        "lut": 134,
+        "ff": 39,
+        "bram": 0,
+        "dsp": 0,
+        "le": 134
+      },
+      {
+        "path": "top/u_s6_video_layer",
+        "depth": 1,
+        "module": "s6_video_layer",
+        "lut": 604,
+        "ff": 320,
+        "bram": 0,
+        "dsp": 4,
+        "le": 605
+      },
+      {
+        "path": "top/u_s6_video_layer/renderer",
+        "depth": 2,
+        "module": "vinyl_renderer",
+        "lut": 56,
+        "ff": 6,
+        "bram": 0,
+        "dsp": 2,
+        "le": 56
+      },
+      {
+        "path": "top/u_s6_video_layer/scheduler",
+        "depth": 2,
+        "module": "mv_frame_scheduler",
+        "lut": 297,
+        "ff": 139,
+        "bram": 0,
+        "dsp": 1,
+        "le": 297
+      },
+      {
+        "path": "top/u_sdram_rd_arbiter",
+        "depth": 1,
+        "module": "sdram_rd_arbiter",
+        "lut": 16,
+        "ff": 9,
+        "bram": 0,
+        "dsp": 0,
+        "le": 16
+      },
+      {
+        "path": "top/u_startup_pulse",
+        "depth": 1,
+        "module": "startup_pulse",
+        "lut": 34,
+        "ff": 22,
+        "bram": 0,
+        "dsp": 0,
+        "le": 34
+      },
+      {
+        "path": "top/u_stream_session",
+        "depth": 1,
+        "module": "stream_session",
+        "lut": 14,
+        "ff": 11,
+        "bram": 0,
+        "dsp": 0,
+        "le": 14
+      },
+      {
+        "path": "top/u_sync_fade_gain",
+        "depth": 1,
+        "module": "sync_fade_gain",
+        "lut": 111,
+        "ff": 86,
+        "bram": 0,
+        "dsp": 0,
+        "le": 111
+      },
+      {
+        "path": "top/u_thumbnail_view_reader",
+        "depth": 1,
+        "module": "thumbnail_view_reader",
+        "lut": 354,
+        "ff": 241,
+        "bram": 2,
+        "dsp": 1,
+        "le": 358
+      },
+      {
+        "path": "top/u_thumbnail_view_reader/u_layout_display",
+        "depth": 2,
+        "module": "thumbnail_layout",
+        "lut": 14,
+        "ff": 1,
+        "bram": 0,
+        "dsp": 0,
+        "le": 14
+      },
+      {
+        "path": "top/u_thumbnail_view_reader/u_thmb_fifo",
+        "depth": 2,
+        "module": "rfifo_32_32_512",
+        "lut": 104,
+        "ff": 84,
+        "bram": 2,
+        "dsp": 0,
+        "le": 106
+      },
+      {
+        "path": "top/u_thumbnail_view_reader/u_thmb_fifo/ram_inst",
+        "depth": 3,
+        "module": "ram_infer_rfifo_32_32_512",
+        "lut": 0,
+        "ff": 0,
+        "bram": 2,
+        "dsp": 0,
+        "le": 0
+      },
+      {
+        "path": "top/u_thumbnail_view_reader/u_thmb_fifo/rd_to_wr_cross_inst",
+        "depth": 3,
+        "module": "fifo_cross_domain_addr_process_al_rfifo_32_32_512",
+        "lut": 32,
+        "ff": 32,
+        "bram": 0,
+        "dsp": 0,
+        "le": 32
+      },
+      {
+        "path": "top/u_thumbnail_view_reader/u_thmb_fifo/wr_to_rd_cross_inst",
+        "depth": 3,
+        "module": "fifo_cross_domain_addr_process_al_rfifo_32_32_512",
+        "lut": 25,
+        "ff": 25,
+        "bram": 0,
+        "dsp": 0,
+        "le": 25
+      },
+      {
+        "path": "top/u_timebase_48k",
+        "depth": 1,
+        "module": "timebase_48k",
+        "lut": 65,
+        "ff": 36,
+        "bram": 0,
+        "dsp": 0,
+        "le": 65
+      },
+      {
+        "path": "top/u_ui_event_bridge",
+        "depth": 1,
+        "module": "ui_event_bridge",
+        "lut": 269,
+        "ff": 67,
+        "bram": 0,
+        "dsp": 0,
+        "le": 269
+      },
+      {
+        "path": "top/u_video_fade_transition",
+        "depth": 1,
+        "module": "video_fade_transition",
+        "lut": 68,
+        "ff": 44,
+        "bram": 0,
+        "dsp": 0,
+        "le": 68
+      },
+      {
+        "path": "top/u_video_reset",
+        "depth": 1,
+        "module": "reset_sync",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_video_rgb_to_axis_640x480",
+        "depth": 1,
+        "module": "video_rgb_to_axis_640x480",
+        "lut": 633,
+        "ff": 100,
+        "bram": 0,
+        "dsp": 0,
+        "le": 633
+      },
+      {
+        "path": "top/u_video_transition_apply",
+        "depth": 1,
+        "module": "video_transition_apply",
+        "lut": 12,
+        "ff": 0,
+        "bram": 0,
+        "dsp": 3,
+        "le": 12
+      },
+      {
+        "path": "top/u_wav_stream_player",
+        "depth": 1,
+        "module": "wav_stream_player",
+        "lut": 439,
+        "ff": 273,
+        "bram": 8,
+        "dsp": 0,
+        "le": 445
+      },
+      {
+        "path": "top/video_pll_m0",
+        "depth": 1,
+        "module": "video_pll",
+        "lut": 0,
+        "ff": 0,
+        "bram": 0,
+        "dsp": 0,
+        "le": 0
+      },
+      {
+        "path": "top/video_timing_data_m0",
+        "depth": 1,
+        "module": "video_timing_data",
+        "lut": 59,
+        "ff": 28,
+        "bram": 0,
+        "dsp": 0,
+        "le": 60
+      },
+      {
+        "path": "top/video_timing_data_m0/color_bar_m0",
+        "depth": 2,
+        "module": "color_bar",
+        "lut": 59,
+        "ff": 27,
+        "bram": 0,
+        "dsp": 0,
+        "le": 59
+      },
+      {
+        "path": "top/u_pcm_media_tone",
+        "depth": 1,
+        "module": "pcm_media_tone",
+        "lut": 14,
+        "ff": 6,
+        "bram": 0,
+        "dsp": 0,
+        "le": 14
+      },
+      {
+        "path": "top/u_thumbnail_controller",
+        "depth": 1,
+        "module": "thumbnail_controller",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/video_delay_m0",
+        "depth": 1,
+        "module": "video_delay",
+        "lut": 60,
+        "ff": 62,
+        "bram": 0,
+        "dsp": 0,
+        "le": 62
+      }
+    ],
+    "input_count": 106,
+    "snapshot_inputs_verified": true
+  },
+  {
+    "round": "S703_M0_20261006",
+    "metrics": {
+      "lut": 16185,
+      "reg": 10191,
+      "bram": 46,
+      "bram32k": 0,
+      "dsp": 16,
+      "#slices": 8753,
+      "Setup WNS": 128,
+      "Setup TNS": 0,
+      "Hold WNS": 19,
+      "Hold TNS": 0,
+      "Num of violated S-EP": 0,
+      "Num of violated H-EP": 0
+    },
+    "clocks": {
+      "sd_card_clk": {
+        "period_ns": 9.872,
+        "fmax_mhz": 101.297
+      },
+      "video_clk": {
+        "period_ns": 27.704,
+        "fmax_mhz": 36.096
+      },
+      "clk": {
+        "period_ns": 18.427,
+        "fmax_mhz": 54.268
+      },
+      "ext_mem_clk": {
+        "period_ns": 7.308,
+        "fmax_mhz": 136.836
+      },
+      "hdmi_5x_clk": {
+        "period_ns": 4.036,
+        "fmax_mhz": 247.77
+      }
+    },
+    "hierarchy": [
+      {
+        "path": "top",
+        "depth": 0,
+        "module": "top",
+        "lut": 16185,
+        "ff": 10252,
+        "bram": 46,
+        "dsp": 16,
+        "le": 16833
+      },
+      {
+        "path": "top/U3",
+        "depth": 1,
+        "module": "sdram",
+        "lut": 317,
+        "ff": 380,
+        "bram": 0,
+        "dsp": 0,
+        "le": 394
+      },
+      {
+        "path": "top/U3/u2_ram",
+        "depth": 2,
+        "module": "sdr_as_ram",
+        "lut": 317,
+        "ff": 380,
+        "bram": 0,
+        "dsp": 0,
+        "le": 394
+      },
+      {
+        "path": "top/U3/u2_ram/u1_init_ref",
+        "depth": 3,
+        "module": "sdr_init_ref",
+        "lut": 82,
+        "ff": 78,
+        "bram": 0,
+        "dsp": 0,
+        "le": 85
+      },
+      {
+        "path": "top/U3/u2_ram/u2_wrrd",
+        "depth": 3,
+        "module": "sdr_wrrd",
+        "lut": 235,
+        "ff": 302,
+        "bram": 0,
+        "dsp": 0,
+        "le": 309
+      },
+      {
+        "path": "top/frame_read_write_m0",
+        "depth": 1,
+        "module": "frame_read_write",
+        "lut": 574,
+        "ff": 385,
+        "bram": 4,
+        "dsp": 0,
+        "le": 602
+      },
+      {
+        "path": "top/frame_read_write_m0/frame_fifo_read_m0",
+        "depth": 2,
+        "module": "frame_fifo_read",
+        "lut": 130,
+        "ff": 83,
+        "bram": 0,
+        "dsp": 0,
+        "le": 130
+      },
+      {
+        "path": "top/frame_read_write_m0/frame_fifo_write_m0",
+        "depth": 2,
+        "module": "frame_fifo_write",
+        "lut": 208,
+        "ff": 107,
+        "bram": 0,
+        "dsp": 0,
+        "le": 213
+      },
+      {
+        "path": "top/frame_read_write_m0/read_buf",
+        "depth": 2,
+        "module": "rfifo_32_32_512",
+        "lut": 89,
+        "ff": 90,
+        "bram": 2,
+        "dsp": 0,
+        "le": 112
+      },
+      {
+        "path": "top/frame_read_write_m0/read_buf/ram_inst",
+        "depth": 3,
+        "module": "ram_infer_rfifo_32_32_512",
+        "lut": 0,
+        "ff": 0,
+        "bram": 2,
+        "dsp": 0,
+        "le": 0
+      },
+      {
+        "path": "top/frame_read_write_m0/read_buf/rd_to_wr_cross_inst",
+        "depth": 3,
+        "module": "fifo_cross_domain_addr_process_al_rfifo_32_32_512",
+        "lut": 28,
+        "ff": 41,
+        "bram": 0,
+        "dsp": 0,
+        "le": 41
+      },
+      {
+        "path": "top/frame_read_write_m0/read_buf/wr_to_rd_cross_inst",
+        "depth": 3,
+        "module": "fifo_cross_domain_addr_process_al_rfifo_32_32_512",
+        "lut": 18,
+        "ff": 24,
+        "bram": 0,
+        "dsp": 0,
+        "le": 24
+      },
+      {
+        "path": "top/frame_read_write_m0/write_buf",
+        "depth": 2,
+        "module": "wfifo_32_32_512",
+        "lut": 115,
+        "ff": 92,
+        "bram": 2,
+        "dsp": 0,
+        "le": 115
+      },
+      {
+        "path": "top/frame_read_write_m0/write_buf/ram_inst",
+        "depth": 3,
+        "module": "ram_infer_wfifo_32_32_512",
+        "lut": 0,
+        "ff": 0,
+        "bram": 2,
+        "dsp": 0,
+        "le": 0
+      },
+      {
+        "path": "top/frame_read_write_m0/write_buf/rd_to_wr_cross_inst",
+        "depth": 3,
+        "module": "fifo_cross_domain_addr_process_al_wfifo_32_32_512",
+        "lut": 34,
+        "ff": 34,
+        "bram": 0,
+        "dsp": 0,
+        "le": 34
+      },
+      {
+        "path": "top/frame_read_write_m0/write_buf/wr_to_rd_cross_inst",
+        "depth": 3,
+        "module": "fifo_cross_domain_addr_process_al_wfifo_32_32_512",
+        "lut": 34,
+        "ff": 34,
+        "bram": 0,
+        "dsp": 0,
+        "le": 34
+      },
+      {
+        "path": "top/sd_card_bmp_m0",
+        "depth": 1,
+        "module": "sd_card_bmp",
+        "lut": 4966,
+        "ff": 3843,
+        "bram": 0,
+        "dsp": 1,
+        "le": 5268
+      },
+      {
+        "path": "top/sd_card_bmp_m0/fat32_media_loader_m0",
+        "depth": 2,
+        "module": "fat32_media_loader",
+        "lut": 4492,
+        "ff": 3531,
+        "bram": 0,
+        "dsp": 1,
+        "le": 4772
+      },
+      {
+        "path": "top/sd_card_bmp_m0/fat32_media_loader_m0/u_file_streamer",
+        "depth": 3,
+        "module": "fat32_file_streamer",
+        "lut": 557,
+        "ff": 305,
+        "bram": 0,
+        "dsp": 0,
+        "le": 563
+      },
+      {
+        "path": "top/sd_card_bmp_m0/fat32_media_loader_m0/u_sd_sector_adapter",
+        "depth": 3,
+        "module": "sd_sector_adapter",
+        "lut": 131,
+        "ff": 81,
+        "bram": 0,
+        "dsp": 0,
+        "le": 131
+      },
+      {
+        "path": "top/sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db",
+        "depth": 3,
+        "module": "song_index_db",
+        "lut": 1332,
+        "ff": 1354,
+        "bram": 0,
+        "dsp": 0,
+        "le": 1490
+      },
+      {
+        "path": "top/sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner",
+        "depth": 3,
+        "module": "fat32_volume_scanner",
+        "lut": 1182,
+        "ff": 1020,
+        "bram": 0,
+        "dsp": 0,
+        "le": 1284
+      },
+      {
+        "path": "top/sd_card_bmp_m0/sd_card_top_m0",
+        "depth": 2,
+        "module": "sd_card_top",
+        "lut": 260,
+        "ff": 181,
+        "bram": 0,
+        "dsp": 0,
+        "le": 282
+      },
+      {
+        "path": "top/sd_card_bmp_m0/sd_card_top_m0/sd_card_cmd_m0",
+        "depth": 3,
+        "module": "sd_card_cmd",
+        "lut": 139,
+        "ff": 66,
+        "bram": 0,
+        "dsp": 0,
+        "le": 139
+      },
+      {
+        "path": "top/sd_card_bmp_m0/sd_card_top_m0/sd_card_sec_read_write_m0",
+        "depth": 3,
+        "module": "sd_card_sec_read_write",
+        "lut": 60,
+        "ff": 77,
+        "bram": 0,
+        "dsp": 0,
+        "le": 82
+      },
+      {
+        "path": "top/sd_card_bmp_m0/sd_card_top_m0/spi_master_m0",
+        "depth": 3,
+        "module": "spi_master",
+        "lut": 61,
+        "ff": 38,
+        "bram": 0,
+        "dsp": 0,
+        "le": 61
+      },
+      {
+        "path": "top/sd_card_bmp_m0/u_key_auto",
+        "depth": 2,
+        "module": "key_press_debounce",
+        "lut": 44,
+        "ff": 22,
+        "bram": 0,
+        "dsp": 0,
+        "le": 44
+      },
+      {
+        "path": "top/seg_scan_m0",
+        "depth": 1,
+        "module": "seg_scan",
+        "lut": 60,
+        "ff": 26,
+        "bram": 0,
+        "dsp": 0,
+        "le": 60
+      },
+      {
+        "path": "top/sys_pll_m0",
+        "depth": 1,
+        "module": "sys_pll",
+        "lut": 1,
+        "ff": 0,
+        "bram": 0,
+        "dsp": 0,
+        "le": 1
+      },
+      {
+        "path": "top/u_audio_arc_calculate",
+        "depth": 1,
+        "module": "audio_arc_calculate",
+        "lut": 48,
+        "ff": 50,
+        "bram": 0,
+        "dsp": 0,
+        "le": 66
+      },
+      {
+        "path": "top/u_boot_layer",
+        "depth": 1,
+        "module": "boot_layer",
+        "lut": 159,
+        "ff": 55,
+        "bram": 16,
+        "dsp": 3,
+        "le": 160
+      },
+      {
+        "path": "top/u_boot_layer/u_boot_logo_rom",
+        "depth": 2,
+        "module": "boot_logo_rom",
+        "lut": 44,
+        "ff": 8,
+        "bram": 16,
+        "dsp": 0,
+        "le": 44
+      },
+      {
+        "path": "top/u_brightness_contrast_adjust",
+        "depth": 1,
+        "module": "brightness_contrast_adjust",
+        "lut": 23,
+        "ff": 23,
+        "bram": 0,
+        "dsp": 3,
+        "le": 23
+      },
+      {
+        "path": "top/u_browse_fsm",
+        "depth": 1,
+        "module": "browse_fsm",
+        "lut": 16,
+        "ff": 22,
+        "bram": 0,
+        "dsp": 0,
+        "le": 22
+      },
+      {
+        "path": "top/u_cover_navigation",
+        "depth": 1,
+        "module": "cover_navigation",
+        "lut": 14,
+        "ff": 10,
+        "bram": 0,
+        "dsp": 0,
+        "le": 14
+      },
+      {
+        "path": "top/u_expansion_integration",
+        "depth": 1,
+        "module": "expansion_integration",
+        "lut": 3488,
+        "ff": 1663,
+        "bram": 0,
+        "dsp": 0,
+        "le": 3515
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor",
+        "depth": 2,
+        "module": "key_dip_monitor",
+        "lut": 326,
+        "ff": 189,
+        "bram": 0,
+        "dsp": 0,
+        "le": 327
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_dip_filter[0]$u_debounce",
+        "depth": 3,
+        "module": "debounce_filter",
+        "lut": 48,
+        "ff": 29,
+        "bram": 0,
+        "dsp": 0,
+        "le": 48
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_dip_filter[0]$u_debounce/u_sync_bit",
+        "depth": 4,
+        "module": "sync_bit",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_dip_filter[1]$u_debounce",
+        "depth": 3,
+        "module": "debounce_filter",
+        "lut": 36,
+        "ff": 19,
+        "bram": 0,
+        "dsp": 0,
+        "le": 36
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_dip_filter[2]$u_debounce",
+        "depth": 3,
+        "module": "debounce_filter",
+        "lut": 43,
+        "ff": 25,
+        "bram": 0,
+        "dsp": 0,
+        "le": 43
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_dip_filter[3]$u_debounce",
+        "depth": 3,
+        "module": "debounce_filter",
+        "lut": 41,
+        "ff": 23,
+        "bram": 0,
+        "dsp": 0,
+        "le": 41
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_key_filter[0]$u_debounce",
+        "depth": 3,
+        "module": "debounce_filter",
+        "lut": 40,
+        "ff": 23,
+        "bram": 0,
+        "dsp": 0,
+        "le": 41
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_key_filter[0]$u_debounce/u_sync_bit",
+        "depth": 4,
+        "module": "sync_bit",
+        "lut": 0,
+        "ff": 1,
+        "bram": 0,
+        "dsp": 0,
+        "le": 1
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_key_filter[1]$u_debounce",
+        "depth": 3,
+        "module": "debounce_filter",
+        "lut": 45,
+        "ff": 26,
+        "bram": 0,
+        "dsp": 0,
+        "le": 45
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_key_filter[1]$u_debounce/u_sync_bit",
+        "depth": 4,
+        "module": "sync_bit",
+        "lut": 1,
+        "ff": 1,
+        "bram": 0,
+        "dsp": 0,
+        "le": 1
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_key_filter[2]$u_debounce",
+        "depth": 3,
+        "module": "debounce_filter",
+        "lut": 42,
+        "ff": 23,
+        "bram": 0,
+        "dsp": 0,
+        "le": 42
+      },
+      {
+        "path": "top/u_expansion_integration/u_board_key_sw_monitor/g_key_filter[2]$u_debounce/u_sync_bit",
+        "depth": 4,
+        "module": "sync_bit",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_expansion_integration/u_buzzer_feedback",
+        "depth": 2,
+        "module": "buzzer_feedback",
+        "lut": 177,
+        "ff": 96,
+        "bram": 0,
+        "dsp": 0,
+        "le": 177
+      },
+      {
+        "path": "top/u_expansion_integration/u_exp_echo_reporter",
+        "depth": 2,
+        "module": "exp_echo_reporter",
+        "lut": 925,
+        "ff": 381,
+        "bram": 0,
+        "dsp": 0,
+        "le": 932
+      },
+      {
+        "path": "top/u_expansion_integration/u_exp_echo_reporter/u_baud_tick",
+        "depth": 3,
+        "module": "exp_baud_tick",
+        "lut": 39,
+        "ff": 30,
+        "bram": 0,
+        "dsp": 0,
+        "le": 46
+      },
+      {
+        "path": "top/u_expansion_integration/u_exp_echo_reporter/u_uart_tx",
+        "depth": 3,
+        "module": "exp_uart_tx",
+        "lut": 20,
+        "ff": 11,
+        "bram": 0,
+        "dsp": 0,
+        "le": 20
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub",
+        "depth": 2,
+        "module": "expansion_io_hub",
+        "lut": 1486,
+        "ff": 709,
+        "bram": 0,
+        "dsp": 0,
+        "le": 1488
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_encoder_monitor",
+        "depth": 3,
+        "module": "encoder_monitor",
+        "lut": 297,
+        "ff": 121,
+        "bram": 0,
+        "dsp": 0,
+        "le": 297
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_encoder_monitor/u_enc1",
+        "depth": 4,
+        "module": "quadrature_decoder",
+        "lut": 106,
+        "ff": 42,
+        "bram": 0,
+        "dsp": 0,
+        "le": 106
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_encoder_monitor/u_enc1_sw",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 41,
+        "ff": 21,
+        "bram": 0,
+        "dsp": 0,
+        "le": 41
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_encoder_monitor/u_enc2",
+        "depth": 4,
+        "module": "quadrature_decoder",
+        "lut": 109,
+        "ff": 37,
+        "bram": 0,
+        "dsp": 0,
+        "le": 109
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_encoder_monitor/u_enc2_sw",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 41,
+        "ff": 21,
+        "bram": 0,
+        "dsp": 0,
+        "le": 41
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_ir_nec_decoder",
+        "depth": 3,
+        "module": "ir_nec_decoder",
+        "lut": 306,
+        "ff": 169,
+        "bram": 0,
+        "dsp": 0,
+        "le": 306
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor",
+        "depth": 3,
+        "module": "key_dip_monitor",
+        "lut": 883,
+        "ff": 419,
+        "bram": 0,
+        "dsp": 0,
+        "le": 885
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_dip_filter[0]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 42,
+        "ff": 23,
+        "bram": 0,
+        "dsp": 0,
+        "le": 42
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_dip_filter[1]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 44,
+        "ff": 25,
+        "bram": 0,
+        "dsp": 0,
+        "le": 44
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_dip_filter[2]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 46,
+        "ff": 24,
+        "bram": 0,
+        "dsp": 0,
+        "le": 46
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_dip_filter[2]$u_debounce/u_sync_bit",
+        "depth": 5,
+        "module": "sync_bit",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_dip_filter[3]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 41,
+        "ff": 24,
+        "bram": 0,
+        "dsp": 0,
+        "le": 41
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_dip_filter[4]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 40,
+        "ff": 24,
+        "bram": 0,
+        "dsp": 0,
+        "le": 41
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_dip_filter[4]$u_debounce/u_sync_bit",
+        "depth": 5,
+        "module": "sync_bit",
+        "lut": 0,
+        "ff": 1,
+        "bram": 0,
+        "dsp": 0,
+        "le": 1
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_dip_filter[5]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 45,
+        "ff": 24,
+        "bram": 0,
+        "dsp": 0,
+        "le": 45
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[0]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 56,
+        "ff": 27,
+        "bram": 0,
+        "dsp": 0,
+        "le": 56
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[0]$u_debounce/u_sync_bit",
+        "depth": 5,
+        "module": "sync_bit",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[10]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 53,
+        "ff": 25,
+        "bram": 0,
+        "dsp": 0,
+        "le": 53
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[10]$u_debounce/u_sync_bit",
+        "depth": 5,
+        "module": "sync_bit",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[11]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 58,
+        "ff": 22,
+        "bram": 0,
+        "dsp": 0,
+        "le": 58
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[1]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 52,
+        "ff": 24,
+        "bram": 0,
+        "dsp": 0,
+        "le": 52
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[1]$u_debounce/u_sync_bit",
+        "depth": 5,
+        "module": "sync_bit",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[2]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 48,
+        "ff": 22,
+        "bram": 0,
+        "dsp": 0,
+        "le": 48
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[3]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 52,
+        "ff": 22,
+        "bram": 0,
+        "dsp": 0,
+        "le": 52
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[4]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 50,
+        "ff": 25,
+        "bram": 0,
+        "dsp": 0,
+        "le": 50
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[5]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 48,
+        "ff": 21,
+        "bram": 0,
+        "dsp": 0,
+        "le": 48
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[6]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 50,
+        "ff": 20,
+        "bram": 0,
+        "dsp": 0,
+        "le": 51
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[6]$u_debounce/u_sync_bit",
+        "depth": 5,
+        "module": "sync_bit",
+        "lut": 0,
+        "ff": 1,
+        "bram": 0,
+        "dsp": 0,
+        "le": 1
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[7]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 52,
+        "ff": 21,
+        "bram": 0,
+        "dsp": 0,
+        "le": 52
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[8]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 52,
+        "ff": 23,
+        "bram": 0,
+        "dsp": 0,
+        "le": 52
+      },
+      {
+        "path": "top/u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/g_key_filter[9]$u_debounce",
+        "depth": 4,
+        "module": "debounce_filter",
+        "lut": 54,
+        "ff": 23,
+        "bram": 0,
+        "dsp": 0,
+        "le": 54
+      },
+      {
+        "path": "top/u_expansion_integration/u_health_monitor",
+        "depth": 2,
+        "module": "health_monitor",
+        "lut": 160,
+        "ff": 107,
+        "bram": 0,
+        "dsp": 0,
+        "le": 162
+      },
+      {
+        "path": "top/u_expansion_integration/u_ui_command_router",
+        "depth": 2,
+        "module": "ui_command_router",
+        "lut": 158,
+        "ff": 58,
+        "bram": 0,
+        "dsp": 0,
+        "le": 158
+      },
+      {
+        "path": "top/u_expansion_integration/u_ui_event_bus",
+        "depth": 2,
+        "module": "ui_event_bus",
+        "lut": 181,
+        "ff": 74,
+        "bram": 0,
+        "dsp": 0,
+        "le": 181
+      },
+      {
+        "path": "top/u_hdmi2phy_wrapper",
+        "depth": 1,
+        "module": "hdmi_phy_wrapper",
+        "lut": 38,
+        "ff": 38,
+        "bram": 0,
+        "dsp": 0,
+        "le": 39
+      },
+      {
+        "path": "top/u_hdmi2phy_wrapper/u0_lane_lvds_8_1",
+        "depth": 2,
+        "module": "lane_lvds_10_1",
+        "lut": 14,
+        "ff": 15,
+        "bram": 0,
+        "dsp": 0,
+        "le": 15
+      },
+      {
+        "path": "top/u_hdmi2phy_wrapper/u1_lane_lvds_8_1",
+        "depth": 2,
+        "module": "lane_lvds_10_1",
+        "lut": 10,
+        "ff": 10,
+        "bram": 0,
+        "dsp": 0,
+        "le": 10
+      },
+      {
+        "path": "top/u_hdmi2phy_wrapper/u2_lane_lvds_8_1",
+        "depth": 2,
+        "module": "lane_lvds_10_1",
+        "lut": 12,
+        "ff": 12,
+        "bram": 0,
+        "dsp": 0,
+        "le": 12
+      },
+      {
+        "path": "top/u_hdmi2phy_wrapper/u3_lane_lvds_8_1",
+        "depth": 2,
+        "module": "lane_lvds_10_1",
+        "lut": 2,
+        "ff": 1,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper",
+        "depth": 1,
+        "module": "hdmi_1_4b_transmitter_core_wrapper",
+        "lut": 1694,
+        "ff": 1503,
+        "bram": 16,
+        "dsp": 0,
+        "le": 1830
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u0_reset_sync",
+        "depth": 2,
+        "module": "hdmi_1_4b_tx_reset_sync",
+        "lut": 3,
+        "ff": 7,
+        "bram": 0,
+        "dsp": 0,
+        "le": 9
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_edid_wrapper",
+        "depth": 2,
+        "module": "hdmi_edid_wrapper",
+        "lut": 285,
+        "ff": 159,
+        "bram": 2,
+        "dsp": 0,
+        "le": 294
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_edid_wrapper/u_hdmi_edid_read_controller",
+        "depth": 3,
+        "module": "hdmi_edid_read_controller",
+        "lut": 17,
+        "ff": 11,
+        "bram": 0,
+        "dsp": 0,
+        "le": 17
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_edid_wrapper/u_iic_master_wrapper",
+        "depth": 3,
+        "module": "iic_master_wrapper",
+        "lut": 268,
+        "ff": 148,
+        "bram": 2,
+        "dsp": 0,
+        "le": 277
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_edid_wrapper/u_iic_master_wrapper/u_iic_bit_transmitter",
+        "depth": 4,
+        "module": "iic_bit_transmitter",
+        "lut": 94,
+        "ff": 34,
+        "bram": 0,
+        "dsp": 0,
+        "le": 94
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_edid_wrapper/u_iic_master_wrapper/u_iic_receiver_controller",
+        "depth": 4,
+        "module": "iic_receiver_controller",
+        "lut": 4,
+        "ff": 0,
+        "bram": 0,
+        "dsp": 0,
+        "le": 4
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_edid_wrapper/u_iic_master_wrapper/u_iic_transmitter_controller",
+        "depth": 4,
+        "module": "iic_transmitter_controller",
+        "lut": 170,
+        "ff": 114,
+        "bram": 2,
+        "dsp": 0,
+        "le": 179
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_edid_wrapper/u_iic_master_wrapper/u_iic_transmitter_controller/u_iic_w11_d1024_fifo",
+        "depth": 5,
+        "module": "iic_w11_d1024_fifo",
+        "lut": 45,
+        "ff": 52,
+        "bram": 2,
+        "dsp": 0,
+        "le": 54
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper",
+        "depth": 2,
+        "module": "hdmi_tx_controller_wrapper",
+        "lut": 1406,
+        "ff": 1337,
+        "bram": 14,
+        "dsp": 0,
+        "le": 1527
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u0_hdmi_tmds_encode",
+        "depth": 3,
+        "module": "hdmi_tmds_encode",
+        "lut": 160,
+        "ff": 169,
+        "bram": 0,
+        "dsp": 0,
+        "le": 212
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u1_hdmi_tmds_encode",
+        "depth": 3,
+        "module": "hdmi_tmds_encode",
+        "lut": 155,
+        "ff": 123,
+        "bram": 0,
+        "dsp": 0,
+        "le": 165
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u2_hdmi_tmds_encode",
+        "depth": 3,
+        "module": "hdmi_tmds_encode",
+        "lut": 165,
+        "ff": 117,
+        "bram": 0,
+        "dsp": 0,
+        "le": 175
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_data_distribution",
+        "depth": 3,
+        "module": "hdmi_data_distribution",
+        "lut": 27,
+        "ff": 29,
+        "bram": 0,
+        "dsp": 0,
+        "le": 29
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_assemble",
+        "depth": 3,
+        "module": "hdmi_island_data_assemble",
+        "lut": 382,
+        "ff": 407,
+        "bram": 0,
+        "dsp": 0,
+        "le": 409
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_gen",
+        "depth": 3,
+        "module": "hdmi_island_data_gen",
+        "lut": 360,
+        "ff": 359,
+        "bram": 11,
+        "dsp": 0,
+        "le": 379
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_gen/U_audio_sample_packet_2_channel",
+        "depth": 4,
+        "module": "audio_sample_packet_2_channel",
+        "lut": 175,
+        "ff": 165,
+        "bram": 11,
+        "dsp": 0,
+        "le": 178
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_gen/U_audio_sample_packet_2_channel/u_w96_d1024_fifo",
+        "depth": 5,
+        "module": "w96_d1024_fifo",
+        "lut": 57,
+        "ff": 58,
+        "bram": 11,
+        "dsp": 0,
+        "le": 59
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_gen/U_audio_sample_packet_2_channel/u_BCH_64_56_encode",
+        "depth": 5,
+        "module": "BCH_64_56_encode",
+        "lut": 11,
+        "ff": 8,
+        "bram": 0,
+        "dsp": 0,
+        "le": 11
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_gen/u_audio_clock_regeneration_packet",
+        "depth": 4,
+        "module": "audio_clock_regeneration_packet",
+        "lut": 48,
+        "ff": 61,
+        "bram": 0,
+        "dsp": 0,
+        "le": 64
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_gen/u_audio_clock_regeneration_packet/u_BCH_64_56_encode",
+        "depth": 5,
+        "module": "BCH_64_56_encode",
+        "lut": 11,
+        "ff": 8,
+        "bram": 0,
+        "dsp": 0,
+        "le": 11
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_video_data_assemble",
+        "depth": 3,
+        "module": "hdmi_video_data_assemble",
+        "lut": 32,
+        "ff": 28,
+        "bram": 0,
+        "dsp": 0,
+        "le": 32
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_video_source",
+        "depth": 3,
+        "module": "hdmi_video_source",
+        "lut": 52,
+        "ff": 38,
+        "bram": 0,
+        "dsp": 0,
+        "le": 52
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_video_axi_stream_receiver",
+        "depth": 3,
+        "module": "video_axi_stream_receiver",
+        "lut": 73,
+        "ff": 67,
+        "bram": 3,
+        "dsp": 0,
+        "le": 74
+      },
+      {
+        "path": "top/u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_video_axi_stream_receiver/u_w24_d1024_fifo",
+        "depth": 4,
+        "module": "w24_d1024_fifo",
+        "lut": 71,
+        "ff": 66,
+        "bram": 3,
+        "dsp": 0,
+        "le": 72
+      },
+      {
+        "path": "top/u_key_next_transition",
+        "depth": 1,
+        "module": "key_press_hold",
+        "lut": 86,
+        "ff": 50,
+        "bram": 0,
+        "dsp": 0,
+        "le": 86
+      },
+      {
+        "path": "top/u_key_thumb_left_confirm",
+        "depth": 1,
+        "module": "key_press_hold",
+        "lut": 97,
+        "ff": 51,
+        "bram": 0,
+        "dsp": 0,
+        "le": 97
+      },
+      {
+        "path": "top/u_lrc_osd",
+        "depth": 1,
+        "module": "lrc_osd",
+        "lut": 655,
+        "ff": 90,
+        "bram": 0,
+        "dsp": 0,
+        "le": 655
+      },
+      {
+        "path": "top/u_lrc_osd/u_font_rom",
+        "depth": 2,
+        "module": "lrc_font_rom",
+        "lut": 424,
+        "ff": 0,
+        "bram": 0,
+        "dsp": 0,
+        "le": 424
+      },
+      {
+        "path": "top/u_media_probe",
+        "depth": 1,
+        "module": "media_probe",
+        "lut": 54,
+        "ff": 35,
+        "bram": 0,
+        "dsp": 0,
+        "le": 54
+      },
+      {
+        "path": "top/u_media_supervisor",
+        "depth": 1,
+        "module": "media_supervisor",
+        "lut": 135,
+        "ff": 75,
+        "bram": 0,
+        "dsp": 0,
+        "le": 135
+      },
+      {
+        "path": "top/u_media_video_reset",
+        "depth": 1,
+        "module": "reset_sync",
+        "lut": 2,
+        "ff": 1,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_mem_reset",
+        "depth": 1,
+        "module": "reset_sync",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_mv_preloaded_sync",
+        "depth": 1,
+        "module": "sync_2ff",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_mv_sector_mux",
+        "depth": 1,
+        "module": "mv_sector_mux",
+        "lut": 4,
+        "ff": 3,
+        "bram": 0,
+        "dsp": 0,
+        "le": 4
+      },
+      {
+        "path": "top/u_mv_stream_player",
+        "depth": 1,
+        "module": "mv_stream_player",
+        "lut": 121,
+        "ff": 80,
+        "bram": 0,
+        "dsp": 0,
+        "le": 121
+      },
+      {
+        "path": "top/u_mv_writer_sync",
+        "depth": 1,
+        "module": "sync_2ff",
+        "lut": 0,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_osd_overlay_24",
+        "depth": 1,
+        "module": "osd_overlay_24",
+        "lut": 20,
+        "ff": 11,
+        "bram": 0,
+        "dsp": 0,
+        "le": 21
+      },
+      {
+        "path": "top/u_osd_overlay_24/u_osd",
+        "depth": 2,
+        "module": "status_osd_overlay",
+        "lut": 20,
+        "ff": 11,
+        "bram": 0,
+        "dsp": 0,
+        "le": 21
+      },
+      {
+        "path": "top/u_param_menu_controller",
+        "depth": 1,
+        "module": "param_menu_controller",
+        "lut": 308,
+        "ff": 172,
+        "bram": 0,
+        "dsp": 0,
+        "le": 308
+      },
+      {
+        "path": "top/u_pcm_volume_fade",
+        "depth": 1,
+        "module": "pcm_volume_fade",
+        "lut": 0,
+        "ff": 0,
+        "bram": 0,
+        "dsp": 1,
+        "le": 0
+      },
+      {
+        "path": "top/u_play_ctrl",
+        "depth": 1,
+        "module": "play_ctrl",
+        "lut": 26,
+        "ff": 26,
+        "bram": 0,
+        "dsp": 0,
+        "le": 28
+      },
+      {
+        "path": "top/u_promax_audio_waveform",
+        "depth": 1,
+        "module": "promax_audio_waveform",
+        "lut": 134,
+        "ff": 39,
+        "bram": 0,
+        "dsp": 0,
+        "le": 134
+      },
+      {
+        "path": "top/u_s6_video_layer",
+        "depth": 1,
+        "module": "s6_video_layer",
+        "lut": 604,
+        "ff": 320,
+        "bram": 0,
+        "dsp": 4,
+        "le": 605
+      },
+      {
+        "path": "top/u_s6_video_layer/renderer",
+        "depth": 2,
+        "module": "vinyl_renderer",
+        "lut": 56,
+        "ff": 6,
+        "bram": 0,
+        "dsp": 2,
+        "le": 56
+      },
+      {
+        "path": "top/u_s6_video_layer/scheduler",
+        "depth": 2,
+        "module": "mv_frame_scheduler",
+        "lut": 297,
+        "ff": 139,
+        "bram": 0,
+        "dsp": 1,
+        "le": 297
+      },
+      {
+        "path": "top/u_sdram_rd_arbiter",
+        "depth": 1,
+        "module": "sdram_rd_arbiter",
+        "lut": 16,
+        "ff": 9,
+        "bram": 0,
+        "dsp": 0,
+        "le": 16
+      },
+      {
+        "path": "top/u_startup_pulse",
+        "depth": 1,
+        "module": "startup_pulse",
+        "lut": 34,
+        "ff": 22,
+        "bram": 0,
+        "dsp": 0,
+        "le": 34
+      },
+      {
+        "path": "top/u_stream_session",
+        "depth": 1,
+        "module": "stream_session",
+        "lut": 14,
+        "ff": 11,
+        "bram": 0,
+        "dsp": 0,
+        "le": 14
+      },
+      {
+        "path": "top/u_sync_fade_gain",
+        "depth": 1,
+        "module": "sync_fade_gain",
+        "lut": 111,
+        "ff": 86,
+        "bram": 0,
+        "dsp": 0,
+        "le": 111
+      },
+      {
+        "path": "top/u_thumbnail_view_reader",
+        "depth": 1,
+        "module": "thumbnail_view_reader",
+        "lut": 354,
+        "ff": 241,
+        "bram": 2,
+        "dsp": 1,
+        "le": 358
+      },
+      {
+        "path": "top/u_thumbnail_view_reader/u_layout_display",
+        "depth": 2,
+        "module": "thumbnail_layout",
+        "lut": 14,
+        "ff": 1,
+        "bram": 0,
+        "dsp": 0,
+        "le": 14
+      },
+      {
+        "path": "top/u_thumbnail_view_reader/u_thmb_fifo",
+        "depth": 2,
+        "module": "rfifo_32_32_512",
+        "lut": 104,
+        "ff": 84,
+        "bram": 2,
+        "dsp": 0,
+        "le": 106
+      },
+      {
+        "path": "top/u_thumbnail_view_reader/u_thmb_fifo/ram_inst",
+        "depth": 3,
+        "module": "ram_infer_rfifo_32_32_512",
+        "lut": 0,
+        "ff": 0,
+        "bram": 2,
+        "dsp": 0,
+        "le": 0
+      },
+      {
+        "path": "top/u_thumbnail_view_reader/u_thmb_fifo/rd_to_wr_cross_inst",
+        "depth": 3,
+        "module": "fifo_cross_domain_addr_process_al_rfifo_32_32_512",
+        "lut": 32,
+        "ff": 32,
+        "bram": 0,
+        "dsp": 0,
+        "le": 32
+      },
+      {
+        "path": "top/u_thumbnail_view_reader/u_thmb_fifo/wr_to_rd_cross_inst",
+        "depth": 3,
+        "module": "fifo_cross_domain_addr_process_al_rfifo_32_32_512",
+        "lut": 25,
+        "ff": 25,
+        "bram": 0,
+        "dsp": 0,
+        "le": 25
+      },
+      {
+        "path": "top/u_timebase_48k",
+        "depth": 1,
+        "module": "timebase_48k",
+        "lut": 65,
+        "ff": 36,
+        "bram": 0,
+        "dsp": 0,
+        "le": 65
+      },
+      {
+        "path": "top/u_ui_event_bridge",
+        "depth": 1,
+        "module": "ui_event_bridge",
+        "lut": 269,
+        "ff": 67,
+        "bram": 0,
+        "dsp": 0,
+        "le": 269
+      },
+      {
+        "path": "top/u_video_fade_transition",
+        "depth": 1,
+        "module": "video_fade_transition",
+        "lut": 68,
+        "ff": 44,
+        "bram": 0,
+        "dsp": 0,
+        "le": 68
+      },
+      {
+        "path": "top/u_video_reset",
+        "depth": 1,
+        "module": "reset_sync",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/u_video_rgb_to_axis_640x480",
+        "depth": 1,
+        "module": "video_rgb_to_axis_640x480",
+        "lut": 633,
+        "ff": 100,
+        "bram": 0,
+        "dsp": 0,
+        "le": 633
+      },
+      {
+        "path": "top/u_video_transition_apply",
+        "depth": 1,
+        "module": "video_transition_apply",
+        "lut": 12,
+        "ff": 0,
+        "bram": 0,
+        "dsp": 3,
+        "le": 12
+      },
+      {
+        "path": "top/u_wav_stream_player",
+        "depth": 1,
+        "module": "wav_stream_player",
+        "lut": 439,
+        "ff": 273,
+        "bram": 8,
+        "dsp": 0,
+        "le": 445
+      },
+      {
+        "path": "top/video_pll_m0",
+        "depth": 1,
+        "module": "video_pll",
+        "lut": 0,
+        "ff": 0,
+        "bram": 0,
+        "dsp": 0,
+        "le": 0
+      },
+      {
+        "path": "top/video_timing_data_m0",
+        "depth": 1,
+        "module": "video_timing_data",
+        "lut": 59,
+        "ff": 28,
+        "bram": 0,
+        "dsp": 0,
+        "le": 60
+      },
+      {
+        "path": "top/video_timing_data_m0/color_bar_m0",
+        "depth": 2,
+        "module": "color_bar",
+        "lut": 59,
+        "ff": 27,
+        "bram": 0,
+        "dsp": 0,
+        "le": 59
+      },
+      {
+        "path": "top/u_pcm_media_tone",
+        "depth": 1,
+        "module": "pcm_media_tone",
+        "lut": 14,
+        "ff": 6,
+        "bram": 0,
+        "dsp": 0,
+        "le": 14
+      },
+      {
+        "path": "top/u_thumbnail_controller",
+        "depth": 1,
+        "module": "thumbnail_controller",
+        "lut": 2,
+        "ff": 2,
+        "bram": 0,
+        "dsp": 0,
+        "le": 2
+      },
+      {
+        "path": "top/video_delay_m0",
+        "depth": 1,
+        "module": "video_delay",
+        "lut": 60,
+        "ff": 62,
+        "bram": 0,
+        "dsp": 0,
+        "le": 62
+      }
+    ],
+    "input_count": 106,
+    "snapshot_inputs_verified": true
+  }
+]
