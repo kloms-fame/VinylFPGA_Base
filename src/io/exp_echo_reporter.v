@@ -17,6 +17,9 @@
 //   IR hhhhhhhh CMD hh               hhhhhhhh=32 位 NEC 码，hh=命令字节 code[15:8]
 //   IR REPEAT
 //   BOOT LOGO / BOOT DONE            S2：上电进入 STATE_BOOT / 离开 STATE_BOOT
+//   INFO/VERIFY/EXPHUB/DIP INIT     S1/S2：媒体状态、在场声明、DIP 初始电平
+//   STAT ...                         S7-01B：周期遥测快照（默认 2 秒）
+//   ERR hh                           S7-01B：最近错误码变化时上报
 // =============================================================================
 module exp_echo_reporter #(
     parameter integer CLK_FREQ_HZ = 50_000_000,
@@ -39,7 +42,18 @@ module exp_echo_reporter #(
     input  wire        exp_present,
     input  wire [5:0]  dip_state,
 
-    output wire        uart_tx
+    // ===================== S7-01B：遥测输入（来自 health_monitor）=====================
+    input  wire        stat_req,          // 周期 STAT 请求脉冲
+    input  wire        err_req,           // 错误变化 ERR 请求脉冲
+    input  wire [7:0]  err_code,          // 最近错误码（sticky）
+    input  wire [15:0] stat_underrun,     // 饱和：音频欠载次数
+    input  wire [15:0] stat_buffer_low,   // 饱和：缓冲低水位次数
+    input  wire [15:0] stat_video_fail,   // 饱和：MV 失败次数
+    input  wire [15:0] stat_ev_overflow,  // 饱和：事件溢出次数
+    input  wire [31:0] fw_version,        // 运行版本
+
+    output wire        uart_tx,
+    output reg         ovf_pulse           // 事件队列溢出单拍脉冲（供 health_monitor 计数）
 );
     `include "exp_event_defs.vh"
 
@@ -50,7 +64,8 @@ module exp_echo_reporter #(
                      ST_BOOT   = 3'd4,
                      ST_BOOTDN = 4'd5,
                      ST_INFO = 4'd6, ST_VERIFY = 4'd7,
-                     ST_PRESENT = 4'd8, ST_DIPINIT = 4'd9;
+                     ST_PRESENT = 4'd8, ST_DIPINIT = 4'd9,
+                     ST_STAT = 4'd10, ST_ERR = 4'd11;
 
     localparam integer MSG_MAX = 96;
 
@@ -69,6 +84,8 @@ module exp_echo_reporter #(
     reg        media_reported;
     reg [23:0] media_report;
     reg [5:0]  dip_initial;
+    reg        stat_pending;
+    reg        err_pending;
 
     // 事件小队列（深度 8）；溢出只翻标志，不覆盖已有事件
     reg [3:0]  q_code [0:7];
@@ -331,6 +348,29 @@ module exp_echo_reporter #(
         end
     endtask
 
+    // S7-01B：周期遥测快照。计数直接读取 health_monitor 持续驱动的总线。
+    task fmt_stat;
+        begin
+            put_byte("S"); put_byte("T"); put_byte("A"); put_byte("T"); put_byte(" ");
+            put_byte("U"); put_byte("R"); put_byte("="); put_hex16(stat_underrun);
+            put_byte(" "); put_byte("B"); put_byte("L"); put_byte("="); put_hex16(stat_buffer_low);
+            put_byte(" "); put_byte("V"); put_byte("F"); put_byte("="); put_hex16(stat_video_fail);
+            put_byte(" "); put_byte("O"); put_byte("V"); put_byte("="); put_hex16(stat_ev_overflow);
+            put_byte(" "); put_byte("E"); put_byte("R"); put_byte("R"); put_byte("="); put_hex8(err_code);
+            put_byte(" "); put_byte("V"); put_byte("E"); put_byte("R"); put_byte("="); put_hex32(fw_version);
+            put_crlf();
+        end
+    endtask
+
+    // S7-01B：最近错误码上报。
+    task fmt_err;
+        begin
+            put_byte("E"); put_byte("R"); put_byte("R"); put_byte(" ");
+            put_hex8(err_code);
+            put_crlf();
+        end
+    endtask
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state          <= ST_BANNER;
@@ -351,23 +391,34 @@ module exp_echo_reporter #(
             q_wr           <= 3'd0;
             q_count        <= 4'd0;
             q_overflow     <= 1'b0;
+            ovf_pulse      <= 1'b0;
+            stat_pending   <= 1'b0;
+            err_pending    <= 1'b0;
             cur_code       <= EV_NONE;
             cur_arg        <= 16'd0;
             cur_aux        <= 16'd0;
         end else begin
             tx_start    <= 1'b0;
+            ovf_pulse   <= 1'b0;
             boot_active_q <= boot_active;
 
             // Latch BOOT DONE even while a UART message is in flight.
             if (boot_active_q && !boot_active)
                 boot_done_pending <= 1'b1;
+            // S7-01B：锁存 health_monitor 的单拍请求，直到状态机完成上报。
+            if (ECHO_ENABLE && stat_req)
+                stat_pending <= 1'b1;
+            if (ECHO_ENABLE && err_req)
+                err_pending <= 1'b1;
             if (push_event) begin
                 q_code[q_wr] <= ev_code;
                 q_arg[q_wr] <= ev_arg;
                 q_aux[q_wr] <= ev_aux;
                 q_wr <= q_wr + 3'd1;
-            end else if (ev_valid && ECHO_ENABLE)
+            end else if (ev_valid && ECHO_ENABLE) begin
                 q_overflow <= 1'b1;
+                ovf_pulse  <= 1'b1;
+            end
             // Simultaneous enqueue/dequeue keeps occupancy, rather than losing one.
             case ({push_event, pop_event})
                 2'b10: q_count <= q_count + 4'd1;
@@ -417,12 +468,20 @@ module exp_echo_reporter #(
                         media_report <= media_status;
                         media_reported <= 1'b1;
                         state <= ST_INFO;
+                    end else if (ECHO_ENABLE && err_pending) begin
+                        // S7-01B：错误变化优先于普通事件，避免被按键流长时间淹没
+                        err_pending <= 1'b0;
+                        state <= ST_ERR;
                     end else if (pop_event) begin
                         cur_code <= q_code[q_rd];
                         cur_arg  <= q_arg[q_rd];
                         cur_aux  <= q_aux[q_rd];
                         q_rd     <= q_rd + 3'd1;
                         state    <= ST_EVENT;
+                    end else if (ECHO_ENABLE && stat_pending) begin
+                        // S7-01B：周期遥测，仅填充空闲，不抢占更高优先级
+                        stat_pending <= 1'b0;
+                        state <= ST_STAT;
                     end
                 end
 
@@ -439,6 +498,14 @@ module exp_echo_reporter #(
                 end
                 ST_VERIFY: begin
                     msg_len = 8'd0; fmt_verify(); tx_index <= 0;
+                    state_after_send <= ST_IDLE; state <= ST_SEND;
+                end
+                ST_STAT: begin
+                    msg_len = 8'd0; fmt_stat(); tx_index <= 0;
+                    state_after_send <= ST_IDLE; state <= ST_SEND;
+                end
+                ST_ERR: begin
+                    msg_len = 8'd0; fmt_err(); tx_index <= 0;
                     state_after_send <= ST_IDLE; state <= ST_SEND;
                 end
                 ST_EVENT: begin

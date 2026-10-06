@@ -82,6 +82,12 @@ module tb_expansion_s1;
         .board_buzzer_n   (board_buzzer_n),
         .boot_active      (boot_active),
         .media_status     (media_status),
+                              .underrun_pulse   (1'b0),
+                              .wav_buffer_low   (1'b0),
+                              .wav_stream_active(1'b0),
+                              .mv_failed        (1'b0),
+                              .osd_err_valid    (1'b0),
+                              .osd_err_code     (8'd0),
         .uart_tx          (uart_tx)
     );
 

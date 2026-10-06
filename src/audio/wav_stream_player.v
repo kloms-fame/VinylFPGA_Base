@@ -44,7 +44,8 @@ module wav_stream_player #(
     output reg  [31:0] sample_counter,
     output wire        stream_active,
     output wire        stream_end,
-    output wire        buffer_low
+    output wire        buffer_low,
+    output reg         underrun_pulse   // S7-01B：流式播放中读侧欠载单拍脉冲（video_clk 域）
 );
     localparam [ADDR_WIDTH:0] BUFFER_HIGH_WATER = (1 << (ADDR_WIDTH - 1));
     localparam [ADDR_WIDTH:0] BUFFER_LOW_WATER  = (1 << (ADDR_WIDTH - 2));
@@ -226,6 +227,7 @@ module wav_stream_player #(
             rd_ptr         <= {ADDR_WIDTH{1'b0}};
             sample_valid   <= 1'b0;
             sample_counter <= 32'd0;
+            underrun_pulse <= 1'b0;
             wr_gray_sync1  <= {ADDR_WIDTH{1'b0}};
             wr_gray_sync2  <= {ADDR_WIDTH{1'b0}};
             wr_gray        <= {ADDR_WIDTH{1'b0}};
@@ -236,6 +238,7 @@ module wav_stream_player #(
             stream_active_rd  <= 1'b0;
             stream_end_rd     <= 1'b0;
         end else begin
+            underrun_pulse <= 1'b0;
             wr_gray       <= to_gray(wr_ptr);
             wr_gray_sync1 <= wr_gray;
             wr_gray_sync2 <= wr_gray_sync1;
@@ -269,6 +272,13 @@ module wav_stream_player #(
                     sample_counter <= sample_counter + 1'b1;
                 end else begin
                     sample_valid <= 1'b1;
+                    // 欠载：写侧尚未完成最后一个扇区（WS_END），但读侧已无
+                    // 可用样本。此时输出静音，同时打一拍欠载脉冲供 S7-01B 遥测。
+                    // 门控 sample_counter!=0：播放起始阶段缓冲尚未充满时不应
+                    // 计为欠载，避免每次起播都产生一次误报。
+                    if (stream_active_rd && (wstate_sync2 != WS_END) &&
+                        (sample_counter != 32'd0))
+                        underrun_pulse <= 1'b1;
                 end
             end
 

@@ -68,6 +68,14 @@ module expansion_integration #(
     input  wire        boot_active,
     input  wire [23:0] media_status, // Already synchronized by top
 
+    // ===================== S7-01B：遥测输入（顶层已同步到 clk 域）=====================
+    input  wire        underrun_pulse,     // 音频欠载单拍脉冲
+    input  wire        wav_buffer_low,     // WAV 缓冲低水位电平
+    input  wire        wav_stream_active,  // WAV 流式播放中电平
+    input  wire        mv_failed,          // MV 取帧失败电平
+    input  wire        osd_err_valid,      // 错误码变化单拍脉冲
+    input  wire [7:0]  osd_err_code,       // 已同步错误码
+
     // ===================== S3：选曲事件出口（最小新增）=====================
     // ui_event_bus 的单拍事件流原样引出，供 S3 的 ui_event_bridge 解码成
     // prev/next/confirm/mode。bus 侧语义与串口回显完全一致，不二次加工。
@@ -107,6 +115,17 @@ module expansion_integration #(
     wire [3:0]  ev_code;
     wire [15:0] ev_arg;
     wire [15:0] ev_aux;
+
+    // ---- S7-01B：health_monitor <-> exp_echo_reporter 的中间信号 ----
+    wire        stat_req;
+    wire        err_req;
+    wire [7:0]  err_code;
+    wire [15:0] cnt_underrun;
+    wire [15:0] cnt_buffer_low;
+    wire [15:0] cnt_video_fail;
+    wire [15:0] cnt_ev_overflow;
+    wire [31:0] fw_version;
+    wire        ev_ovf_pulse;
 
     // ---- 输入驱动汇聚层（sync / debounce / edge / 正交 / NEC）----
     expansion_io_hub #(
@@ -227,6 +246,31 @@ module expansion_integration #(
     assign ui_event_arg   = ev_arg;
     assign ui_event_aux   = ev_aux;
 
+    // ---- S7-01B：健康遥测汇聚（被动旁路，clk 域）----
+    health_monitor #(
+        .CLK_FREQ_HZ   (CLK_FREQ_HZ),
+        .STAT_PERIOD_MS(2000),
+        .FW_VERSION    (32'h0701_0001)
+    ) u_health_monitor (
+        .clk           (clk),
+        .rst_n         (rst_n),
+        .underrun_pulse(underrun_pulse),
+        .buffer_low    (wav_buffer_low),
+        .stream_active (wav_stream_active),
+        .video_failed  (mv_failed),
+        .osd_err_valid (osd_err_valid),
+        .osd_err_code  (osd_err_code),
+        .ev_overflow   (ev_ovf_pulse),
+        .stat_req      (stat_req),
+        .err_req       (err_req),
+        .err_code      (err_code),
+        .cnt_underrun  (cnt_underrun),
+        .cnt_buffer_low(cnt_buffer_low),
+        .cnt_video_fail(cnt_video_fail),
+        .cnt_ev_overflow(cnt_ev_overflow),
+        .fw_version    (fw_version)
+    );
+
     // ---- 硬件回显上报器 ----
     exp_echo_reporter #(
         .CLK_FREQ_HZ (CLK_FREQ_HZ),
@@ -244,7 +288,16 @@ module expansion_integration #(
         .io_ready   (io_ready),
         .exp_present(exp_present),
         .dip_state  (dip_level),
-        .uart_tx    (uart_tx)
+        .stat_req   (stat_req),
+        .err_req    (err_req),
+        .err_code   (err_code),
+        .stat_underrun   (cnt_underrun),
+        .stat_buffer_low (cnt_buffer_low),
+        .stat_video_fail (cnt_video_fail),
+        .stat_ev_overflow(cnt_ev_overflow),
+        .fw_version (fw_version),
+        .uart_tx    (uart_tx),
+        .ovf_pulse  (ev_ovf_pulse)
     );
 
     // ---- 母板按键 KEY1-3 / 拨码 SW1-4：复用 J2 移植的消抖驱动 ----

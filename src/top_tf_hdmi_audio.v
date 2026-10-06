@@ -17,6 +17,7 @@
 `include "io/exp_baud_tick.v"
 `include "io/exp_uart_tx.v"
 `include "io/exp_echo_reporter.v"
+`include "io/health_monitor.v"
 `include "io/buzzer_feedback.v"
 `include "io/expansion_integration.v"
 `include "io/ui_event_bridge.v"
@@ -413,6 +414,7 @@ wire signed [15:0] wav_sample_right;
 wire        wav_stream_active;
 wire        wav_stream_end;
 wire        wav_buffer_low;
+wire        wav_underrun_pulse;   // S7-01B：音频欠载单拍脉冲（video_clk 域）
 wire [31:0] wav_sample_counter;
 wire [7:0]  wav_fade_gain;
 wire        wav_scaled_valid;
@@ -445,6 +447,23 @@ reg         osd_error_toggle_sync2;
 reg         osd_error_toggle_seen;
 reg         osd_error_update_pending;
 reg [7:0]   osd_error_code_frame;
+// S7-01B：错误码/欠载/低水位/流式/MV失败 -> clk 域的同步链
+reg [7:0]   osd_error_code_c1;
+reg [7:0]   osd_error_code_c2;
+reg         osd_error_toggle_c1;
+reg         osd_error_toggle_c2;
+reg         osd_error_toggle_cseen;
+reg         osd_err_valid_clk;
+reg [7:0]   osd_err_code_clk;
+reg         underrun_tgl;          // video_clk 域：欠载脉冲转电平翻转
+reg         underrun_tgl_c1;
+reg         underrun_tgl_c2;
+reg         wav_buffer_low_c1;
+reg         wav_buffer_low_c2;
+reg         wav_stream_active_c1;
+reg         wav_stream_active_c2;
+reg         mv_failed_c1;
+reg         mv_failed_c2;
 reg [9:0]   osd_pixel_x;
 reg         vs_q;
 reg         transition_armed;
@@ -1592,6 +1611,58 @@ always @(posedge clk or negedge exp_rst_n) begin
     end
 end
 
+// ===================== S7-01B：遥测信号跨域同步 =====================
+// 音频欠载是 video_clk 域的单拍脉冲，转成电平翻转再跨到 clk 域边沿还原；
+// 缓冲低水位/流式状态/MV 失败是慢变电平，直接两级同步；
+// osd_error_code 是低频 8 位数据，复用其 toggle 作为捆绑更新标志。
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n)
+        underrun_tgl <= 1'b0;
+    else if (wav_underrun_pulse)
+        underrun_tgl <= ~underrun_tgl;
+end
+
+always @(posedge clk or negedge exp_rst_n) begin
+    if (!exp_rst_n) begin
+        underrun_tgl_c1      <= 1'b0;
+        underrun_tgl_c2      <= 1'b0;
+        wav_buffer_low_c1    <= 1'b0;
+        wav_buffer_low_c2    <= 1'b0;
+        wav_stream_active_c1 <= 1'b0;
+        wav_stream_active_c2 <= 1'b0;
+        mv_failed_c1         <= 1'b0;
+        mv_failed_c2         <= 1'b0;
+        osd_error_code_c1    <= 8'd0;
+        osd_error_code_c2    <= 8'd0;
+        osd_error_toggle_c1  <= 1'b0;
+        osd_error_toggle_c2  <= 1'b0;
+        osd_error_toggle_cseen <= 1'b0;
+        osd_err_valid_clk    <= 1'b0;
+        osd_err_code_clk     <= 8'd0;
+    end else begin
+        underrun_tgl_c1      <= underrun_tgl;
+        underrun_tgl_c2      <= underrun_tgl_c1;
+        wav_buffer_low_c1    <= wav_buffer_low;
+        wav_buffer_low_c2    <= wav_buffer_low_c1;
+        wav_stream_active_c1 <= wav_stream_active;
+        wav_stream_active_c2 <= wav_stream_active_c1;
+        mv_failed_c1         <= mv_failed;
+        mv_failed_c2         <= mv_failed_c1;
+        osd_error_code_c1    <= osd_error_code;
+        osd_error_code_c2    <= osd_error_code_c1;
+        osd_error_toggle_c1  <= osd_error_toggle;
+        osd_error_toggle_c2  <= osd_error_toggle_c1;
+        osd_err_valid_clk    <= 1'b0;
+        if (osd_error_toggle_c2 != osd_error_toggle_cseen) begin
+            osd_error_toggle_cseen <= osd_error_toggle_c2;
+            osd_err_valid_clk      <= 1'b1;
+            osd_err_code_clk       <= osd_error_code_c2;
+        end
+    end
+end
+
+wire underrun_pulse_clk = underrun_tgl_c1 ^ underrun_tgl_c2;
+
 // Silent 48 kHz samples cover startup, browsing, pause and track prefetch.
 // Legacy tone is allowed only after boot when no audio resource was found.
 wire media_audio_available = media_status_v2[20] && (|media_status_v2[19:16]);
@@ -1656,7 +1727,8 @@ wav_stream_player #(
     .sample_counter    (wav_sample_counter),
     .stream_active     (wav_stream_active),
     .stream_end        (wav_stream_end),
-    .buffer_low        (wav_buffer_low)
+    .buffer_low        (wav_buffer_low),
+    .underrun_pulse    (wav_underrun_pulse)
 );
 
 // 单声道 PCM 左右声道使用同一数据。
@@ -1982,6 +2054,12 @@ expansion_integration #(
     .ui_ev_valid      (ui_ev_valid),
     .boot_active      (boot_active_s2),
     .media_status     (media_status_clk),
+    .underrun_pulse   (underrun_pulse_clk),
+    .wav_buffer_low   (wav_buffer_low_c2),
+    .wav_stream_active(wav_stream_active_c2),
+    .mv_failed        (mv_failed_c2),
+    .osd_err_valid    (osd_err_valid_clk),
+    .osd_err_code     (osd_err_code_clk),
     .ui_event_valid   (ui_event_valid),
     .ui_event_code    (ui_event_code),
     .ui_event_arg     (ui_event_arg),
