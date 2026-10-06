@@ -33,7 +33,8 @@ module sd_sector_adapter #(
 
     reg [8:0] byte_cnt;
     reg       busy_reg;
-    reg [31:0] tmo_cnt;
+    localparam integer TMO_W = $clog2(SECTOR_TIMEOUT_CYCLES); // 25
+    reg [TMO_W-1:0] tmo_cnt;
     reg       tmo_done;
 
     assign sector_busy       = busy_reg;
@@ -48,7 +49,7 @@ module sd_sector_adapter #(
             sd_sec_read_addr <= 32'd0;
             byte_cnt <= 9'd0;
             busy_reg <= 1'b0;
-            tmo_cnt <= 32'd0;
+            tmo_cnt <= {TMO_W{1'b0}};
             tmo_done <= 1'b0;
             sector_error <= ERR_NONE;
         end else begin
@@ -58,13 +59,13 @@ module sd_sector_adapter #(
                 sd_sec_read_addr <= sector_lba;
                 busy_reg <= 1'b1;
                 byte_cnt <= 9'd0;
-                tmo_cnt <= 32'd0;
+                tmo_cnt <= {TMO_W{1'b0}};
                 sector_error <= ERR_NONE;
             end else if (sd_sec_read_end) begin
                 sd_sec_read <= 1'b0;
                 busy_reg <= 1'b0;
                 byte_cnt <= 9'd0;
-                tmo_cnt <= 32'd0;
+                tmo_cnt <= {TMO_W{1'b0}};
                 sector_error <= ERR_NONE;
             end else if (sd_sec_read_data_valid) begin
                 byte_cnt <= byte_cnt + 9'd1;
@@ -76,11 +77,11 @@ module sd_sector_adapter #(
                     sd_sec_read  <= 1'b0;
                     busy_reg     <= 1'b0;
                     byte_cnt     <= 9'd0;
-                    tmo_cnt      <= 32'd0;
+                    tmo_cnt      <= {TMO_W{1'b0}};
                     tmo_done     <= 1'b1;
                     sector_error <= ERR_RD_TMO;
                 end else begin
-                    tmo_cnt <= tmo_cnt + 32'd1;
+                    tmo_cnt <= tmo_cnt + 1'b1;
                 end
             end
         end

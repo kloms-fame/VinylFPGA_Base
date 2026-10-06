@@ -12,20 +12,15 @@
 //      进入 REMOUNT_COOLDOWN_MS 冷却再重挂（无专用卡检测脚时以协议超时判卡，
 //      重插卡后在下一次重挂窗口内自动恢复）。
 //   2) 扇区事务看门狗：sector_done 伴随 sector_error!=0（由 sd_sector_adapter
-//      的 SECTOR_TIMEOUT_MS 超时产生）-> Err-05 读超时；底层 SD 控制器此刻
+//      的 SECTOR_TIMEOUT_CYCLES 超时产生）-> Err-05 读超时；底层 SD 控制器此刻
 //      已被卡死，立即复位恢复。
 //
-// 每次 SD 复位递增 media_epoch（恢复代次）；cnt_sd_reset/cnt_sector_err 为
-// 饱和遥测计数（本阶段引出，供后续 S7-05 外设反馈扩展）。
-//
-// 集中错误码（本模块负责 01/05，其余 02/03/04/06/07/08/09 由既有 FAT/OSD
-// 错误路径承载，见交付说明错误码表）：
+// 集中错误码（本模块负责 01/05，其余由既有 FAT/OSD 错误路径承载）：
 //   Err-01 挂载失败 / Err-05 读超时
 // =============================================================================
 module media_supervisor #(
     parameter integer CLK_FREQ_HZ         = 100_000_000,
     parameter integer MOUNT_TIMEOUT_MS    = 5000,    // 挂载总期限
-    parameter integer SECTOR_TIMEOUT_MS   = 250,     // 扇区事务期限（冗余观测）
     parameter integer MOUNT_RETRY_MAX     = 3,       // 单轮挂载重试上限
     parameter integer REMOUNT_COOLDOWN_MS = 30000,   // 连续失败后重挂冷却
     parameter integer RESET_PULSE_CYCLES  = 100      // SD 复位脉冲宽度
@@ -42,10 +37,7 @@ module media_supervisor #(
     // ---- 控制/上报输出 ----
     output reg         sd_rst_n,        // 低有效，复位 SD 媒体子系统
     output reg  [7:0]  media_err_code,  // 集中错误码（sticky，最近非零）
-    output reg         media_err_toggle,// 错误码变化翻转标志（跨域捆绑握手）
-    output reg  [7:0]  media_epoch,     // 恢复代次（每次 SD 复位递增）
-    output reg  [15:0] cnt_sd_reset,    // SD 复位次数（饱和）
-    output reg  [15:0] cnt_sector_err   // 扇区错误次数（饱和）
+    output reg         media_err_toggle // 错误码变化翻转标志（跨域捆绑握手）
 );
 
     localparam [7:0] ERR_NONE   = 8'h00;
@@ -56,36 +48,46 @@ module media_supervisor #(
     localparam [2:0] ST_RESET_PULSE = 3'd1;
     localparam [2:0] ST_COOLDOWN    = 3'd2;
 
-    localparam integer MOUNT_CYCLES    = (CLK_FREQ_HZ / 1000) * MOUNT_TIMEOUT_MS;
-    localparam integer COOLDOWN_CYCLES = (CLK_FREQ_HZ / 1000) * REMOUNT_COOLDOWN_MS;
-    localparam integer MOUNT_W         = $clog2(MOUNT_CYCLES + 1);
-    localparam integer COOLDOWN_W      = $clog2(COOLDOWN_CYCLES + 1);
-    localparam integer PULSE_W         = $clog2(RESET_PULSE_CYCLES + 1);
-    localparam [2:0]  RETRY_LIMIT      = MOUNT_RETRY_MAX[2:0];
+    // 共享 1kHz 毫秒预分频，把挂载/冷却两个长计时器从周期计数压缩成毫秒计数，
+    // 明显降低寄存器与比较逻辑资源占用，同时保持误差在 1ms 量级。
+    localparam integer PRE_DIV  = CLK_FREQ_HZ / 1000;         // 100000 @100MHz
+    localparam integer PRE_W    = $clog2(PRE_DIV);            // 17
+    localparam integer MOUNT_W  = $clog2(MOUNT_TIMEOUT_MS);   // 13 (5000)
+    localparam integer COOL_W   = $clog2(REMOUNT_COOLDOWN_MS);// 15 (30000)
+    localparam integer PULSE_W  = $clog2(RESET_PULSE_CYCLES); // 7  (100)
+    localparam [2:0]  RETRY_LIMIT = MOUNT_RETRY_MAX[2:0];
 
     reg [2:0]          state;
+    reg [PRE_W-1:0]    pre_cnt;
+    wire               ms_tick = (pre_cnt >= (PRE_DIV - 1));
     reg [MOUNT_W-1:0]  mount_cnt;
-    reg [COOLDOWN_W-1:0] cool_cnt;
+    reg [COOL_W-1:0]   cool_cnt;
     reg [PULSE_W-1:0]  pulse_cnt;
     reg [2:0]          mount_attempt;
-    reg                sd_rst_n_q;
+
+    // 毫秒预分频器。
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            pre_cnt <= {PRE_W{1'b0}};
+        else if (ms_tick)
+            pre_cnt <= {PRE_W{1'b0}};
+        else
+            pre_cnt <= pre_cnt + 1'b1;
+    end
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            state          <= ST_WAIT_MOUNT;
-            mount_cnt      <= {MOUNT_W{1'b0}};
-            cool_cnt       <= {COOLDOWN_W{1'b0}};
-            pulse_cnt      <= {PULSE_W{1'b0}};
-            mount_attempt  <= 3'd0;
-            sd_rst_n       <= 1'b1;
-            media_err_code <= ERR_NONE;
-            media_err_toggle <= 1'b0;
-            cnt_sector_err <= 16'd0;
+            state           <= ST_WAIT_MOUNT;
+            mount_cnt       <= {MOUNT_W{1'b0}};
+            cool_cnt        <= {COOL_W{1'b0}};
+            pulse_cnt       <= {PULSE_W{1'b0}};
+            mount_attempt   <= 3'd0;
+            sd_rst_n        <= 1'b1;
+            media_err_code  <= ERR_NONE;
+            media_err_toggle<= 1'b0;
         end else begin
             // ---- 扇区事务错误（最高优先级）：adapter 超时返回 -> 复位恢复 ----
             if (sector_done && (sector_error != 8'd0)) begin
-                if (cnt_sector_err != 16'hFFFF)
-                    cnt_sector_err <= cnt_sector_err + 16'd1;
                 if (media_err_code != ERR_RD_TMO) begin
                     media_err_code   <= ERR_RD_TMO;
                     media_err_toggle <= ~media_err_toggle;
@@ -103,8 +105,8 @@ module media_supervisor #(
                     if (media_ready) begin
                         mount_cnt     <= {MOUNT_W{1'b0}};
                         mount_attempt <= 3'd0;
-                    end else begin
-                        if (mount_cnt >= (MOUNT_CYCLES - 1)) begin
+                    end else if (ms_tick) begin
+                        if (mount_cnt >= (MOUNT_TIMEOUT_MS - 1)) begin
                             mount_cnt <= {MOUNT_W{1'b0}};
                             if (media_err_code != ERR_MOUNT) begin
                                 media_err_code   <= ERR_MOUNT;
@@ -112,11 +114,11 @@ module media_supervisor #(
                             end
                             if (mount_attempt >= RETRY_LIMIT) begin
                                 mount_attempt <= 3'd0;
-                                state  <= ST_COOLDOWN;
-                                cool_cnt <= {COOLDOWN_W{1'b0}};
+                                state   <= ST_COOLDOWN;
+                                cool_cnt<= {COOL_W{1'b0}};
                             end else begin
                                 mount_attempt <= mount_attempt + 3'd1;
-                                state  <= ST_RESET_PULSE;
+                                state   <= ST_RESET_PULSE;
                                 pulse_cnt <= {PULSE_W{1'b0}};
                                 sd_rst_n <= 1'b0;
                             end
@@ -136,34 +138,20 @@ module media_supervisor #(
                     end
                 end
                 ST_COOLDOWN: begin
-                    if (cool_cnt >= (COOLDOWN_CYCLES - 1)) begin
-                        cool_cnt <= {COOLDOWN_W{1'b0}};
-                        mount_attempt <= 3'd0;
-                        state  <= ST_RESET_PULSE;
-                        pulse_cnt <= {PULSE_W{1'b0}};
-                        sd_rst_n <= 1'b0;
-                    end else begin
-                        cool_cnt <= cool_cnt + 1'b1;
+                    if (ms_tick) begin
+                        if (cool_cnt >= (REMOUNT_COOLDOWN_MS - 1)) begin
+                            cool_cnt <= {COOL_W{1'b0}};
+                            mount_attempt <= 3'd0;
+                            state   <= ST_RESET_PULSE;
+                            pulse_cnt <= {PULSE_W{1'b0}};
+                            sd_rst_n <= 1'b0;
+                        end else begin
+                            cool_cnt <= cool_cnt + 1'b1;
+                        end
                     end
                 end
                 default: state <= ST_WAIT_MOUNT;
                 endcase
-            end
-        end
-    end
-
-    // 恢复代次与复位计数：在 sd_rst_n 下降沿（复位脉冲开始）各计一次。
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            sd_rst_n_q  <= 1'b1;
-            media_epoch <= 8'd0;
-            cnt_sd_reset <= 16'd0;
-        end else begin
-            sd_rst_n_q <= sd_rst_n;
-            if (sd_rst_n_q && !sd_rst_n) begin
-                media_epoch <= media_epoch + 8'd1;
-                if (cnt_sd_reset != 16'hFFFF)
-                    cnt_sd_reset <= cnt_sd_reset + 16'd1;
             end
         end
     end

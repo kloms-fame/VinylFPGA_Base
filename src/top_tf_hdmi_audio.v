@@ -200,9 +200,6 @@ wire        switch_abort_toggle;
 wire        media_sd_rst_n;       // 监督器驱动的 SD 媒体子系统复位（低有效）
 wire [7:0]  media_err_code;       // 集中错误码 Err-01..09（sticky）
 wire        media_err_toggle;     // 错误码变化翻转标志（跨域捆绑握手）
-wire [7:0]  media_epoch;          // 恢复代次
-wire [15:0] media_cnt_sd_reset;   // SD 复位计数（饱和，遥测预留）
-wire [15:0] media_cnt_sector_err; // 扇区错误计数（饱和，遥测预留）
 wire        sd_media_rst_n;       // 合并后的 SD 媒体子系统复位（低有效）
 
 // 第十讲：图片转场控制与像素应用
@@ -844,7 +841,6 @@ sd_card_bmp #(
 media_supervisor #(
     .CLK_FREQ_HZ         (100_000_000),
     .MOUNT_TIMEOUT_MS    (5000),
-    .SECTOR_TIMEOUT_MS   (250),
     .MOUNT_RETRY_MAX     (3),
     .REMOUNT_COOLDOWN_MS (30000),
     .RESET_PULSE_CYCLES  (100)
@@ -857,10 +853,7 @@ media_supervisor #(
     .sector_busy    (media_sec_busy),
     .sd_rst_n       (media_sd_rst_n),
     .media_err_code (media_err_code),
-    .media_err_toggle(media_err_toggle),
-    .media_epoch    (media_epoch),
-    .cnt_sd_reset   (media_cnt_sd_reset),
-    .cnt_sector_err (media_cnt_sector_err)
+    .media_err_toggle(media_err_toggle)
 );
 
 // 第十讲：KEY1外部消抖后送转场控制器，避免被sd_card_bmp内部硬切逻辑抢先响应。
@@ -1759,7 +1752,9 @@ wire underrun_pulse_clk = underrun_tgl_c1 ^ underrun_tgl_c2;
 
 // S7-02：合并媒体错误与既有 OSD 错误，集中错误码优先，交给 health_monitor 上报。
 wire        merged_err_valid = osd_err_valid_clk | media_err_valid_clk;
-wire [7:0]  merged_err_code  = (media_err_code_clk != 8'd0) ? media_err_code_clk : osd_err_code_clk;
+// 集中错误码优先：媒体错误脉冲当拍抢占；其余时刻保留 OSD/FAT 错误，
+// 避免 sticky 的媒体错误码长期遮蔽后续不同的 OSD 错误。
+wire [7:0]  merged_err_code  = media_err_valid_clk ? media_err_code_clk : osd_err_code_clk;
 
 // Silent 48 kHz samples cover startup, browsing, pause and track prefetch.
 // Legacy tone is allowed only after boot when no audio resource was found.

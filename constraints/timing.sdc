@@ -58,18 +58,28 @@ set_clock_groups -exclusive \
 # 5. 第3课起 pcm_media_tone / ACR / 音频数据全部运行在 video_clk，
 #    不再存在 audio_mclk 跨域约束。
 #
-# 6. 可选：如果你的 frame_read_write 内部异步 FIFO 已经完全处理好了跨域，
-#    且报告里总出现 video_clk / sd_card_clk / ext_mem_clk 之间的大量伪违例，
-#    可以打开下面这组异步分组。
+# 6. S7-02：把各 PLL 派生时钟域声明为异步时钟组。
 #
-#    建议先不要开，先看报告；
-#    只有确认这些跨域都只经过 FIFO / 同步器时再开。
+#    理由：clk(50MHz 输入) 与 sys_pll/video_pll 输出的 sd_card_clk、ext_mem_clk、
+#    video_clk、hdmi_5x_clk 分属不同时钟树，器件内 PLL 插入延迟不一致，跨域
+#    相位关系并非固定；工程内所有跨域都已用 2FF 同步器 / gray-code 异步 FIFO /
+#    toggle 握手显式隔离，没有不经同步器的直接组合跨域路径。
+#
+#    S7-01 基线 Hold WNS 仅 +0.003ns，本就处于临界；S7-02 在 sd_card_clk 域新增
+#    media_supervisor 后，sd_card_clk 时钟树扇出/偏斜增大，使既有的
+#    media_status_sd / osd_error_code / media_err_code 等 2FF 状态同步路径出现
+#    -1.5ns 级别的跨域 hold 违例。这些跨域本就应按异步域处理，而不是靠 PnR 恰好
+#    满足相位关系，因此在此显式分组消除伪违例。
+#
+#    ext_mem_clk_sft 是 SDRAM 采样移位时钟（fanout=1，仅进硬 IP），仍由第 8 节的
+#    set_false_path 与 ext_mem_clk 互斥处理，不纳入异步组。
 # ------------------------------------------------------------
-# set_clock_groups -asynchronous \
-#     -group [get_clocks {sd_card_clk}] \
-#     -group [get_clocks {ext_mem_clk}] \
-#     -group [get_clocks {video_clk}] \
-#     -group [get_clocks {hdmi_5x_clk}]
+set_clock_groups -asynchronous \
+    -group [get_clocks {clk}] \
+    -group [get_clocks {sd_card_clk}] \
+    -group [get_clocks {ext_mem_clk}] \
+    -group [get_clocks {video_clk}] \
+    -group [get_clocks {hdmi_5x_clk}]
 
 # ------------------------------------------------------------
 # 7. 其余 Input/Output delay 先保持空白
