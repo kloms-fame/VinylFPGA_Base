@@ -44,8 +44,14 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('rounds', nargs='+')
     p.add_argument('--output', type=Path, required=True)
+    p.add_argument('--accepted', help='Explicit retained round; later failed experiments are not releases')
     a = p.parse_args()
     data = [measure(ROOT/'prj/resource_opt_verified_20261005'/name) for name in a.rounds]
+    if a.accepted:
+        accepted = next(r for r in data if r['round'] == a.accepted)
+        m = accepted['metrics']
+        assert m['Setup WNS'] >= 0 and m['Hold WNS'] >= 0
+        assert all(m[k] == 0 for k in ('Setup TNS', 'Hold TNS', 'Num of violated S-EP', 'Num of violated H-EP'))
     a.output.parent.mkdir(parents=True, exist_ok=True)
     a.output.with_suffix('.json').write_text(json.dumps(data, indent=2), encoding='utf-8')
     lines = ['# S7-03 TD 实测资源与时序', '',
@@ -56,6 +62,9 @@ def main():
         m = record['metrics']
         lines.append('| '+record['round']+' | '+' | '.join(str(m[k]) for k in ('lut','reg','bram','bram32k','dsp','#slices','Setup WNS','Hold WNS'))+
                      f" | {m['Setup TNS']}/{m['Hold TNS']} | {m['Num of violated S-EP']}/{m['Num of violated H-EP']} |")
+    if a.accepted:
+        lines += ['', '**当前保留版本：'+a.accepted+'。** 后续失败实验不代表交付版本。',
+                  'M3 与 M6 seed7 未完成 final 报告，其 gate/失败诊断见执行记录，未混入本表。']
     for record in data:
         lines += ['', '## '+record['round'], '', '### 各时钟 Fmax（TD 原生报告值）', '', '| 时钟 | Fmax MHz | 最小周期 ns |', '|---|---:|---:|']
         for name, v in record['clocks'].items():
