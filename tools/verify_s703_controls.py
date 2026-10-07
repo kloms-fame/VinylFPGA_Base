@@ -7,19 +7,23 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 p = argparse.ArgumentParser()
-p.add_argument('--baseline', default='S703_M0_20261006')
+p.add_argument('--baseline', default='533f605', help='Git revision or saved round name')
 p.add_argument('--label', default='current')
+p.add_argument('--legacy-uart', action='store_true', help='Also test the retired UART library')
 a = p.parse_args()
 out = ROOT/'sim/resource_opt_verified'/('controls_'+a.label)
 out.mkdir(parents=True, exist_ok=True)
 results = {}
-for module in ('ui_event_bus', 'ui_command_router', 'exp_echo_reporter'):
+for module in ('ui_event_bus', 'ui_command_router') + (('exp_echo_reporter',) if a.legacy_uart else ()):
     baseline = ROOT/'prj/resource_opt_verified_20261005'/a.baseline/'src/io'/f'{module}.v'
-    ref = baseline.read_text(encoding='utf-8')
+    baseline_source = (baseline.read_text(encoding='utf-8') if baseline.exists() else
+                       subprocess.check_output(['git', 'show', f'{a.baseline}:src/io/{module}.v'],
+                                               cwd=ROOT).decode('utf-8'))
+    ref = baseline_source
     ref = ref.replace(module, module+'_reference').replace('EXP_UI_EVENT_BUS_V','S703_REF_EVENT_BUS_V').replace('EXP_UI_COMMAND_ROUTER_V','S703_REF_ROUTER_V')
     ref = ref.replace('EXP_EXP_ECHO_REPORTER_V', 'S703_REF_ECHO_V')
     (out/f'{module}_reference.v').write_text(ref, encoding='utf-8')
-    source = baseline.read_text(encoding='utf-8').split(');',1)[0]
+    source = baseline_source.split(');',1)[0]
     ports = re.findall(r'\b(input|output)\s+(?:wire|reg)\s*(\[[^\]]+\])?\s*(\w+)',source)
     lines = ['`timescale 1ns/1ps', 'module tb_controls;', 'localparam KEY_COUNT=12,DIP_COUNT=6;',
              'integer i,j,cycles=0; reg[31:0] random_state=32\'h13579bdf;']
@@ -73,7 +77,7 @@ for module in ('ui_event_bus', 'ui_command_router', 'exp_echo_reporter'):
     lines += ['repeat(300) @(posedge clk);', f'$display("PASS {module} all outputs, %0d cycles",cycles);$finish;', 'end', 'endmodule']
     bench=out/f'{module}_tb.v';bench.write_text('\n'.join(lines),encoding='utf-8')
     binary=out/f'{module}.vvp'
-    c=subprocess.run(['iverilog','-g2005','-Isrc/include','-y','src/io','-s','tb_controls','-o',str(binary),str(bench),str(ROOT/'src/io'/f'{module}.v'),str(out/f'{module}_reference.v')],cwd=ROOT,capture_output=True,text=True,timeout=30)
+    c=subprocess.run(['iverilog','-g2005','-Isrc/include','-y','src/io','-y','sim/legacy','-s','tb_controls','-o',str(binary),str(bench),str((ROOT/'sim/legacy' if module=='exp_echo_reporter' else ROOT/'src/io')/f'{module}.v'),str(out/f'{module}_reference.v')],cwd=ROOT,capture_output=True,text=True,timeout=30)
     log=c.stdout+c.stderr;ok=False
     if c.returncode==0:
         r=subprocess.run(['vvp',str(binary)],cwd=ROOT,capture_output=True,text=True,timeout=30)

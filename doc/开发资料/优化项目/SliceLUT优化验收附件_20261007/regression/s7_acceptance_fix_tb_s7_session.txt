@@ -1,0 +1,2 @@
+PASS session waits for SD, MV, read-domain reset acknowledgement
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_s7_session.v:18: $finish called at 3150000 (1ps)

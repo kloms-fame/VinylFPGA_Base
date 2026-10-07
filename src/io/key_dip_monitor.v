@@ -3,10 +3,13 @@
 module key_dip_monitor #(
     parameter integer KEY_COUNT       = 12,
     parameter integer DIP_COUNT       = 6,
-    parameter integer DEBOUNCE_CYCLES = 400_000
+    parameter integer DEBOUNCE_CYCLES = 400_000,
+    parameter integer DEBOUNCE_TICK_CYCLES = (DEBOUNCE_CYCLES < 5000) ? 1 : 5000,
+    parameter integer USE_EXTERNAL_TICK = 0
 )(
     input  wire                clk,
     input  wire                rst_n,
+    input  wire                debounce_ce,
     input  wire [KEY_COUNT-1:0] key_async,
     input  wire [DIP_COUNT-1:0] dip_async,
     output wire [KEY_COUNT-1:0] key_level,
@@ -19,57 +22,51 @@ module key_dip_monitor #(
     wire [DIP_COUNT-1:0] dip_fall_pulse;
     wire [DIP_COUNT-1:0] dip_rise_pulse;
     // Reset settling establishes initial configuration, not a user action.
-    localparam integer SETTLE_CYCLES = DEBOUNCE_CYCLES + 8;
+    localparam integer STABLE_TICKS = (DEBOUNCE_CYCLES + DEBOUNCE_TICK_CYCLES - 1) / DEBOUNCE_TICK_CYCLES;
+    localparam integer SETTLE_CYCLES = (STABLE_TICKS + 1) * DEBOUNCE_TICK_CYCLES + 8;
     localparam integer SETTLE_W = $clog2(SETTLE_CYCLES + 1);
-    reg [SETTLE_W-1:0] settle_count;
-    reg dip_initialized;
+    reg [SETTLE_W-1:0] settle_count = 0;
+    reg dip_initialized = 1'b0;
     integer              i;
 
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            settle_count <= 0;
-            dip_initialized <= 1'b0;
-        end else if (!dip_initialized) begin
-            if (settle_count == SETTLE_CYCLES-1)
-                dip_initialized <= 1'b1;
-            else
-                settle_count <= settle_count + 1'b1;
+    wire local_ce;
+    wire tick_ce;
+    generate
+        if (USE_EXTERNAL_TICK) begin: g_external_tick
+            assign local_ce = 1'b0;
+        end else begin: g_local_tick
+            debounce_tick #(.TICK_CYCLES(DEBOUNCE_TICK_CYCLES)) u_tick (
+                .clk(clk), .rst_n(rst_n), .tick_ce(local_ce)
+            );
         end
+    endgenerate
+    assign tick_ce = USE_EXTERNAL_TICK ? debounce_ce : local_ce;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            settle_count <= 0;
+        else if (!dip_initialized)
+            settle_count <= settle_count + 1'b1;
     end
 
-    genvar key_index;
-    generate
-        for (key_index = 0; key_index < KEY_COUNT; key_index = key_index + 1) begin: g_key_filter
-            debounce_filter #(
-                .DEBOUNCE_CYCLES(DEBOUNCE_CYCLES),
-                .INITIAL_LEVEL  (1'b1)
-            ) u_debounce (
-                .clk       (clk),
-                .rst_n     (rst_n),
-                .async_in  (key_async[key_index]),
-                .level     (key_level[key_index]),
-                .fall_pulse(key_fall_pulse[key_index]),
-                .rise_pulse(key_rise_pulse[key_index])
-            );
-        end
-    endgenerate
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            dip_initialized <= 1'b0;
+        else if (settle_count == SETTLE_CYCLES-1)
+            dip_initialized <= 1'b1;
+    end
 
-    genvar dip_index;
-    generate
-        for (dip_index = 0; dip_index < DIP_COUNT; dip_index = dip_index + 1) begin: g_dip_filter
-            debounce_filter #(
-                .DEBOUNCE_CYCLES(DEBOUNCE_CYCLES),
-                .INITIAL_LEVEL  (1'b1)
-            ) u_debounce (
-                .clk       (clk),
-                .rst_n     (rst_n),
-                .async_in  (dip_async[dip_index]),
-                .level     (dip_level[dip_index]),
-                .fall_pulse(dip_fall_pulse[dip_index]),
-                .rise_pulse(dip_rise_pulse[dip_index])
-            );
-        end
-    endgenerate
+    debounce_bank #(
+        .CHANNELS(KEY_COUNT + DIP_COUNT),
+        .STABLE_TICKS(STABLE_TICKS),
+        .INITIAL_LEVEL(1'b1)
+    ) u_debounce_bank (
+        .clk(clk), .rst_n(rst_n), .tick_ce(tick_ce),
+        .async_in({dip_async, key_async}),
+        .level({dip_level, key_level}),
+        .fall_pulse({dip_fall_pulse, key_fall_pulse}),
+        .rise_pulse({dip_rise_pulse, key_rise_pulse})
+    );
 
     assign dip_change_pulse = (dip_fall_pulse | dip_rise_pulse) & {DIP_COUNT{dip_initialized}};
 

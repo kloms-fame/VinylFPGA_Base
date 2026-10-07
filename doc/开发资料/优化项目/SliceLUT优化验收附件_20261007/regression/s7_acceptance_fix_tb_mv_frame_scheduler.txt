@@ -1,0 +1,2 @@
+TEST_PASS mv_frame_scheduler pause underload restart seek three slots 600s no drift
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_mv_frame_scheduler.v:61: $finish called at 5770960000 (1ps)

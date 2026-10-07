@@ -13,7 +13,7 @@ def simulate(name, source, files):
     bench = OUT / (name + '.v')
     bench.write_text(source, encoding='utf-8')
     binary = OUT / (name + '.vvp')
-    libs = [ROOT / 'src', *[p for p in (ROOT / 'src').iterdir() if p.is_dir()]]
+    libs = [ROOT / 'sim/legacy', ROOT / 'src', *[p for p in (ROOT / 'src').iterdir() if p.is_dir()]]
     cp = subprocess.run(['iverilog', '-g2005', '-I', str(ROOT / 'src/include'),
                          *[a for p in libs for a in ('-y', str(p))], '-s', name,
                          '-o', str(binary), str(bench), *map(str, files)],
@@ -39,7 +39,9 @@ def reference(rel, module):
 def existing_miter(module, rel, outputs, bench_module=None, reset='rst_n'):
     name = 'tb_' + module + '_opt_equiv'
     bench_module = bench_module or 'tb_' + module
-    src = (ROOT / 'sim' / (bench_module + '.v')).read_text(encoding='utf-8')
+    bench_path = ROOT / 'sim' / (bench_module + '.v')
+    if not bench_path.exists(): bench_path = ROOT/'sim/legacy'/(bench_module+'.v')
+    src = bench_path.read_text(encoding='utf-8')
     src = src.replace('module ' + bench_module + ';', 'module ' + name + ';')
     inst = re.search(r'    ' + module + r'\b.*?\bdut\s*\(.*?\n    \);', src, re.S).group(0)
     ref_path = reference(rel, module)

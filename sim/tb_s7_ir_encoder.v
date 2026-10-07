@@ -8,7 +8,7 @@ module tb_s7_ir_encoder;
  ui_command_router router(.clk(clk),.rst_n(rst),.ev_valid(valid),.ev_code(code),
   .ev_arg(arg),.ev_aux(aux),.dip_level(dip),.cmd_valid(cv),.cmd_code(cc),.cmd_arg(ca),.cmd_aux(cx));
  ui_event_bridge bridge(.clk(clk),.rst_n(rst),.ev_valid(cv),.ev_code(cc),
-  .ev_arg(ca),.ev_aux(cx),.enc_cw_tgl(cw),.enc_ccw_tgl(ccw));
+  .ev_arg(ca),.ev_aux(cx),.next_tgl(cw),.prev_tgl(ccw));
  always @(negedge clk) if(rst) begin
   if(cw!=oldcw)net=net+1;if(ccw!=oldccw)net=net-1;oldcw=cw;oldccw=ccw;
  end

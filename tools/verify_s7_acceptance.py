@@ -6,11 +6,11 @@ O=R/'sim/s7_acceptance_fix'; O.mkdir(exist_ok=True)
 def run(name, path=None, top=False):
     src=path or R/'sim'/f'{name}.v'
     cmd=['iverilog','-g2005','-I.','-Isrc','-Isrc/include','-Isrc/SD']
-    for d in ['src',*[str(p.relative_to(R)) for p in (R/'src').iterdir() if p.is_dir() and p.name != 'IP']]:
+    for d in ['src','sim',*[str(p.relative_to(R)) for p in (R/'src').iterdir() if p.is_dir() and p.name != 'IP']]:
         cmd+=['-y',d]
-    if top: cmd+=['-i'] # vendor primitives only; explicit controlled boundaries
+    if name in ('tb_lrc_font_sync','tb_lrc_osd_equiv'): cmd+=['-y','sim/legacy']
     cmd+=['-s',name,'-o',str(O/f'{name}.vvp'),str(src)]
-    if top: cmd+=['src/top_tf_hdmi_audio.v']
+    if top: cmd+=['src/top_tf_hdmi_audio.v','sim/integration/vendor_control_stubs.v']
     c=subprocess.run(cmd,cwd=R,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=90)
     log=c.stdout+c.stderr
     if c.returncode==0:
@@ -31,8 +31,8 @@ if __name__=='__main__':
         'tb_fat32_index_loader','tb_fat32_file_streamer','tb_fat32_volume_scanner',
         'tb_thumbnail_view_reader','tb_sdram_rd_arbiter','tb_s5_play','tb_expansion_s1','tb_io_startup_dip']
     if not a.tests:
-        names = names + ['tb_x2_seek','tb_x2_seek_wav']
-    results={name:run(name,top=name=='tb_s7_top') for name in names}
+        names = names + ['tb_x2_seek','tb_x2_seek_wav','tb_opt_no_uart','tb_opt_osd_bypass','tb_debounce_bank','tb_debounce_monitors','tb_lrc_font_sync','tb_lrc_osd_equiv','tb_x1x2_display','tb_opt_metadata']
+    results={name:run(name,top=name in ('tb_s7_top','tb_opt_osd_bypass','tb_opt_metadata')) for name in names}
     if not a.tests:
         # 48 sectors = 12288 samples, three complete wraps of the 4096-sample FIFO.
         src=(R/'sim/tb_wav_stream_player_flow.v').read_text(encoding='utf-8').replace('tb_wav_stream_player_flow','tb_s7_wav_wrap').replace('SECTORS = 12','SECTORS = 48')

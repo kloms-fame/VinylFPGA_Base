@@ -18,7 +18,9 @@ reference.write_text(BASE.read_text(encoding='utf-8').replace(
 
 def run(name, sources, top=None):
     binary = OUT / (name + '.vvp')
-    libraries = [str(p) for p in (ROOT / 'src').iterdir() if p.is_dir()]
+    libraries = [str(ROOT/'sim')] + [str(p) for p in (ROOT / 'src').iterdir() if p.is_dir()]
+    if name in ('tb_lrc_font_sync','tb_lrc_osd_equiv'):
+        libraries.append(str(ROOT/'sim/legacy'))
     compile_result = subprocess.run(['iverilog', '-g2005', '-I', str(ROOT / 'src/include'),
         '-y', str(ROOT / 'src'), *[arg for path in libraries for arg in ('-y', path)],
         '-s', top or name, '-o', str(binary), *map(str, sources)],
@@ -171,6 +173,7 @@ run('tb_promax_audio_waveform', [ROOT / 'sim/tb_promax_audio_waveform.v', rtl / 
 experimental_benches = {
     'tb_p1_equiv',              # one-off P1 experiment with a local golden module
     'tb_thumbnail_layout_equiv',# untracked local experiment
+    'tb_opt_osd_bypass',       # explicit vendor-boundary suite
     'tb_s7_top',                # needs -i plus explicit top source
 }
 for bench in sorted((ROOT / 'sim').glob('tb_*.v')):

@@ -124,21 +124,27 @@ def render_glyph(ch, is_ascii: bool) -> list:
 def emit_font_rom(chars: list, glyphs: list) -> str:
     total = len(chars) * GLYPH_H
     addr_w = max(1, (total - 1).bit_length())
+    depth = 1 << addr_w
     lines = [
         "// 由 tools/gen_lrc_assets.py 自动生成，请勿手改。",
         "`ifndef EXP_LRC_FONT_ROM_V",
         "`define EXP_LRC_FONT_ROM_V",
         "module lrc_font_rom (",
+        "    input  wire clk,",
         f"    input  wire [{addr_w - 1}:0] addr,",
-        "    output reg  [15:0] dout",
+        "    output reg  [15:0] dout = 16'h0000",
         ");",
-        "    always @* begin",
-        "        case (addr)",
+        "    // Single synchronous read: one clock latency, no reset on BRAM data.",
+        f"    reg [15:0] row_mem [0:{depth - 1}];",
+        "    initial begin",
     ]
     for gi, rows in enumerate(glyphs):
         for r, bits in enumerate(rows):
-            lines.append(f"            {addr_w}'d{gi * GLYPH_H + r}: dout = 16'h{bits:04X};")
-    lines += ["            default: dout = 16'h0000;", "        endcase", "    end", "endmodule", "`endif", ""]
+            lines.append(f"        row_mem[{gi * GLYPH_H + r}] = 16'h{bits:04X};")
+    for addr in range(total, depth):
+        lines.append(f"        row_mem[{addr}] = 16'h0000;")
+    lines += ["    end", "    always @(posedge clk) begin",
+              "        dout <= row_mem[addr];", "    end", "endmodule", "`endif", ""]
     return "\n".join(lines)
 
 

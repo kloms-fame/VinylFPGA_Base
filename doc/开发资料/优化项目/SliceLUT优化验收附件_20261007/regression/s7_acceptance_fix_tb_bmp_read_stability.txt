@@ -1,0 +1,15 @@
+PASS: valid scan finds sector 0
+PASS: valid scan reports one image
+PASS: valid load has no error
+PASS: valid load writes 8 pixels
+PASS: bad DIB reports ERR_HEADER
+PASS: bad planes reports ERR_HEADER
+PASS: hort file_len reports ERR_HEADER
+PASS: xel stream reports ERR_TRUNCATED
+PASS:  BMP fast-skip lands on sector 2
+PASS: fast-skip finds the valid image
+PASS:  SD response reports ERR_TIMEOUT
+PASS: scan timeout reports ERR_TIMEOUT
+PASS: or scan is not falsely timed out
+PASS: bmp_read stability tests completed
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_bmp_read_stability.v:476: $finish called at 512195000 (1ps)

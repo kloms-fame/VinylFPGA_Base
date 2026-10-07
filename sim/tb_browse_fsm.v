@@ -41,10 +41,10 @@ module tb_browse_fsm;
         .ev_next_tgl    (ev_next_tgl),
         .ev_confirm_tgl (ev_confirm_tgl),
         .ev_mode_tgl    (ev_mode_tgl),
-        .mb_next        (mb_next),
-        .mb_mode        (mb_mode),
-        .mb_left        (mb_left),
-        .mb_confirm     (mb_confirm),
+
+
+
+
         .view_mode      (view_mode),
         .mode_play      (mode_play),
         .fs_next        (fs_next),
@@ -84,10 +84,10 @@ module tb_browse_fsm;
         .ev_next_tgl    (off_next_tgl),
         .ev_confirm_tgl (off_confirm_tgl),
         .ev_mode_tgl    (off_mode_tgl),
-        .mb_next        (off_mb_next),
-        .mb_mode        (off_mb_mode),
-        .mb_left        (off_mb_left),
-        .mb_confirm     (off_mb_confirm),
+
+
+
+
         .view_mode      (off_view_mode),
         .mode_play      (1'b0),
         .fs_next        (off_fs_next),
@@ -202,8 +202,8 @@ module tb_browse_fsm;
         fire_event(2'd2, 6'b000000, "fullscreen confirm starts PLAY");
         if(c_start!=1) $fatal(1,"FAIL missing play_start");
         fire_event(2'd3, 6'b000001, "fullscreen mode toggles grid");
-        fire_mpulse(2'd0, 6'b100000, "fullscreen mb_next fallback");
-        fire_mpulse(2'd1, 6'b000001, "fullscreen mb_mode fallback");
+        fire_mpulse(2'd0, 6'b000000, "fullscreen mb_next fallback");
+        fire_mpulse(2'd1, 6'b000000, "fullscreen mb_mode fallback");
 
         // ---- 缩略图态 ----
         view_mode = 1'b1;
@@ -212,10 +212,10 @@ module tb_browse_fsm;
         fire_event(2'd0, 6'b000100, "thumbnail prev = focus left");
         fire_event(2'd2, 6'b000010, "thumbnail confirm");
         fire_event(2'd3, 6'b000001, "thumbnail mode toggles grid");
-        fire_mpulse(2'd0, 6'b001000, "thumbnail mb_next fallback");
-        fire_mpulse(2'd2, 6'b000100, "thumbnail mb_left fallback");
-        fire_mpulse(2'd3, 6'b000010, "thumbnail mb_confirm fallback");
-        fire_mpulse(2'd1, 6'b000001, "thumbnail mb_mode fallback");
+        fire_mpulse(2'd0, 6'b000000, "thumbnail mb_next fallback");
+        fire_mpulse(2'd2, 6'b000000, "thumbnail mb_left fallback");
+        fire_mpulse(2'd3, 6'b000000, "thumbnail mb_confirm fallback");
+        fire_mpulse(2'd1, 6'b000000, "thumbnail mb_mode fallback");
 
         // S7-03b：播放态 KEY7 直接进缩略图选曲（不再先回主界面），同拍退出播放。
         view_mode = 1'b0;
@@ -247,8 +247,8 @@ module tb_browse_fsm;
         @(negedge clk);
         off_mb_next = 1'b0;
         repeat (4) @(posedge clk);
-        if ({o_fs_next[0], o_fs_prev[0], o_right[0], o_left[0], o_conf[0], o_mode[0]} !== 6'b100000) begin
-            $display("FAIL: disabled J2 path broke motherboard fallback");
+        if ({o_fs_next[0], o_fs_prev[0], o_right[0], o_left[0], o_conf[0], o_mode[0]} !== 6'b000000) begin
+            $display("FAIL: retired motherboard path produced event");
             errors = errors + 1;
         end
 

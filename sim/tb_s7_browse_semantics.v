@@ -21,7 +21,7 @@ module tb_s7_browse_semantics;
         .clk(clk), .rst_n(rst),
         .ev_prev_tgl(1'b0), .ev_next_tgl(1'b0),
         .ev_home_tgl(ht), .ev_confirm_tgl(cf), .ev_mode_tgl(md),
-        .mb_next(1'b0), .mb_mode(1'b0), .mb_left(1'b0), .mb_confirm(1'b0),
+
         .view_mode(1'b0), .mode_play(playing),
         .thumb_mode(grid), .play_stop(stop), .go_home(home));
 

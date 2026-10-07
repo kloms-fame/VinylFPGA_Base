@@ -47,11 +47,11 @@ module tb_s3_browse_integration;
 
     expansion_integration #(
         .CLK_FREQ_HZ      (2_000_000),
-        .BAUD_RATE        (115_200),
+
         .DEBOUNCE_CYCLES  (DEBOUNCE_CYCLES),
         .AB_STABLE_CYCLES (AB_STABLE_CYCLES),
         .IR_CLK_FREQ_HZ   (2_000_000),
-        .ECHO_ENABLE      (1'b0),
+
         .BUZZER_ENABLE    (1'b0)
     ) u_exp (
         .clk             (clk),
@@ -65,8 +65,8 @@ module tb_s3_browse_integration;
         .exp_enc2_b      (exp_enc2_b),
         .exp_enc2_sw_n   (exp_enc2_sw_n),
         .exp_ir_rx       (exp_ir_rx),
-        .key1            (key1),
-        .key2            (key2),
+
+
         .key3            (key3),
         .sw1             (sw1),
         .sw2             (sw2),
@@ -78,8 +78,8 @@ module tb_s3_browse_integration;
         .board_buzzer_n  (board_buzzer_n),
         .uart_tx         (uart_tx),
         .ui_ev_valid     (ui_ev_valid),
-        .boot_active     (1'b0),
-        .media_status    (24'd0),
+
+
         .ui_event_valid  (ui_event_valid),
         .ui_event_code   (ui_event_code),
         .ui_event_arg    (ui_event_arg),
@@ -112,10 +112,10 @@ module tb_s3_browse_integration;
         .ev_next_tgl    (ev_next_tgl),
         .ev_confirm_tgl (ev_confirm_tgl),
         .ev_mode_tgl    (ev_mode_tgl),
-        .mb_next        (1'b0),
-        .mb_mode        (1'b0),
-        .mb_left        (1'b0),
-        .mb_confirm     (1'b0),
+
+
+
+
         .view_mode      (view_mode),
         .mode_play      (1'b0),
         .fs_next        (fs_next),

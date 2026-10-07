@@ -4,7 +4,7 @@ module tb_s7_encoder;
  wire cw,ccw;reg oldcw=0,oldccw=0;integer net=0;
  always #10 clk=~clk;
  ui_event_bridge dut(.clk(clk),.rst_n(rst),.ev_valid(valid),.ev_code(4'd4),
- .ev_arg(count),.ev_aux(aux),.enc_cw_tgl(cw),.enc_ccw_tgl(ccw));
+ .ev_arg(count),.ev_aux(aux),.next_tgl(cw),.prev_tgl(ccw));
  always @(negedge clk) if(rst) begin
  if(cw!=oldcw)net=net+1;if(ccw!=oldccw)net=net-1;oldcw=cw;oldccw=ccw;
  end

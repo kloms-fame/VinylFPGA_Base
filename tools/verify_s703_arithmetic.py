@@ -12,7 +12,10 @@ parts=['`timescale 1ns/1ps','module tb_arithmetic;','reg [15:0] capture;','reg[1
        'integer i,j; reg[31:0] c; reg[7:0] d; reg[31:0] noise=32\'h39bda781;',
        'task put_byte; input[7:0] b;begin capture={capture[7:0],b};end endtask']
 for root,suffix in [(base,'_ref'),(ROOT/'src','')]:
-    source=(root/'io/exp_echo_reporter.v').read_text(encoding='utf-8')
+    reporter = root/'io/exp_echo_reporter.v'
+    if root == ROOT/'src':
+        reporter = ROOT/'sim/legacy/exp_echo_reporter.v' # historical formatting only
+    source=reporter.read_text(encoding='utf-8')
     for name in ('put_dec2','put_dec1'):
         fragment=re.search(r'\btask '+name+r';.*?endtask',source,re.S)[0]
         parts.append(fragment.replace('task '+name+';', 'task '+name+suffix+';'))

@@ -1,0 +1,25 @@
+-----------------------------------------------------------
+| QoR metrics               |         value               |
+-----------------------------------------------------------
+| Timing                    |                             |
+|     Setup WNS             |         -298                |
+|     Setup TNS             |        -2968                |
+|     Num of violated S-EP  |           23                |
+|     Hold WNS              |           11                |
+|     Hold TNS              |            0                |
+|     Num of violated H-EP  |            0                |
+-----------------------------------------------------------
+| Routing Resource          |                             |
+|     Wire length           |      1509920                |
+-----------------------------------------------------------
+| Utilization               |                             |
+|     #slices               |         7561                |
+|     slices percentage     |       77.15%                |
+|     #RAMs                 |           46                |
+|     #DSPs                 |           12                |
+|     #DRAMHARDCON          |            0                |
+-----------------------------------------------------------
+Report route stage QoR done.
+
+
+Reports and checkpoints saved in D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\prj\resource_opt_verified_20261005\S0_S5_fix_20261006_v2

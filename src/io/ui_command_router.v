@@ -26,7 +26,7 @@
 //   - 空闲/重启/连发三个计数器共用同一 1 ms 预分频，饱和计数。
 // 物理事件编码见 src/include/exp_event_defs.vh；本模块输出的 cmd_* 沿用 EV_* 编码
 // 作为"翻译后的业务命令"，以便 ui_event_bridge 无缝消费，不破坏既有选曲/播控语义。
-// 红外原始帧的串口回显仍走 ui_event_bus -> exp_echo_reporter，不经本模块。
+// 红外原始帧经 ui_event_bus 送入本模块解码；生产 UART 保持静默。
 // =============================================================================
 module ui_command_router #(
     parameter integer CLK_FREQ_HZ         = 50_000_000,

@@ -1,0 +1,3 @@
+FAIL: same-bank quick select did not release transition
+FAIL: errors=1
+sim/tb_sd_card_bmp_fourbank.v:306: $finish called at 4555000 (1ps)

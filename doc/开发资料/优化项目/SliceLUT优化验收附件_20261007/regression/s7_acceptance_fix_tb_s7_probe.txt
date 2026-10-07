@@ -1,0 +1,2 @@
+PASS idle probe isolation and client priority
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_s7_probe.v:21: $finish called at 560000 (1ps)

@@ -1,0 +1,2 @@
+PASS X2 seek_controller clamp/empty/pause/accumulate/100-round-trip
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_x2_seek.v:126: $finish called at 3450000 (1ps)

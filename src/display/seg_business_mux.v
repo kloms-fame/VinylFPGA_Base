@@ -5,6 +5,9 @@
 // Conversion uses one shared subtractor; no wide combinational division.
 module seg_business_mux (
  input wire clk,rst_n,display_enable,
+ input wire debug_enable,
+ input wire [3:0] fault_flags,
+ input wire [7:0] error_code,
  input wire [31:0] sample_position,
  input wire [1:0] song_index,
  output wire [7:0] seg_data_0,seg_data_1,seg_data_2,seg_data_3,
@@ -50,11 +53,16 @@ module seg_business_mux (
  seg_decoder sh_dec(.bin_data(time_bcd[7:4]),.seg_data(dsh));
  seg_decoder sl_dec(.bin_data(time_bcd[3:0]),.seg_data(dsl));
  seg_decoder song_dec(.bin_data({2'b0,song_display}+4'd1),.seg_data(dsong));
- assign seg_data_0=display_enable ? {1'b1,dmh} : 8'hff;
- assign seg_data_1=display_enable ? {1'b1,dml} : 8'hff;
- assign seg_data_2=display_enable ? 8'hbf : 8'hff;
- assign seg_data_3=display_enable ? {1'b1,dsh} : 8'hff;
- assign seg_data_4=display_enable ? {1'b1,dsl} : 8'hff;
+ wire [6:0] derr_hi,derr_lo,dflags;
+ seg_decoder err_hi_dec(.bin_data(error_code[7:4]),.seg_data(derr_hi));
+ seg_decoder err_lo_dec(.bin_data(error_code[3:0]),.seg_data(derr_lo));
+ seg_decoder flags_dec(.bin_data(fault_flags),.seg_data(dflags));
+ // SW3: Ehh Fh NN, current error plus sticky history and track number.
+ assign seg_data_0=display_enable ? (debug_enable ? 8'h86 : {1'b1,dmh}) : 8'hff;
+ assign seg_data_1=display_enable ? (debug_enable ? {1'b1,derr_hi} : {1'b1,dml}) : 8'hff;
+ assign seg_data_2=display_enable ? (debug_enable ? {1'b1,derr_lo} : 8'hbf) : 8'hff;
+ assign seg_data_3=display_enable ? (debug_enable ? 8'h8e : {1'b1,dsh}) : 8'hff;
+ assign seg_data_4=display_enable ? (debug_enable ? {1'b1,dflags} : {1'b1,dsl}) : 8'hff;
  assign seg_data_5=8'hff;
  assign seg_data_6=display_enable ? 8'hc0 : 8'hff;
  assign seg_data_7=display_enable ? {1'b1,dsong} : 8'hff;

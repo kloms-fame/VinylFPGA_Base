@@ -46,11 +46,11 @@ module tb_s2_boot_guard;
 
     expansion_integration #(
         .CLK_FREQ_HZ      (CLK_HZ),
-        .BAUD_RATE        (115_200),
+
         .DEBOUNCE_CYCLES  (DEBOUNCE),
         .AB_STABLE_CYCLES (AB_STABLE),
         .IR_CLK_FREQ_HZ   (CLK_HZ),
-        .ECHO_ENABLE      (1'b0),
+
         .BUZZER_ENABLE    (1'b0)
     ) dut (
         .clk (clk), .rst_n (rst_n),
@@ -58,12 +58,11 @@ module tb_s2_boot_guard;
         .exp_enc1_a (exp_enc1_a), .exp_enc1_b (exp_enc1_b), .exp_enc1_sw_n (exp_enc1_sw_n),
         .exp_enc2_a (exp_enc2_a), .exp_enc2_b (exp_enc2_b), .exp_enc2_sw_n (exp_enc2_sw_n),
         .exp_ir_rx (exp_ir_rx),
-        .key1 (key1), .key2 (key2), .key3 (key3),
+          .key3 (key3),
         .sw1 (sw1), .sw2 (sw2), .sw3 (sw3), .sw4 (sw4),
         .exp_led_n (exp_led_n), .exp_ws2812_data (exp_ws2812_data), .exp_ext_o (exp_ext_o),
         .board_buzzer_n (board_buzzer_n), .uart_tx (uart_tx),
-        .media_status (24'd0), .ui_ev_valid (ui_ev_valid), .boot_active (boot_active)
-    );
+         .ui_ev_valid (ui_ev_valid));
 
     integer guard_pulses = 0;
     integer total_pulses = 0;
@@ -92,7 +91,7 @@ module tb_s2_boot_guard;
                  cycle_cnt, total_pulses);
 
         // 保护窗之后，真实用户动作必须仍然能上报（此处用 DIP 之外的事件源验证通路）
-        key1 = 1'b0;                       // 按下母板 KEY（会经 board_key_fall_pulse）
+        key3 = 1'b0;                       // 按下母板 KEY（会经 board_key_fall_pulse）
         repeat (4 * DEBOUNCE) @(negedge clk);
         if (total_pulses == 0)
             $fatal(1, "FAIL real key press after guard produced no event");

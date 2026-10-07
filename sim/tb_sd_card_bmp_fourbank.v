@@ -12,6 +12,7 @@ module tb_sd_card_bmp_fourbank;
     reg         sdr_init_done = 1'b0;
     reg         key_next = 1'b1;
     reg         next_event = 1'b0;
+    reg prev_event=0;
     reg         select_req = 1'b0;
     reg  [1:0]  select_index = 2'd0;
     reg         key_auto = 1'b1;
@@ -56,21 +57,21 @@ module tb_sd_card_bmp_fourbank;
         .SCAN_START_SECTOR (32'd0),
         .SCAN_MAX_SECTOR   (32'd16),
         .SCAN_TARGET_COUNT (3'd4),
-        .LONG_PRESS_MS     (100),
-        .AUTO_PLAY_MS      (10),
+
+
         .SD_READ_TIMEOUT_MS(500),
         .MAX_RETRIES       (0)
     ) dut (
         .clk                 (clk),
         .rst                 (rst),
         .sdr_init_done       (sdr_init_done),
-        .key_next            (key_next),
+
         .next_event          (next_event),
-        .prev_event          (1'b0),
+        .prev_event          (prev_event),
         .select_req          (select_req),
         .select_index        (select_index),
         .select_ack          (select_ack),
-        .auto_inhibit(1'b0),.key_auto            (key_auto),
+
         .state_code          (state_code),
         .bmp_width           (16'd2),
         .bmp_height          (16'd2),
@@ -135,14 +136,7 @@ module tb_sd_card_bmp_fourbank;
         end
     end
 
-    task press_key1;
-        begin
-            @(negedge clk) key_next = 1'b0;
-            repeat (30) @(posedge clk);
-            @(negedge clk) key_next = 1'b1;
-            repeat (30) @(posedge clk);
-        end
-    endtask
+    task press_key1; begin pulse_next_event(); end endtask
 
     task pulse_next_event;
         begin
@@ -161,14 +155,11 @@ module tb_sd_card_bmp_fourbank;
         end
     endtask
 
-    task long_press_key2;
-        begin
-            @(negedge clk) key_auto = 1'b0;
-            repeat (140) @(posedge clk);
-            @(negedge clk) key_auto = 1'b1;
-            repeat (30) @(posedge clk);
-        end
-    endtask
+    task long_press_key2; begin
+ @(negedge clk) prev_event=1;
+ @(negedge clk) prev_event=0;
+ repeat(30) @(posedge clk);
+end endtask
 
     initial begin
         key_next = 1'b1;
@@ -284,25 +275,16 @@ module tb_sd_card_bmp_fourbank;
             errors = errors + 1;
         end
 
-        // KEY2短按：打开自动轮播；四bank均已加载，应只切换索引。
+        // Idle and retired physical-key stimuli must not advance a bank.
         short_press_key2();
-        if (!dut.auto_play_en) begin
-            $display("FAIL: auto play did not enable");
-            errors = errors + 1;
-        end
-        for (wait_count = 0; wait_count < 15; wait_count = wait_count + 1)
-            @(posedge clk);
-        if (load_start_count != 4) begin
-            $display("FAIL: auto play caused reload, count=%0d", load_start_count);
-            errors = errors + 1;
-        end
-        if (disp_buf_idx == 2'd0) begin
-            $display("FAIL: auto play did not advance image");
+        repeat (500) @(posedge clk);
+        if (load_start_count != 4 || disp_buf_idx != 0) begin
+            $display("FAIL retired auto path changed bank or reloaded");
             errors = errors + 1;
         end
 
         if (errors == 0)
-            $display("PASS: four-bank scheduler preload/switch/next_event/long-press/auto");
+            $display("PASS: four-bank scheduler preload/switch/next_event/prev_event/no-auto");
         else
             $display("FAIL: errors=%0d", errors);
         $finish;

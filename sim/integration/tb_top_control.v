@@ -17,8 +17,8 @@ reg stop_tgl=0, cf_tgl=0, home_tgl=0;
 reg [23:0] status=24'hFF0000;
 reg wav_active=0;
 reg skip=0;
-top #(.BUZZER_FEEDBACK_ENABLE(1'b0),.ECHO_TEST_ENABLE(1'b0)) dut
-(.clk(clk),.rst_n(reset),.key1(1'b1),.key2(1'b1),.key3(1'b1),
+top #(.BUZZER_FEEDBACK_ENABLE(1'b0)) dut
+(.clk(clk),.rst_n(reset),.key3(1'b1),
  .sw1(1'b1),.sw2(1'b1),.sw3(1'b1),.sw4(1'b1),.sd_miso(1'b1),
  .exp_key_n(12'hFFF),.exp_dip_n(6'h01),.exp_enc1_a(1'b1),.exp_enc1_b(1'b1),.exp_enc1_sw_n(1'b1),
  .exp_enc2_a(1'b1),.exp_enc2_b(1'b1),.exp_enc2_sw_n(1'b1),.exp_ir_rx(1'b1));

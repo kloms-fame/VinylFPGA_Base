@@ -2,7 +2,7 @@
 // File Name    : sd_card_bmp.v
 // Module Name  : sd_card_bmp
 // Project      : VinylFPGA (完赛优化系列 - 第三讲/第五讲/第六讲/第七讲/第八讲)
-// Description  : 长短按复用、双向切换、自动轮播、稳定性恢复、FAT32四bank预加载
+// Description  : 事件驱动双向切换、稳定性恢复、FAT32四bank预加载
 // =============================================================================
 
 module sd_card_bmp #(
@@ -11,28 +11,22 @@ module sd_card_bmp #(
     parameter [31:0]  SCAN_MAX_SECTOR   = 32'd131071,  // 扫描最大扇区
     parameter [2:0]   SCAN_TARGET_COUNT = 3'd4,        // 目标图片数量
     // === 优化新增参数配置 ===
-    parameter integer LONG_PRESS_MS      = 1000,        // KEY2长按判定门限(ms)，默认1秒
-    parameter integer AUTO_PLAY_MS       = 3000,        // 自动轮播间隔(ms)，默认3秒
     parameter integer SD_READ_TIMEOUT_MS = 500,         // SD读超时(ms)，第五讲稳定性
     parameter integer MAX_RETRIES        = 1            // 错误重试次数，默认1次
 )(
     input                       clk,
     input                       rst,
     input                       sdr_init_done,         // SDRAM初始化完成，已同步到本时钟域
-    input                       key_next,              // KEY1：短按下一张
     input                       next_event,            // 第十讲：转场模块完成淡出后的下一张请求
     input                       prev_event,            // S3：J2 EC1/方向键的"上一张"单拍请求
     input                       select_req,            // 第十五讲：快速选图请求（保持到 select_ack）
     input  [1:0]                select_index,          // 第十五讲：快速选图目标 bank
     output reg                  select_ack,            // 第十五讲：快速选图请求已接受
-    input                       auto_inhibit,
-    input                       key_auto,              // KEY2：短按自动轮播开关 / 长按上一张
     output reg [3:0]            state_code,            // 数码管显示：当前图片编号 1~4
     input  [15:0]               bmp_width,
     input  [15:0]               bmp_height,
     input  [1:0]                song_sel,           // S5：当前选中曲目（同域，播放音频定位用）
     output reg                  display_valid,
-    output wire                 auto_play_en_out,      // 第九讲OSD：自动轮播状态
     output reg  [7:0]           osd_error_code,        // 第九讲OSD：错误码，0=正常
     output reg                  osd_error_toggle,      // 跨到video_clk域的捆绑数据翻转标志
     output reg                  switch_abort_toggle,   // 第十讲：手动切换失败时释放转场状态机
@@ -73,10 +67,6 @@ module sd_card_bmp #(
     // =========================================================================
     // 信号定义
     // =========================================================================
-    wire        key_next_press;
-    wire        key_auto_press;
-    wire        key_auto_stable;
-    reg         key_auto_stable_d;
 
     wire        sd_sec_read;
     wire [31:0] sd_sec_read_addr;
@@ -108,8 +98,6 @@ module sd_card_bmp #(
     reg         boot_failed;
     reg [2:0]   preload_idx;         // 后台预加载顺序：0~3，4表示全部处理完
 
-    reg         auto_play_en;
-    reg [31:0]  auto_cnt;
     reg [2:0]   img_found_count;
     reg         audio_play_enable_reg;
     reg [1:0]   img_idx;             // 当前屏幕上显示的图片编号(0~3)
@@ -133,18 +121,13 @@ module sd_card_bmp #(
     reg [1:0]   retry_count;
 
     // KEY2 长按检测逻辑寄存器
-    reg [31:0]  long_press_cnt;
-    reg         long_press_marked;
 
     // 跨时钟域写完成同步链
     reg [2:0]   wrfin_tgl_sync;
     wire        write_finish_pulse;
 
     // 毫秒转周期常量计算
-    localparam [31:0] AUTO_PLAY_CYCLES  = (CLK_FREQ_HZ / 1000) * AUTO_PLAY_MS;
-    localparam [31:0] LONG_PRESS_CYCLES = (CLK_FREQ_HZ / 1000) * LONG_PRESS_MS;
 
-    wire        auto_tick;
     wire [1:0]  next_from_current;
     wire [1:0]  prev_from_current;
 
@@ -154,8 +137,6 @@ module sd_card_bmp #(
     assign write_en           = bmp_data_wr_en;
     assign write_data         = {bmp_data[23:16], bmp_data[15:8], bmp_data[7:0], 8'h00};
     assign write_finish_pulse = wrfin_tgl_sync[2] ^ wrfin_tgl_sync[1];
-    assign auto_tick          = (auto_cnt >= (AUTO_PLAY_CYCLES - 1'b1));
-    assign auto_play_en_out   = auto_play_en;
     assign media_preloaded = preload_done && scan_done_eff;
     assign preload_done       = (img_found_count == 3'd0) ||
                                 (preload_idx >= img_found_count);
@@ -256,8 +237,6 @@ module sd_card_bmp #(
             scan_abort            <= 1'b0;
             boot_failed           <= 1'b0;
             preload_idx           <= 3'd0;
-            auto_play_en          <= 1'b0;
-            auto_cnt              <= 32'd0;
             img_found_count       <= 3'd0;
             img_idx               <= 2'd0;
             load_idx              <= 2'd0;
@@ -280,9 +259,6 @@ module sd_card_bmp #(
             osd_error_code        <= 8'd0;
             osd_error_toggle      <= 1'b0;
             switch_abort_toggle   <= 1'b0;
-            long_press_cnt        <= 32'd0;
-            long_press_marked     <= 1'b0;
-            key_auto_stable_d     <= 1'b1;
             select_ack            <= 1'b0;
             state_code            <= 4'd0;
         end else begin
@@ -290,9 +266,7 @@ module sd_card_bmp #(
             wrfin_tgl_sync    <= {wrfin_tgl_sync[1:0], write_finish_toggle};
             bmp_ready_q       <= bmp_ready;
             scan_done_eff     <= scan_done | scan_abort;
-            key_auto_stable_d <= key_auto_stable;
 
-            if (auto_inhibit) auto_play_en <= 1'b0;
             scan_start_pulse  <= 1'b0;
             load_start_pulse  <= 1'b0;
             select_ack        <= 1'b0;
@@ -303,8 +277,6 @@ module sd_card_bmp #(
                 scan_abort            <= 1'b0;
                 boot_failed           <= 1'b0;
                 preload_idx           <= 3'd0;
-                auto_play_en          <= 1'b0;
-                auto_cnt              <= 32'd0;
                 img_found_count       <= 3'd0;
                 img_idx               <= 2'd0;
                 load_idx              <= 2'd0;
@@ -327,8 +299,6 @@ module sd_card_bmp #(
                 osd_error_code        <= 8'd0;
                 osd_error_toggle      <= 1'b0;
                 switch_abort_toggle   <= 1'b0;
-                long_press_cnt        <= 32'd0;
-                long_press_marked     <= 1'b0;
                 select_ack            <= 1'b0;
                 state_code            <= 4'd0;
             end else begin
@@ -390,8 +360,6 @@ module sd_card_bmp #(
                     scan_abort            <= 1'b0;
                     boot_failed           <= 1'b0;
                     preload_idx           <= 3'd0;
-                    auto_play_en          <= 1'b0;
-                    auto_cnt              <= 32'd0;
                     img_found_count       <= 3'd0;
                     img_idx               <= 2'd0;
                     load_idx              <= 2'd0;
@@ -408,59 +376,20 @@ module sd_card_bmp #(
                     load_error_seen       <= 1'b0;
                     retry_count           <= 2'd0;
                 end else begin
-                    // ---- KEY1: 手动下一张 ----
-                    if ((key_next_press || next_event) && scan_done_eff &&
+                    // ---- J2/播放策略：下一张事件 ----
+                    if (next_event && scan_done_eff &&
                         (img_found_count > 3'd0))
                         next_req_pending <= 1'b1;
 
-                    // ---- S3: J2 事件"上一张"（与 KEY2 长按同一分支，行为等价）----
+                    // ---- S3: J2 事件"上一张"----
                     if (prev_event && scan_done_eff && (img_found_count > 3'd0))
                         prev_req_pending <= 1'b1;
-
-                    // ---- KEY2: 长按(上一张) 与 短按(自动轮播开关) 互斥判定 ----
-                    if (key_auto_stable == 1'b0) begin
-                        // 按键持续按下
-                        if (long_press_cnt < (LONG_PRESS_CYCLES - 1'b1)) begin
-                            long_press_cnt <= long_press_cnt + 32'd1;
-                        end else if (!long_press_marked) begin
-                            // 达到 1 秒长按门限，触发上一张请求
-                            long_press_marked <= 1'b1;
-                            if (scan_done_eff && (img_found_count > 3'd0))
-                                prev_req_pending <= 1'b1;
-                        end
-                    end else begin
-                        // 按键处于松开状态
-                        if (key_auto_stable_d == 1'b0) begin
-                            // 检测到按键释放沿 (0 -> 1)
-                            if (!long_press_marked) begin
-                                // 持续时间不足 1 秒，确认为有效短按：翻转自动轮播状态
-                                if (scan_done_eff && (img_found_count > 3'd1)) begin
-                                    auto_play_en <= ~auto_play_en;
-                                    auto_cnt     <= 32'd0;
-                                end
-                            end
-                        end
-                        long_press_cnt    <= 32'd0;
-                        long_press_marked <= 1'b0;
-                    end
-
-                    // ---- 自动轮播计时器 ----
-                    if (!auto_inhibit && scan_done_eff && auto_play_en && display_valid && !load_busy &&
-                        first_image_committed && (img_found_count > 3'd1)) begin
-                        if (auto_tick)
-                            auto_cnt <= 32'd0;
-                        else
-                            auto_cnt <= auto_cnt + 32'd1;
-                    end else begin
-                        auto_cnt <= 32'd0;
-                    end
 
                     // ---- 图片加载/切换仲裁调度逻辑 ----
                     // 优先级0（第十五讲）：缩略图快速选择。select_req 默认恒为0，
                     // 以下原有仲裁路径在旧功能下保持原行为。
                     if (scan_done_eff && display_valid && !load_busy &&
                         select_req && !select_ack && (img_found_count != 3'd0)) begin
-                        auto_cnt <= 32'd0;
                         if (ready_lut(select_index)) begin
                             img_idx      <= select_index;
                             disp_buf_idx <= select_index;
@@ -487,7 +416,6 @@ module sd_card_bmp #(
                     else if (scan_done_eff && display_valid && !load_busy &&
                         next_req_pending && (img_found_count != 3'd0)) begin
                         next_req_pending <= 1'b0;
-                        auto_cnt         <= 32'd0;
                         if (ready_lut(next_from_current)) begin
                             img_idx      <= next_from_current;
                             disp_buf_idx <= next_from_current;
@@ -504,11 +432,10 @@ module sd_card_bmp #(
                             retry_count      <= 2'd0;
                         end
                     end
-                    // 优先级2：手动上一张（KEY2长按）。
+                    // 优先级2：上一张事件。
                     else if (scan_done_eff && display_valid && !load_busy &&
                              prev_req_pending && (img_found_count != 3'd0)) begin
                         prev_req_pending <= 1'b0;
-                        auto_cnt         <= 32'd0;
                         if (ready_lut(prev_from_current)) begin
                             img_idx      <= prev_from_current;
                             disp_buf_idx <= prev_from_current;
@@ -516,26 +443,6 @@ module sd_card_bmp #(
                             load_idx         <= prev_from_current;
                             load_index       <= prev_from_current;
                             write_buf_idx    <= prev_from_current;
-                            load_start_pulse <= 1'b1;
-                            load_busy        <= 1'b1;
-                            load_is_preload  <= 1'b0;
-                            load_for_display <= 1'b1;
-                            source_done_seen <= 1'b0;
-                            load_error_seen  <= 1'b0;
-                            retry_count      <= 2'd0;
-                        end
-                    end
-                    // 优先级3：自动轮播。已加载bank直接切换，避免重新读卡。
-                    else if (scan_done_eff && display_valid && !load_busy &&
-                             !auto_inhibit && auto_play_en && auto_tick && (img_found_count > 3'd1)) begin
-                        auto_cnt <= 32'd0;
-                        if (ready_lut(next_from_current)) begin
-                            img_idx      <= next_from_current;
-                            disp_buf_idx <= next_from_current;
-                        end else if (bmp_ready_q) begin
-                            load_idx         <= next_from_current;
-                            load_index       <= next_from_current;
-                            write_buf_idx    <= next_from_current;
                             load_start_pulse <= 1'b1;
                             load_busy        <= 1'b1;
                             load_is_preload  <= 1'b0;
@@ -612,7 +519,6 @@ module sd_card_bmp #(
                             source_done_seen <= 1'b0;
                             next_req_pending <= 1'b0;
                             prev_req_pending <= 1'b0;
-                            auto_cnt         <= 32'd0;
                             retry_count      <= 2'd0;
                             load_error_seen  <= 1'b1;
                             if (load_for_display && !load_is_preload)
@@ -633,31 +539,6 @@ module sd_card_bmp #(
                 end
             end
         end
-
-    // =========================================================================
-    // 实例化消抖模块
-    // =========================================================================
-    key_press_debounce #(
-        .CLK_FREQ_HZ (CLK_FREQ_HZ),
-        .DEBOUNCE_MS (20)
-    ) u_key_next (
-        .clk              (clk),
-        .rst              (rst),
-        .button_in        (key_next),
-        .press_pulse      (key_next_press),
-        .button_stable_out()
-    );
-
-    key_press_debounce #(
-        .CLK_FREQ_HZ (CLK_FREQ_HZ),
-        .DEBOUNCE_MS (20)
-    ) u_key_auto (
-        .clk              (clk),
-        .rst              (rst),
-        .button_in        (key_auto),
-        .press_pulse      (key_auto_press),
-        .button_stable_out(key_auto_stable) // 引出消抖后电平供长按状态机采样
-    );
 
     // =========================================================================
     // 底层子模块例化：第七讲用 FAT32 加载器替换 bmp_read。
@@ -727,58 +608,5 @@ module sd_card_bmp #(
         .sd_sec_write_data_req  (),
         .sd_sec_write_end       ()
     );
-
-endmodule
-
-
-// =============================================================================
-// 按键消抖模块 (升级版：新增输出消抖后电平 button_stable_out)
-// =============================================================================
-module key_press_debounce #(
-    parameter integer CLK_FREQ_HZ = 100_000_000,
-    parameter integer DEBOUNCE_MS = 20
-)(
-    input  wire clk,
-    input  wire rst,
-    input  wire button_in,
-    output reg  press_pulse,
-    output reg  button_stable_out // 1=松开, 0=按下
-);
-
-    localparam integer DEBOUNCE_CYCLES = (CLK_FREQ_HZ / 1000) * DEBOUNCE_MS;
-
-    reg button_sync0;
-    reg button_sync1;
-    reg button_stable;
-    reg [31:0] cnt;
-
-    always @(posedge clk or posedge rst) begin
-        if (rst) begin
-            button_sync0      <= 1'b1;
-            button_sync1      <= 1'b1;
-            button_stable     <= 1'b1;
-            button_stable_out <= 1'b1;
-            cnt               <= 32'd0;
-            press_pulse       <= 1'b0;
-        end else begin
-            button_sync0 <= button_in;
-            button_sync1 <= button_sync0;
-            press_pulse  <= 1'b0;
-
-            if (button_sync1 == button_stable) begin
-                cnt <= 32'd0;
-            end else begin
-                if (cnt >= DEBOUNCE_CYCLES - 1'b1) begin
-                    if (button_stable && !button_sync1)
-                        press_pulse <= 1'b1;
-                    button_stable     <= button_sync1;
-                    button_stable_out <= button_sync1;
-                    cnt               <= 32'd0;
-                end else begin
-                    cnt <= cnt + 32'd1;
-                end
-            end
-        end
-    end
 
 endmodule

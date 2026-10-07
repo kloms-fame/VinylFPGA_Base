@@ -1,0 +1,2 @@
+PASS: sd_sector_adapter timeout
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_sd_sector_adapter_timeout.v:88: $finish called at 1165000 (1ps)

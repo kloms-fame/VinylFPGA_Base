@@ -1,0 +1,2 @@
+PASS 303 rapid steps across three modes, 16-frame page without fade, held bank ACK
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_s7_switch.v:52: $finish called at 52990000 (1ps)

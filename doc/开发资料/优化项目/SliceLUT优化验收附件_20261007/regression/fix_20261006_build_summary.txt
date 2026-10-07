@@ -1,0 +1,39 @@
+_core/hdmi_1_4b_transmitter_core_wrapper.enc.v(6924)
+HDL-1007 : elaborate module ** in src/hdmi1.4b_transmitter_core/hdmi_1_4b_transmitter_core_wrapper.enc.v(6994)
+HDL-1007 : elaborate module ** in src/hdmi1.4b_transmitter_core/hdmi_1_4b_transmitter_core_wrapper.enc.v(6994)
+HDL-1007 : elaborate module ** in src/hdmi1.4b_transmitter_core/hdmi_1_4b_transmitter_core_wrapper.enc.v(6994)
+HDL-1007 : elaborate module hdmi_phy_wrapper in src/hdmi_phy_warpper.v(3)
+HDL-1007 : elaborate module lane_lvds_10_1 in src/lane_lvds_10_1.v(4)
+HDL-1007 : elaborate module EG_LOGIC_ODDR in D:\Anlogic\TD_6.2.1_Engineer_6.2.168.116\arch/eagle_macro.v(66)
+HDL-1007 : elaborate module expansion_integration in src/io/expansion_integration.v(23)
+HDL-1007 : elaborate module expansion_io_hub in src/io/expansion_io_hub.v(21)
+HDL-1007 : elaborate module key_dip_monitor in src/io/key_dip_monitor.v(3)
+HDL-1007 : elaborate module debounce_filter in src/io/debounce_filter.v(3)
+HDL-1007 : elaborate module sync_bit in src/io/sync_bit.v(3)
+HDL-1007 : elaborate module encoder_monitor in src/io/encoder_monitor.v(3)
+HDL-1007 : elaborate module quadrature_decoder in src/io/quadrature_decoder.v(3)
+HDL-1007 : elaborate module ir_nec_decoder in src/io/ir_nec_decoder.v(3)
+HDL-1007 : elaborate module ui_event_bus in src/io/ui_event_bus.v(18)
+HDL-1007 : elaborate module exp_echo_reporter in src/io/exp_echo_reporter.v(21)
+HDL-1007 : extracting RAM for identifier 'q_code' in src/io/exp_echo_reporter.v(74)
+HDL-1007 : extracting RAM for identifier 'q_arg' in src/io/exp_echo_reporter.v(75)
+HDL-1007 : extracting RAM for identifier 'q_aux' in src/io/exp_echo_reporter.v(76)
+HDL-1007 : elaborate module exp_baud_tick in src/io/exp_baud_tick.v(9)
+HDL-1007 : elaborate module exp_uart_tx in src/io/exp_uart_tx.v(9)
+HDL-5314 WARNING: net 'msg[32][7]' does not have a driver in src/io/exp_echo_reporter.v(57)
+HDL-1007 : elaborate module key_dip_monitor(KEY_COUNT=3,DIP_COUNT=4) in src/io/key_dip_monitor.v(3)
+HDL-1007 : elaborate module buzzer_feedback in src/io/buzzer_feedback.v(5)
+HDL-1007 : elaborate module ui_event_bridge in src/io/ui_event_bridge.v(24)
+HDL-1007 : elaborate module timebase_48k in src/audio/timebase_48k.v(17)
+HDL-5001 WARNING: Contains anonymous inst(s) and/or net(s) that have not been renamed
+HDL-5001 WARNING: Contains anonymous inst(s) and/or net(s) that have not been renamed
+HDL-5001 WARNING: Contains anonymous inst(s) and/or net(s) that have not been renamed
+HDL-5001 WARNING: Contains anonymous inst(s) and/or net(s) that have not been renamed
+HDL-8007 ERROR: song_index_db(MAX_SONGS=4) is a black box in src/SD/fat32_media_loader.v(452)
+HDL-8007 ERROR: lrc_lines_rom is a black box in src/display/lrc_osd.v(50)
+HDL-8007 ERROR: lrc_font_rom is a black box in src/display/lrc_osd.v(61)
+RUN-1003 : finish command "elaborate -top top" in  1.136965s wall, 1.046875s user + 0.093750s system = 1.140625s CPU (100.3%)
+
+RUN-1004 : used memory is 345 MB, reserved memory is 336 MB, peak memory is 345 MB
+
+td > 

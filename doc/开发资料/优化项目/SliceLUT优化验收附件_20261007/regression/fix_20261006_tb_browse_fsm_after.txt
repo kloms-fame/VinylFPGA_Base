@@ -1,0 +1,2 @@
+TEST_PASS browse_fsm_s3_smoke
+sim/tb_browse_fsm.v:230: $finish called at 1745000 (1ps)

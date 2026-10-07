@@ -1,0 +1,38 @@
+tb_wav_stream_player: PASS: wav stream player little-endian/prefill/drain/end
+tb_wav_equiv_long: PASS: wav stream multi-sector high-water/order/drain
+tb_wav_equiv_stalls: PASS: wav stream multi-sector high-water/order/drain
+tb_wav_equiv_control: PASS: stop/restart, reset, SD error, silence equivalence
+tb_promax_audio_waveform: PASS: taller colored waveform bars and peak meter are active
+tb_bilinear_8q8: PASS: tb_bilinear_8q8 all checks passed
+tb_bmp_read_stability: PASS: valid scan finds sector 0; PASS: valid scan reports one image; PASS: valid load has no error; PASS: valid load writes 8 pixels; PASS: bad DIB reports ERR_HEADER; PASS: bad planes reports ERR_HEADER; PASS: hort file_len reports ERR_HEADER; PASS: xel stream reports ERR_TRUNCATED; PASS:  BMP fast-skip lands on sector 2; PASS: fast-skip finds the valid image; PASS:  SD response reports ERR_TIMEOUT; PASS: scan timeout reports ERR_TIMEOUT; PASS: or scan is not falsely timed out; PASS: bmp_read stability tests completed
+tb_boot_s2: PASS boot logo rendered: nonblack=43236 maxlum=592 mid_bright=5932 lower=7676; PASS first-image handoff to browse state; PASS skip event left STATE_BOOT at frame boundary; PASS event consumed once, no re-entry; TEST_PASS boot_s2_smoke
+tb_boot_window: PASS boot hold/early-skip/no-card timeout at frame boundaries
+tb_brightness_contrast_adjust: PASS: tb_brightness_contrast_adjust all checks passed
+tb_browse_fsm: TEST_PASS browse_fsm_s3_smoke
+tb_expansion_s1: PASS line [                  banner]; PASS board SW feedback tone; PASS line [              key04-down]; PASS led echo on press; PASS buzzer feedback on key press; PASS line [                key04-up]; PASS led echo on release; PASS line [              key07-down]; PASS line [                key07-up]; PASS line [       dip1-presence-off]; PASS line [                dip1-low]; PASS line [        dip1-presence-on]; PASS line [               dip1-high]; PASS line [                enc1-fwd]; PASS line [                ir-frame]; PASS line [              media-info]; PASS line [       media-verify-good]; PASS line [       media-info-broken]; PASS line [        media-verify-crc]; PASS line [        boot-done-queued]; PASS idle silent (no periodic flood); TEST_PASS expansion_s1_smoke
+tb_fat32_file_streamer: PASS: FAT32 fragmented FAT chain
+tb_fat32_index_loader: TEST_PASS fat32_index_loader_s4
+tb_fat32_media_loader: PASS: FAT32 media loader scan/load/pixel pipeline
+tb_fat32_volume_scanner: PASS: FAT32 volume scanner
+tb_frame_fifo_read_gap: PASS: frame_fifo_read burst gap min=14 cycles
+tb_frame_fifo_read_pace: PASS: refresh window holds off new read bursts (60 cycles, 0 pulses); PASS: read burst resumed 3 cycles after refresh deasserted; PASS: controller-busy window holds off new read bursts (60 cycles, 0 pulses); PASS: low-watermark fallback issued a burst (3 cycles) despite busy+refresh; PASS: tb_frame_fifo_read_pace all checks passed (pulses=1024 bursts=4 min_gap=14)
+tb_frame_fifo_write: PASS: frame_fifo_write registered-level burst
+tb_hdmi_pcm_audio_bridge: PASS: 48kHz PCM count=4800, amplitude/error checks clean, blip active
+tb_io_startup_dip: PASS DIP startup silent and simultaneous changes preserved
+tb_osd_overlay: PASS: tb_osd_overlay all checks passed
+tb_param_menu_controller: PASS: tb_param_menu_controller all checks passed
+tb_s2_boot_guard: PASS no power-on skip event inside guard window (cycles=26600, total=0); PASS real key press after guard still reported (total=1); TEST_PASS s2_boot_guard
+tb_s3_browse_integration: TEST_PASS s3_browse_integration
+tb_s5_play: TEST_PASS s5_play_timebase_lrc
+tb_sd_card_bmp_fourbank: PASS: four-bank scheduler preload/switch/next_event/long-press/auto
+tb_sd_sector_adapter: PASS: sd sector adapter
+tb_sdram_rd_arbiter: PASS: handoff to thumbnail took 8 cycles (quiet window 8); PASS: tb_sdram_rd_arbiter all checks passed
+tb_song_index_db: TEST_PASS song_index_db_s4
+tb_thumbnail_controller: PASS: tb_thumbnail_controller all checks passed
+tb_thumbnail_layout: PASS: tb_thumbnail_layout all checks passed
+tb_thumbnail_view_reader: PASS: tb_thumbnail_view_reader all checks passed (checks=307200, bursts=7200, requests=921600, gaps=7200, blankpop=0)
+tb_video_fade_transition: PASS: tb_video_fade_transition manual/auto/wipe arithmetic
+tb_vinyl_renderer: TEST_PASS vinyl_renderer_s6
+tb_fat32_streamer_equiv: PASS: FAT32 fragmented FAT chain
+tb_cluster_offset_equiv: PASS: 262144 cluster offset cases, all BPB byte values
+PASS: all resource optimization regressions

@@ -1,0 +1,2 @@
+PASS: wav stream player little-endian/prefill/drain/end
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_wav_stream_player.v:182: $finish called at 88100000 (1ps)

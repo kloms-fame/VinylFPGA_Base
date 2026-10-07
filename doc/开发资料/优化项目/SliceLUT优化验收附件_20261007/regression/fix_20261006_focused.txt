@@ -1,0 +1,9 @@
+tb_boot_window: PASS boot hold/early-skip/no-card timeout at frame boundaries
+tb_sd_card_bmp_fourbank: PASS: four-bank scheduler preload/switch/next_event/long-press/auto
+tb_fat32_index_loader: TEST_PASS fat32_index_loader_s4
+tb_browse_fsm: TEST_PASS browse_fsm_s3_smoke
+tb_io_startup_dip: PASS DIP startup silent and simultaneous changes preserved
+tb_video_fade_transition: PASS: tb_video_fade_transition manual/auto/wipe arithmetic
+tb_expansion_s1: PASS line [                  banner]; PASS board SW feedback tone; PASS line [              key04-down]; PASS led echo on press; PASS buzzer feedback on key press; PASS line [                key04-up]; PASS led echo on release; PASS line [              key07-down]; PASS line [                key07-up]; PASS line [       dip1-presence-off]; PASS line [                dip1-low]; PASS line [        dip1-presence-on]; PASS line [               dip1-high]; PASS line [                enc1-fwd]; PASS line [                ir-frame]; PASS line [              media-info]; PASS line [       media-verify-good]; PASS line [       media-info-broken]; PASS line [        media-verify-crc]; PASS line [        boot-done-queued]; PASS idle silent (no periodic flood); TEST_PASS expansion_s1_smoke
+tb_s3_browse_integration: TEST_PASS s3_browse_integration
+tb_top_control: PASS logo 4s skip guard and startup silence; PASS same-bank exit/re-entry, EC1 pause/resume and single KEY7 silent grid; PASS different-bank fade handshake and current bank1 reselect; PASS no-card fallback; TEST_PASS top_control

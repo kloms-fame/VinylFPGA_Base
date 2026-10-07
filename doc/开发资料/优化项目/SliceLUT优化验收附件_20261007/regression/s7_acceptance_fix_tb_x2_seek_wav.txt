@@ -1,0 +1,2 @@
+TEST_PASS x2_seek_wav timebase load + sector skip
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_x2_seek_wav.v:152: $finish called at 24002120000 (1ps)

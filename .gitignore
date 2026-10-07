@@ -31,6 +31,7 @@ reports/raw/
 *.hex
 *.prm
 *.log
+*.logw
 *.rpt
 *.txt.out
 

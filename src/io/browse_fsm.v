@@ -5,7 +5,7 @@
 //
 // 运行在 sd_card_clk(100 MHz) 域，位于 ui_event_bridge(clk 域) 与既有
 // thumbnail_controller/sd_card_bmp 之间。职责只有一件：把 J2 选曲事件
-// （经独立 toggle 跨域）与母板按键兜底脉冲，按当前视图路由成既有主链路
+// （经独立 toggle 跨域），按当前视图路由成既有主链路
 // 已经能消费的控制脉冲。**不重写**缩略图布局、bank 预加载或取数握手。
 //
 // 路由规则（S3 冻结约定，S7-03b 更新 KEY07/KEY11 归属）：
@@ -24,10 +24,6 @@
 //   说明：旧版 KEY07 在播放态先回主界面、再按一次才进缩略图；S7-03b 起 KEY07
 //         在主界面与播放界面都可直接进入缩略图选曲，KEY11 专责返回主界面。
 //
-// 母板兜底：mb_next/mb_mode/mb_left/mb_confirm 是 S0~S2 已上板验收的单拍
-// 脉冲（KEY1 短/长、KEY2 短/长），与事件脉冲同为 sd 域单拍，直接 OR 并入，
-// 因此 J2 不接时母板行为与 S2 完全一致。J2_BROWSE_ENABLE=0 可整体旁路事件侧。
-//
 // CDC：四路 toggle 为目标域电平，先 3 级 FF（2 级同步 + 1 级延迟）再异或
 // 取边沿，事件间隔远大于同步延迟，不会丢步；一次边沿只产出一拍。
 // =============================================================================
@@ -42,11 +38,6 @@ module browse_fsm #(
     input  wire        ev_confirm_tgl,
     input  wire        ev_mode_tgl,
     input  wire        ev_home_tgl,
-
-    input  wire        mb_next,        // 母板 KEY1 短按（sd 域单拍）
-    input  wire        mb_mode,        // 母板 KEY1 长按（sd 域单拍）
-    input  wire        mb_left,        // 母板 KEY2 短按（sd 域单拍，缩略图左移）
-    input  wire        mb_confirm,     // 母板 KEY2 长按（sd 域单拍，缩略图确认）
 
     input  wire        view_mode,      // 1=2x2 缩略图选曲视图
     input  wire        mode_play,      // 1=播放态：导航交给 play_ctrl，KEY7 只生成 stop/home
@@ -100,20 +91,15 @@ module browse_fsm #(
     wire j2_confirm = J2_BROWSE_ENABLE ? (confirm_s2 ^ confirm_s3) : 1'b0;
     wire j2_mode    = J2_BROWSE_ENABLE ? (mode_s2    ^ mode_s3)    : 1'b0;
 
-    // 事件侧与母板兜底合并（两者都是单拍，OR 不会互相干扰）
-    wire next_any    = j2_next    | mb_next;
+    wire next_any    = j2_next;
     wire prev_any    = j2_prev;
-    wire confirm_any = j2_confirm | mb_confirm;
-    wire mode_any    = j2_mode    | mb_mode;
-    wire left_any    = j2_prev    | mb_left;
+    wire confirm_any = j2_confirm;
+    wire mode_any    = j2_mode;
+    wire left_any    = j2_prev;
 
     // S7-03b：切歌模式(mode)两种来源分流。
     //   j2_grid      = J2 KEY07 切歌模式：任意态(全屏/缩略图/播放)进入或退出缩略图。
-    //   mb_grid      = 母板 KEY1 长按兜底：保持 S0–S2 既有路由，仅非播放态进/出缩略图。
-    //   mb_stop_home = 母板 KEY1 长按在播放态：保持既有"退出播放并回主界面全屏"。
     wire j2_grid      = j2_mode & ~home_event;
-    wire mb_grid      = mb_mode & ~mode_play & ~home_event;
-    wire mb_stop_home = mb_mode &  mode_play;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -137,10 +123,10 @@ module browse_fsm #(
             //   KEY11(home_event) 停止播放并强制 go_home 回主界面全屏。
             //   thumb_mode / play_stop / go_home 同在 sd_card_clk 单域同拍生成，
             //   旧版"退出播放"与"翻转视图"两条独立跨域路径的竞态不复存在。
-            thumb_mode    <= j2_grid | mb_grid;
+            thumb_mode    <= j2_grid;
             play_start    <= confirm_any && !view_mode && !mode_play && !home_event && !mode_any;
             play_stop     <= home_event || (mode_any && mode_play);
-            go_home       <= home_event || mb_stop_home;
+            go_home       <= home_event;
         end
     end
 endmodule

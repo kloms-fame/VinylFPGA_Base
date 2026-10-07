@@ -1,0 +1,6 @@
+WARNING: sim/tb_fat32_index_loader.v:219: $readmemh(sim/s4_fixture/card_mem.hex): Not enough words in the file for the requested range [0:32767].
+WARNING: sim/tb_fat32_index_loader.v:240: $readmemh(sim/s4_fixture/card_song_mem.hex): Not enough words in the file for the requested range [0:32767].
+FAIL: bad index must restore legacy AUDIO.PCM metadata
+FAIL: legacy audio fallback LBA=44
+FAIL: tb_fat32_index_loader errors=2
+sim/tb_fat32_index_loader.v:286: $finish called at 127225000 (1ps)

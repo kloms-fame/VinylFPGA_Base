@@ -9,8 +9,8 @@ module tb_s7_top;
  integer f=0,i;
  always #10 clk=~clk;always #5 sdclk=~sdclk;always #20 pix=~pix;
  always @(negedge pix) begin f=f+1;vs=(f%30!=0);end
- top #(.BUZZER_FEEDBACK_ENABLE(0),.ECHO_TEST_ENABLE(0),.S2_BOOT_ENABLE(0)) dut
- (.clk(clk),.rst_n(rst),.key1(1'b1),.key2(1'b1),.key3(1'b1),
+ top #(.BUZZER_FEEDBACK_ENABLE(0),.S2_BOOT_ENABLE(0)) dut
+ (.clk(clk),.rst_n(rst),.key3(1'b1),
  .sw1(1'b1),.sw2(1'b1),.sw3(1'b1),.sw4(1'b1),.sd_miso(1'b1),
  .exp_key_n(12'hfff),.exp_dip_n(6'h11),.exp_enc1_a(1'b1),.exp_enc1_b(1'b1),.exp_enc1_sw_n(1'b1),
  .exp_enc2_a(1'b1),.exp_enc2_b(1'b1),.exp_enc2_sw_n(1'b1),.exp_ir_rx(1'b1));
@@ -76,7 +76,7 @@ module tb_s7_top;
  if(dut.play_active_sd || dut.media_err_code!=8'h34) $fatal(1,"FAIL bad index treated as mounted");
  wait(!dut.media_sd_rst_n);wait(dut.media_sd_rst_n);
  error=0;status=24'hff0000;cycles(100);
- if(dut.media_err_code!=0 || dut.osd_err_code_frame_eff!=0) $fatal(1,"FAIL CRC recovery did not clear OSD");
+ if(dut.media_err_code!=0 || dut.media_err_code_frame!=0) $fatal(1,"FAIL CRC recovery did not clear OSD");
  key(1);cycles(60);sector_error=5;sector_done=1;cycles(1);sector_done=0;sector_error=0;
  cycles(100);
  if(dut.play_active_sd || dut.thumb_mode_sd || dut.media_err_code!=0) $fatal(1,"FAIL remove/remount UI lifecycle");

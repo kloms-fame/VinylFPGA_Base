@@ -7,7 +7,8 @@
 // 单独列出这些文件，也不会重复定义。
 // ==========================================================================
 `include "io/sync_bit.v"
-`include "io/debounce_filter.v"
+`include "io/debounce_tick.v"
+`include "io/debounce_bank.v"
 `include "io/key_dip_monitor.v"
 `include "io/quadrature_decoder.v"
 `include "io/encoder_monitor.v"
@@ -15,9 +16,6 @@
 `include "io/expansion_io_hub.v"
 `include "io/ui_event_bus.v"
 `include "io/ui_command_router.v"
-`include "io/exp_baud_tick.v"
-`include "io/exp_uart_tx.v"
-`include "io/exp_echo_reporter.v"
 `include "io/health_monitor.v"
 `include "io/buzzer_feedback.v"
 `include "io/expansion_integration.v"
@@ -62,8 +60,6 @@
 module top(
     input                       clk,
     input                       rst_n,
-    input                       key1,           // 手动下一张
-    input                       key2,           // 自动播放 开/关
     input                       key3,           // 母板按键 3（B1），用于操作反馈音
     input                       sw1,            // 母板拨码 SW1（C8），用于操作反馈音
     input                       sw2,            // 母板拨码 SW2（C7）
@@ -121,10 +117,6 @@ parameter BUF1_ADDR     = FRAME_PIXELS;
 parameter BUF2_ADDR     = FRAME_PIXELS * 24'd2;
 parameter BUF3_ADDR     = FRAME_PIXELS * 24'd3;
 
-// S1 硬件回显测试开关：1=串口周期上报按键状态（含事件计数），0=完全静默。
-// 只影响 exp_echo_reporter 的串口输出与 exp_led_n 回显，不改变主链路功能。
-parameter ECHO_TEST_ENABLE = 1'b1;
-
 // 按键/拨码/编码器/红外 操作反馈音总开关：1=开启（母板蜂鸣器 + 拓展板 EXT1），0=静音。
 // 母板蜂鸣器还需硬件 SW5 拨至接通档才会发声。
 parameter BUZZER_FEEDBACK_ENABLE = 1'b1;
@@ -141,13 +133,12 @@ parameter integer BOOT_TIMEOUT_MS = 8000;
 
 // ===================== S3：主界面选歌（J2 事件迁移） =====================
 // S3_J2_BROWSE_ENABLE=1：EC1 旋转/方向键/EC1 按压/KEY07 事件接入选曲业务；
-//                       母板 KEY1/KEY2 作为兜底通路仍然并联生效。
-// =0：整体旁路 J2 选曲事件，行为回到 S2（母板按键控制），用于回滚。
+// 母板 KEY1/KEY2 已撤销；=0 时关闭 J2 选曲事件，仅供隔离诊断。
 parameter S3_J2_BROWSE_ENABLE = 1'b1;
 
 // ===================== S5：音频播放与歌词渲染 =====================
 // S5_PLAY_ENABLE=1：缩略图确认曲目后进入播放态，音频/歌词只在该状态推进；
-//                   EC1 按压暂停/恢复、EC1 旋转切曲、KEY04/05 音量。
+//                   EC1 按压暂停/恢复、播放中 EC1 旋转 Seek、KEY04/05 音量。
 // =0：整层旁路，音频回到 S0~S4 的"扫描完成即播放"行为（回滚开关）。
 parameter S5_PLAY_ENABLE = 1'b1;
 parameter S6_VIDEO_ENABLE = 1'b1;
@@ -195,16 +186,12 @@ wire [23:0] vout_data;
 wire [23:0] transition_rgb;
 wire [23:0] osd_rgb_out;
 wire [23:0] waveform_rgb_out;
-wire        osd_de_out;
-wire        osd_active;
 wire        waveform_active;
 reg         waveform_enable_frame;
 wire        display_valid;
-wire        auto_play_en_out;
 wire [7:0]  osd_error_code;
 wire [23:0] media_status_sd; // Slow scan metadata, settled before serial reporting
 reg [23:0] media_status_v1, media_status_v2;
-reg [23:0] media_status_c1, media_status_c2, media_status_clk;
 wire        osd_error_toggle;
 wire        switch_abort_toggle;
 
@@ -215,7 +202,6 @@ wire        media_err_toggle;     // 错误码变化翻转标志（跨域捆绑�
 wire        sd_media_rst_n;       // 合并后的 SD 媒体子系统复位（低有效）
 
 // 第十讲：图片转场控制与像素应用
-wire        key_next_transition_press;
 wire        fade_next_event;
 wire        fade_busy;
 wire [7:0]  fade_alpha;
@@ -225,27 +211,9 @@ wire [4:0]  wipe_ramp;
 wire [1:0]  transition_kind;
 wire        frame_start;
 
-// ===================== 第十四讲：亮度/对比度参数 =====================
-// 参数菜单控制器在 sd_card_clk 域，现有 KEY1/KEY2 的低有效键流先经过它。
-wire        key1_eff_n;
-wire        key2_eff_n;
-wire [7:0]  cfg_brightness_ctrl;
-wire [7:0]  cfg_contrast_ctrl;
-wire        cfg_param_update;
-wire        cfg_menu_event;
-wire [1:0]  cfg_menu_kind;
-wire [3:0]  cfg_menu_level;
-wire        cfg_menu_active;
-
-reg  [7:0]  cfg_brightness_sync1;
-reg  [7:0]  cfg_brightness_sync2;
-reg  [7:0]  cfg_contrast_sync1;
-reg  [7:0]  cfg_contrast_sync2;
-reg         cfg_menu_active_sync1;
-reg         cfg_menu_active_sync2;
-reg  [7:0]  brightness_frame;
-reg  [7:0]  contrast_frame;
-reg         menu_active_frame;
+// Default image parameters; preserve the registered pixel stage.
+wire [7:0] brightness_frame = 8'd255;
+wire [7:0] contrast_frame = 8'd128;
 wire [23:0] adjusted_rgb;
 wire        adjusted_de;
 reg  [9:0]  adjusted_pixel_x;
@@ -282,9 +250,6 @@ wire [3:0] App_wr_dm;
 // 第十五讲在第十三讲取像链路上增加 thumbnail_controller。控制器位于
 // sd_card_clk 域，只负责 view_mode/focus_index/active_index/transition_req；
 // 视频域仍在 frame_start 整帧提交，避免像素链路半帧换图。
-wire        key_view_hold;          // KEY1 长按脉冲：进入/退出缩略图
-wire        key2_thumb_press;       // KEY2 短按脉冲：缩略图焦点左移
-wire        key2_thumb_hold;        // KEY2 长按脉冲：缩略图确认
 
 wire        thumb_mode_sd;          // thumbnail_controller 输出（sd 域）
 wire [1:0]  thumb_focus_index_sd;
@@ -294,8 +259,6 @@ wire        thumb_confirm_event_sd;
 
 wire        key_next_request_sd;    // 全屏模式 KEY1 短按：下一张
 wire        fade_start_event_sd;    // 送 video_fade_transition 的淡出请求
-wire        key2_to_sd;             // 缩略图模式下屏蔽原 KEY2 功能
-reg         key2_thumb_lock_sd;     // 锁定到 KEY2 松开，防止确认后误触发上一张
 
 wire        thumb_select_pending_sd;
 wire        thumb_select_hold_sd;
@@ -335,11 +298,9 @@ wire        thumb_mem_enable;       // mem 域：缩略图取像允许发请求
 
 // ===================== S2：开机 Logo/启动画面 =====================
 // 事件握手：ui_ev_valid（clk 域单拍）-> 翻转电平 -> video 域同步/边沿检测。
-// 状态回读：boot_active（video 域电平）-> 两级同步到 clk 域，仅供串口观测。
+// 状态回读：boot_active（video 域电平）-> 两级同步到 clk 域。
 wire        ui_ev_valid;
 reg         boot_skip_toggle_clk;
-reg         boot_active_s1;
-reg         boot_active_s2;
 wire        boot_active;
 wire [23:0] boot_rgb;
 wire [23:0] final_rgb;
@@ -369,7 +330,6 @@ reg [1:0] stream_enable_vid;
 reg [2:0] eof_sync;
 reg [2:0] effect_sync;
 reg [1:0] effect_mode;
-reg [3:0] ui_modes_v1,ui_modes_v2;
 
 wire media_video_rst_n;
 wire storage_done;
@@ -469,9 +429,17 @@ wire        disp_mode_tgl_clk;      // 母板 KEY3(B1) 翻转电平（clk 域）
 
 // Display controls and sample position stay in sd_card_clk.
 reg [1:0] sd_sw1_sync;
+reg [1:0] sd_sw3_sync;
+wire [3:0] fault_flags_clk;
+reg [3:0] fault_flags_s1, fault_flags_s2;
+
 wire [7:0] seg_biz_0,seg_biz_1,seg_biz_2,seg_biz_3,seg_biz_4,seg_biz_5,seg_biz_6,seg_biz_7;
 wire [1:0] display_song_sd = play_active_sd ? play_sel_song_sd :
                              (thumb_mode_sd ? thumb_focus_index_sd : disp_buf_idx);
+// Isolate view/focus selection from the indexed cluster/length arithmetic.
+// stream_session waits 32 idle cycles before starting a generation, so the
+// extra metadata cycle settles before either WAV or MV consumes the result.
+reg [1:0] metadata_song_sd;
 wire        frw_app_rd_en;          // frame_read_write -> 仲裁器
 wire [ADDR_BITS-1:0] frw_app_rd_addr;
 wire        frw_rd_valid;           // 仲裁器 -> frame_read_write 的 Sdr_rd_en
@@ -545,15 +513,6 @@ reg         display_valid_sync1;
 reg         display_valid_sync2;
 reg         audio_play_enable_sync1;
 reg         audio_play_enable_sync2;
-reg         auto_enabled_sync1;
-reg         auto_enabled_sync2;
-reg [7:0]   osd_error_code_sync1;
-reg [7:0]   osd_error_code_sync2;
-reg         osd_error_toggle_sync1;
-reg         osd_error_toggle_sync2;
-reg         osd_error_toggle_seen;
-reg         osd_error_update_pending;
-reg [7:0]   osd_error_code_frame;
 // S7-02：media_supervisor 错误码 -> video_clk 域同步（数据 2FF + toggle 边沿）
 reg [7:0]   media_err_code_sync1;
 reg [7:0]   media_err_code_sync2;
@@ -618,9 +577,10 @@ wire sdcard_rst_n;
 wire mem_rst_n;
 wire video_rst_n;
 wire Sdr_init_done_sd;
-always @(posedge video_clk or negedge video_rst_n) begin
- if(!video_rst_n) begin ui_modes_v1<=0; ui_modes_v2<=0; end
- else begin ui_modes_v1<={play_end_mode,effect_mode}; ui_modes_v2<=ui_modes_v1; end
+
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+    if (!sdcard_rst_n) metadata_song_sd <= 2'd0;
+    else metadata_song_sd <= display_song_sd;
 end
 
 // S7-03：重启确认软复位（clk 域）。restart_req 触发拉低 soft_rst_n 一段时间，
@@ -689,32 +649,6 @@ sync_2ff u_sdram_init_sync (
     .rst_n      (sdcard_rst_n),
     .async_in   (Sdr_init_done),
     .sync_out   (Sdr_init_done_sd)
-);
-
-// ===================== 第十四讲：参数菜单入口 =====================
-// 教程的完赛工程用 KEY4；本工程物理上只有 KEY1/KEY2，因此按教程 2.4
-// 的“组合键扩展”方案，用双键长按进入/退出菜单。菜单外两路键完全直通，
-// 原有 KEY1/KEY2 行为不变。
-param_menu_controller #(
-    .CLK_FREQ_HZ     (100_000_000),
-    .DEBOUNCE_MS     (20),
-    .COMBO_HOLD_MS   (1000),
-    .LONG_HOLD_MS    (1000),
-    .MENU_TIMEOUT_MS (10000)
-) u_param_menu_controller (
-    .clk              (sd_card_clk),
-    .rst_n            (sdcard_rst_n),
-    .key1_n           (key1),
-    .key2_n           (key2),
-    .key1_out_n       (key1_eff_n),
-    .key2_out_n       (key2_eff_n),
-    .cfg_brightness   (cfg_brightness_ctrl),
-    .cfg_contrast     (cfg_contrast_ctrl),
-    .cfg_update_valid (cfg_param_update),
-    .menu_event       (cfg_menu_event),
-    .menu_kind        (cfg_menu_kind),
-    .menu_level       (cfg_menu_level),
-    .menu_active      (cfg_menu_active)
 );
 
 // =========================================================================
@@ -928,21 +862,17 @@ sd_card_bmp #(
     .clk               (sd_card_clk),
     .rst               (~sd_media_rst_n),
     .sdr_init_done     (Sdr_init_done_sd),
-    // 第十讲：KEY1先进入转场控制器，淡出完成后再用next_event触发切换。
-    .key_next          (1'b1),
+    // 切图统一经过转场控制器与 select_req 握手。
     .next_event        (1'b0),
     .prev_event        (1'b0),
     .select_req        (thumb_select_req_sd),
     .select_index      (thumb_select_index_sd),
     .select_ack        (sd_select_ack),
-    .auto_inhibit      (play_active_sd),
-    .key_auto          (key2_to_sd),
     .state_code        (state_code),
     .bmp_width         (16'd640),
     .bmp_height        (16'd480),
-    .song_sel          (display_song_sd),
+    .song_sel          (metadata_song_sd),
     .display_valid     (display_valid),
-    .auto_play_en_out  (auto_play_en_out),
     .storage_done      (storage_done),
     .storage_error     (storage_error),
     .media_status      (media_status_sd),
@@ -1014,33 +944,11 @@ media_supervisor #(
 //   - 短按（松开时）仍输出 next 脉冲，行为等价原来的 KEY1“下一张”；
 //   - 长按 1s 输出 hold 脉冲，用于切换“缩略图 / 全屏”视图，且不会同时触发
 //     下一张。KEY2 的消抖模块仍用原 key_press_debounce，行为完全不变。
-key_press_hold #(
-    .CLK_FREQ_HZ (100_000_000),
-    .DEBOUNCE_MS (20),
-    .HOLD_MS     (1000)
-) u_key_next_transition (
-    .clk              (sd_card_clk),
-    .rst              (~sdcard_rst_n),
-    .button_in        (key1_eff_n),
-    .press_pulse      (key_next_transition_press),
-    .hold_pulse       (key_view_hold),
-    .button_stable_out()
-);
+
 
 // 第十五讲：KEY2 短/长按判别只用于缩略图模式（左移/确认）；全屏模式下
 // KEY2 仍原样直通 sd_card_bmp，自动轮播开关和长按上一张保持不变。
-key_press_hold #(
-    .CLK_FREQ_HZ (100_000_000),
-    .DEBOUNCE_MS (20),
-    .HOLD_MS     (1000)
-) u_key_thumb_left_confirm (
-    .clk              (sd_card_clk),
-    .rst              (~sdcard_rst_n),
-    .button_in        (key2_eff_n),
-    .press_pulse      (key2_thumb_press),
-    .hold_pulse       (key2_thumb_hold),
-    .button_stable_out()
-);
+
 
 // S5：可播放曲目数 = 已就绪 bank 数（索引模式下等于索引曲目数）
 assign song_total_sd = {2'b0, image_ready_sd[0]} + {2'b0, image_ready_sd[1]} +
@@ -1194,11 +1102,10 @@ stream_session u_stream_session(
  .enable(stream_enable_sd),.start_toggle(play_track_tgl_sd));
 assign audio_play_enable_gated = S5_PLAY_ENABLE ? stream_enable_sd : audio_play_enable;
 
-// S3：全屏"下一张"入口 = 母板 KEY1 短按(兜底) 或 J2 EC1 顺时针/方向键(next)。
+// 全屏下一张来自 J2 浏览事件或播放结束策略。
 // browse_fsm 已按 view_mode 拆好：缩略图态走 brw_thumb_right，不会在此重复触发。
 assign key_next_request_sd   = brw_fs_next | play_fs_next_sd;
-assign key2_to_sd            = (thumb_mode_sd || key2_thumb_lock_sd) ? 1'b1 : key2_eff_n;
-// S3：缩略图"确认"入口 = 母板 KEY2 长按(兜底) 或 J2 EC1 按压/KEY02(中)。
+// 缩略图确认来自 J2 EC1 按压/KEY02。
 // Reject unavailable/busy selections before either playback or display accepts them.
 assign thumb_confirm_event_sd = brw_thumb_confirm && image_ready_sd[thumb_focus_index_sd] &&
                                 media_mount_ok_sd && !cover_busy && !brw_go_home;
@@ -1206,7 +1113,7 @@ assign thumb_select_req_sd   = thumb_select_hold_sd;
 assign thumb_select_index_sd = thumb_select_index_hold_sd;
 
 // S3：选曲事件适配层（sd_card_clk 域）。事件侧(clk 域 toggle)在此同步/边沿还原，
-// 与母板兜底脉冲合并后按当前视图路由成既有主链路可消费的控制脉冲。
+// 按当前视图路由成主链路可消费的控制脉冲。
 browse_fsm #(
     .J2_BROWSE_ENABLE (S3_J2_BROWSE_ENABLE)
 ) u_browse_fsm (
@@ -1220,10 +1127,6 @@ browse_fsm #(
     .play_start      (brw_play_start),
     .play_stop       (brw_play_stop),
     .go_home         (brw_go_home),
-    .mb_next         (key_next_transition_press),
-    .mb_mode         (key_view_hold),
-    .mb_left         (key2_thumb_press),
-    .mb_confirm      (key2_thumb_hold),
     .view_mode       (thumb_mode_sd),
     .mode_play       (play_active_sd),
     .fs_next         (brw_fs_next),
@@ -1236,7 +1139,7 @@ browse_fsm #(
 
 // 教程 thumbnail_controller：控制域按键 -> view/focus/active/transition_req。
 // S3 后输入来自 browse_fsm：全屏 EC1/方向键切换、缩略图 EC1 移动焦点、
-// EC1 按压/KEY02 确认、KEY07 进出缩略图；母板 KEY1/KEY2 作为兜底同源并入。
+// EC1 按压/KEY02 确认、KEY07 进出缩略图。
 thumbnail_controller u_thumbnail_controller (
     .clk             (sd_card_clk),
     .rst_n           (sdcard_rst_n),
@@ -1270,14 +1173,6 @@ end
 
 assign frame_start_sd = frame_start_tgl_sd[2] ^ frame_start_tgl_sd[1];
 
-always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
-    if (!sdcard_rst_n)
-        key2_thumb_lock_sd <= 1'b0;
-    else if (key2_eff_n)
-        key2_thumb_lock_sd <= 1'b0;
-    else if (thumb_mode_sd)
-        key2_thumb_lock_sd <= 1'b1;
-end
 
 // Accumulate desired bank while a previous transition is in flight.
 wire key_prev_request_sd = brw_fs_prev | play_fs_prev_sd;
@@ -1360,10 +1255,19 @@ always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
  if(!sdcard_rst_n) sd_sw1_sync<=0;
  else sd_sw1_sync<={sd_sw1_sync[0],board_sw_level_clk[0]};
 end
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+ if(!sdcard_rst_n) begin sd_sw3_sync<=0; fault_flags_s1<=0; fault_flags_s2<=0; end
+ else begin
+  sd_sw3_sync<={sd_sw3_sync[0],board_sw_level_clk[2]};
+  // Independent sticky flags, each transferred through two flip-flops.
+  fault_flags_s1<=fault_flags_clk; fault_flags_s2<=fault_flags_s1;
+ end
+end
 seg_business_mux u_seg_business_mux(
  .clk(sd_card_clk),.rst_n(sdcard_rst_n),.display_enable(sd_sw1_sync[1]),
  .sample_position(play_active_sd ? seek_cur_sample_sd : play_total_samples),
  .song_index(display_song_sd),
+ .debug_enable(sd_sw3_sync[1]),.fault_flags(fault_flags_s2),.error_code(media_err_code),
  .seg_data_0(seg_biz_0),.seg_data_1(seg_biz_1),.seg_data_2(seg_biz_2),.seg_data_3(seg_biz_3),
  .seg_data_4(seg_biz_4),.seg_data_5(seg_biz_5),.seg_data_6(seg_biz_6),.seg_data_7(seg_biz_7));
 seg_scan #(.CLK_FREQ(100_000_000)) seg_scan_m0(
@@ -1496,36 +1400,6 @@ assign vout_data = (`DIAG_LOCAL_PATTERN) ? local_pattern_rgb
 assign view_rgb = thumb_view ? (thumb_active ? thumb_rgb : 24'd0)
                              : ((mv_read_active && !mv_window_visible) ? 24'd0 : vout_data);
 
-// ===================== 第十四讲：亮度/对比度像素调节 =====================
-// 控制域参数先做两级同步，再在 frame_start 整帧锁存。默认值
-// brightness=255、contrast=128 时模块严格旁路，因此不改动既有画面。
-always @(posedge video_clk or negedge video_rst_n) begin
-    if (!video_rst_n) begin
-        cfg_brightness_sync1  <= 8'd255;
-        cfg_brightness_sync2  <= 8'd255;
-        cfg_contrast_sync1    <= 8'd128;
-        cfg_contrast_sync2    <= 8'd128;
-        cfg_menu_active_sync1 <= 1'b0;
-        cfg_menu_active_sync2 <= 1'b0;
-        brightness_frame      <= 8'd255;
-        contrast_frame        <= 8'd128;
-        menu_active_frame     <= 1'b0;
-    end else begin
-        cfg_brightness_sync1  <= cfg_brightness_ctrl;
-        cfg_brightness_sync2  <= cfg_brightness_sync1;
-        cfg_contrast_sync1    <= cfg_contrast_ctrl;
-        cfg_contrast_sync2    <= cfg_contrast_sync1;
-        cfg_menu_active_sync1 <= cfg_menu_active;
-        cfg_menu_active_sync2 <= cfg_menu_active_sync1;
-
-        if (frame_start) begin
-            brightness_frame  <= cfg_brightness_sync2;
-            contrast_frame    <= cfg_contrast_sync2;
-            menu_active_frame <= cfg_menu_active_sync2;
-        end
-    end
-end
-
 // ===================== 第九讲：OSD状态字幕叠加 =====================
 // OSD 紧跟在黑屏屏蔽之后、video_rgb_to_axis 之前，纯组合替换像素，
 // 不改变现有 de/vs 的节拍，也不影响 HDMI 音频数据岛调度。
@@ -1578,32 +1452,11 @@ always @(posedge video_clk or negedge video_rst_n) begin
         adjusted_pixel_x <= adjusted_pixel_x + 10'd1;
 end
 
-// S7-02：集中错误码优先于既有 OSD 错误码，用于最小屏幕状态提示。
-wire [7:0] osd_err_code_frame_eff =
-    media_err_code_frame;
+// Retain the startup error background; the three debug text rows are retired.
+assign osd_rgb_out = (!display_valid_sync2 && media_err_code_frame != 0) ? 24'h201018 : adjusted_rgb;
 
-osd_overlay_24 #(
-    .OSD_X(8),
-    .OSD_Y(8)
-) u_osd_overlay_24 (
-    .clk          (video_clk),
-    .rst_n        (video_rst_n),
-    .vsync        (vs),
-    .de           (adjusted_de),
-    .rgb_in       ((!display_valid_sync2 && osd_err_code_frame_eff != 0) ? 24'h201018 : adjusted_rgb),
-    .pixel_x      (adjusted_pixel_x),
-    .active_index (media_id),
-    .auto_enabled (auto_enabled_sync2),
-    .end_mode     (ui_modes_v2[3:2]),
-    .effect_mode  (ui_modes_v2[1:0]),
-    .error_code   (osd_err_code_frame_eff),
-    .brightness   (brightness_frame),
-    .contrast     (contrast_frame),
-    .menu_active  (menu_active_frame),
-    .rgb_out      (osd_rgb_out),
-    .de_out       (osd_de_out),
-    .osd_active   (osd_active)
-);
+
+
 
 // 第十二讲：音频波形+峰值条叠加。位于OSD之后、RGB转AXIS之前，
 // 纯像素级组合替换，不改变de/vs节拍，不影响HDMI音频数据岛调度。
@@ -1805,15 +1658,6 @@ always @(posedge video_clk or negedge video_rst_n) begin
         display_valid_sync2    <= 1'b0;
         audio_play_enable_sync1 <= 1'b0;
         audio_play_enable_sync2 <= 1'b0;
-        auto_enabled_sync1     <= 1'b0;
-        auto_enabled_sync2     <= 1'b0;
-        osd_error_code_sync1   <= 8'd0;
-        osd_error_code_sync2   <= 8'd0;
-        osd_error_toggle_sync1 <= 1'b0;
-        osd_error_toggle_sync2 <= 1'b0;
-        osd_error_toggle_seen  <= 1'b0;
-        osd_error_update_pending <= 1'b0;
-        osd_error_code_frame   <= 8'd0;
         media_err_code_sync1   <= 8'd0;
         media_err_code_sync2   <= 8'd0;
         media_err_toggle_sync1 <= 1'b0;
@@ -1834,8 +1678,6 @@ always @(posedge video_clk or negedge video_rst_n) begin
         display_valid_sync2    <= display_valid_sync1;
         audio_play_enable_sync1 <= audio_play_enable;
         audio_play_enable_sync2 <= audio_play_enable_sync1;
-        auto_enabled_sync1     <= auto_play_en_out;
-        auto_enabled_sync2     <= auto_enabled_sync1;
         vs_q                   <= vs;
         index_commit_pulse     <= 1'b0;
         switch_abort_sync      <= {switch_abort_sync[1:0], switch_abort_toggle};
@@ -1843,17 +1685,7 @@ always @(posedge video_clk or negedge video_rst_n) begin
         // error_code 是低频8位状态，用toggle作为捆绑数据更新标志。
         // 等待toggle同步完成后的下一拍再提交数据，避免多位同时变化时
         // 视频域采到中间值。
-        osd_error_code_sync1   <= osd_error_code;
-        osd_error_code_sync2   <= osd_error_code_sync1;
-        osd_error_toggle_sync1 <= osd_error_toggle;
-        osd_error_toggle_sync2 <= osd_error_toggle_sync1;
-        if (osd_error_toggle_sync2 != osd_error_toggle_seen) begin
-            osd_error_toggle_seen   <= osd_error_toggle_sync2;
-            osd_error_update_pending <= 1'b1;
-        end else if (osd_error_update_pending) begin
-            osd_error_code_frame    <= osd_error_code_sync2;
-            osd_error_update_pending <= 1'b0;
-        end
+
 
         // S7-02：media_supervisor 错误码同步到 video 域，供最小屏幕状态提示。
         media_err_code_sync1   <= media_err_code;
@@ -1901,8 +1733,7 @@ assign media_id = (display_valid_sync2 &&
                 ? (media_state_code_sync2[1:0] - 2'd1)
                 : 2'd0;
 
-// Scan diagnostics are quasi-static. Serial snapshot waits for two identical
-// synchronized samples; video consumes only single-bit status flags.
+// Scan diagnostics are quasi-static; video consumes single-bit status flags.
 always @(posedge video_clk or negedge video_rst_n) begin
     if (!video_rst_n) begin
         media_status_v1 <= 24'd0;
@@ -1910,18 +1741,6 @@ always @(posedge video_clk or negedge video_rst_n) begin
     end else begin
         media_status_v1 <= media_status_sd;
         media_status_v2 <= media_status_v1;
-    end
-end
-always @(posedge clk or negedge exp_rst_n) begin
-    if (!exp_rst_n) begin
-        media_status_c1 <= 24'd0;
-        media_status_c2 <= 24'd0;
-        media_status_clk <= 24'd0;
-    end else begin
-        media_status_c1 <= media_status_sd;
-        media_status_c2 <= media_status_c1;
-        if (media_status_c1 == media_status_c2)
-            media_status_clk <= media_status_c2;
     end
 end
 
@@ -2455,11 +2274,9 @@ reset_sync u_exp_reset (
 
 expansion_integration #(
     .CLK_FREQ_HZ      (50_000_000),
-    .BAUD_RATE        (115_200),
     .DEBOUNCE_CYCLES  (400_000),
     .AB_STABLE_CYCLES (50_000),
     .IR_CLK_FREQ_HZ   (50_000_000),
-    .ECHO_ENABLE      (ECHO_TEST_ENABLE),
     .BUZZER_ENABLE    (BUZZER_FEEDBACK_ENABLE)
 ) u_expansion_integration (
     .clk              (clk),
@@ -2473,9 +2290,7 @@ expansion_integration #(
     .exp_enc2_b       (exp_enc2_b),
     .exp_enc2_sw_n    (exp_enc2_sw_n),
     .exp_ir_rx        (exp_ir_rx),
-    .key1             (key1),
-    .key2             (key2),
-    .key3             (1'b1),
+    .key3             (key3),
     .sw1              (sw1),
     .sw2              (sw2),
     .sw3              (sw3),
@@ -2485,9 +2300,8 @@ expansion_integration #(
     .exp_ext_o        (exp_ext_o),
     .board_buzzer_n   (board_buzzer_n),
     .uart_tx          (uart_tx),
+    .fault_flags      (fault_flags_clk),
     .ui_ev_valid      (ui_ev_valid),
-    .boot_active      (boot_active_s2),
-    .media_status     (media_status_clk),
     .underrun_pulse   (underrun_pulse_clk),
     .wav_buffer_low   (wav_buffer_low_c2),
     .wav_stream_active(wav_stream_active_c2),
@@ -2515,7 +2329,7 @@ expansion_integration #(
 // S3：主界面选歌事件解码（板级 clk 域）
 //   把统一事件总线里的选曲事件（EC1 旋转、方向键、EC1 按压、KEY07）
 //   解码成四路电平翻转；随后由 sd 域的 browse_fsm 同步/边沿还原。
-//   事件流的物理通路、串口回显、反馈音完全不变，只是新增一路只读消费。
+//   事件流的物理通路与反馈音保留，启动控制只读消费事件。
 // ==========================================================================
 ui_event_bridge u_ui_event_bridge (
     .clk          (clk),
@@ -2549,19 +2363,15 @@ ui_event_bridge u_ui_event_bridge (
 //   1) clk 域：任一已确认事件 -> 翻转电平（单比特电平翻转是标准 CDC 手法，
 //      不会因事件密集而丢脉冲，也不需要事件总线整体跨域）；
 //   2) video 域：boot_layer 内两级同步 + 边沿检测，一次事件只消费一次；
-//   3) 反向：boot_active 为慢变单比特电平，两级同步回 clk 域仅用于串口观测。
+//   3) 反向：boot_active 为慢变单比特电平，两级同步回 clk 域。
 // ==========================================================================
 always @(posedge clk or negedge exp_rst_n) begin
     if (!exp_rst_n) begin
         boot_skip_toggle_clk <= 1'b0;
-        boot_active_s1       <= S2_BOOT_ENABLE;
-        boot_active_s2       <= S2_BOOT_ENABLE;
     end else begin
         if (ui_ev_valid)
             boot_skip_toggle_clk <= ~boot_skip_toggle_clk;
 
-        boot_active_s1 <= boot_active;
-        boot_active_s2 <= boot_active_s1;
     end
 end
 

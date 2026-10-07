@@ -1,0 +1,4 @@
+WARNING: D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_fat32_index_loader.v:225: $readmemh(sim/s4_fixture/card_mem.hex): Not enough words in the file for the requested range [0:32767].
+WARNING: D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_fat32_index_loader.v:246: $readmemh(sim/s4_fixture/card_song_mem.hex): Not enough words in the file for the requested range [0:32767].
+TEST_PASS fat32_index_loader_s4
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_fat32_index_loader.v:295: $finish called at 127565000 (1ps)

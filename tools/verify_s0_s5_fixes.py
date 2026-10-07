@@ -4,16 +4,14 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "sim/fix_20261006"
 OUT.mkdir(exist_ok=True)
-libs = ["src", "src/SD", "src/io", "src/display", "src/audio", "src/boot", "src/video"]
+libs = ["sim", "src", "src/SD", "src/io", "src/display", "src/audio", "src/boot", "src/video"]
 def run(name, top_control=False):
     src = ROOT / "sim/integration" / (name + ".v") if top_control else ROOT / "sim" / (name + ".v")
     args = ["iverilog", "-g2005", "-I", "src", "-I", "src/include", "-I", "src/SD"]
-    if top_control:
-        args += ["-i"]  # encrypted/primitive datapaths only; clocks/data driven by bench
     args += [x for d in libs for x in ("-y",d)]
     args += ["-s",name,"-o",str(OUT/(name+".vvp")),str(src)]
     if top_control:
-        args += ["src/top_tf_hdmi_audio.v"]
+        args += ["src/top_tf_hdmi_audio.v", "sim/integration/vendor_control_stubs.v"]
     c = subprocess.run(args,cwd=ROOT,capture_output=True,text=True,encoding="utf-8",errors="replace",timeout=90)
     r = subprocess.run(["vvp",str(OUT/(name+".vvp"))],cwd=ROOT,capture_output=True,text=True,encoding="utf-8",errors="replace",timeout=120) if c.returncode==0 else c
     log = c.stdout+c.stderr+r.stdout+r.stderr

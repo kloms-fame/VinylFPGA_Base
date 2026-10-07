@@ -10,7 +10,8 @@
 // 每帧的消隐期做两件事（时间充裕，25 MHz 下 >3 万拍）：
 //   1) 顺序扫描行表，选出行时间 <= cur_time_ms 的**最后一行**；
 //   2) 把该行的字形号读进 16 个寄存器。
-// 像素期只剩"16:1 字形选择 + 字库一次查表 + 位选"，路径短且与行号无关。
+// 像素期提前一像素读取下一字形行；首像素使用 ROM 输出，随后使用行缓存。
+// RGB/hit 仍为当前像素的组合输出，不增加 RGB、DE 或 VS 流水延迟。
 //
 // 几何/字形数/颜色来自 src/include/lrc_geom.vh（由 tools/gen_lrc_assets.py 生成）。
 // =============================================================================
@@ -57,8 +58,10 @@ module lrc_osd (
     reg  [7:0] cur_glyph;
     wire [LRC_FONT_ADDR_W-1:0] font_addr;
     wire [15:0] font_row;
+    reg [15:0] row_cache = 16'h0000;
 
     lrc_font_rom u_font_rom (
+        .clk  (clk),
         .addr (font_addr),
         .dout (font_row)
     );
@@ -139,7 +142,10 @@ module lrc_osd (
     wire        in_box = enable && de &&
                          (dx12 < (LRC_CHARS_PER_LINE * LRC_GLYPH_W)) &&
                          (dy12 < LRC_GLYPH_H);
-    wire [LINE_IDX_W-1:0] char_sel = dx12[7:4];    // /16（LRC_GLYPH_W=16, SCALE=1）
+    // At x=95,111,... the address already names the following character.
+    // Reading is independent of enable, so enabling midway through a glyph is safe.
+    wire [11:0] fetch_dx = dx12 + 12'd1;
+    wire [LINE_IDX_W-1:0] char_sel = fetch_dx[7:4];
     wire [3:0]            col_pix  = dx12[3:0];
     wire [3:0]            row_sel  = dy12[3:0];
 
@@ -167,7 +173,16 @@ module lrc_osd (
     // font_addr = 字形号*16 + 行号（16x16 点阵，每行 16bit）
     wire [11:0] font_addr_full = {cur_glyph, 4'b0000} + {8'd0, row_sel};
     assign font_addr = font_addr_full[LRC_FONT_ADDR_W-1:0];
-    assign hit = in_box && font_row[15 - col_pix];
+    // Capture during column 0. The direct path for column 0 accounts for the
+    // synchronous ROM's single-cycle latency without delaying the pixel stream.
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            row_cache <= 16'h0000;
+        else if (de && col_pix == 4'd0)
+            row_cache <= font_row;
+    end
+    wire [15:0] render_row = (col_pix == 4'd0) ? font_row : row_cache;
+    assign hit = in_box && render_row[15 - col_pix];
     assign rgb_out = hit ? LRC_COLOR : rgb_in;
 
 endmodule

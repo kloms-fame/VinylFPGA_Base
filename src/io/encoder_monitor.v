@@ -2,10 +2,13 @@
 `define EXP_ENCODER_MONITOR_V
 module encoder_monitor #(
     parameter integer DEBOUNCE_CYCLES  = 400_000,
-    parameter integer AB_STABLE_CYCLES = 50_000
+    parameter integer AB_STABLE_CYCLES = 50_000,
+    parameter integer DEBOUNCE_TICK_CYCLES = (DEBOUNCE_CYCLES < 5000) ? 1 : 5000,
+    parameter integer USE_EXTERNAL_TICK = 0
 )(
     input  wire        clk,
     input  wire        rst_n,
+    input  wire        debounce_ce,
     input  wire        enc1_a_async,
     input  wire        enc1_b_async,
     input  wire        enc1_sw_async,
@@ -49,28 +52,28 @@ module encoder_monitor #(
         .count      (enc2_count)
     );
 
-    debounce_filter #(
-        .DEBOUNCE_CYCLES(DEBOUNCE_CYCLES),
-        .INITIAL_LEVEL  (1'b1)
-    ) u_enc1_sw (
-        .clk       (clk),
-        .rst_n     (rst_n),
-        .async_in  (enc1_sw_async),
-        .level     (enc1_sw_level),
-        .fall_pulse(enc1_sw_fall_pulse),
-        .rise_pulse(enc1_sw_rise_pulse)
-    );
+    localparam integer STABLE_TICKS = (DEBOUNCE_CYCLES + DEBOUNCE_TICK_CYCLES - 1) / DEBOUNCE_TICK_CYCLES;
+    wire local_ce;
+    wire tick_ce;
+    generate
+        if (USE_EXTERNAL_TICK) begin: g_external_tick
+            assign local_ce = 1'b0;
+        end else begin: g_local_tick
+            debounce_tick #(.TICK_CYCLES(DEBOUNCE_TICK_CYCLES)) u_tick (
+                .clk(clk), .rst_n(rst_n), .tick_ce(local_ce)
+            );
+        end
+    endgenerate
+    assign tick_ce = USE_EXTERNAL_TICK ? debounce_ce : local_ce;
 
-    debounce_filter #(
-        .DEBOUNCE_CYCLES(DEBOUNCE_CYCLES),
-        .INITIAL_LEVEL  (1'b1)
-    ) u_enc2_sw (
-        .clk       (clk),
-        .rst_n     (rst_n),
-        .async_in  (enc2_sw_async),
-        .level     (enc2_sw_level),
-        .fall_pulse(enc2_sw_fall_pulse),
-        .rise_pulse(enc2_sw_rise_pulse)
+    debounce_bank #(
+        .CHANNELS(2), .STABLE_TICKS(STABLE_TICKS), .INITIAL_LEVEL(1'b1)
+    ) u_sw_bank (
+        .clk(clk), .rst_n(rst_n), .tick_ce(tick_ce),
+        .async_in({enc2_sw_async, enc1_sw_async}),
+        .level({enc2_sw_level, enc1_sw_level}),
+        .fall_pulse({enc2_sw_fall_pulse, enc1_sw_fall_pulse}),
+        .rise_pulse({enc2_sw_rise_pulse, enc1_sw_rise_pulse})
     );
 endmodule
 `endif
