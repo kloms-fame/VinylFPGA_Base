@@ -64,16 +64,38 @@ module seek_controller #(
     wire        any_ev   = seek_ev | prp;
     wire [31:0] mag      = (p5f | p5b) ? STEP_IR : STEP_ENC;
     wire        dir_up   = p5f | p2f;      // 1 = 向曲尾
+    wire        accept   = any_ev && play_active && (total_samples != 32'd0);
 
-    // 扩位有符号加法：base(33bit 正) + delta(33bit 有符号)
-    wire signed [32:0] delta_ext = dir_up ? $signed({1'b0, mag})
-                                          : -$signed({1'b0, mag});
-    wire signed [32:0] base_ext  = busy ? $signed({1'b0, target_sample})
-                                        : $signed({1'b0, cur_sample});
-    wire signed [32:0] cand      = base_ext + delta_ext;
+    // 步长在事件当拍只做寄存，不参与 33 位加法/比较，打断
+    // s[2] 同步位 -> 方向 mux -> 加法 -> 钳位比较链（r11 上 -0.023 ns）。
+    wire signed [34:0] new_delta = dir_up ? $signed({3'b0, mag})
+                                          : -$signed({3'b0, mag});
 
-    wire [31:0] clamped = cand[32]                       ? 32'd0 :
-                          (cand > $signed({1'b0, lim_reg})) ? lim_reg : cand[31:0];
+    // 二级：加法结果寄存，钳位比较不再与加法同拍
+    reg                cand_v;
+    reg                cand_replay;
+    reg signed [35:0]  cand_val;
+
+    wire signed [35:0] lim_ext   = $signed({4'b0, lim_reg});
+    wire signed [35:0] clamped35 = (cand_val < 0)       ? 36'sd0 :
+                                   (cand_val > lim_ext) ? lim_ext : cand_val;
+    wire [31:0]        pending_target = cand_v
+                                      ? (cand_replay ? 32'd0 : clamped35[31:0])
+                                      : target_sample;
+
+    // 忙时（含“本拍即将提交”）以最新目标为基准，保证背靠背步进不丢失。
+    wire [32:0]        new_base = (busy | cand_v) ? {1'b0, pending_target}
+                                                  : {1'b0, cur_sample};
+
+    // 一级：事件锁存 + 忙窗口内后续步进合并累加（重播只需标记）
+    reg                acc_v;
+    reg                acc_replay;
+    reg signed [34:0]  acc_delta;
+    reg [32:0]         acc_base;
+
+    wire        cand_go = acc_v && !accept && !cand_v;
+    wire signed [35:0] acc_base_ext = $signed({3'b0, acc_base});
+    wire signed [35:0] cand_next    = acc_base_ext + $signed(acc_delta);
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -82,6 +104,13 @@ module seek_controller #(
             busy          <= 1'b0;
             hold          <= 20'd0;
             lim_reg       <= 32'd0;
+            acc_v         <= 1'b0;
+            acc_replay    <= 1'b0;
+            acc_delta     <= 35'sd0;
+            acc_base      <= 33'd0;
+            cand_v        <= 1'b0;
+            cand_replay   <= 1'b0;
+            cand_val      <= 36'sd0;
         end else begin
             restart_req <= 1'b0;
             // 总数在整曲生命周期内稳定；预先寄存 total-1，避免它进入
@@ -91,17 +120,46 @@ module seek_controller #(
                 target_sample <= 32'd0;
                 busy          <= 1'b0;
                 hold          <= 20'd0;
-            end else if (any_ev) begin
+                acc_v         <= 1'b0;
+                acc_replay    <= 1'b0;
+                acc_delta     <= 35'sd0;
+                cand_v        <= 1'b0;
+            end else if (accept) begin
                 // 空音频或非播放态一律不响应（方案：空音频禁止 Seek）
-                if (play_active && (total_samples != 32'd0)) begin
-                    target_sample <= prp ? 32'd0 : clamped;
+                if (acc_v) begin
+                    acc_delta  <= acc_delta + new_delta;
+                    acc_replay <= acc_replay | prp;
+                end else begin
+                    acc_base   <= new_base;
+                    acc_delta  <= new_delta;
+                    acc_replay <= prp;
+                    acc_v      <= 1'b1;
+                end
+            end
+
+            if (!clear_pulse) begin
+                if (cand_v) begin
+                    // 本拍由三级消费；清除后同一拍不装载新候选。
+                    cand_v      <= 1'b0;
+                end else if (cand_go) begin
+                    cand_val    <= cand_next;
+                    cand_replay <= acc_replay;
+                    cand_v      <= 1'b1;
+                    acc_v       <= 1'b0;
+                end
+
+                if (cand_v) begin
+                    target_sample <= pending_target;
                     restart_req   <= 1'b1;
                     busy          <= 1'b1;
                     hold          <= BUSY_HOLD;
+                end else if (busy) begin
+                    if (hold == 20'd0) busy <= 1'b0;
+                    else               hold <= hold - 1'b1;
                 end
             end else if (busy) begin
-                if (hold == 20'd0) busy <= 1'b0;
-                else               hold <= hold - 1'b1;
+                busy <= 1'b0;
+                hold <= 20'd0;
             end
         end
     end

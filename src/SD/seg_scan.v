@@ -18,6 +18,12 @@ parameter SCAN_COUNT = CLK_FREQ /(SCAN_FREQ * 6) - 1;
 
 reg[31:0] scan_timer;  //scan time counter
 reg[3:0] scan_sel;     //Scan select counter
+reg[7:0] seg_data_0_q;
+reg[7:0] seg_data_1_q;
+reg[7:0] seg_data_2_q;
+reg[7:0] seg_data_3_q;
+reg[7:0] seg_data_4_q;
+reg[7:0] seg_data_5_q;
 always@(posedge clk or negedge rst_n)
 begin
 	if(rst_n == 1'b0)
@@ -42,44 +48,56 @@ always@(posedge clk or negedge rst_n)
 begin
 	if(rst_n == 1'b0)
 	begin
+		seg_data_0_q <= 8'hff;
+		seg_data_1_q <= 8'hff;
+		seg_data_2_q <= 8'hff;
+		seg_data_3_q <= 8'hff;
+		seg_data_4_q <= 8'hff;
+		seg_data_5_q <= 8'hff;
 		seg_sel <= 6'b111111;
 		seg_data <= 8'hff;
 	end
 	else
 	begin
+		seg_data_0_q <= seg_data_0;
+		seg_data_1_q <= seg_data_1;
+		seg_data_2_q <= seg_data_2;
+		seg_data_3_q <= seg_data_3;
+		seg_data_4_q <= seg_data_4;
+		seg_data_5_q <= seg_data_5;
 		case(scan_sel)
 			//first digital led
 			4'd0:
 			begin
 				seg_sel <= 6'b11_1110;
-				seg_data <= seg_data_0;
+				seg_data <= seg_data_0_q;
 			end
 			//second digital led
 			4'd1:
 			begin
 				seg_sel <= 6'b11_1101;
-				seg_data <= seg_data_1;
+				seg_data <= seg_data_1_q;
 			end
 			//...
 			4'd2:
 			begin
 				seg_sel <= 6'b11_1011;
-				seg_data <= seg_data_2;
+				seg_data <= seg_data_2_q;
 			end
 			4'd3:
 			begin
 				seg_sel <= 6'b11_0111;
-				seg_data <= seg_data_3;
+				seg_data <= seg_data_3_q;
 			end
 			4'd4:
 			begin
 				seg_sel <= 6'b10_1111;
-				seg_data <= seg_data_4;
+				seg_data <= seg_data_4_q;
 			end
 			4'd5:
 			begin
 				seg_sel <= 6'b01_1111;
-				seg_data <= seg_data_5;
+				seg_data <= seg_data_5_q;
 			end
 			default:
 			begin
