@@ -824,10 +824,11 @@ module fat32_media_loader #(
 
             // 4. 跳过 BMP 数据偏移，然后 BGR -> RGB。
             if (streamer_valid && (load_state == LD_DATA)) begin
-                if (pixel_byte_cnt < data_offset) begin
-                    pixel_byte_cnt <= pixel_byte_cnt + 32'd1;
-                end else if ((pixel_byte_cnt < file_len) &&
-                             (pixel_byte_cnt < pixel_end)) begin
+                // 进入 LD_DATA 时 pixel_byte_cnt 已载入 data_offset，因此
+                // “跳过头部”分支在该状态下不再可达；header_valid 又已保证
+                // file_len >= pixel_end，故逐字节仅需判断 pixel_end 上界。
+                // 这保留原行为，同时从 100 MHz 域移除两段冗余 32 位比较。
+                if (pixel_byte_cnt < pixel_end) begin
                     case (rgb_byte_cnt)
                         3'd0: begin
                             bmp_data[7:0] <= streamer_byte;

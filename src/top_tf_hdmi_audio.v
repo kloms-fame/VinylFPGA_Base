@@ -378,7 +378,20 @@ wire probe_card_req,probe_card_busy,probe_card_valid,probe_card_done;
 wire [31:0] probe_card_lba;
 wire media_mount_ok = media_status_sd[23] && media_preloaded_sd &&
                      (|image_ready_sd) && media_status_sd[15:0]==16'd0 && osd_error_code==0;
+// media_mount_ok 由 image_ready/media_status 等多路状态组合而成；这些状态
+// 只在扫描或预加载完成时变化，打一拍用于导航器可切断 100 MHz 组合长路径。
 wire play_media_lost = !media_sd_rst_n || media_err_code!=0;
+reg media_mount_ok_sd;
+reg play_media_lost_sd;
+always @(posedge sd_card_clk or negedge sd_media_rst_n) begin
+    if (!sd_media_rst_n) begin
+        media_mount_ok_sd <= 1'b0;
+        play_media_lost_sd <= 1'b1;
+    end else begin
+        media_mount_ok_sd <= media_mount_ok;
+        play_media_lost_sd <= play_media_lost;
+    end
+end
 
 // sd 域：browse_fsm 还原/路由出的控制脉冲。
 wire        brw_fs_next;        // 全屏：下一张
@@ -971,7 +984,7 @@ sd_card_bmp #(
 );
 
 media_probe u_media_probe(
- .clk(sd_card_clk),.rst_n(sd_media_rst_n),.ready(media_mount_ok),
+ .clk(sd_card_clk),.rst_n(sd_media_rst_n),.ready(media_mount_ok_sd),
  .client_req(media_sec_req),.client_lba(media_sec_lba),
  .client_busy(media_sec_busy),.client_valid(media_sec_valid),.client_done(media_sec_done),
  .card_req(probe_card_req),.card_lba(probe_card_lba),
@@ -989,7 +1002,7 @@ media_supervisor #(
 ) u_media_supervisor (
     .clk            (sd_card_clk),
     .rst_n          (sdcard_rst_n),
-    .media_ready    (media_mount_ok),
+    .media_ready    (media_mount_ok_sd),
     .mount_error    (osd_error_code),
     .sector_error   (storage_error),
     .sector_done    (storage_done),
@@ -1041,7 +1054,7 @@ play_ctrl u_play_ctrl (
     .clk           (sd_card_clk),
     .rst_n         (sdcard_rst_n),
     .song_total    (song_total_sd),
-    .song_confirm  (thumb_confirm_event_sd || (brw_play_start && media_mount_ok && !cover_busy)),
+    .song_confirm  (thumb_confirm_event_sd || (brw_play_start && media_mount_ok_sd && !cover_busy)),
     .focus_index   (thumb_confirm_event_sd ? thumb_focus_index_sd : disp_buf_idx),
     .enc_cw_tgl    (brw_ev_enc_cw_tgl),
     .enc_ccw_tgl   (brw_ev_enc_ccw_tgl),
@@ -1050,7 +1063,7 @@ play_ctrl u_play_ctrl (
     .key_down_tgl  (brw_ev_key_down_tgl),
     .stop_tgl      (1'b0),
     .stop_request  (brw_play_stop),
-    .media_lost    (play_media_lost),
+    .media_lost    (play_media_lost_sd),
     .stream_end    (eof_sync[2] && stream_enable_sd),
     .end_mode_tgl  (brw_ev_end_mode_tgl),
     .end_mode      (play_end_mode),
@@ -1178,7 +1191,7 @@ wire play_fs_prev_sd = play_track_step_sd & ~play_track_dir_sd;
 // Restart transaction: drain clients and acknowledge read-side pointer reset.
 stream_session u_stream_session(
  .clk(sd_card_clk),.rst_n(sd_media_rst_n),
- .requested(audio_play_enable && play_active_sd && media_mount_ok && !cover_busy),
+ .requested(audio_play_enable && play_active_sd && media_mount_ok_sd && !cover_busy),
  .restart(play_restart_request),.storage_busy(wav_sec_busy),
  .video_busy(mv_writer_active),.reader_idle(wav_reader_idle),
  .enable(stream_enable_sd),.start_toggle(play_track_tgl_sd));
@@ -1191,7 +1204,7 @@ assign key2_to_sd            = (thumb_mode_sd || key2_thumb_lock_sd) ? 1'b1 : ke
 // S3：缩略图"确认"入口 = 母板 KEY2 长按(兜底) 或 J2 EC1 按压/KEY02(中)。
 // Reject unavailable/busy selections before either playback or display accepts them.
 assign thumb_confirm_event_sd = brw_thumb_confirm && image_ready_sd[thumb_focus_index_sd] &&
-                                media_mount_ok && !cover_busy && !brw_go_home;
+                                media_mount_ok_sd && !cover_busy && !brw_go_home;
 assign thumb_select_req_sd   = thumb_select_hold_sd;
 assign thumb_select_index_sd = thumb_select_index_hold_sd;
 
@@ -1233,8 +1246,8 @@ thumbnail_controller u_thumbnail_controller (
     .key_right       (brw_thumb_right),
     .key_left        (brw_thumb_left),
     .key_confirm     (thumb_confirm_event_sd),
-    .key_mode        (brw_thumb_mode && media_mount_ok),
-    .go_home         (brw_go_home || play_media_lost),
+    .key_mode        (brw_thumb_mode && media_mount_ok_sd),
+    .go_home         (brw_go_home || play_media_lost_sd),
     .image_complete  (image_ready_sd),
     .frame_start     (frame_start_sd),
     .view_mode       (thumb_mode_sd),
@@ -1272,7 +1285,7 @@ end
 // Accumulate desired bank while a previous transition is in flight.
 wire key_prev_request_sd = brw_fs_prev | play_fs_prev_sd;
 cover_navigation u_cover_navigation(
- .clk(sd_card_clk),.rst_n(sd_media_rst_n),.ready(media_mount_ok),
+ .clk(sd_card_clk),.rst_n(sd_media_rst_n),.ready(media_mount_ok_sd),
  .count(song_total_sd),.displayed(disp_buf_idx),
  .next_step(brw_fs_next),.prev_step(brw_fs_prev),
  .choose(thumb_confirm_event_sd || play_track_step_sd),

@@ -415,8 +415,9 @@ module thumbnail_view_reader #(
     wire fifo_empty;
     wire [31:0] fifo_dout;
     wire fifo_valid;
-    wire fifo_we = rd_valid && (ret_index_mem[1:0] == 2'd0) &&
-                   !fifo_full && !fifo_rst;
+    // rfifo 内部已用 full_flag 保护写指针；这里不再重复依赖组合 full，
+    // 避免 full -> we -> wr_en 长路径进入 ext_mem_clk 关键区域。
+    wire fifo_we = rd_valid && (ret_index_mem[1:0] == 2'd0) && !fifo_rst;
     wire raw_read_en;
 
     rfifo_32_32_512 u_thmb_fifo (
