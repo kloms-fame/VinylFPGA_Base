@@ -87,6 +87,7 @@ module sd_card_bmp #(
     wire [23:0] bmp_data;
     wire        sd_init_done;
     wire        bmp_ready;
+    reg         bmp_ready_q;
     wire        scan_done;
     reg         scan_done_eff;
     wire        scan_found_valid;
@@ -245,6 +246,7 @@ module sd_card_bmp #(
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             wrfin_tgl_sync        <= 3'b000;
+            bmp_ready_q           <= 1'b0;
             scan_done_eff         <= 1'b0;
             scan_start_pulse      <= 1'b0;
             load_start_pulse      <= 1'b0;
@@ -286,6 +288,7 @@ module sd_card_bmp #(
         end else begin
             // 跨时钟域信号同步与按键打拍
             wrfin_tgl_sync    <= {wrfin_tgl_sync[1:0], write_finish_toggle};
+            bmp_ready_q       <= bmp_ready;
             scan_done_eff     <= scan_done | scan_abort;
             key_auto_stable_d <= key_auto_stable;
 
@@ -379,7 +382,7 @@ module sd_card_bmp #(
                     state_code <= bmp_internal_state;
 
                 // 5. 扫描与加载调度状态机
-                if (!scan_kicked && bmp_ready && sdr_init_done) begin
+                if (!scan_kicked && bmp_ready_q && sdr_init_done) begin
                     // 上电自启动扫描
                     scan_start_pulse      <= 1'b1;
                     scan_kicked           <= 1'b1;
@@ -466,7 +469,7 @@ module sd_card_bmp #(
                             // 等不到 index_commit；复用已有 abort 脉冲释放它。
                             if (select_index == img_idx)
                                 switch_abort_toggle <= ~switch_abort_toggle;
-                        end else if (bmp_ready) begin
+                        end else if (bmp_ready_q) begin
                             load_idx         <= select_index;
                             load_index       <= select_index;
                             write_buf_idx    <= select_index;
@@ -488,7 +491,7 @@ module sd_card_bmp #(
                         if (ready_lut(next_from_current)) begin
                             img_idx      <= next_from_current;
                             disp_buf_idx <= next_from_current;
-                        end else if (bmp_ready) begin
+                        end else if (bmp_ready_q) begin
                             load_idx         <= next_from_current;
                             load_index       <= next_from_current;
                             write_buf_idx    <= next_from_current;
@@ -509,7 +512,7 @@ module sd_card_bmp #(
                         if (ready_lut(prev_from_current)) begin
                             img_idx      <= prev_from_current;
                             disp_buf_idx <= prev_from_current;
-                        end else if (bmp_ready) begin
+                        end else if (bmp_ready_q) begin
                             load_idx         <= prev_from_current;
                             load_index       <= prev_from_current;
                             write_buf_idx    <= prev_from_current;
@@ -529,7 +532,7 @@ module sd_card_bmp #(
                         if (ready_lut(next_from_current)) begin
                             img_idx      <= next_from_current;
                             disp_buf_idx <= next_from_current;
-                        end else if (bmp_ready) begin
+                        end else if (bmp_ready_q) begin
                             load_idx         <= next_from_current;
                             load_index       <= next_from_current;
                             write_buf_idx    <= next_from_current;
@@ -544,7 +547,7 @@ module sd_card_bmp #(
                     end
                     // 优先级4：后台顺序预加载四个bank。首图加载完成后立即显示，
                     // 其余图片在后台装入各自固定bank，后续切换不再访问TF卡。
-                    else if (scan_done_eff && bmp_ready && !load_busy &&
+                    else if (scan_done_eff && bmp_ready_q && !load_busy &&
                              (preload_idx < img_found_count)) begin
                         if (!ready_lut(preload_idx[1:0])) begin
                             load_idx         <= preload_idx[1:0];
