@@ -33,12 +33,13 @@ module tb_visual_feedback_top;
  force dut.play_active_sd=playing;force dut.play_sel_song_sd=selected;
  force dut.thumb_mode_sd=grid;force dut.thumb_focus_index_sd=focus;force dut.disp_buf_idx=bank;
  force dut.audio_file_valid=valid;force dut.play_total_samples=duration;force dut.seek_cur_sample_sd=position;
- force dut.board_sw_level_clk=4'b0001;
+ force dut.board_sw_level_clk=4'b0101; // SW3 on must no longer select E00F0
+ force dut.media_err_code=8'h34;force dut.fault_flags_clk=4'hf;
  repeat(4)@(negedge clk);rst=1;
  check(125,0,0);bank=1;check(62,1,0);
  grid=1;focus=2;check(5999,2,0);focus=3;check(240,3,0);
  selected=3;playing=1;position=0;check(0,3,0);
- position=60*48000;check(60,3,2);check(60,3,2); // pause retains position
+ position=60*48000;check(60,3,2);focus=0;bank=1;check(60,3,2); // pause retains position
  position=180*48000;check(180,3,6); // seek forward
  position=30*48000;check(30,3,1); // backward
  position=0;check(0,3,0);position=240*48000;check(240,3,8);

@@ -8,77 +8,71 @@ ws2812_effects #(.CLK_FREQ_HZ(REAL_TIMING ? 50000000 : 1000),.REFRESH_MS(REAL_TI
  (.clk(clk),.rst_n(rst),.enable(en),.mode_tgl(mode),.level(level),.progress(progress),.mute(mute),.ws_data(ws));
 led_business_driver #(.CLK_FREQ_HZ(1000)) leds(.clk(clk),.rst_n(rst),.en(en),.ir_accepted(ir),.biz_accepted(biz),.fault(fault),.mv_active(mv),.led_n(led));
 integer i,j,bit_count=0,high_count=0,frames=0;
-reg [191:0] first, captured=0, frozen=0, expected=0;
-reg [23:0] rgb;
-reg [7:0] r,g,b,amp,chan;
-integer model_mode=0, model_div=0, model_head=0, model_phase=0;
-integer history[0:7];
-integer bright, distance, colour, k;
-reg [7:0] model_level;
-reg [7:0] lit_mask;
-integer colourful_frames=0, long_pulses=0, shift_checks=0;
+reg [191:0] captured=0,frozen=0,expected=0;
+integer model_mode=0,model_level=0,model_progress=0,age=0;
+integer count,phase,head,energy,r,g,b,distance,flight,span;
+integer absorption_frames=0,long_pulses=0,base_frames=0;
+reg [255:0] vu_seen=0;
+reg [8:0] progress_seen=0;
 reg was_high=0;
-// Independently render the accepted frame, then check actual physical pulse widths.
-// Tests follow the public serialized output instead of the implementation's frame storage.
+// Reference uses an elapsed-frame timeline instead of DUT animation registers.
+// Decode physical NRZ data and compare every pixel of every accepted frame.
 always @(posedge clk) begin
- if(rst && dut.load_req && !dut.busy) begin
-  expected=0;bit_count=0;
-  amp=(mute || level<8) ? 0 : level/4;
-  if(en) model_phase=(model_phase+1)%64;
-  if(!en || dut.mode!=2 || dut.mode!=model_mode) model_head=0;
-  else if(model_div==3) model_head=(model_head+1)%11;
-  if(!en || dut.mode!=1 || mute) begin
-   for(k=0;k<8;k=k+1)history[k]=0;
-  end else if(dut.mode!=model_mode) begin
-   for(k=0;k<8;k=k+1)history[k]=0;
-   history[0]=amp;
-  end else if(model_div==2) begin
-   for(k=7;k>0;k=k-1)history[k]=history[k-1];
-   history[0]=amp;shift_checks=shift_checks+1;
+ if(!rst)begin
+  model_mode=0;model_level=0;model_progress=0;age=0;
+ end else if(dut.load_req && !dut.busy)begin
+  bit_count=0;expected=0;
+  span=progress>8 ? 8 : progress;
+  if(!en || dut.mode!=2 || dut.mode!=model_mode || span==0 || span!=model_progress)age=0;
+  else age=(age+1)%(span*3+12);
+  if(!en || dut.mode!=1 || mute)model_level=0;
+  else if(dut.mode!=model_mode || level>=model_level)model_level=level;
+  else if(model_level-level<=8)model_level=level;
+  else model_level=model_level-8;
+  model_mode=en ? dut.mode : 0;model_progress=span;
+  count=(model_level*8)/255;
+  flight=span*3;
+  phase=age<flight ? 0 : (age<flight+8 ? 1 : 2);
+  head=phase==0 ? age/3 : span-1;
+  energy=63-8*(age-flight);
+  if(model_mode==1 && model_level==level && !mute)vu_seen[level]=1;
+  if(model_mode==2)begin
+   progress_seen[span]=1;
+   if(span>0 && phase==1)absorption_frames=absorption_frames+1;
+   if(span>=4 && phase==0 && head>=3)long_pulses=long_pulses+1;
+   if(span>0 && phase==2)base_frames=base_frames+1;
   end
-  if(!en || dut.mode!=model_mode || dut.mode==0 ||
-     (dut.mode==1 && model_div==2) || (dut.mode==2 && model_div==3))model_div=0;
-  else model_div=model_div+1;
-  model_mode=en ? dut.mode : 0;
-  lit_mask=0;
-  for(i=0;i<8;i=i+1) begin
-   bright=0;
-   if(model_mode==1)bright=history[i];
-   if(model_mode==2)begin
-    if(i<progress)bright=12;
-    distance=model_head-i;
-    if(distance>=0 && distance<4)begin
-     case(distance)0:bright=63;1:bright=48;2:bright=32;3:bright=16;endcase
+  for(i=0;i<8;i=i+1)begin
+   r=0;g=0;b=0;
+   if(model_mode==1 && i<count)begin
+    if(i<4)g=48;else if(i<6)begin r=56;g=32;end else r=63;
+   end
+   if(model_mode==2 && i<span)begin
+    r=5;g=8;b=10;distance=head-i;
+    if(phase==0 && distance>=0 && distance<4)begin
+     case(distance)
+      0:begin r=32;g=63;b=63;end 1:begin r=12;g=40;b=56;end
+      2:begin r=6;g=22;b=36;end 3:begin r=5;g=12;b=20;end
+     endcase
+    end else if(phase==1 && i==span-1)begin
+     r=energy>5 ? energy : 5;g=energy>8 ? energy : 8;b=energy>10 ? energy : 10;
     end
    end
-   r=0;g=0;b=0;colour=(i+8-model_phase/8)%8;
-   case(colour)
-    0:r=bright;1:begin r=bright;g=bright/2;end
-    2:begin r=bright;g=bright;end 3:g=bright;
-    4:begin g=bright;b=bright;end 5:b=bright;
-    6:begin r=bright/2;b=bright;end 7:begin r=bright;b=bright;end
-   endcase
-   expected[i*24+:24]={g,r,b};
-   if(bright!=0)lit_mask[i]=1;
+   expected[i*24+:24]={g[7:0],r[7:0],b[7:0]};
   end
-  if(model_mode==1 && expected[23:0]!=0 && expected[47:24]!=0 && expected[23:0]!=expected[47:24])colourful_frames=colourful_frames+1;
-  if(model_mode==2 && progress==0 && model_head==3 && lit_mask==8'h0f)long_pulses=long_pulses+1;
  end
  #1;
- if(!rst) begin high_count=0;was_high=0;bit_count=0;end
+ if(!rst)begin high_count=0;was_high=0;bit_count=0;end
  else begin
-  if(ws) high_count=high_count+1;
-  else if(was_high) begin
-   if(high_count!=T0 && high_count!=T1) $fatal(1,"FAIL WS pulse width");
+  if(ws)high_count=high_count+1;
+  else if(was_high)begin
+   if(high_count!=T0 && high_count!=T1)$fatal(1,"FAIL WS pulse width");
    captured[(bit_count/24)*24+23-(bit_count%24)]=(high_count==T1);
-   bit_count=bit_count+1;
-   high_count=0;
-   if(bit_count==192) begin
+   bit_count=bit_count+1;high_count=0;
+   if(bit_count==192)begin
     frozen=captured;frames=frames+1;
-    if(captured!==expected) $fatal(1,"FAIL serialized frame RGB/progress/mute/black");
-    for(i=0;i<24;i=i+1) begin
-     chan=captured[i*8+:8];if(chan>63)$fatal(1,"FAIL brightness cap");
-    end
+    if(captured!==expected)$fatal(1,"FAIL frame=%0d mode=%0d age=%0d level=%0d progress=%0d got=%h want=%h",frames,model_mode,age,model_level,model_progress,captured,expected);
+    for(i=0;i<24;i=i+1)if(captured[i*8+:8]>63)$fatal(1,"FAIL brightness cap");
    end
   end
   was_high=ws;
@@ -93,42 +87,44 @@ task next_frame;
  end
 endtask
 initial begin
- for(k=0;k<8;k=k+1)history[k]=0;
+ level=0;
  repeat(4)@(negedge clk);rst=1;mode=1;repeat(8)@(negedge clk);
  if(led!==4'b0111)$fatal(1,"FAIL RUN silk mapping");
  ir=1;biz=1;mv=1;@(negedge clk);ir=0;biz=0;
  if(led!==0)$fatal(1,"FAIL IR/MV/ACTION silk mapping");
- next_frame;first=frozen;repeat(30)next_frame;
- if(first===frozen)$fatal(1,"FAIL RGB colour animation");
  if(REAL_TIMING)begin
-  mode=0;repeat(8)@(negedge clk);progress=0;repeat(16)next_frame;
-  if(long_pulses==0)$fatal(1,"FAIL real timing long pulse");
+  level=255;next_frame;next_frame;
+  mode=0;repeat(8)@(negedge clk);progress=8;repeat(40)next_frame;
+  if(absorption_frames==0 || long_pulses==0 || base_frames==0)$fatal(1,"FAIL real charge coverage");
   en=0;repeat(60000)@(negedge clk);
-  if(frozen!==0 || dut.busy || ws)$fatal(1,"FAIL real timing shutdown");
-  $display("PASS real 50MHz 63/18/35/3000 WS frames, RGB flow and long pulse (1ms refresh)");$finish;
+  if(frozen!==0 || dut.busy || ws)$fatal(1,"FAIL real shutdown");
+  $display("PASS real 50MHz 63/18/35/3000 VU and bounded charge/absorption (1ms refresh)");$finish;
  end
- for(j=0;j<30;j=j+1)begin level=(j*43)%256;next_frame;end
- level=0;repeat(27)next_frame;
- if(frozen!==0)$fatal(1,"FAIL silence must flow off strip");
- level=255;repeat(27)next_frame;
- mute=1;next_frame;next_frame;
+ // Exhaust all 256 input levels while increasing: next frame must attack directly.
+ for(j=0;j<256;j=j+1)begin level=j;next_frame;end
+ next_frame;next_frame;
+ if(vu_seen!=={256{1'b1}})$fatal(1,"FAIL missing VU input level");
+ level=0;next_frame;next_frame;
+ if(frozen===0)$fatal(1,"FAIL no smooth decay");
+ repeat(33)next_frame;if(frozen!==0)$fatal(1,"FAIL release to silence");
+ level=255;next_frame;next_frame;mute=1;next_frame;next_frame;
  if(frozen!==0)$fatal(1,"FAIL mute");mute=0;
  mode=0;repeat(8)@(negedge clk);
- // Verify every fill count and pulse passage, including 0% and full-scale.
- progress=0;repeat(48)next_frame;
  for(j=0;j<=8;j=j+1)begin progress=j;repeat(48)next_frame;end
- if(colourful_frames==0 || long_pulses==0 || shift_checks<16)$fatal(1,"FAIL missing animation coverage");
- // Changes during serialization must not affect the accepted frame.
- @(posedge dut.busy);repeat(100)@(negedge clk);progress=0;level=0;
- next_frame;next_frame;
+ if(progress_seen!==9'h1ff || absorption_frames==0 || long_pulses==0 || base_frames==0)$fatal(1,"FAIL charge coverage");
+ // Seek backward while transmitting: current frame must stay frozen, next must clip.
+ @(posedge dut.busy);repeat(100)@(negedge clk);progress=1;
+ repeat(20)next_frame;progress=0;next_frame;next_frame;
+ if(frozen!==0)$fatal(1,"FAIL zero progress must be entirely black");
+ progress=15;repeat(45)next_frame; // invalid input clamps to eight
  en=0;repeat(2500)@(negedge clk);
- if(led!==15 || !dut.black_sent || dut.busy || ws)$fatal(1,"FAIL DIP off black frame and idle");
- if(frozen!==0)$fatal(1,"FAIL black frame payload");
- // Re-enable must send live frames again; mode 2 -> 0 must go black.
+ if(led!==15 || !dut.black_sent || dut.busy || ws || frozen!==0)$fatal(1,"FAIL DIP off black frame");
  en=1;next_frame;next_frame;mode=1;repeat(8)@(negedge clk);next_frame;next_frame;
  if(frozen!==0 || dut.mode!==0)$fatal(1,"FAIL mode cycle/off");
- if(frames<500)$fatal(1,"FAIL insufficient frame coverage");
- $display("PASS RGB right-flow history, four-pixel pulse, fill 0..8, mute, busy snapshot and black/resume; frames=%0d",frames);$finish;
+ mode=0;next_frame;@(posedge dut.busy);repeat(100)@(negedge clk);rst=0;
+ repeat(4)@(negedge clk);rst=1;mode=0;repeat(8)@(negedge clk);next_frame;next_frame;
+ if(frozen!==0)$fatal(1,"FAIL reset during frame");
+ $display("PASS VU 256 levels/fast attack/smooth decay; fill 0..8, bounded comet, endpoint absorption, seek/mute/off/reset; frames=%0d",frames);$finish;
 end
 initial begin #100000000;$fatal(1,"FAIL lights watchdog");end
 endmodule

@@ -414,8 +414,8 @@ wire [31:0] lyric_time_ms;
 //   X1A：LED1~4 全部在 expansion_integration（clk 域）内部接线；
 //   X1B：PCM 包络在视频域产生，精确进度在 SD 域产生，分别跨到 clk 域；
 //        KEY10 模式循环由 ui_event_bridge（clk 域）给出翻转电平；
-//   X1C：数码管业务 mux 与 seg_scan 同在 sd_card_clk 域，SW1/SW3 与 KEY3
-//        翻转电平各做 2FF 同步（全部为慢变配置/事件，单比特跨域）。
+//   X1C：数码管业务 mux 与 seg_scan 同在 sd_card_clk 域；SW1 使能经 2FF 同步。
+//        数码管固定显示 MM-SS 空白 NN，SW3 不再切换诊断页。
 // ==========================================================================
 wire [7:0]  x1b_level_vid;          // pcm_tap 包络
 wire        x1b_upd_tgl_vid;        // 包络更新翻转（数据已稳定后才翻转）
@@ -428,9 +428,7 @@ wire        disp_mode_tgl_clk;      // 母板 KEY3(B1) 翻转电平（clk 域）
 
 // Display controls and sample position stay in sd_card_clk.
 reg [1:0] sd_sw1_sync;
-reg [1:0] sd_sw3_sync;
 wire [3:0] fault_flags_clk;
-reg [3:0] fault_flags_s1, fault_flags_s2;
 
 wire [7:0] seg_biz_0,seg_biz_1,seg_biz_2,seg_biz_3,seg_biz_4,seg_biz_5,seg_biz_6,seg_biz_7;
 wire [1:0] display_song_sd = play_active_sd ? play_sel_song_sd :
@@ -1256,20 +1254,11 @@ always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
  if(!sdcard_rst_n) sd_sw1_sync<=0;
  else sd_sw1_sync<={sd_sw1_sync[0],board_sw_level_clk[0]};
 end
-always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
- if(!sdcard_rst_n) begin sd_sw3_sync<=0; fault_flags_s1<=0; fault_flags_s2<=0; end
- else begin
-  sd_sw3_sync<={sd_sw3_sync[0],board_sw_level_clk[2]};
-  // Independent sticky flags, each transferred through two flip-flops.
-  fault_flags_s1<=fault_flags_clk; fault_flags_s2<=fault_flags_s1;
- end
-end
 seg_business_mux u_seg_business_mux(
  .clk(sd_card_clk),.rst_n(sdcard_rst_n),.display_enable(sd_sw1_sync[1]),
  .sample_position(audio_file_valid ?
                   (play_active_sd ? seek_cur_sample_sd : play_total_samples) : 32'd0),
  .song_index(metadata_song_sd),
- .debug_enable(sd_sw3_sync[1]),.fault_flags(fault_flags_s2),.error_code(media_err_code),
  .seg_data_0(seg_biz_0),.seg_data_1(seg_biz_1),.seg_data_2(seg_biz_2),.seg_data_3(seg_biz_3),
  .seg_data_4(seg_biz_4),.seg_data_5(seg_biz_5),.seg_data_6(seg_biz_6),.seg_data_7(seg_biz_7));
 seg_scan #(.CLK_FREQ(100_000_000)) seg_scan_m0(

@@ -5,8 +5,8 @@
 //
 // 运行在板级 clk(50 MHz) 域。KEY10 每按一次在三种模式间循环：
 //   mode 0 = 全灭（上电默认）
-//   mode 1 = 音频律动：彩色包络历史从第 1 颗向右流动，每 60 ms 前进一步
-//   mode 2 = 进度条   ：比例底色 + 四颗渐变长脉冲向右，每 80 ms 前进一步
+//   mode 1 = VU 电平条：LED[0] 向右连续展开，绿/黄/红分段，快升慢降
+//   mode 2 = 充能进度条：有效进度内四颗彗星脉冲 + 终点吸收，区外全暗
 //
 // 音频只读旁路：level 是 pcm_tap 送来的包络，本模块不反压、不访问 SD/音频 FIFO。
 // DIP6(enable) 关闭时：先补发一整帧全黑（否则灯珠会保持最后颜色），
@@ -50,11 +50,12 @@ module ws2812_effects #(
     end
 
     // All animation state is held throughout serialization. At 20 ms refresh,
-    // audio history moves right every 60 ms; the four-pixel pulse every 80 ms.
+    // VU attacks within one frame and releases by 8/255 per frame (640 ms max).
+    // The comet moves every 60 ms, absorbs at the endpoint, then rests 80 ms.
     localparam integer MS_CYCLES = (CLK_FREQ_HZ < 1000) ? 1 : CLK_FREQ_HZ / 1000;
     localparam integer MS_W = (MS_CYCLES < 2) ? 1 : $clog2(MS_CYCLES);
     localparam integer RF_W = (REFRESH_MS < 2) ? 1 : $clog2(REFRESH_MS);
-    localparam integer HEAD_W = $clog2(PIXEL_COUNT + 3);
+
     reg [MS_W-1:0] ms_div;
     reg [RF_W-1:0] rf_ms;
     wire ms_tick = (ms_div == MS_CYCLES-1);
@@ -75,87 +76,87 @@ module ws2812_effects #(
     wire accept_frame = load_req && !busy;
     reg [1:0] frame_mode;
     reg [3:0] frame_progress;
-    reg [5:0] colour_phase;
+    reg [7:0] vu_envelope;
+    reg [2:0] pulse_head;
     reg [1:0] motion_div;
-    reg [HEAD_W-1:0] pulse_head;
-    // Six amplitude bits per pixel, instead of a 24-bit RGB framebuffer.
-    reg [PIXEL_COUNT*6-1:0] audio_history;
-    wire [5:0] amplitude = (mute || level < 8) ? 6'd0 : level[7:2];
+    reg [1:0] charge_state; // 0: flight, 1: absorption, 2: base-only interval
+    reg [5:0] charge_energy;
+    reg [1:0] gap_count;
+    wire [3:0] bounded_progress = progress > 8 ? 4'd8 : progress;
     wire mode_start = (mode != frame_mode);
-    wire audio_step = mode_start || (motion_div == 2);
-    wire pulse_step = (motion_div == 3);
+    wire restart_charge = !enable || mode != 2 || mode_start ||
+                          bounded_progress == 0 || bounded_progress != frame_progress;
+    // Exactly floor(level * 8 / 255): thresholds 32,64,...,224,255.
+    wire [3:0] vu_count = vu_envelope == 255 ? 4'd8 : {1'b0,vu_envelope[7:5]};
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) frame_mode <= 0;
         else if (accept_frame) frame_mode <= enable ? mode : 2'd0;
     end
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) frame_progress <= 0;
-        else if (accept_frame) frame_progress <= progress > 8 ? 4'd8 : progress;
+        else if (accept_frame) frame_progress <= bounded_progress;
     end
     always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) colour_phase <= 0;
-        else if (accept_frame && enable) colour_phase <= colour_phase + 1'b1;
-    end
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) motion_div <= 0;
+        if (!rst_n) vu_envelope <= 0;
         else if (accept_frame) begin
-            if (!enable || mode_start || mode == 0 ||
-                (mode == 1 && audio_step) || (mode == 2 && pulse_step)) motion_div <= 0;
-            else motion_div <= motion_div + 1'b1;
+            if (!enable || mode != 1 || mute) vu_envelope <= 0;
+            else if (mode_start || level >= vu_envelope) vu_envelope <= level;
+            else if (vu_envelope - level <= 8) vu_envelope <= level;
+            else vu_envelope <= vu_envelope - 8'd8;
         end
     end
+    // Related animation registers update together only at an accepted frame.
     always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) pulse_head <= 0;
-        else if (accept_frame) begin
-            if (!enable || mode_start || mode != 2) pulse_head <= 0;
-            else if (pulse_step)
-                pulse_head <= (pulse_head == PIXEL_COUNT+2) ? 0 : pulse_head + 1'b1;
-        end
-    end
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) audio_history <= 0;
-        else if (accept_frame) begin
-            if (!enable || mode != 1 || mute) audio_history <= 0;
-            else if (mode_start) audio_history <= amplitude;
-            else if (audio_step) audio_history <= (audio_history << 6) | amplitude;
+        if (!rst_n) begin
+            pulse_head<=0; motion_div<=0; charge_state<=0; charge_energy<=0; gap_count<=0;
+        end else if (accept_frame) begin
+            if (restart_charge) begin
+                pulse_head<=0; motion_div<=0; charge_state<=0; charge_energy<=0; gap_count<=0;
+            end else case (charge_state)
+                0: if (motion_div == 2) begin
+                    motion_div <= 0;
+                    if ({1'b0,pulse_head}+4'd1 >= bounded_progress) begin
+                        charge_state<=1; charge_energy<=63;
+                    end else pulse_head <= pulse_head + 1'b1;
+                end else motion_div <= motion_div + 1'b1;
+                1: if (charge_energy > 8) charge_energy <= charge_energy - 6'd8;
+                   else begin charge_energy<=0; charge_state<=2; gap_count<=0; end
+                2: if (gap_count == 3) begin charge_state<=0; pulse_head<=0; motion_div<=0; end
+                   else gap_count <= gap_count + 1'b1;
+                default: begin charge_state<=0; pulse_head<=0; motion_div<=0; end
+            endcase
         end
     end
 
     wire [4:0] pixel_index;
-    wire [2:0] pixel_colour = pixel_index[2:0] - colour_phase[5:3];
-    wire [HEAD_W:0] tail_distance = {1'b0,pulse_head} - pixel_index;
-    reg [5:0] brightness;
+    wire [3:0] tail_distance = {1'b0,pulse_head} - pixel_index;
     reg [7:0] red, green, blue;
     wire [23:0] pixel_grb = {green,red,blue};
     always @* begin
-        brightness = 0;
-        if (frame_mode == 1)
-            brightness = audio_history[pixel_index*6 +: 6];
-        else if (frame_mode == 2) begin
-            // Fixed progress base: floor(position / total * 8) LEDs.
-            if (pixel_index < frame_progress) brightness = 12;
-            // A four-pixel gradient travels right and exits before restarting.
-            if (pixel_index <= pulse_head) begin
+        red=0; green=0; blue=0;
+        if (frame_mode == 1 && pixel_index < vu_count) begin
+            // Four green, two amber, two red: position expresses warning level.
+            if (pixel_index < 4) green=48;
+            else if (pixel_index < 6) begin red=56; green=32; end
+            else red=63;
+        end else if (frame_mode == 2 && pixel_index < frame_progress) begin
+            // Dim desaturated blue-grey base. All effects are clipped to progress.
+            red=5; green=8; blue=10;
+            if (charge_state == 0 && pixel_index <= pulse_head) begin
                 case (tail_distance)
-                    0: brightness = 63;
-                    1: brightness = 48;
-                    2: brightness = 32;
-                    3: brightness = 16;
+                    0: begin red=32; green=63; blue=63; end
+                    1: begin red=12; green=40; blue=56; end
+                    2: begin red=6; green=22; blue=36; end
+                    3: begin red=5; green=12; blue=20; end
                     default: ;
                 endcase
+            end else if (charge_state == 1 && pixel_index == pulse_head) begin
+                // Endpoint absorbs the comet: white flash decays into the base.
+                red   = charge_energy > 5  ? {2'b0,charge_energy} : 8'd5;
+                green = charge_energy > 8  ? {2'b0,charge_energy} : 8'd8;
+                blue  = charge_energy > 10 ? {2'b0,charge_energy} : 8'd10;
             end
         end
-        red = 0; green = 0; blue = 0;
-        case (pixel_colour)
-            0: red = {2'b0,brightness};
-            1: begin red = {2'b0,brightness}; green = {3'b0,brightness[5:1]}; end
-            2: begin red = {2'b0,brightness}; green = {2'b0,brightness}; end
-            3: green = {2'b0,brightness};
-            4: begin green = {2'b0,brightness}; blue = {2'b0,brightness}; end
-            5: blue = {2'b0,brightness};
-            6: begin red = {3'b0,brightness[5:1]}; blue = {2'b0,brightness}; end
-            7: begin red = {2'b0,brightness}; blue = {2'b0,brightness}; end
-        endcase
     end
 
     // ---- 关闭后补发完整黑帧；此分支中 frame_mode 必然锁存为 0 ----

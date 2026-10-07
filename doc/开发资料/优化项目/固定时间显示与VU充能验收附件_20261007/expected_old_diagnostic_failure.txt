@@ -1,0 +1,2 @@
+FATAL: D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_x1x2_display.v:18: FAIL display sec=125 got=86b0998ef8ffc0f9 expected=c0a4bfc092ffc0f9
+       Time: 49110000  Scope: tb_x1x2_display.check

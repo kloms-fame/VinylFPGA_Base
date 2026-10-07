@@ -1,7 +1,7 @@
 `ifndef EXP_EXPANSION_INTEGRATION_V
 `define EXP_EXPANSION_INTEGRATION_V
 // J2 commands, shared input filtering and LED/WS/buzzer feedback, all at 50 MHz.
-// UART is retired; fault history remains visible through the SW3 diagnostic page.
+// UART is retired; internal fault monitoring remains separate from the fixed time display.
 module expansion_integration #(
     parameter integer CLK_FREQ_HZ      = 50_000_000,
     parameter integer DEBOUNCE_CYCLES  = 400_000,

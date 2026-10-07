@@ -72,6 +72,7 @@ sim/counter_r5_results/
 sim/ws2812_context/
 sim/visual_feedback/
 sim/x1x2_repair/visual_flow_*/
+sim/x1x2_repair/vu_charge_*/
 sim/x1x2_repair/o8_final/
 sim/x1x2_repair/ws_context_r5/
 
