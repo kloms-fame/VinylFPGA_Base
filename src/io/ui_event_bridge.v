@@ -44,7 +44,9 @@ module ui_event_bridge (
     output reg         enc_ccw_tgl,
     output reg         key_up_tgl,
     output reg         visual_tgl,
-    output reg         key_down_tgl
+    output reg         key_down_tgl,
+    // ---- X1B：KEY10 循环 WS2812 灯效模式（0=全灭 / 1=律动 / 2=进度）----
+    output reg         ws_mode_tgl
 );
     `include "exp_event_defs.vh"
 
@@ -121,10 +123,13 @@ module ui_event_bridge (
             enc_ccw_tgl <= 1'b0;
             key_up_tgl  <= 1'b0;
             key_down_tgl<= 1'b0;
+            ws_mode_tgl <= 1'b0;
         end else begin
             if (ev_valid && is_key_down && ev_arg == 16'd10) home_tgl <= ~home_tgl;
             if (ev_valid && is_key_down && ev_arg == 16'd8) effect_tgl <= ~effect_tgl;
             if (ev_valid && is_key_down && ev_arg == 16'd11) end_mode_tgl <= ~end_mode_tgl;
+            // X1B：KEY10（端口 exp_key_n[9] -> 事件索引 9）循环 WS2812 灯效
+            if (ev_valid && is_key_down && ev_arg == 16'd9) ws_mode_tgl <= ~ws_mode_tgl;
             if (emit_encoder && enc_delta[15]) begin prev_tgl<=~prev_tgl;enc_ccw_tgl<=~enc_ccw_tgl;end
             if (emit_encoder && !enc_delta[15]) begin next_tgl<=~next_tgl;enc_cw_tgl<=~enc_cw_tgl;end
             if (ev_valid && ev_prev)    prev_tgl    <= ~prev_tgl;

@@ -234,14 +234,16 @@ module tb_expansion_s1;
             $display("PASS board SW feedback tone");
         end
 
-        // 2) KEY04 按下 -> 事件 + LED4 点亮（低有效）
+        // 2) KEY04 按下 -> 事件 + LED2 业务动作脉冲（低有效，80 ms）
+        //    X1A 起 LED 不再镜像 KEY 电平：LED1=有效红外 / LED2=已接受业务动作 /
+        //    LED3=1 Hz 心跳 / LED4=当前故障。
         exp_key_n[3] = 1'b0;
         wait_match("KEY 04 DOWN", 11, "", 0, "key04-down");
-        if (exp_led_n[3] !== 1'b0) begin
+        if (exp_led_n[1] !== 1'b0) begin
             errors = errors + 1;
-            $display("FAIL led echo on press: exp_led_n=%b", exp_led_n);
+            $display("FAIL led biz pulse on press: exp_led_n=%b", exp_led_n);
         end else begin
-            $display("PASS led echo on press");
+            $display("PASS led biz pulse on press");
         end
         // 操作反馈音：母板蜂鸣器（低有效）应进入鸣叫状态，EXT1 同步输出同一波形
         if ((board_buzzer_n !== 1'b0) || (exp_ext_o[0] !== 1'b0)) begin
@@ -252,14 +254,24 @@ module tb_expansion_s1;
             $display("PASS buzzer feedback on key press");
         end
 
-        // 3) KEY04 释放 -> 事件 + LED4 熄灭
+        // 3) KEY04 释放 -> 事件上报；LED2 会在 80 ms 脉冲结束后自动熄灭
+        //    （不镜像 KEY 松开本身，避免松开也点亮）
         exp_key_n[3] = 1'b1;
         wait_match("KEY 04 UP", 9, "", 0, "key04-up");
-        if (exp_led_n[3] !== 1'b1) begin
-            errors = errors + 1;
-            $display("FAIL led echo on release: exp_led_n=%b", exp_led_n);
-        end else begin
-            $display("PASS led echo on release");
+        begin : led_pulse_decay
+            integer waited;
+            waited = 0;
+            // 80 ms 脉冲 @1 MHz -> 需 >= 80000 拍；留足余量到 150 ms
+            while ((exp_led_n[1] !== 1'b1) && (waited < 1500)) begin
+                #100000;     // 100 us @ 1 MHz
+                waited = waited + 1;
+            end
+            if (exp_led_n[1] !== 1'b1) begin
+                errors = errors + 1;
+                $display("FAIL led biz pulse stuck on: exp_led_n=%b", exp_led_n);
+            end else begin
+                $display("PASS led biz pulse self-clears");
+            end
         end
 
         // 4) 另一路按键（KEY07 -> exp_key_n[6]）验证编号映射
@@ -317,9 +329,31 @@ module tb_expansion_s1;
             errors = errors + 1;
             $display("FAIL ext_o[5:1] not zero: %b", exp_ext_o);
         end
-        if (exp_ws2812_data !== 1'b0) begin
-            errors = errors + 1;
-            $display("FAIL ws2812 not idle-low");
+        // 10b) X1B：WS2812 在"全灭"模式下仍会周期性推一整帧黑色，
+        //      因此不能用"恒 0"判定；这里检查数据线不是 X 且在 60 ms 内
+        //      至少完成一次黑色帧传输（出现高电平 T0H 脉冲）。
+        begin : ws_black_frame
+            integer high_seen;
+            integer waited;
+            high_seen = 0;
+            waited = 0;
+            if (exp_ws2812_data === 1'bx) begin
+                errors = errors + 1;
+                $display("FAIL ws2812 is X");
+            end else begin
+                while ((high_seen == 0) && (waited < 600)) begin
+                    #100000;
+                    waited = waited + 1;
+                    if (exp_ws2812_data === 1'b1)
+                        high_seen = 1;
+                end
+                if (high_seen == 0) begin
+                    errors = errors + 1;
+                    $display("FAIL ws2812 no black-frame activity in 60 ms");
+                end else begin
+                    $display("PASS ws2812 black frame transmitted");
+                end
+            end
         end
 
         if (errors == 0)

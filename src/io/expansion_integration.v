@@ -88,7 +88,14 @@ module expansion_integration #(
     output wire        blank_active,       // 消隐激活（DIP4 自动 + 遥控息屏手动）
     output wire        led_enable,         // DIP3 LED 总使能（S7-05 接入执行器）
     output wire        ws_enable,          // DIP6 WS 总使能（S7-05 接入执行器）
-    output wire        restart_req         // 重启确认后一拍脉冲（软复位请求）
+    output wire        restart_req,        // 重启确认后一拍脉冲（软复位请求）
+
+    // ===================== X1：状态反馈执行器接线（clk 域）=====================
+    input  wire [7:0]  pcm_level,          // X1B：PCM 包络（顶层已从视频域跨来）
+    input  wire [3:0]  ws_progress,        // X1B：进度点亮颗数 0..8
+    input  wire        ws_mode_tgl,        // X1B：KEY10 模式循环翻转电平
+    output wire [3:0]  board_sw_level,     // X1C：母板 SW1-4 消抖后电平（上拨=1）
+    output wire        disp_mode_tgl       // X1C：母板 KEY3(B1) 每按一次翻转
 );
 
     // 事件编码常量（与 ui_event_bus / exp_echo_reporter 各取一份，module 作用域）
@@ -126,6 +133,10 @@ module expansion_integration #(
     wire [3:0]  cmd_code;
     wire [15:0] cmd_arg;
     wire [15:0] cmd_aux;
+
+    // X1A：router 给出的"已接受"单拍脉冲（LED1/LED2 业务化输入）
+    wire        ir_accepted;
+    wire        biz_accepted;
 
     // ---- S7-01B：health_monitor <-> exp_echo_reporter 的中间信号 ----
     wire        stat_req;
@@ -268,7 +279,9 @@ module expansion_integration #(
         .blank_active       (blank_active),
         .led_enable         (led_enable),
         .ws_enable          (ws_enable),
-        .restart_req        (restart_req)
+        .restart_req        (restart_req),
+        .ir_accepted        (ir_accepted),
+        .biz_accepted       (biz_accepted)
     );
 
     // ---- S3：事件流引出（S7-03 起改为 router 的业务命令流，供顶层 ui_event_bridge）----
@@ -336,9 +349,17 @@ module expansion_integration #(
     wire [2:0] board_key_level;
     wire [2:0] board_key_fall_pulse;
     wire [2:0] board_key_rise_pulse;
-    wire [3:0] board_sw_level;
     wire [3:0] board_sw_change_pulse;
     wire [2:0] board_sw_change_index;
+
+    // X1C：母板 KEY3（B1）不属于任何既有业务，专用于数码管显示项循环。
+    //       做成翻转电平，便于跨到 sd_card_clk 域做 2FF + 边沿还原。
+    reg disp_mode_tgl_r;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)                    disp_mode_tgl_r <= 1'b0;
+        else if (board_key_fall_pulse[2]) disp_mode_tgl_r <= ~disp_mode_tgl_r;
+    end
+    assign disp_mode_tgl = disp_mode_tgl_r;
 
     key_dip_monitor #(
         .KEY_COUNT      (3),
@@ -436,11 +457,40 @@ module expansion_integration #(
         .busy                  ()
     );
 
-    // ---- J2 输出安全态 / 硬件回显 ----
-    // key_level 与 exp_led_n 同为低有效（按下=0 / 点亮=0），因此直连即"按下即点亮"；
-    // 关闭回显时输出全 1 = 四路 LED 全灭。
-    assign exp_led_n       = ECHO_ENABLE ? key_level[3:0] : 4'hF;
-    assign exp_ws2812_data = 1'b0;
+    // ===================== X1A：LED1~4 业务化执行器 =====================
+    // 不再回显 KEY 电平，改为状态反馈：IR 有效 / 业务动作 / 心跳 / 故障。
+    // DIP3(led_enable)=0 时组合全灭（远快于 100 ms 门限）。
+    led_business_driver #(
+        .CLK_FREQ_HZ (CLK_FREQ_HZ)
+    ) u_led_business_driver (
+        .clk          (clk),
+        .rst_n        (rst_n),
+        .en           (led_enable),
+        .ir_accepted  (ir_accepted),
+        .biz_accepted (biz_accepted),
+        .fault        (err_code != 8'd0),
+        .led_n        (exp_led_n)
+    );
+
+    // ===================== X1B：WS2812 灯效执行器 =====================
+    // level/progress 由顶层从视频域以"数据 + 翻转"方式跨来（只读旁路，不反压音频）。
+    // KEY10 在本域翻转模式；DIP6 关闭时先补发整帧黑色再停刷新。
+    ws2812_effects #(
+        .PIXEL_COUNT  (8),
+        .CLK_FREQ_HZ  (CLK_FREQ_HZ),
+        .REFRESH_MS   (20)
+    ) u_ws2812_effects (
+        .clk       (clk),
+        .rst_n     (rst_n),
+        .enable    (ws_enable),
+        .mode_tgl  (ws_mode_tgl),
+        .level     (pcm_level),
+        .progress  (ws_progress),
+        .mute      (1'b0),          // X5 前恒 0
+        .ws_data   (exp_ws2812_data)
+    );
+
+    // ---- J2 其余输出安全态 / 硬件回显 ----
     // EXT1 = 操作反馈音波形（拓展板外接蜂鸣器用，与母板同源）；EXT2-6 保持 0。
     assign exp_ext_o       = {5'b00000, board_buzzer_n};
 

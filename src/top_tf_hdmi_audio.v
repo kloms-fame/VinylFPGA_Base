@@ -22,6 +22,12 @@
 `include "io/buzzer_feedback.v"
 `include "io/expansion_integration.v"
 `include "io/ui_event_bridge.v"
+// X1：状态反馈执行器（LED / WS2812 / 数码管业务 mux）
+`include "io/led_business_driver.v"
+`include "io/ws2812_driver.v"
+`include "io/ws2812_effects.v"
+`include "audio/pcm_tap.v"
+`include "display/seg_business_mux.v"
 `include "io/browse_fsm.v"
 
 // ==========================================================================
@@ -405,6 +411,33 @@ reg         play_track_tgl_v1, play_track_tgl_v2, play_track_tgl_v3;
 wire        play_track_restart_vid = play_track_tgl_v2 ^ play_track_tgl_v3;
 wire        play_running_vid = play_active_v2 & ~paused_v2;
 wire [31:0] lyric_time_ms;
+
+// ==========================================================================
+// X1：状态反馈执行器信号
+//   X1A：LED1~4 全部在 expansion_integration（clk 域）内部接线；
+//   X1B：PCM 包络 / 进度在视频域产生，用"数据 + 翻转"捆绑握手跨到 clk 域；
+//        KEY10 模式循环由 ui_event_bridge（clk 域）给出翻转电平；
+//   X1C：数码管业务 mux 与 seg_scan 同在 sd_card_clk 域，SW1/SW3 与 KEY3
+//        翻转电平各做 2FF 同步（全部为慢变配置/事件，单比特跨域）。
+// ==========================================================================
+wire [7:0]  x1b_level_vid;          // pcm_tap 包络
+wire [3:0]  x1b_progress_vid;       // 进度点亮颗数 0..8
+wire        x1b_upd_tgl_vid;        // 包络更新翻转（数据已稳定后才翻转）
+reg         x1b_upd_tgl_s1, x1b_upd_tgl_s2, x1b_upd_tgl_seen;
+reg  [11:0] x1b_bundle_clk;         // {level[7:0], progress[3:0]} clk 域快照
+wire [7:0]  pcm_level_clk   = x1b_bundle_clk[11:4];
+wire [3:0]  ws_progress_clk = x1b_bundle_clk[3:0];
+wire        ws_mode_tgl;            // KEY10 模式循环（clk 域）
+wire [3:0]  board_sw_level_clk;     // 母板 SW1-4 消抖后电平（clk 域）
+wire        disp_mode_tgl_clk;      // 母板 KEY3(B1) 翻转电平（clk 域）
+
+// X1C：sd_card_clk 域输入同步（全部单比特慢变）
+reg  [1:0]  sd_sw1_sync;
+reg  [1:0]  sd_sw3_sync;
+reg  [1:0]  sd_disp_tgl_sync;
+reg         sd_disp_tgl_seen;
+reg         sd_disp_mode_tgl;       // sd 域重建的翻转电平（供 mux 边沿检测）
+wire [7:0]  seg_biz_0, seg_biz_1, seg_biz_2, seg_biz_3, seg_biz_4, seg_biz_5;
 
 wire        frw_app_rd_en;          // frame_read_write -> 仲裁器
 wire [ADDR_BITS-1:0] frw_app_rd_addr;
@@ -1174,6 +1207,53 @@ endfunction
 // hold WNS -0.738ns（12 个终点，时钟偏斜 1.615ns）。这里把扫描器整体搬进
 // sd_card_clk 域并把 CLK_FREQ 同步改成 100MHz，刷新率仍为 200Hz/位，
 // 跨域路径消失，也不再需要额外的约束豁免。
+// ==========================================================================
+// X1C：6 位数码管业务 mux（与 seg_scan 同域：sd_card_clk）
+//   SW1/SW3 为慢变配置、KEY3 为单次事件，均以单比特 2FF 跨到本域。
+//   pat_mode 诊断扫描优先级最高，业务页只在非诊断模式下驱动。
+// ==========================================================================
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+    if (!sdcard_rst_n) begin
+        sd_sw1_sync       <= 2'b00;
+        sd_sw3_sync       <= 2'b00;
+        sd_disp_tgl_sync  <= 2'b00;
+        sd_disp_tgl_seen  <= 1'b0;
+        sd_disp_mode_tgl  <= 1'b0;
+    end else begin
+        sd_sw1_sync      <= {sd_sw1_sync[0],  board_sw_level_clk[0]};
+        sd_sw3_sync      <= {sd_sw3_sync[0],  board_sw_level_clk[2]};
+        sd_disp_tgl_sync <= {sd_disp_tgl_sync[0], disp_mode_tgl_clk};
+        if (sd_disp_tgl_sync[1] != sd_disp_tgl_seen) begin
+            sd_disp_tgl_seen <= sd_disp_tgl_sync[1];
+            sd_disp_mode_tgl <= ~sd_disp_mode_tgl;
+        end
+    end
+end
+
+seg_business_mux #(
+    .CLK_FREQ_HZ   (100_000_000),
+    .PARAM_HOLD_MS (2000)
+) u_seg_business_mux (
+    .clk            (sd_card_clk),
+    .rst_n          (sdcard_rst_n),
+    .display_enable (sd_sw1_sync[1]),      // SW1：显示总使能（上拨=1，待上板核对）
+    .mode_tgl       (sd_disp_mode_tgl),    // KEY3 显示项循环
+    .debug_sw       (sd_sw3_sync[1]),      // SW3：诊断项开关
+    .error_code     (media_err_code),      // sd 域当前故障码（sticky，0=恢复）
+    .param_valid    (1'b0),                // X5 前恒 0
+    .param_value    (16'd0),
+    .play_active    (play_active_sd),
+    .paused         (paused_sd),
+    .track_step     (play_track_step_sd),
+    .song_index     (play_sel_song_sd),
+    .seg_data_0     (seg_biz_0),
+    .seg_data_1     (seg_biz_1),
+    .seg_data_2     (seg_biz_2),
+    .seg_data_3     (seg_biz_3),
+    .seg_data_4     (seg_biz_4),
+    .seg_data_5     (seg_biz_5)
+);
+
 seg_scan #(
     .CLK_FREQ          (100_000_000)
 ) seg_scan_m0(
@@ -1181,12 +1261,12 @@ seg_scan #(
     .rst_n             (sdcard_rst_n),
     .seg_sel           (seg_sel),
     .seg_data          (seg_data),
-    .seg_data_0        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[3:0])}   : {1'b1,7'b1111_111}),
-    .seg_data_1        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[7:4])}   : {1'b1,7'b1111_111}),
-    .seg_data_2        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[11:8])}  : {1'b1,7'b1111_111}),
-    .seg_data_3        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[15:12])} : {1'b1,7'b1111_111}),
-    .seg_data_4        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[19:16])} : {1'b1,7'b1111_111}),
-    .seg_data_5        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[23:20])} : {1'b1,seg_data_0})
+    .seg_data_0        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[3:0])}   : seg_biz_0),
+    .seg_data_1        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[7:4])}   : seg_biz_1),
+    .seg_data_2        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[11:8])}  : seg_biz_2),
+    .seg_data_3        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[15:12])} : seg_biz_3),
+    .seg_data_4        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[19:16])} : seg_biz_4),
+    .seg_data_5        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[23:20])} : seg_biz_5)
 );
 
 // ===================== 原图像时序与帧缓存 =====================
@@ -1965,6 +2045,55 @@ hdmi_pcm_source_bridge u_hdmi_pcm_source_bridge (
     .contract_error (audio_contract_error)
 );
 
+// ==========================================================================
+// X1B：PCM 包络只读旁路 + 进度计算（视频域，均不反压音频）
+//   包络直接挂在最终混音（hdmi 音源）上，音量/静音/转场淡入淡出都会体现，
+//   因此不需要额外的 mute 端口；进度按播放位置对曲目长度做 8 等分（纯移位/加法）。
+// ==========================================================================
+pcm_tap u_pcm_tap (
+    .clk          (video_clk),
+    .rst_n        (media_video_rst_n),
+    .sample_valid (mix_sample_valid),
+    .sample_left  (mix_sample_left),
+    .sample_right (mix_sample_right),
+    .level        (x1b_level_vid),
+    .upd_tgl      (x1b_upd_tgl_vid)
+);
+
+// total_sectors * 256 = 采样点数（PCM 连续布局、16 bit 单声道打包）
+wire [31:0] x1b_total_samples = {audio_total_sectors[23:0], 8'b0};
+wire [31:0] x1b_th1 = x1b_total_samples >> 3;
+wire [31:0] x1b_th2 = x1b_total_samples >> 2;
+wire [31:0] x1b_th4 = x1b_total_samples >> 1;
+assign x1b_progress_vid =
+      (x1b_total_samples     == 32'd0)                        ? 4'd0 :
+      (wav_sample_counter    >= x1b_total_samples)            ? 4'd8 :
+      (wav_sample_counter    >= (x1b_total_samples - x1b_th1))? 4'd7 :
+      (wav_sample_counter    >= (x1b_th4 + x1b_th2))          ? 4'd6 :
+      (wav_sample_counter    >= (x1b_th4 + x1b_th1))          ? 4'd5 :
+      (wav_sample_counter    >=  x1b_th4)                     ? 4'd4 :
+      (wav_sample_counter    >= (x1b_th2 + x1b_th1))          ? 4'd3 :
+      (wav_sample_counter    >=  x1b_th2)                     ? 4'd2 :
+      (wav_sample_counter    >=  x1b_th1)                     ? 4'd1 : 4'd0;
+
+// 包络/进度"数据 + 翻转"捆绑跨到 clk 域（板级 50 MHz）。
+// 包络翻转由 pcm_tap 保证发生在数据稳定之后，50 MHz 域同步采到的一定是完整值。
+always @(posedge clk or negedge exp_rst_n) begin
+    if (!exp_rst_n) begin
+        x1b_upd_tgl_s1 <= 1'b0;
+        x1b_upd_tgl_s2 <= 1'b0;
+        x1b_upd_tgl_seen <= 1'b0;
+        x1b_bundle_clk <= 12'd0;
+    end else begin
+        x1b_upd_tgl_s1 <= x1b_upd_tgl_vid;
+        x1b_upd_tgl_s2 <= x1b_upd_tgl_s1;
+        if (x1b_upd_tgl_s2 != x1b_upd_tgl_seen) begin
+            x1b_upd_tgl_seen <= x1b_upd_tgl_s2;
+            x1b_bundle_clk   <= {x1b_level_vid, x1b_progress_vid};
+        end
+    end
+end
+
 audio_arc_calculate #(
     .ACR_N         (6144)
 ) u_audio_arc_calculate (
@@ -2238,7 +2367,13 @@ expansion_integration #(
     .blank_active     (blank_active),
     .led_enable       (led_enable),
     .ws_enable        (ws_enable),
-    .restart_req      (restart_req)
+    .restart_req      (restart_req),
+    // X1：状态反馈执行器接线
+    .pcm_level        (pcm_level_clk),
+    .ws_progress      (ws_progress_clk),
+    .ws_mode_tgl      (ws_mode_tgl),
+    .board_sw_level   (board_sw_level_clk),
+    .disp_mode_tgl    (disp_mode_tgl_clk)
 );
 
 // ==========================================================================
@@ -2265,7 +2400,8 @@ ui_event_bridge u_ui_event_bridge (
     .enc_ccw_tgl  (brw_ev_enc_ccw_tgl),
     .key_up_tgl   (brw_ev_key_up_tgl),
     .visual_tgl   (mv_visual_tgl),
-    .key_down_tgl (brw_ev_key_down_tgl)
+    .key_down_tgl (brw_ev_key_down_tgl),
+    .ws_mode_tgl  (ws_mode_tgl)
 );
 
 // ==========================================================================

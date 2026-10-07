@@ -57,7 +57,14 @@ module ui_command_router #(
     output wire        blank_active,       // 消隐激活（DIP4 自动 + 遥控息屏手动）
     output wire        led_enable,         // DIP3 LED 总使能（S7-05 接入执行器）
     output wire        ws_enable,          // DIP6 WS 总使能（S7-05 接入执行器）
-    output reg         restart_req         // 重启确认后的一拍脉冲
+    output reg         restart_req,        // 重启确认后的一拍脉冲
+
+    // ===================== X1A：给 LED 执行器的"已接受"单拍脉冲 =====================
+    // ir_accepted：通过白名单 + 双反码校验、且 DIP5 开启的有效红外帧（每帧一拍）。
+    // biz_accepted：真正被放行的业务动作（KEY 按下 / ENC 步进 / ENC 按压），
+    //               刻意排除 KEY 松开与 DIP_CHANGE，避免 LED2 被静态配置刷亮。
+    output reg         ir_accepted,
+    output reg         biz_accepted
 );
     `include "exp_event_defs.vh"
 
@@ -222,6 +229,11 @@ module ui_command_router #(
     assign cmd_arg   = cmd_arg_c;
     assign cmd_aux   = cmd_aux_c;
 
+    // X1A：业务动作 = 已放行的命令流里"按下/步进/按压"三类，排除 KEY 松开与 DIP_CHANGE。
+    wire biz_action_c = cmd_valid_c && ((cmd_code_c == EV_KEY_DOWN) ||
+                                        (cmd_code_c == EV_ENC_STEP) ||
+                                        (cmd_code_c == EV_ENC_SW));
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             ms_cnt          <= {MS_W{1'b0}};
@@ -233,8 +245,13 @@ module ui_command_router #(
             restart_armed   <= 1'b0;
             restart_timer   <= {RST_W{1'b0}};
             restart_req     <= 1'b0;
+            ir_accepted     <= 1'b0;
+            biz_accepted    <= 1'b0;
         end else begin
             restart_req <= 1'b0;
+            // X1A：有效红外（反码+白名单+DIP5）与已接受业务动作，各一拍
+            ir_accepted  <= ev_valid && is_ir_frame && ir_x_valid && dip_level[4];
+            biz_accepted <= biz_action_c;
 
             // 1 ms 预分频
             if (ms_cnt >= (MS_CYCLES - 1))
