@@ -92,6 +92,32 @@ module ui_event_bus #(
 
     integer i;
 
+    // LSB-first priority encoder.  The previous procedural scan produced a
+    // 12-stage arb_valid chain on the 50 MHz domain; casez infers a balanced
+    // mux tree without changing the pending order.
+    function [3:0] key_priority;
+        input [KEY_COUNT-1:0] bits;
+        begin
+            casez (bits)
+                12'b???????????1: key_priority = 4'd0;
+                12'b??????????10: key_priority = 4'd1;
+                12'b?????????100: key_priority = 4'd2;
+                12'b????????1000: key_priority = 4'd3;
+                12'b???????10000: key_priority = 4'd4;
+                12'b??????100000: key_priority = 4'd5;
+                12'b?????1000000: key_priority = 4'd6;
+                12'b????10000000: key_priority = 4'd7;
+                12'b???100000000: key_priority = 4'd8;
+                12'b??1000000000: key_priority = 4'd9;
+                12'b?10000000000: key_priority = 4'd10;
+                default:          key_priority = 4'd11;
+            endcase
+        end
+    endfunction
+
+    wire [3:0] key_down_idx = key_priority(key_down_pending);
+    wire [3:0] key_up_idx   = key_priority(key_rise_pulse);
+
     always @* begin
         arb_valid = 1'b0;
         arb_code  = EV_NONE;
@@ -106,21 +132,17 @@ module ui_event_bus #(
         arb_ir_clr        = 1'b0;
 
         // KEY_DOWN（优先级最高，pending 逐键保序）
-        for (i = 0; i < KEY_COUNT; i = i + 1) begin
-            if (!arb_valid && key_down_pending[i]) begin
-                arb_valid = 1'b1;
-                arb_code  = EV_KEY_DOWN;
-                arb_arg   = i[15:0];
-                arb_key_down_clr[i] = 1'b1;
-            end
+        if (|key_down_pending) begin
+            arb_valid = 1'b1;
+            arb_code  = EV_KEY_DOWN;
+            arb_arg   = {12'd0, key_down_idx};
+            arb_key_down_clr = 12'b1 << key_down_idx;
         end
         // KEY_UP（直接，无 pending）
-        for (i = 0; i < KEY_COUNT; i = i + 1) begin
-            if (!arb_valid && key_rise_pulse[i]) begin
-                arb_valid = 1'b1;
-                arb_code  = EV_KEY_UP;
-                arb_arg   = i[15:0];
-            end
+        else if (|key_rise_pulse) begin
+            arb_valid = 1'b1;
+            arb_code  = EV_KEY_UP;
+            arb_arg   = {12'd0, key_up_idx};
         end
         // DIP
         for (i = 0; i < DIP_COUNT; i = i + 1) begin

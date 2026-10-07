@@ -88,7 +88,7 @@ module sd_card_bmp #(
     wire        sd_init_done;
     wire        bmp_ready;
     wire        scan_done;
-    wire        scan_done_eff;
+    reg         scan_done_eff;
     wire        scan_found_valid;
     wire [1:0]  scan_found_index;
     wire        scan_found_total;
@@ -154,7 +154,6 @@ module sd_card_bmp #(
     assign write_data         = {bmp_data[23:16], bmp_data[15:8], bmp_data[7:0], 8'h00};
     assign write_finish_pulse = wrfin_tgl_sync[2] ^ wrfin_tgl_sync[1];
     assign auto_tick          = (auto_cnt >= (AUTO_PLAY_CYCLES - 1'b1));
-    assign scan_done_eff      = scan_done | scan_abort;
     assign auto_play_en_out   = auto_play_en;
     assign media_preloaded = preload_done && scan_done_eff;
     assign preload_done       = (img_found_count == 3'd0) ||
@@ -246,6 +245,7 @@ module sd_card_bmp #(
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             wrfin_tgl_sync        <= 3'b000;
+            scan_done_eff         <= 1'b0;
             scan_start_pulse      <= 1'b0;
             load_start_pulse      <= 1'b0;
             load_index            <= 2'd0;
@@ -286,6 +286,7 @@ module sd_card_bmp #(
         end else begin
             // 跨时钟域信号同步与按键打拍
             wrfin_tgl_sync    <= {wrfin_tgl_sync[1:0], write_finish_toggle};
+            scan_done_eff     <= scan_done | scan_abort;
             key_auto_stable_d <= key_auto_stable;
 
             if (auto_inhibit) auto_play_en <= 1'b0;
