@@ -24,9 +24,12 @@ module mv_frame_scheduler (
  reg [31:0] next_time;
  reg [3:0] settle;
  // X2：restart/invalidate 期间把播放位置直接落到目标帧，而不是从 0 重新数。
+ // *100 用移位加法实现，避免为一次定位请求额外占用 DSP。
  wire [15:0] rst_frame = (frame_count == 16'd0) ? 16'd0 :
                          ((seek_frame >= frame_count) ? (frame_count - 16'd1) : seek_frame);
- wire [31:0] rst_next_time = ({16'd0, rst_frame} * 32'd100) + 32'd100;
+ wire [31:0] rst_frame_x100 = {16'd0, rst_frame, 2'b00} +
+                              {17'd0, rst_frame, 1'b0} + {19'd0, rst_frame};
+ wire [31:0] rst_next_time = rst_frame_x100 + 32'd100;
  wire completed = busy && (done_sync[2]==request_toggle);
  wire invalidating = !enable || restart;
  wire can_issue = enable && !paused && !restart && settle==4'd15 && !busy &&

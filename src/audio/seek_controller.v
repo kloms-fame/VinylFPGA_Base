@@ -58,6 +58,7 @@ module seek_controller #(
 
     reg        busy;
     reg [19:0] hold;
+    reg [31:0] lim_reg;
 
     wire        seek_ev  = p5f | p5b | p2f | p2b;
     wire        any_ev   = seek_ev | prp;
@@ -71,9 +72,8 @@ module seek_controller #(
                                         : $signed({1'b0, cur_sample});
     wire signed [32:0] cand      = base_ext + delta_ext;
 
-    wire [31:0] lim = (total_samples == 32'd0) ? 32'd0 : (total_samples - 32'd1);
     wire [31:0] clamped = cand[32]                       ? 32'd0 :
-                          (cand > $signed({1'b0, lim}))  ? lim   : cand[31:0];
+                          (cand > $signed({1'b0, lim_reg})) ? lim_reg : cand[31:0];
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -81,8 +81,12 @@ module seek_controller #(
             restart_req   <= 1'b0;
             busy          <= 1'b0;
             hold          <= 20'd0;
+            lim_reg       <= 32'd0;
         end else begin
             restart_req <= 1'b0;
+            // 总数在整曲生命周期内稳定；预先寄存 total-1，避免它进入
+            // 事件当拍的 33 位加法/钳位路径（100 MHz SD 域关键路径）。
+            lim_reg <= (total_samples == 32'd0) ? 32'd0 : (total_samples - 32'd1);
             if (clear_pulse) begin
                 target_sample <= 32'd0;
                 busy          <= 1'b0;

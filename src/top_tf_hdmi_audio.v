@@ -415,9 +415,13 @@ wire        play_seek_clear_sd;
 reg  [31:0] seek_cur_sample_sd;
 // Seek 目标 -> video 域（稳定窗口内 2FF）
 reg  [31:0] play_seek_target_v1, play_seek_target_v2;
-// 目标样本 -> 目标帧（1/4800 倒数乘法，误差 <0.01%）
-wire [43:0] seek_frame_prod = play_seek_target_v2 * 32'd3495;
-wire [19:0] seek_frame_calc = seek_frame_prod[43:24];
+// 目标样本 -> 目标帧：4800 样本/帧。用低频常量步进累减替代 32x15 乘法，
+// 最坏 32 位目标也远小于预缓冲窗口；视频域逐帧推进只使用寄存器路径。
+reg  [31:0] seek_frame_rem, seek_frame_target_d;
+reg  [19:0] seek_frame_calc_reg;
+reg         seek_frame_busy;
+wire [31:0] seek_frame_rem_next = seek_frame_rem - 32'd4800;
+wire [19:0] seek_frame_calc = seek_frame_calc_reg;
 wire [15:0] seek_frame_vid  = (seek_frame_calc > 20'h0FFFF) ? 16'hFFFF :
                               seek_frame_calc[15:0];
 // 播放态慢变信号 -> video 域（两级同步）
@@ -1141,6 +1145,29 @@ always @(posedge video_clk or negedge media_video_rst_n) begin
     end else begin
         play_seek_target_v1 <= play_seek_target_sd;
         play_seek_target_v2 <= play_seek_target_v1;
+    end
+end
+
+// 目标样本 / 4800 的串行定位器。seek 事务期间目标保持不变；每个视频时钟
+// 做一次常量减法，完成后把帧号交给 MV 调度器。
+always @(posedge video_clk or negedge media_video_rst_n) begin
+    if (!media_video_rst_n) begin
+        seek_frame_rem       <= 32'd0;
+        seek_frame_target_d  <= 32'd0;
+        seek_frame_calc_reg  <= 20'd0;
+        seek_frame_busy      <= 1'b0;
+    end else if (play_seek_target_v2 != seek_frame_target_d) begin
+        seek_frame_target_d <= play_seek_target_v2;
+        seek_frame_rem      <= play_seek_target_v2;
+        seek_frame_calc_reg <= 20'd0;
+        seek_frame_busy     <= (play_seek_target_v2 >= 32'd4800);
+    end else if (seek_frame_busy) begin
+        if (seek_frame_rem >= 32'd4800) begin
+            seek_frame_rem      <= seek_frame_rem_next;
+            seek_frame_calc_reg <= seek_frame_calc_reg + 1'b1;
+        end else begin
+            seek_frame_busy <= 1'b0;
+        end
     end
 end
 

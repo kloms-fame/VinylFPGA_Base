@@ -64,7 +64,6 @@ module wav_stream_player #(
     reg       play_enable_sync1;
     reg       play_enable_sync2;
     reg       play_enable_sync3;
-    reg [31:0] rd_base;
     reg       stream_active_rd;
     reg       stream_end_rd;
     reg stream_fault_wr;
@@ -114,7 +113,7 @@ module wav_stream_player #(
     reg [2:0]  wstate;
     reg [31:0] cur_lba;
     reg [31:0] sectors_read;
-    reg [31:0] samples_done;
+    reg [31:0] remaining;
     reg [7:0]  lo_byte;
     reg [7:0]  skip_cnt;
     reg        lo_pending;
@@ -124,7 +123,7 @@ module wav_stream_player #(
     // 仍为 4096 x 16bit，读数据在消费沿更新，不增加 sample_valid 延迟。
     wire buffer_write = wr_rst_n && play_enable &&
                         (wstate == WS_FILL) && sd_valid && lo_pending &&
-                        (skip_cnt == 8'd0) && (samples_done < valid_samples);
+                        (skip_cnt == 8'd0) && (remaining != 32'd0);
     wire buffer_available = play_enable_sync2 && !fault_sync[1] &&
                             ((level_rd >= SAMPLES_PER_SECTOR) ||
                             (finished_sync[1] && (level_rd > 0)));
@@ -168,7 +167,7 @@ module wav_stream_player #(
             cur_lba       <= 32'd0;
             sectors_read  <= 32'd0;
             wr_ptr        <= {ADDR_WIDTH{1'b0}};
-            samples_done  <= 32'd0;
+            remaining     <= 32'd0;
             lo_pending    <= 1'b0;
             lo_byte       <= 8'd0;
             skip_cnt      <= 8'd0;
@@ -191,7 +190,7 @@ module wav_stream_player #(
                 cur_lba      <= 32'd0;
                 sectors_read <= 32'd0;
                 wr_ptr       <= {ADDR_WIDTH{1'b0}};
-                samples_done <= 32'd0;
+                remaining    <= 32'd0;
                 lo_pending   <= 1'b0;
                 skip_cnt     <= 8'd0;
                 limit_reached <= 1'b0;
@@ -202,7 +201,7 @@ module wav_stream_player #(
                         cur_lba      <= start_lba;
                         sectors_read <= 32'd0;
                         wr_ptr       <= {ADDR_WIDTH{1'b0}};
-                        samples_done <= 32'd0;
+                        remaining    <= valid_samples;
                         lo_pending   <= 1'b0;
                         skip_cnt     <= skip_samples;
                         limit_reached <= (valid_samples == 32'd0);
@@ -224,10 +223,10 @@ module wav_stream_player #(
                             lo_pending     <= 1'b0;
                             if (skip_cnt != 8'd0)
                                 skip_cnt <= skip_cnt - 1'b1;
-                            else if (samples_done < valid_samples) begin
+                            else if (remaining != 32'd0) begin
                                 wr_ptr <= wr_ptr + 1'b1;
-                                samples_done <= samples_done + 1'b1;
-                                if (samples_done + 32'd1 >= valid_samples)
+                                remaining <= remaining - 32'd1;
+                                if (remaining == 32'd1)
                                     limit_reached <= 1'b1;
                             end
                         end
@@ -284,7 +283,6 @@ module wav_stream_player #(
             play_enable_sync1 <= 1'b0;
             play_enable_sync2 <= 1'b0;
             play_enable_sync3 <= 1'b0;
-            rd_base           <= 32'd0;
             stream_active_rd  <= 1'b0;
             stream_end_rd     <= 1'b0;
         end else begin
@@ -336,10 +334,9 @@ module wav_stream_player #(
             if (!play_enable_sync2) begin
                 rd_ptr         <= {ADDR_WIDTH{1'b0}};
                 sample_counter <= 32'd0;
-                rd_base        <= sample_base;
             end else if (play_enable_sync2 && !play_enable_sync3) begin
                 // X2：整条流重启后的第一个使能沿把计数器载到 Seek 目标
-                sample_counter <= rd_base;
+                sample_counter <= sample_base;
             end
         end
     end
