@@ -24,6 +24,7 @@
 `include "io/led_business_driver.v"
 `include "io/ws2812_driver.v"
 `include "io/ws2812_effects.v"
+`include "io/ws2812_progress.v"
 `include "audio/pcm_tap.v"
 `include "display/seg_business_mux.v"
 `include "io/browse_fsm.v"
@@ -411,18 +412,16 @@ wire [31:0] lyric_time_ms;
 // ==========================================================================
 // X1：状态反馈执行器信号
 //   X1A：LED1~4 全部在 expansion_integration（clk 域）内部接线；
-//   X1B：PCM 包络 / 进度在视频域产生，用"数据 + 翻转"捆绑握手跨到 clk 域；
+//   X1B：PCM 包络在视频域产生，精确进度在 SD 域产生，分别跨到 clk 域；
 //        KEY10 模式循环由 ui_event_bridge（clk 域）给出翻转电平；
 //   X1C：数码管业务 mux 与 seg_scan 同在 sd_card_clk 域，SW1/SW3 与 KEY3
 //        翻转电平各做 2FF 同步（全部为慢变配置/事件，单比特跨域）。
 // ==========================================================================
 wire [7:0]  x1b_level_vid;          // pcm_tap 包络
-wire [3:0]  x1b_progress_vid;       // 进度点亮颗数 0..8
 wire        x1b_upd_tgl_vid;        // 包络更新翻转（数据已稳定后才翻转）
 reg         x1b_upd_tgl_s1, x1b_upd_tgl_s2, x1b_upd_tgl_seen;
-reg  [11:0] x1b_bundle_clk;         // {level[7:0], progress[3:0]} clk 域快照
-wire [7:0]  pcm_level_clk   = x1b_bundle_clk[11:4];
-wire [3:0]  ws_progress_clk = x1b_bundle_clk[3:0];
+reg  [7:0]  pcm_level_clk;          // 包络 clk 域快照
+wire [3:0]  ws_progress_clk;        // 精确进度，独立握手跨域
 wire        ws_mode_tgl;            // KEY10 模式循环（clk 域）
 wire [3:0]  board_sw_level_clk;     // 母板 SW1-4 消抖后电平（clk 域）
 wire        disp_mode_tgl_clk;      // 母板 KEY3(B1) 翻转电平（clk 域）
@@ -1249,6 +1248,8 @@ endfunction
 // sd_card_clk 域并把 CLK_FREQ 同步改成 100MHz，刷新率仍为 200Hz/位，
 // 跨域路径消失，也不再需要额外的约束豁免。
 // ==========================================================================
+// MM-SS blank NN: the blank digit is unlit, not an ampersand glyph.
+// Pair the track number with the metadata pipeline producing its duration.
 // Eight digits: browsing shows the focused song duration, PLAY shows consumed
 // sample position. Pause/Seek/replay/EOF all share the transport timeline.
 always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
@@ -1265,8 +1266,9 @@ always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
 end
 seg_business_mux u_seg_business_mux(
  .clk(sd_card_clk),.rst_n(sdcard_rst_n),.display_enable(sd_sw1_sync[1]),
- .sample_position(play_active_sd ? seek_cur_sample_sd : play_total_samples),
- .song_index(display_song_sd),
+ .sample_position(audio_file_valid ?
+                  (play_active_sd ? seek_cur_sample_sd : play_total_samples) : 32'd0),
+ .song_index(metadata_song_sd),
  .debug_enable(sd_sw3_sync[1]),.fault_flags(fault_flags_s2),.error_code(media_err_code),
  .seg_data_0(seg_biz_0),.seg_data_1(seg_biz_1),.seg_data_2(seg_biz_2),.seg_data_3(seg_biz_3),
  .seg_data_4(seg_biz_4),.seg_data_5(seg_biz_5),.seg_data_6(seg_biz_6),.seg_data_7(seg_biz_7));
@@ -1993,55 +1995,44 @@ hdmi_pcm_source_bridge u_hdmi_pcm_source_bridge (
 );
 
 // ==========================================================================
-// X1B：PCM 包络只读旁路 + 进度计算（视频域，均不反压音频）
+// X1B：PCM 包络只读旁路（视频域）+ 精确进度（SD 域），均不反压音频
 //   包络直接挂在最终混音（hdmi 音源）上，音量/静音/转场淡入淡出都会体现，
-//   因此不需要额外的 mute 端口；进度按播放位置对曲目长度做 8 等分（纯移位/加法）。
+//   因此不需要额外的 mute 端口；进度通过串行减法精确计算 8 等分。
 // ==========================================================================
-pcm_tap u_pcm_tap (
+// Faster visual envelope: roughly 85 ms full-scale release at 48 kHz.
+pcm_tap #(.DECAY_DIV(64), .DECAY_STEP(4)) u_pcm_tap (
     .clk          (video_clk),
     .rst_n        (media_video_rst_n),
-    .sample_valid (mix_sample_valid),
+    .sample_valid (mix_sample_valid && mix_sample_ready),
     .sample_left  (mix_sample_left),
     .sample_right (mix_sample_right),
     .level        (x1b_level_vid),
     .upd_tgl      (x1b_upd_tgl_vid)
 );
 
-// total_sectors * 256 = 采样点数（PCM 连续布局、16 bit 单声道打包）
-// Quantize the sample counters to 256-sample units before comparing.  The
-// progress indicator does not need sub-5 ms precision, and removing the low
-// eight bits avoids a wide lower-bit comparator tree that caused a TD route
-// collision between x1b_total_samples[5] and [2].
-wire [23:0] x1b_total_q = play_total_samples[31:8];
-wire [23:0] x1b_cur_q   = wav_sample_counter[31:8];
-wire [23:0] x1b_th1 = x1b_total_q >> 3;
-wire [23:0] x1b_th2 = x1b_total_q >> 2;
-wire [23:0] x1b_th4 = x1b_total_q >> 1;
-assign x1b_progress_vid =
-      (x1b_total_q == 24'd0)                  ? 4'd0 :
-      (x1b_cur_q   >= x1b_total_q)            ? 4'd8 :
-      (x1b_cur_q   >= (x1b_total_q-x1b_th1))  ? 4'd7 :
-      (x1b_cur_q   >= (x1b_th4+x1b_th2))      ? 4'd6 :
-      (x1b_cur_q   >= (x1b_th4+x1b_th1))      ? 4'd5 :
-      (x1b_cur_q   >= x1b_th4)                ? 4'd4 :
-      (x1b_cur_q   >= (x1b_th2+x1b_th1))      ? 4'd3 :
-      (x1b_cur_q   >= x1b_th2)                ? 4'd2 :
-      (x1b_cur_q   >= x1b_th1)                ? 4'd1 : 4'd0;
+// Progress follows the same SD-domain timeline as the numeric display.
+// It remains responsive to Seek/replay while paused, independent of PCM events.
+ws2812_progress u_ws2812_progress (
+    .src_clk(sd_card_clk), .src_rst_n(sdcard_rst_n),
+    .position(play_active_sd ? seek_cur_sample_sd : 32'd0),
+    .total(audio_file_valid ? play_total_samples : 32'd0),
+    .dst_clk(clk), .dst_rst_n(exp_rst_n), .progress(ws_progress_clk)
+);
 
-// 包络/进度"数据 + 翻转"捆绑跨到 clk 域（板级 50 MHz）。
+// 包络更新跨到 clk 域（板级 50 MHz）；进度使用上面的独立握手。
 // 包络翻转由 pcm_tap 保证发生在数据稳定之后，50 MHz 域同步采到的一定是完整值。
 always @(posedge clk or negedge exp_rst_n) begin
     if (!exp_rst_n) begin
         x1b_upd_tgl_s1 <= 1'b0;
         x1b_upd_tgl_s2 <= 1'b0;
         x1b_upd_tgl_seen <= 1'b0;
-        x1b_bundle_clk <= 12'd0;
+        pcm_level_clk <= 8'd0;
     end else begin
         x1b_upd_tgl_s1 <= x1b_upd_tgl_vid;
         x1b_upd_tgl_s2 <= x1b_upd_tgl_s1;
         if (x1b_upd_tgl_s2 != x1b_upd_tgl_seen) begin
             x1b_upd_tgl_seen <= x1b_upd_tgl_s2;
-            x1b_bundle_clk   <= {x1b_level_vid, x1b_progress_vid};
+            pcm_level_clk <= x1b_level_vid;
         end
     end
 end

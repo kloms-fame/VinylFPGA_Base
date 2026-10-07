@@ -1,0 +1,26 @@
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\src\SD/frame_read_write.v:125: warning: Port 21 (rdusedw) of module frame_fifo_write expects 10 bit(s), given 9.
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\src\SD/frame_read_write.v:125:        : Padding 1 high bits of the port.
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\src\SD/frame_read_write.v:175: warning: Port 21 (wrusedw) of module frame_fifo_read expects 10 bit(s), given 9.
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\src\SD/frame_read_write.v:175:        : Padding 1 high bits of the port.
+src/top_tf_hdmi_audio.v:1491: warning: Port 17 (read_addr_0) of module frame_read_write expects 21 bit(s), given 24.
+src/top_tf_hdmi_audio.v:1491:        : Pruning 3 high bits of the expression.
+src/top_tf_hdmi_audio.v:1491: warning: Port 18 (read_addr_1) of module frame_read_write expects 21 bit(s), given 24.
+src/top_tf_hdmi_audio.v:1491:        : Pruning 3 high bits of the expression.
+src/top_tf_hdmi_audio.v:1491: warning: Port 19 (read_addr_2) of module frame_read_write expects 21 bit(s), given 48.
+src/top_tf_hdmi_audio.v:1491:        : Pruning 27 high bits of the expression.
+src/top_tf_hdmi_audio.v:1491: warning: Port 20 (read_addr_3) of module frame_read_write expects 21 bit(s), given 48.
+src/top_tf_hdmi_audio.v:1491:        : Pruning 27 high bits of the expression.
+src/top_tf_hdmi_audio.v:1491: warning: Port 22 (read_len) of module frame_read_write expects 21 bit(s), given 24.
+src/top_tf_hdmi_audio.v:1491:        : Pruning 3 high bits of the expression.
+src/top_tf_hdmi_audio.v:1491: warning: Port 33 (write_addr_0) of module frame_read_write expects 21 bit(s), given 24.
+src/top_tf_hdmi_audio.v:1491:        : Pruning 3 high bits of the expression.
+src/top_tf_hdmi_audio.v:1491: warning: Port 34 (write_addr_1) of module frame_read_write expects 21 bit(s), given 24.
+src/top_tf_hdmi_audio.v:1491:        : Pruning 3 high bits of the expression.
+src/top_tf_hdmi_audio.v:1491: warning: Port 35 (write_addr_2) of module frame_read_write expects 21 bit(s), given 48.
+src/top_tf_hdmi_audio.v:1491:        : Pruning 27 high bits of the expression.
+src/top_tf_hdmi_audio.v:1491: warning: Port 36 (write_addr_3) of module frame_read_write expects 21 bit(s), given 48.
+src/top_tf_hdmi_audio.v:1491:        : Pruning 27 high bits of the expression.
+src/top_tf_hdmi_audio.v:1491: warning: Port 38 (write_len) of module frame_read_write expects 21 bit(s), given 24.
+src/top_tf_hdmi_audio.v:1491:        : Pruning 3 high bits of the expression.
+PASS four-song WAV/MV metadata, rapid focus/confirm, session settle, stop and reset
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_opt_metadata.v:65: $finish called at 1691000 (1ps)

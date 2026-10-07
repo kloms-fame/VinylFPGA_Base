@@ -31,8 +31,8 @@ if __name__=='__main__':
         'tb_fat32_index_loader','tb_fat32_file_streamer','tb_fat32_volume_scanner',
         'tb_thumbnail_view_reader','tb_sdram_rd_arbiter','tb_s5_play','tb_expansion_s1','tb_io_startup_dip']
     if not a.tests:
-        names = names + ['tb_x2_seek','tb_x2_seek_wav','tb_opt_no_uart','tb_opt_osd_bypass','tb_debounce_bank','tb_debounce_monitors','tb_lrc_font_sync','tb_lrc_osd_equiv','tb_x1x2_display','tb_opt_metadata']
-    results={name:run(name,top=name in ('tb_s7_top','tb_opt_osd_bypass','tb_opt_metadata')) for name in names}
+        names = names + ['tb_x2_seek','tb_x2_seek_wav','tb_opt_no_uart','tb_opt_osd_bypass','tb_debounce_bank','tb_debounce_monitors','tb_lrc_font_sync','tb_lrc_osd_equiv','tb_x1x2_display','tb_opt_metadata','tb_x1x2_lights','tb_ws2812_progress','tb_visual_feedback_top']
+    results={name:run(name,top=name in ('tb_s7_top','tb_opt_osd_bypass','tb_opt_metadata','tb_visual_feedback_top')) for name in names}
     if not a.tests:
         # 48 sectors = 12288 samples, three complete wraps of the 4096-sample FIFO.
         src=(R/'sim/tb_wav_stream_player_flow.v').read_text(encoding='utf-8').replace('tb_wav_stream_player_flow','tb_s7_wav_wrap').replace('SECTORS = 12','SECTORS = 48')

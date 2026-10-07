@@ -5,8 +5,8 @@
 //
 // 运行在板级 clk(50 MHz) 域。KEY10 每按一次在三种模式间循环：
 //   mode 0 = 全灭（上电默认）
-//   mode 1 = 音频律动：8 颗灯按 PCM 包络点亮，快升慢降由 pcm_tap 提供
-//   mode 2 = 进度条   ：8 颗灯按播放进度点亮，暂停/欠载时进度自然冻结
+//   mode 1 = 音频律动：彩色包络历史从第 1 颗向右流动，每 60 ms 前进一步
+//   mode 2 = 进度条   ：比例底色 + 四颗渐变长脉冲向右，每 80 ms 前进一步
 //
 // 音频只读旁路：level 是 pcm_tap 送来的包络，本模块不反压、不访问 SD/音频 FIFO。
 // DIP6(enable) 关闭时：先补发一整帧全黑（否则灯珠会保持最后颜色），
@@ -49,101 +49,113 @@ module ws2812_effects #(
         else if (mode_event) mode <= (mode == 2'd2) ? 2'd0 : mode + 1'b1;
     end
 
-    // ---- 20 ms 刷新节拍 ----
-    localparam integer MS_CYCLES = CLK_FREQ_HZ / 1000;
-    localparam integer MS_W      = $clog2(MS_CYCLES + 1);
-    localparam integer RF_W      = $clog2(REFRESH_MS + 1);
+    // All animation state is held throughout serialization. At 20 ms refresh,
+    // audio history moves right every 60 ms; the four-pixel pulse every 80 ms.
+    localparam integer MS_CYCLES = (CLK_FREQ_HZ < 1000) ? 1 : CLK_FREQ_HZ / 1000;
+    localparam integer MS_W = (MS_CYCLES < 2) ? 1 : $clog2(MS_CYCLES);
+    localparam integer RF_W = (REFRESH_MS < 2) ? 1 : $clog2(REFRESH_MS);
+    localparam integer HEAD_W = $clog2(PIXEL_COUNT + 3);
     reg [MS_W-1:0] ms_div;
     reg [RF_W-1:0] rf_ms;
-    wire ms_tick = (ms_div >= (MS_CYCLES - 1));
+    wire ms_tick = (ms_div == MS_CYCLES-1);
+    wire refresh_pulse = ms_tick && (rf_ms == REFRESH_MS-1);
     always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            ms_div <= {MS_W{1'b0}};
-            rf_ms  <= {RF_W{1'b0}};
-        end else if (ms_tick) begin
-            ms_div <= {MS_W{1'b0}};
-            rf_ms  <= (rf_ms >= (REFRESH_MS - 1)) ? {RF_W{1'b0}} : rf_ms + 1'b1;
-        end else begin
-            ms_div <= ms_div + 1'b1;
-        end
+        if (!rst_n) ms_div <= 0;
+        else if (ms_tick) ms_div <= 0;
+        else ms_div <= ms_div + 1'b1;
     end
-    wire refresh_pulse = ms_tick && (rf_ms >= (REFRESH_MS - 1));
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) rf_ms <= 0;
+        else if (ms_tick) rf_ms <= refresh_pulse ? 0 : rf_ms + 1'b1;
+    end
 
-    // Low-cost RGB colour wheel, one step per refresh. Audio amplitude sets
-    // the channel ceiling (0..63); silence and mute are black. No fixed VU palette.
-    reg [5:0] hue_ramp;
-    reg [2:0] hue_sector;
-    reg [7:0] runner_ms;
-    reg [2:0] runner;
-    always @(posedge clk or negedge rst_n) begin
-        if(!rst_n) begin hue_ramp<=0;hue_sector<=0;end
-        else if(refresh_pulse && enable) begin
-            hue_ramp<=hue_ramp+1'b1;
-            if(hue_ramp==63) hue_sector<=(hue_sector==5) ? 3'd0 : hue_sector+1'b1;
-        end
-    end
-    always @(posedge clk or negedge rst_n) begin
-        if(!rst_n) begin runner_ms<=0;runner<=0;end
-        else if(ms_tick && enable) begin
-            if(runner_ms==249) begin runner_ms<=0;runner<=(runner==PIXEL_COUNT-1) ? 3'd0 : runner+1'b1;end
-            else runner_ms<=runner_ms+1'b1;
-        end
-    end
-    reg [5:0] wheel_r,wheel_g,wheel_b;
-    always @* begin
-        wheel_r=0;wheel_g=0;wheel_b=0;
-        case(hue_sector)
-          0:begin wheel_r=63;wheel_g=hue_ramp;end
-          1:begin wheel_r=63-hue_ramp;wheel_g=63;end
-          2:begin wheel_g=63;wheel_b=hue_ramp;end
-          3:begin wheel_g=63-hue_ramp;wheel_b=63;end
-          4:begin wheel_b=63;wheel_r=hue_ramp;end
-          default:begin wheel_b=63-hue_ramp;wheel_r=63;end
-        endcase
-    end
-    wire [5:0] amplitude = (mute || level<8) ? 6'd0 : level[7:2];
-    reg  black_sent;
-    reg  load_req;
+    reg black_sent;
+    reg load_req;
     wire busy;
-
-    // Freeze the same load-edge values previously stored as a full pixel frame.
-    // A 33-bit rendering context replaces 24*PIXEL_COUNT frame bits and their mux.
-    // Live input changes while busy must only affect the next accepted frame.
+    wire accept_frame = load_req && !busy;
     reg [1:0] frame_mode;
-    reg [5:0] frame_r, frame_g, frame_b, frame_amplitude;
     reg [3:0] frame_progress;
-    reg [2:0] frame_runner;
-    wire [4:0] pixel_index;
-    reg [23:0] pixel_grb;
+    reg [5:0] colour_phase;
+    reg [1:0] motion_div;
+    reg [HEAD_W-1:0] pulse_head;
+    // Six amplitude bits per pixel, instead of a 24-bit RGB framebuffer.
+    reg [PIXEL_COUNT*6-1:0] audio_history;
+    wire [5:0] amplitude = (mute || level < 8) ? 6'd0 : level[7:2];
+    wire mode_start = (mode != frame_mode);
+    wire audio_step = mode_start || (motion_div == 2);
+    wire pulse_step = (motion_div == 3);
     always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            frame_mode <= 0;
-            frame_r <= 0; frame_g <= 0; frame_b <= 0;
-            frame_amplitude <= 0;
-            frame_progress <= 0;
-            frame_runner <= 0;
-        end else if (load_req && !busy) begin
-            frame_mode <= enable ? mode : 2'd0;
-            frame_r <= wheel_r; frame_g <= wheel_g; frame_b <= wheel_b;
-            frame_amplitude <= amplitude;
-            frame_progress <= progress;
-            frame_runner <= runner;
+        if (!rst_n) frame_mode <= 0;
+        else if (accept_frame) frame_mode <= enable ? mode : 2'd0;
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) frame_progress <= 0;
+        else if (accept_frame) frame_progress <= progress > 8 ? 4'd8 : progress;
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) colour_phase <= 0;
+        else if (accept_frame && enable) colour_phase <= colour_phase + 1'b1;
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) motion_div <= 0;
+        else if (accept_frame) begin
+            if (!enable || mode_start || mode == 0 ||
+                (mode == 1 && audio_step) || (mode == 2 && pulse_step)) motion_div <= 0;
+            else motion_div <= motion_div + 1'b1;
         end
     end
-    wire [5:0] ar = frame_r < frame_amplitude ? frame_r : frame_amplitude;
-    wire [5:0] ag = frame_g < frame_amplitude ? frame_g : frame_amplitude;
-    wire [5:0] ab = frame_b < frame_amplitude ? frame_b : frame_amplitude;
-    always @* begin
-        pixel_grb = 24'd0;
-        if (frame_mode == 1)
-            pixel_grb = {2'b0,ag,2'b0,ar,2'b0,ab};
-        else if (frame_mode == 2) begin
-            // Progress base is dim (max 15); travelling point is at most 63.
-            if (pixel_index < frame_progress)
-                pixel_grb = {4'b0,frame_g[5:2],4'b0,frame_r[5:2],4'b0,frame_b[5:2]};
-            if (pixel_index == frame_runner)
-                pixel_grb = {2'b0,frame_g,2'b0,frame_r,2'b0,frame_b};
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) pulse_head <= 0;
+        else if (accept_frame) begin
+            if (!enable || mode_start || mode != 2) pulse_head <= 0;
+            else if (pulse_step)
+                pulse_head <= (pulse_head == PIXEL_COUNT+2) ? 0 : pulse_head + 1'b1;
         end
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) audio_history <= 0;
+        else if (accept_frame) begin
+            if (!enable || mode != 1 || mute) audio_history <= 0;
+            else if (mode_start) audio_history <= amplitude;
+            else if (audio_step) audio_history <= (audio_history << 6) | amplitude;
+        end
+    end
+
+    wire [4:0] pixel_index;
+    wire [2:0] pixel_colour = pixel_index[2:0] - colour_phase[5:3];
+    wire [HEAD_W:0] tail_distance = {1'b0,pulse_head} - pixel_index;
+    reg [5:0] brightness;
+    reg [7:0] red, green, blue;
+    wire [23:0] pixel_grb = {green,red,blue};
+    always @* begin
+        brightness = 0;
+        if (frame_mode == 1)
+            brightness = audio_history[pixel_index*6 +: 6];
+        else if (frame_mode == 2) begin
+            // Fixed progress base: floor(position / total * 8) LEDs.
+            if (pixel_index < frame_progress) brightness = 12;
+            // A four-pixel gradient travels right and exits before restarting.
+            if (pixel_index <= pulse_head) begin
+                case (tail_distance)
+                    0: brightness = 63;
+                    1: brightness = 48;
+                    2: brightness = 32;
+                    3: brightness = 16;
+                    default: ;
+                endcase
+            end
+        end
+        red = 0; green = 0; blue = 0;
+        case (pixel_colour)
+            0: red = {2'b0,brightness};
+            1: begin red = {2'b0,brightness}; green = {3'b0,brightness[5:1]}; end
+            2: begin red = {2'b0,brightness}; green = {2'b0,brightness}; end
+            3: green = {2'b0,brightness};
+            4: begin green = {2'b0,brightness}; blue = {2'b0,brightness}; end
+            5: blue = {2'b0,brightness};
+            6: begin red = {3'b0,brightness[5:1]}; blue = {2'b0,brightness}; end
+            7: begin red = {2'b0,brightness}; blue = {2'b0,brightness}; end
+        endcase
     end
 
     // ---- 关闭后补发完整黑帧；此分支中 frame_mode 必然锁存为 0 ----

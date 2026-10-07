@@ -1,4 +1,8 @@
-"""Cycle equivalence to frozen 6ffce23 WS effects, with deterministic input stress."""
+"""Historical O8 equivalence to 6ffce23 (run on commit a4362f9).
+
+The later right-flow lighting intentionally changes those effects. For current
+RTL use verify_visual_feedback.py; this script retains the old acceptance test.
+"""
 from pathlib import Path
 import argparse
 import datetime
