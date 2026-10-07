@@ -92,6 +92,7 @@ module expansion_integration #(
 
     // ===================== X1：状态反馈执行器接线（clk 域）=====================
     input  wire [7:0]  pcm_level,          // X1B：PCM 包络（顶层已从视频域跨来）
+    input  wire        mv_mode_active,
     input  wire [3:0]  ws_progress,        // X1B：进度点亮颗数 0..8
     input  wire        ws_mode_tgl,        // X1B：KEY10 模式循环翻转电平
     output wire [3:0]  board_sw_level,     // X1C：母板 SW1-4 消抖后电平（上拨=1）
@@ -352,14 +353,7 @@ module expansion_integration #(
     wire [3:0] board_sw_change_pulse;
     wire [2:0] board_sw_change_index;
 
-    // X1C：母板 KEY3（B1）不属于任何既有业务，专用于数码管显示项循环。
-    //       做成翻转电平，便于跨到 sd_card_clk 域做 2FF + 边沿还原。
-    reg disp_mode_tgl_r;
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n)                    disp_mode_tgl_r <= 1'b0;
-        else if (board_key_fall_pulse[2]) disp_mode_tgl_r <= ~disp_mode_tgl_r;
-    end
-    assign disp_mode_tgl = disp_mode_tgl_r;
+    assign disp_mode_tgl = 1'b0; // KEY3 display pages removed.
 
     key_dip_monitor #(
         .KEY_COUNT      (3),
@@ -460,6 +454,11 @@ module expansion_integration #(
     // ===================== X1A：LED1~4 业务化执行器 =====================
     // 不再回显 KEY 电平，改为状态反馈：IR 有效 / 业务动作 / 心跳 / 故障。
     // DIP3(led_enable)=0 时组合全灭（远快于 100 ms 门限）。
+    reg [1:0] mv_mode_sync;
+    always @(posedge clk or negedge rst_n) begin
+        if(!rst_n) mv_mode_sync<=0;
+        else mv_mode_sync<={mv_mode_sync[0],mv_mode_active};
+    end
     led_business_driver #(
         .CLK_FREQ_HZ (CLK_FREQ_HZ)
     ) u_led_business_driver (
@@ -469,6 +468,7 @@ module expansion_integration #(
         .ir_accepted  (ir_accepted),
         .biz_accepted (biz_accepted),
         .fault        (err_code != 8'd0),
+        .mv_active    (mv_mode_sync[1]),
         .led_n        (exp_led_n)
     );
 

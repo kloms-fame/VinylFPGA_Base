@@ -75,8 +75,8 @@ module ui_command_router #(
     localparam [7:0] IR_VOLUP   = 8'hBB;
     localparam [7:0] IR_VOLDN   = 8'hBF;
     localparam [7:0] IR_BLANK   = 8'hBC;
-    localparam [7:0] IR_SEEKP   = 8'hF8;
-    localparam [7:0] IR_SEEKM   = 8'hEA;
+    localparam [7:0] IR_SEEKP   = 8'hEA;
+    localparam [7:0] IR_SEEKM   = 8'hF8;
     localparam [7:0] IR_REPLAY  = 8'hF6;
     localparam [7:0] IR_RESTART = 8'hE9;
     localparam [7:0] IR_UP      = 8'hE7;

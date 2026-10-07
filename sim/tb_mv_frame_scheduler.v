@@ -7,7 +7,7 @@ reg [15:0] seek_frame=16'd0;
 wire req,dv,busy; wire [31:0] lba; wire [1:0] wb,db; wire [15:0] frame;
 reg [1:0] oldbank; reg [15:0] oldframe; integer n;
 mv_frame_scheduler dut(.clk(clk),.rst_n(rst_n),.frame_start(fs),.enable(en),
- .paused(pause),.restart(restart),.time_ms(ms),.start_lba(base),.frame_count(16'd6500),
+ .retain_display(1'b0),.paused(pause),.restart(restart),.time_ms(ms),.start_lba(base),.frame_count(16'd6500),
  .seek_frame(seek_frame),
  .done_toggle(done),.failed(failed),.request_toggle(req),.request_lba(lba),
  .request_bank(wb),.display_valid(dv),.display_bank(db),.display_frame(frame),.waiting(busy));

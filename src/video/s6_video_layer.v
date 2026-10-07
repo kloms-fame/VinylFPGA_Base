@@ -5,6 +5,7 @@ module s6_video_layer #(
  parameter ENABLE=1
 )(
  input wire clk,rst_n,frame_start,play_active,paused,restart,diagnostic,
+ input wire transport_ready,
  input wire covers_ready, input wire [63:0] metadata_async,
  input wire [31:0] time_ms, input wire [15:0] seek_frame, input wire visual_toggle,
  input wire raw_read_en, out_de, input wire [9:0] out_x,
@@ -25,7 +26,8 @@ module s6_video_layer #(
  wire [32:0] mv_end_lba={1'b0,meta2[31:0]} + (meta2[47:32]*33'd300);
  wire mv_meta_valid=(meta2[63:56]==8'd1 && meta2[55:48]==8'd10 &&
                      meta2[47:32]!=0 && meta2[31:0]!=0 && !mv_end_lba[32]);
- wire schedule_enable=ENABLE && play_active && covers_ready && mv_meta_valid && !diagnostic;
+ wire display_enable=ENABLE && play_active && covers_ready && mv_meta_valid && !diagnostic;
+ wire schedule_enable=display_enable && transport_ready;
  wire display_valid;
  wire [15:0] display_frame;
  wire waiting;
@@ -61,12 +63,12 @@ module s6_video_layer #(
  // Bank selection itself is wired from scheduler and settles before read_req.
  always @(posedge clk or negedge rst_n) begin
   if(!rst_n) mv_read_active<=0;
-  else if(frame_start) mv_read_active<=schedule_enable && !restart && display_valid &&
+  else if(frame_start) mv_read_active<=display_enable && display_valid &&
        !(prefer_vinyl ^ (play_active && (visual_pending^visual_event)));
  end
  mv_frame_scheduler scheduler(
   .clk(clk),.rst_n(rst_n),.frame_start(frame_start),.enable(schedule_enable),
-  .paused(paused),.restart(restart),.time_ms(time_ms),.start_lba(meta2[31:0]),
+  .paused(paused),.restart(restart),.retain_display(display_enable),.time_ms(time_ms),.start_lba(meta2[31:0]),
   .frame_count(meta2[47:32]),.seek_frame(seek_frame),.done_toggle(done_toggle),.failed(failed),
   .request_toggle(request_toggle),.request_lba(request_lba),.request_bank(request_bank),
   .display_valid(display_valid),.display_bank(mv_read_bank),.display_frame(display_frame),.waiting(waiting));

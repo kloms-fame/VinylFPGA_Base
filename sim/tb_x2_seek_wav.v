@@ -127,7 +127,7 @@ module tb_x2_seek_wav;
 
         // --- timebase 加载 ---
         load_sample = 32'd12345; load = 1; @(negedge clk); load = 0;
-        repeat (2) @(negedge clk);
+        repeat (34) @(negedge clk);
         chk(samp_cnt == 32'd12345, "timebase load sample_count exact");
         chk(ms == 32'd257, "timebase load ms ~= 12345/48");
         run = 1;

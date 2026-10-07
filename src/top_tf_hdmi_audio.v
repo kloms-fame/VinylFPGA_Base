@@ -70,7 +70,7 @@ module top(
     input                       sw3,            // 母板拨码 SW3（C6）
     input                       sw4,            // 母板拨码 SW4（C5）
 
-    output [5:0]                seg_sel,
+    output [7:0]                seg_sel,
     output [7:0]                seg_data,
 
     // HDMI TMDS
@@ -467,14 +467,11 @@ wire        ws_mode_tgl;            // KEY10 模式循环（clk 域）
 wire [3:0]  board_sw_level_clk;     // 母板 SW1-4 消抖后电平（clk 域）
 wire        disp_mode_tgl_clk;      // 母板 KEY3(B1) 翻转电平（clk 域）
 
-// X1C：sd_card_clk 域输入同步（全部单比特慢变）
-reg  [1:0]  sd_sw1_sync;
-reg  [1:0]  sd_sw3_sync;
-reg  [1:0]  sd_disp_tgl_sync;
-reg         sd_disp_tgl_seen;
-reg         sd_disp_mode_tgl;       // sd 域重建的翻转电平（供 mux 边沿检测）
-wire [7:0]  seg_biz_0, seg_biz_1, seg_biz_2, seg_biz_3, seg_biz_4, seg_biz_5;
-
+// Display controls and sample position stay in sd_card_clk.
+reg [1:0] sd_sw1_sync;
+wire [7:0] seg_biz_0,seg_biz_1,seg_biz_2,seg_biz_3,seg_biz_4,seg_biz_5,seg_biz_6,seg_biz_7;
+wire [1:0] display_song_sd = play_active_sd ? play_sel_song_sd :
+                             (thumb_mode_sd ? thumb_focus_index_sd : disp_buf_idx);
 wire        frw_app_rd_en;          // frame_read_write -> 仲裁器
 wire [ADDR_BITS-1:0] frw_app_rd_addr;
 wire        frw_rd_valid;           // 仲裁器 -> frame_read_write 的 Sdr_rd_en
@@ -943,7 +940,7 @@ sd_card_bmp #(
     .state_code        (state_code),
     .bmp_width         (16'd640),
     .bmp_height        (16'd480),
-    .song_sel          (play_sel_song_sd),
+    .song_sel          (display_song_sd),
     .display_valid     (display_valid),
     .auto_play_en_out  (auto_play_en_out),
     .storage_done      (storage_done),
@@ -1144,7 +1141,7 @@ always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
         end else if (seek_restart_sd_d) begin
             seek_cur_sample_sd <= seek_target_sd_d;
         end else if (seek_sample_step_sd && (play_total_samples != 32'd0) &&
-                     (seek_cur_sample_sd < (play_total_samples - 32'd1))) begin
+                     (seek_cur_sample_sd < play_total_samples)) begin
             seek_cur_sample_sd <= seek_cur_sample_sd + 32'd1;
         end
     end
@@ -1357,66 +1354,22 @@ endfunction
 // sd_card_clk 域并把 CLK_FREQ 同步改成 100MHz，刷新率仍为 200Hz/位，
 // 跨域路径消失，也不再需要额外的约束豁免。
 // ==========================================================================
-// X1C：6 位数码管业务 mux（与 seg_scan 同域：sd_card_clk）
-//   SW1/SW3 为慢变配置、KEY3 为单次事件，均以单比特 2FF 跨到本域。
-//   pat_mode 诊断扫描优先级最高，业务页只在非诊断模式下驱动。
-// ==========================================================================
+// Eight digits: browsing shows the focused song duration, PLAY shows consumed
+// sample position. Pause/Seek/replay/EOF all share the transport timeline.
 always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
-    if (!sdcard_rst_n) begin
-        sd_sw1_sync       <= 2'b00;
-        sd_sw3_sync       <= 2'b00;
-        sd_disp_tgl_sync  <= 2'b00;
-        sd_disp_tgl_seen  <= 1'b0;
-        sd_disp_mode_tgl  <= 1'b0;
-    end else begin
-        sd_sw1_sync      <= {sd_sw1_sync[0],  board_sw_level_clk[0]};
-        sd_sw3_sync      <= {sd_sw3_sync[0],  board_sw_level_clk[2]};
-        sd_disp_tgl_sync <= {sd_disp_tgl_sync[0], disp_mode_tgl_clk};
-        if (sd_disp_tgl_sync[1] != sd_disp_tgl_seen) begin
-            sd_disp_tgl_seen <= sd_disp_tgl_sync[1];
-            sd_disp_mode_tgl <= ~sd_disp_mode_tgl;
-        end
-    end
+ if(!sdcard_rst_n) sd_sw1_sync<=0;
+ else sd_sw1_sync<={sd_sw1_sync[0],board_sw_level_clk[0]};
 end
-
-seg_business_mux #(
-    .CLK_FREQ_HZ   (100_000_000),
-    .PARAM_HOLD_MS (2000)
-) u_seg_business_mux (
-    .clk            (sd_card_clk),
-    .rst_n          (sdcard_rst_n),
-    .display_enable (sd_sw1_sync[1]),      // SW1：显示总使能（上拨=1，待上板核对）
-    .mode_tgl       (sd_disp_mode_tgl),    // KEY3 显示项循环
-    .debug_sw       (sd_sw3_sync[1]),      // SW3：诊断项开关
-    .error_code     (media_err_code),      // sd 域当前故障码（sticky，0=恢复）
-    .param_valid    (1'b0),                // X5 前恒 0
-    .param_value    (16'd0),
-    .play_active    (play_active_sd),
-    .paused         (paused_sd),
-    .track_step     (play_track_step_sd),
-    .song_index     (play_sel_song_sd),
-    .seg_data_0     (seg_biz_0),
-    .seg_data_1     (seg_biz_1),
-    .seg_data_2     (seg_biz_2),
-    .seg_data_3     (seg_biz_3),
-    .seg_data_4     (seg_biz_4),
-    .seg_data_5     (seg_biz_5)
-);
-
-seg_scan #(
-    .CLK_FREQ          (100_000_000)
-) seg_scan_m0(
-    .clk               (sd_card_clk),
-    .rst_n             (sdcard_rst_n),
-    .seg_sel           (seg_sel),
-    .seg_data          (seg_data),
-    .seg_data_0        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[3:0])}   : seg_biz_0),
-    .seg_data_1        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[7:4])}   : seg_biz_1),
-    .seg_data_2        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[11:8])}  : seg_biz_2),
-    .seg_data_3        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[15:12])} : seg_biz_3),
-    .seg_data_4        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[19:16])} : seg_biz_4),
-    .seg_data_5        (pat_mode ? {1'b1,hex7seg(pat_err_cnt[23:20])} : seg_biz_5)
-);
+seg_business_mux u_seg_business_mux(
+ .clk(sd_card_clk),.rst_n(sdcard_rst_n),.display_enable(sd_sw1_sync[1]),
+ .sample_position(play_active_sd ? seek_cur_sample_sd : play_total_samples),
+ .song_index(display_song_sd),
+ .seg_data_0(seg_biz_0),.seg_data_1(seg_biz_1),.seg_data_2(seg_biz_2),.seg_data_3(seg_biz_3),
+ .seg_data_4(seg_biz_4),.seg_data_5(seg_biz_5),.seg_data_6(seg_biz_6),.seg_data_7(seg_biz_7));
+seg_scan #(.CLK_FREQ(100_000_000)) seg_scan_m0(
+ .clk(sd_card_clk),.rst_n(sdcard_rst_n),.seg_sel(seg_sel),.seg_data(seg_data),
+ .seg_data_0(seg_biz_0),.seg_data_1(seg_biz_1),.seg_data_2(seg_biz_2),.seg_data_3(seg_biz_3),
+ .seg_data_4(seg_biz_4),.seg_data_5(seg_biz_5),.seg_data_6(seg_biz_6),.seg_data_7(seg_biz_7));
 
 // ===================== 原图像时序与帧缓存 =====================
 // ------------------------------------------------------------
@@ -2236,20 +2189,25 @@ pcm_tap u_pcm_tap (
 );
 
 // total_sectors * 256 = 采样点数（PCM 连续布局、16 bit 单声道打包）
-wire [31:0] x1b_total_samples = play_total_samples;
-wire [31:0] x1b_th1 = x1b_total_samples >> 3;
-wire [31:0] x1b_th2 = x1b_total_samples >> 2;
-wire [31:0] x1b_th4 = x1b_total_samples >> 1;
+// Quantize the sample counters to 256-sample units before comparing.  The
+// progress indicator does not need sub-5 ms precision, and removing the low
+// eight bits avoids a wide lower-bit comparator tree that caused a TD route
+// collision between x1b_total_samples[5] and [2].
+wire [23:0] x1b_total_q = play_total_samples[31:8];
+wire [23:0] x1b_cur_q   = wav_sample_counter[31:8];
+wire [23:0] x1b_th1 = x1b_total_q >> 3;
+wire [23:0] x1b_th2 = x1b_total_q >> 2;
+wire [23:0] x1b_th4 = x1b_total_q >> 1;
 assign x1b_progress_vid =
-      (x1b_total_samples     == 32'd0)                        ? 4'd0 :
-      (wav_sample_counter    >= x1b_total_samples)            ? 4'd8 :
-      (wav_sample_counter    >= (x1b_total_samples - x1b_th1))? 4'd7 :
-      (wav_sample_counter    >= (x1b_th4 + x1b_th2))          ? 4'd6 :
-      (wav_sample_counter    >= (x1b_th4 + x1b_th1))          ? 4'd5 :
-      (wav_sample_counter    >=  x1b_th4)                     ? 4'd4 :
-      (wav_sample_counter    >= (x1b_th2 + x1b_th1))          ? 4'd3 :
-      (wav_sample_counter    >=  x1b_th2)                     ? 4'd2 :
-      (wav_sample_counter    >=  x1b_th1)                     ? 4'd1 : 4'd0;
+      (x1b_total_q == 24'd0)                  ? 4'd0 :
+      (x1b_cur_q   >= x1b_total_q)            ? 4'd8 :
+      (x1b_cur_q   >= (x1b_total_q-x1b_th1))  ? 4'd7 :
+      (x1b_cur_q   >= (x1b_th4+x1b_th2))      ? 4'd6 :
+      (x1b_cur_q   >= (x1b_th4+x1b_th1))      ? 4'd5 :
+      (x1b_cur_q   >= x1b_th4)                ? 4'd4 :
+      (x1b_cur_q   >= (x1b_th2+x1b_th1))      ? 4'd3 :
+      (x1b_cur_q   >= x1b_th2)                ? 4'd2 :
+      (x1b_cur_q   >= x1b_th1)                ? 4'd1 : 4'd0;
 
 // 包络/进度"数据 + 翻转"捆绑跨到 clk 域（板级 50 MHz）。
 // 包络翻转由 pcm_tap 保证发生在数据稳定之后，50 MHz 域同步采到的一定是完整值。
@@ -2349,7 +2307,7 @@ s6_video_layer #(.ENABLE(S6_VIDEO_ENABLE)) u_s6_video_layer(
  .clk(video_clk),.rst_n(media_video_rst_n),.frame_start(frame_start),
  .play_active(S5_PLAY_ENABLE && play_active_v2),.paused(paused_v2),
  .restart(play_track_restart_vid),.diagnostic(pat_mode),
- .covers_ready(media_preloaded_vid && stream_enable_vid[1]),.metadata_async(mv_metadata_sd),.time_ms(lyric_time_ms),
+ .transport_ready(stream_enable_vid[1] && !seek_frame_busy),.covers_ready(media_preloaded_vid),.metadata_async(mv_metadata_sd),.time_ms(lyric_time_ms),
  .seek_frame(seek_frame_vid),
  .visual_toggle(mv_visual_tgl),.raw_read_en(video_read_en),.out_de(de),.out_x(osd_pixel_x),
  .adjusted_de(adjusted_de),.adjusted_x(adjusted_pixel_x),.rgb_in(wave_rgb_eff),.rgb_out(s6_rgb),
@@ -2517,7 +2475,7 @@ expansion_integration #(
     .exp_ir_rx        (exp_ir_rx),
     .key1             (key1),
     .key2             (key2),
-    .key3             (key3),
+    .key3             (1'b1),
     .sw1              (sw1),
     .sw2              (sw2),
     .sw3              (sw3),
@@ -2546,6 +2504,7 @@ expansion_integration #(
     .restart_req      (restart_req),
     // X1：状态反馈执行器接线
     .pcm_level        (pcm_level_clk),
+    .mv_mode_active   (mv_read_active),
     .ws_progress      (ws_progress_clk),
     .ws_mode_tgl      (ws_mode_tgl),
     .board_sw_level   (board_sw_level_clk),

@@ -675,12 +675,18 @@
     <Runs>
         <Run Name="syn_1" Type="Synthesis" ConstraintSet="constraint_1" Description="" Active="true">
             <Strategy Name="Default_Synthesis_Strategy">
+                <GateProperty>
+                    <map_mode>area_prior</map_mode>
+                </GateProperty>
             </Strategy>
             <UserParams>
             </UserParams>
         </Run>
         <Run Name="phy_1" Type="PhysicalDesign" ConstraintSet="constraint_1" Description="" SynRun="syn_1" Active="true">
             <Strategy Name="Default_PhysicalDesign_Strategy">
+                <PlaceProperty>
+                    <seed>5</seed>
+                </PlaceProperty>
             </Strategy>
             <UserParams>
             </UserParams>

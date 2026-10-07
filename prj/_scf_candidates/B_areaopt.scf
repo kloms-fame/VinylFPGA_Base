@@ -1,0 +1,7 @@
+<Strategy Version="1">
+<Name>AreaOptimizeHigh</Name>
+<Type>syn</Type>
+<version>1</version>
+<description>Area optimize high</description>
+<param>set_param gate map_mode area_prior</param>
+</Strategy>

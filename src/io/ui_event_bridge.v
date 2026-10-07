@@ -38,7 +38,7 @@ module ui_event_bridge (
     output reg         effect_tgl,
     output reg         end_mode_tgl,
     // ---- S5：播放控制额外需要的"原始"事件（与上面 4 路并存）----
-    // enc_cw/enc_ccw 只取 EC1 旋转本身（播放态 = 切曲）；
+    // enc_cw/enc_ccw 只取 KEY01/03；EC1 同时产生浏览导航和 Seek，由各目标状态门控；
     // key_up/key_down 取 KEY04/KEY05（播放态 = 音量±，方向键上下）。
     output reg         enc_cw_tgl,
     output reg         enc_ccw_tgl,
@@ -47,12 +47,12 @@ module ui_event_bridge (
     output reg         key_down_tgl,
     // ---- X1B：KEY10 循环 WS2812 灯效模式（0=全灭 / 1=律动 / 2=进度）----
     output reg         ws_mode_tgl,
-    // ---- X2：Seek / 重播（红外 F8/EA/F6 + EC2 旋钮 SEEK）----
-    output reg         seek_fwd5_tgl,    // 红外 F8   +5 s
-    output reg         seek_bwd5_tgl,    // 红外 EA   -5 s
+    // ---- X2：Seek / 重播（红外 F8/EA/F6 + EC1 旋钮 SEEK）----
+    output reg         seek_fwd5_tgl,    // 红外 EA   +5 s
+    output reg         seek_bwd5_tgl,    // 红外 F8   -5 s
     output reg         replay_tgl,       // 红外 F6   本曲重播
-    output reg         seek_fwd2_tgl,    // EC2 顺    +2 s
-    output reg         seek_bwd2_tgl     // EC2 逆    -2 s
+    output reg         seek_fwd2_tgl,    // EC1 顺    +2 s
+    output reg         seek_bwd2_tgl     // EC1 逆    -2 s
 );
     `include "exp_event_defs.vh"
 
@@ -94,12 +94,10 @@ module ui_event_bridge (
     wire ev_key_dn  = is_key_down && (ev_arg == 16'd4);   // KEY05 下
 
     // X2：红外 Seek/重播由 ui_command_router 翻译成 ev_arg=12/13/14 的"虚拟按键"；
-    //     EC2 旋钮转一步 = ±2 s（方向沿用 enc 约定：0=递增/向曲尾）。
+    //     EC1 旋钮转一步 = ±2 s（方向沿用 enc 约定：0=递增/向曲尾）。
     wire ev_seek_fwd5 = is_key_down && (ev_arg == 16'd12);
     wire ev_seek_bwd5 = is_key_down && (ev_arg == 16'd13);
     wire ev_replay    = is_key_down && (ev_arg == 16'd14);
-    wire ev_seek_fwd2 = is_enc2_step && (ev_aux[0] == 1'b0);
-    wire ev_seek_bwd2 = is_enc2_step && (ev_aux[0] == 1'b1);
 
     // The event arbiter coalesces encoder pulses but carries the latest count.
     // Replay the modular delta, separated by eight source clocks for toggle CDC.
@@ -150,8 +148,8 @@ module ui_event_bridge (
             if (ev_valid && is_key_down && ev_arg == 16'd11) end_mode_tgl <= ~end_mode_tgl;
             // X1B：KEY10（端口 exp_key_n[9] -> 事件索引 9）循环 WS2812 灯效
             if (ev_valid && is_key_down && ev_arg == 16'd9) ws_mode_tgl <= ~ws_mode_tgl;
-            if (emit_encoder && enc_delta[15]) begin prev_tgl<=~prev_tgl;enc_ccw_tgl<=~enc_ccw_tgl;end
-            if (emit_encoder && !enc_delta[15]) begin next_tgl<=~next_tgl;enc_cw_tgl<=~enc_cw_tgl;end
+            if (emit_encoder && enc_delta[15]) begin prev_tgl<=~prev_tgl;seek_bwd2_tgl<=~seek_bwd2_tgl;end
+            if (emit_encoder && !enc_delta[15]) begin next_tgl<=~next_tgl;seek_fwd2_tgl<=~seek_fwd2_tgl;end
             if (ev_valid && ev_prev)    prev_tgl    <= ~prev_tgl;
             if (ev_valid && ev_next)    next_tgl    <= ~next_tgl;
             if (ev_valid && ev_confirm) confirm_tgl <= ~confirm_tgl;
@@ -163,8 +161,6 @@ module ui_event_bridge (
             if (ev_valid && ev_seek_fwd5) seek_fwd5_tgl<=~seek_fwd5_tgl;
             if (ev_valid && ev_seek_bwd5) seek_bwd5_tgl<=~seek_bwd5_tgl;
             if (ev_valid && ev_replay)    replay_tgl   <=~replay_tgl;
-            if (ev_valid && ev_seek_fwd2) seek_fwd2_tgl<=~seek_fwd2_tgl;
-            if (ev_valid && ev_seek_bwd2) seek_bwd2_tgl<=~seek_bwd2_tgl;
         end
     end
 endmodule

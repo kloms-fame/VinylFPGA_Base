@@ -49,39 +49,6 @@ module ws2812_effects #(
         else if (mode_event) mode <= (mode == 2'd2) ? 2'd0 : mode + 1'b1;
     end
 
-    // ---- 律动点亮颗数：level>>5 再补一颗，钳位到 8 ----
-    wire [3:0] vu_n = (level < 8'd8)  ? 4'd0 :
-                      (level < 8'd40) ? 4'd1 :
-                      (level < 8'd72) ? 4'd2 :
-                      (level < 8'd104)? 4'd3 :
-                      (level < 8'd136)? 4'd4 :
-                      (level < 8'd168)? 4'd5 :
-                      (level < 8'd200)? 4'd6 :
-                      (level < 8'd232)? 4'd7 : 4'd8;
-    wire [3:0] vu_n_eff = mute ? 4'd0 : vu_n;
-
-    // ---- 整帧像素（RGB）----
-    reg  [23:0] frame_rgb [0:PIXEL_COUNT-1];
-    reg  [PIXEL_COUNT*24-1:0] frame_grb;
-    integer i;
-    always @* begin
-        for (i = 0; i < PIXEL_COUNT; i = i + 1) begin
-            frame_rgb[i] = 24'h000000;
-            if (mode == 2'd1) begin
-                if (i < vu_n_eff)
-                    frame_rgb[i] = (i < 3) ? 24'h00E000 :
-                                   (i < 6) ? 24'hE0E000 : 24'hE02000;
-            end else if (mode == 2'd2) begin
-                if (i < progress)
-                    frame_rgb[i] = (i < 4) ? 24'h0030E0 : 24'h00C0E0;
-            end
-        end
-        for (i = 0; i < PIXEL_COUNT; i = i + 1)
-            frame_grb[i*24 +: 24] = {frame_rgb[i][15:8],
-                                     frame_rgb[i][23:16],
-                                     frame_rgb[i][7:0]};
-    end
-
     // ---- 20 ms 刷新节拍 ----
     localparam integer MS_CYCLES = CLK_FREQ_HZ / 1000;
     localparam integer MS_W      = $clog2(MS_CYCLES + 1);
@@ -101,6 +68,58 @@ module ws2812_effects #(
         end
     end
     wire refresh_pulse = ms_tick && (rf_ms >= (REFRESH_MS - 1));
+
+    // Low-cost RGB colour wheel, one step per refresh. Audio amplitude sets
+    // the channel ceiling (0..63); silence and mute are black. No fixed VU palette.
+    reg [5:0] hue_ramp;
+    reg [2:0] hue_sector;
+    reg [7:0] runner_ms;
+    reg [2:0] runner;
+    always @(posedge clk or negedge rst_n) begin
+        if(!rst_n) begin hue_ramp<=0;hue_sector<=0;end
+        else if(refresh_pulse && enable) begin
+            hue_ramp<=hue_ramp+1'b1;
+            if(hue_ramp==63) hue_sector<=(hue_sector==5) ? 3'd0 : hue_sector+1'b1;
+        end
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if(!rst_n) begin runner_ms<=0;runner<=0;end
+        else if(ms_tick && enable) begin
+            if(runner_ms==249) begin runner_ms<=0;runner<=(runner==PIXEL_COUNT-1) ? 3'd0 : runner+1'b1;end
+            else runner_ms<=runner_ms+1'b1;
+        end
+    end
+    reg [5:0] wheel_r,wheel_g,wheel_b;
+    always @* begin
+        wheel_r=0;wheel_g=0;wheel_b=0;
+        case(hue_sector)
+          0:begin wheel_r=63;wheel_g=hue_ramp;end
+          1:begin wheel_r=63-hue_ramp;wheel_g=63;end
+          2:begin wheel_g=63;wheel_b=hue_ramp;end
+          3:begin wheel_g=63-hue_ramp;wheel_b=63;end
+          4:begin wheel_b=63;wheel_r=hue_ramp;end
+          default:begin wheel_b=63-hue_ramp;wheel_r=63;end
+        endcase
+    end
+    wire [5:0] amplitude = (mute || level<8) ? 6'd0 : level[7:2];
+    wire [7:0] ar={2'b0,(wheel_r<amplitude ? wheel_r : amplitude)};
+    wire [7:0] ag={2'b0,(wheel_g<amplitude ? wheel_g : amplitude)};
+    wire [7:0] ab={2'b0,(wheel_b<amplitude ? wheel_b : amplitude)};
+    // Progress base is dim (max 15); the travelling point is at most 63.
+    reg [23:0] frame_rgb [0:PIXEL_COUNT-1];
+    reg [PIXEL_COUNT*24-1:0] frame_grb;
+    integer i;
+    always @* begin
+        for(i=0;i<PIXEL_COUNT;i=i+1) begin
+            frame_rgb[i]=24'd0;
+            if(mode==1) frame_rgb[i]={ar,ag,ab};
+            else if(mode==2) begin
+                if(i<progress) frame_rgb[i]={4'b0,wheel_r[5:2],4'b0,wheel_g[5:2],4'b0,wheel_b[5:2]};
+                if(i==runner) frame_rgb[i]={2'b0,wheel_r,2'b0,wheel_g,2'b0,wheel_b};
+            end
+            frame_grb[i*24 +:24]={frame_rgb[i][15:8],frame_rgb[i][23:16],frame_rgb[i][7:0]};
+        end
+    end
 
     // ---- 黑帧补发：DIP6 关闭后必须真正推一帧全 0，而不是把数据线拉低 ----
     wire [PIXEL_COUNT*24-1:0] tx_frame = enable ? frame_grb

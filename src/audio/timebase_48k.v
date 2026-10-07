@@ -27,34 +27,42 @@ module timebase_48k (
     output reg  [31:0] cur_time_ms,
     output reg  [5:0]  sub_sample
 );
-    // 毫秒 = 样本 / 48。用 21845/2^20 的倒数乘法替代 32 位除法，
-    // 相对误差约 1.7e-5（10 M 样本约 4 ms），对歌词/进度无影响。
-    wire [46:0] load_ms_prod = load_sample * 32'd21845;
-    wire [31:0] load_ms_w    = load_ms_prod[46:20];
-    // *48 = <<5 + <<4
-    wire [31:0] load_ms48    = {load_ms_w, 5'b0} + {load_ms_w, 4'b0};
-    wire [31:0] load_sub_w   = load_sample - load_ms48;
-
+    // Exact radix-2 division by 48, one input bit per cycle. The 32-cycle
+    // conversion finishes well within one 48-kHz period at video_clk=25 MHz.
+    // Count any consumed samples during conversion rather than dropping them.
+    reg [31:0] quotient;
+    reg [5:0] remainder, steps, pending_samples;
+    wire [6:0] shifted = {remainder, quotient[31]};
+    wire subtract = shifted >= 7'd48;
+    wire [6:0] rem_next = subtract ? shifted - 7'd48 : shifted;
+    wire [31:0] quotient_next = {quotient[30:0], subtract};
+    wire [6:0] final_sub = rem_next + {1'b0,pending_samples} +
+                           ((sample_tick && running) ? 7'd1 : 7'd0);
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            sample_count <= 32'd0;
-            cur_time_ms  <= 32'd0;
-            sub_sample   <= 6'd0;
+            sample_count<=0; cur_time_ms<=0; sub_sample<=0;
+            quotient<=0; remainder<=0; steps<=0; pending_samples<=0;
         end else if (load) begin
-            sample_count <= load_sample;
-            cur_time_ms  <= load_ms_w;
-            sub_sample   <= load_sub_w[5:0];
+            sample_count<=load_sample;
+            quotient<=load_sample; remainder<=0; steps<=32; pending_samples<=0;
         end else if (restart) begin
-            sample_count <= 32'd0;
-            cur_time_ms  <= 32'd0;
-            sub_sample   <= 6'd0;
-        end else if (sample_tick && running) begin
-            sample_count <= sample_count + 32'd1;
-            if (sub_sample == 6'd47) begin
-                sub_sample  <= 6'd0;
-                cur_time_ms <= cur_time_ms + 32'd1;
-            end else begin
-                sub_sample <= sub_sample + 6'd1;
+            sample_count<=0; cur_time_ms<=0; sub_sample<=0;
+            quotient<=0; remainder<=0; steps<=0; pending_samples<=0;
+        end else begin
+            if (sample_tick && running) sample_count<=sample_count+1'b1;
+            if (steps!=0) begin
+                quotient<=quotient_next;
+                remainder<=rem_next[5:0];
+                steps<=steps-1'b1;
+                if (sample_tick && running) pending_samples<=pending_samples+1'b1;
+                if (steps==1) begin
+                    cur_time_ms<=quotient_next + ((final_sub>=48) ? 32'd1 : 32'd0);
+                    sub_sample<=(final_sub>=48) ? final_sub-7'd48 : final_sub;
+                end
+            end else if (sample_tick && running) begin
+                if (sub_sample==47) begin
+                    sub_sample<=0;cur_time_ms<=cur_time_ms+1'b1;
+                end else sub_sample<=sub_sample+1'b1;
             end
         end
     end

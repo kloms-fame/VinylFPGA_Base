@@ -1,0 +1,12 @@
+{
+  "files": 109,
+  "verilog": 105,
+  "headers": 4,
+  "module_definitions": 106,
+  "static_edges": 126,
+  "hierarchy_rows": 194,
+  "top_instances": 54,
+  "excluded": 11,
+  "input_matches": 112,
+  "input_total": 112
+}

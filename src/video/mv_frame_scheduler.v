@@ -9,6 +9,7 @@ module mv_frame_scheduler (
  input wire [15:0] frame_count,
  input wire [15:0] seek_frame,      // X2：Seek 定位目标帧（顶层按样本换算）
  input wire done_toggle, failed,
+ input wire retain_display, // retain a completed SDRAM bank while transport refills
  output reg request_toggle, output reg [31:0] request_lba,
  output reg [1:0] request_bank,
  output reg display_valid, output reg [1:0] display_bank,
@@ -27,12 +28,12 @@ module mv_frame_scheduler (
  // *100 用移位加法实现，避免为一次定位请求额外占用 DSP。
  wire [15:0] rst_frame = (frame_count == 16'd0) ? 16'd0 :
                          ((seek_frame >= frame_count) ? (frame_count - 16'd1) : seek_frame);
- wire [31:0] rst_frame_x100 = {16'd0, rst_frame, 2'b00} +
-                              {17'd0, rst_frame, 1'b0} + {19'd0, rst_frame};
+ wire [31:0] rst_frame_x100 = {10'd0, rst_frame, 6'b0} +
+                              {11'd0, rst_frame, 5'b0} + {14'd0, rst_frame, 2'b0};
  wire [31:0] rst_next_time = rst_frame_x100 + 32'd100;
  wire completed = busy && (done_sync[2]==request_toggle);
  wire invalidating = !enable || restart;
- wire can_issue = enable && !paused && !restart && settle==4'd15 && !busy &&
+ wire can_issue = enable && (!paused || first_frame) && !restart && settle==4'd15 && !busy &&
                   frame_count!=0 && (first_frame || display_frame+16'd1<frame_count);
  wire [15:0] next_frame = first_frame ? target_frame :
                          ((target_frame>display_frame) ? target_frame : display_frame+16'd1);
@@ -98,11 +99,11 @@ module mv_frame_scheduler (
   else if(frame_start) clear_pending<=0;
  end
  assign show_ready = completed && !discard && !invalidating && !clear_pending &&
-                   !paused && !fail_sync[1] && requested_frame<=target_frame;
+                   (!paused || first_frame) && !fail_sync[1] && requested_frame<=target_frame;
  always @(posedge clk or negedge rst_n) begin
   if(!rst_n) display_valid<=0;
   else if(frame_start) begin
-   if(invalidating || clear_pending) display_valid<=0;
+   if((invalidating || clear_pending) && !retain_display) display_valid<=0;
    else if(show_ready) display_valid<=1;
   end
  end
