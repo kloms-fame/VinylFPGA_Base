@@ -2084,10 +2084,26 @@ end
 
 // X2：Seek 后起始 LBA / 剩余扇区。target 已在 seek_controller 内钳位到
 // [0,total_samples-1]，所以 offset_sectors <= total_sectors-1，剩余至少 1 个扇区。
-wire [31:0] wav_seek_sector      = {24'd0, play_seek_target_sd[31:8]};
-wire [31:0] wav_start_lba_eff    = audio_start_lba + wav_seek_sector;
-wire [31:0] wav_total_sectors_eff= audio_total_sectors - wav_seek_sector;
-wire [31:0] wav_valid_samples    = play_total_samples - play_seek_target_sd;
+// 这些派生量再寄存一拍，避免 32 位 target 直接穿进播放器的组合寻址与
+// 突发判断（r12 布线后最后 -0.156 ns 违例：target_sample -> wstate）。
+wire [31:0] wav_seek_sector = {24'd0, play_seek_target_sd[31:8]};
+reg  [31:0] wav_start_lba_eff;
+reg  [31:0] wav_total_sectors_eff;
+reg  [31:0] wav_valid_samples;
+reg  [7:0]  wav_skip_samples;
+always @(posedge sd_card_clk or negedge sd_media_rst_n) begin
+    if (!sd_media_rst_n) begin
+        wav_start_lba_eff     <= 32'd0;
+        wav_total_sectors_eff <= 32'd0;
+        wav_valid_samples     <= 32'd0;
+        wav_skip_samples      <= 8'd0;
+    end else begin
+        wav_start_lba_eff     <= audio_start_lba + wav_seek_sector;
+        wav_total_sectors_eff <= audio_total_sectors - wav_seek_sector;
+        wav_valid_samples     <= play_total_samples - play_seek_target_sd;
+        wav_skip_samples      <= play_seek_target_sd[7:0];
+    end
+end
 
 // 第十一讲核心：从 AUDIO.PCM 的连续扇区流式播放。
 wav_stream_player #(
@@ -2100,7 +2116,7 @@ wav_stream_player #(
     .start_lba         (wav_start_lba_eff),
     .total_sectors     (wav_total_sectors_eff),
     .valid_samples     (wav_valid_samples),
-    .skip_samples      (play_seek_target_sd[7:0]),
+    .skip_samples      (wav_skip_samples),
     .sd_req            (wav_sec_req),
     .sd_lba            (wav_sec_lba),
     .sd_busy           (wav_sec_busy),

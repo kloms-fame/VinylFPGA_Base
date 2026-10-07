@@ -40,7 +40,10 @@ else:
               'report_timing_summary -file ' + out('gate.timing'),
               'flow_status -file ' + out('gate.status'), 'export_db ' + out('gate.db')]
 lines += ['set_param place seed ' + str(a.seed),
-          'place', 'export_db ' + out('place.db'), 'route', 'update_timing -mode final',
+          'place', 'export_db ' + out('place.db'), 'route',
+          # route 内建 hold 修复在 slice 利用率 >90% 时会被跳过；显式 fix_hold
+          # 不受该门槛限制，可消除第三方 HDMI IP 内 20 ps 级的结构性 hold 违例。
+          'fix_hold', 'update_timing -mode final',
           'report_area -io_info -file ' + out('final.area'),
           'report_qor -step route -file ' + out('final.qor'),
           'report_timing_summary -file ' + out('final.timing'),

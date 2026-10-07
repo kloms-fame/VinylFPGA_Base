@@ -66,36 +66,36 @@ module seek_controller #(
     wire        dir_up   = p5f | p2f;      // 1 = 向曲尾
     wire        accept   = any_ev && play_active && (total_samples != 32'd0);
 
-    // 步长在事件当拍只做寄存，不参与 33 位加法/比较，打断
-    // s[2] 同步位 -> 方向 mux -> 加法 -> 钳位比较链（r11 上 -0.023 ns）。
-    wire signed [34:0] new_delta = dir_up ? $signed({3'b0, mag})
-                                          : -$signed({3'b0, mag});
+    wire signed [35:0] new_delta = dir_up ? $signed({4'b0, mag})
+                                          : -$signed({4'b0, mag});
 
-    // 二级：加法结果寄存，钳位比较不再与加法同拍
-    reg                cand_v;
-    reg                cand_replay;
-    reg signed [35:0]  cand_val;
+    // 三级显式流水：
+    //   IDLE  : 装载基址与增量，忙时新事件进入 pending。
+    //   ADD   : 只寄存 base+delta，不接钳位比较。
+    //   CLAMP : 只比较/选择并提交 target，不和加法叠在同一拍。
+    // 这样切断了原本 lim_ext -> clamp -> pending_target -> new_base -> acc_base
+    // 的回灌组合链；连续事件仍按增量合并后在忙窗口内依次提交。
+    localparam [1:0] S_IDLE  = 2'd0;
+    localparam [1:0] S_ADD   = 2'd1;
+    localparam [1:0] S_CLAMP = 2'd2;
 
-    wire signed [35:0] lim_ext   = $signed({4'b0, lim_reg});
-    wire signed [35:0] clamped35 = (cand_val < 0)       ? 36'sd0 :
-                                   (cand_val > lim_ext) ? lim_ext : cand_val;
-    wire [31:0]        pending_target = cand_v
-                                      ? (cand_replay ? 32'd0 : clamped35[31:0])
-                                      : target_sample;
+    reg [1:0]       state;
+    reg [32:0]      work_base;
+    reg signed [35:0] work_delta;
+    reg             work_replay;
+    reg             pend_v;
+    reg signed [35:0] pend_delta;
+    reg             pend_replay;
+    reg signed [36:0] sum_reg;
 
-    // 忙时（含“本拍即将提交”）以最新目标为基准，保证背靠背步进不丢失。
-    wire [32:0]        new_base = (busy | cand_v) ? {1'b0, pending_target}
-                                                  : {1'b0, cur_sample};
+    wire signed [36:0] sum_next = $signed({1'b0, work_base}) + work_delta;
+    wire signed [36:0] lim_ext  = $signed({5'b0, lim_reg});
+    wire signed [36:0] clamped  = (sum_reg < 0)       ? 37'sd0 :
+                                  (sum_reg > lim_ext) ? lim_ext : sum_reg;
 
-    // 一级：事件锁存 + 忙窗口内后续步进合并累加（重播只需标记）
-    reg                acc_v;
-    reg                acc_replay;
-    reg signed [34:0]  acc_delta;
-    reg [32:0]         acc_base;
-
-    wire        cand_go = acc_v && !accept && !cand_v;
-    wire signed [35:0] acc_base_ext = $signed({3'b0, acc_base});
-    wire signed [35:0] cand_next    = acc_base_ext + $signed(acc_delta);
+    wire start_pending = (state == S_IDLE) && pend_v;
+    wire start_event   = (state == S_IDLE) && !pend_v && accept;
+    wire queue_event   = accept && !start_event;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -104,13 +104,14 @@ module seek_controller #(
             busy          <= 1'b0;
             hold          <= 20'd0;
             lim_reg       <= 32'd0;
-            acc_v         <= 1'b0;
-            acc_replay    <= 1'b0;
-            acc_delta     <= 35'sd0;
-            acc_base      <= 33'd0;
-            cand_v        <= 1'b0;
-            cand_replay   <= 1'b0;
-            cand_val      <= 36'sd0;
+            state         <= S_IDLE;
+            work_base     <= 33'd0;
+            work_delta    <= 36'sd0;
+            work_replay   <= 1'b0;
+            pend_v        <= 1'b0;
+            pend_delta    <= 36'sd0;
+            pend_replay   <= 1'b0;
+            sum_reg       <= 37'sd0;
         end else begin
             restart_req <= 1'b0;
             // 总数在整曲生命周期内稳定；预先寄存 total-1，避免它进入
@@ -120,46 +121,59 @@ module seek_controller #(
                 target_sample <= 32'd0;
                 busy          <= 1'b0;
                 hold          <= 20'd0;
-                acc_v         <= 1'b0;
-                acc_replay    <= 1'b0;
-                acc_delta     <= 35'sd0;
-                cand_v        <= 1'b0;
-            end else if (accept) begin
-                // 空音频或非播放态一律不响应（方案：空音频禁止 Seek）
-                if (acc_v) begin
-                    acc_delta  <= acc_delta + new_delta;
-                    acc_replay <= acc_replay | prp;
-                end else begin
-                    acc_base   <= new_base;
-                    acc_delta  <= new_delta;
-                    acc_replay <= prp;
-                    acc_v      <= 1'b1;
-                end
-            end
-
-            if (!clear_pulse) begin
-                if (cand_v) begin
-                    // 本拍由三级消费；清除后同一拍不装载新候选。
-                    cand_v      <= 1'b0;
-                end else if (cand_go) begin
-                    cand_val    <= cand_next;
-                    cand_replay <= acc_replay;
-                    cand_v      <= 1'b1;
-                    acc_v       <= 1'b0;
+                state         <= S_IDLE;
+                pend_v        <= 1'b0;
+                work_replay   <= 1'b0;
+                pend_replay   <= 1'b0;
+            end else begin
+                case (state)
+                S_IDLE: begin
+                    if (start_pending) begin
+                        work_base   <= busy ? {1'b0, target_sample} : {1'b0, cur_sample};
+                        work_delta  <= pend_delta;
+                        work_replay <= pend_replay;
+                        pend_v      <= 1'b0;
+                        pend_replay <= 1'b0;
+                        state       <= S_ADD;
+                    end else if (start_event) begin
+                        work_base   <= busy ? {1'b0, target_sample} : {1'b0, cur_sample};
+                        work_delta  <= new_delta;
+                        work_replay <= prp;
+                        state       <= S_ADD;
+                    end else if (busy) begin
+                        if (hold == 20'd0) busy <= 1'b0;
+                        else               hold <= hold - 1'b1;
+                    end
                 end
 
-                if (cand_v) begin
-                    target_sample <= pending_target;
+                S_ADD: begin
+                    sum_reg <= sum_next;
+                    state   <= S_CLAMP;
+                end
+
+                default: begin // S_CLAMP
+                    target_sample <= work_replay ? 32'd0 : clamped[31:0];
                     restart_req   <= 1'b1;
                     busy          <= 1'b1;
                     hold          <= BUSY_HOLD;
-                end else if (busy) begin
-                    if (hold == 20'd0) busy <= 1'b0;
-                    else               hold <= hold - 1'b1;
+                    if (pend_v) begin
+                        work_base   <= clamped[32:0];
+                        work_delta  <= pend_delta;
+                        work_replay <= pend_replay;
+                        pend_v      <= 1'b0;
+                        pend_replay <= 1'b0;
+                        state       <= S_ADD;
+                    end else begin
+                        state <= S_IDLE;
+                    end
                 end
-            end else if (busy) begin
-                busy <= 1'b0;
-                hold <= 20'd0;
+                endcase
+
+                if (queue_event) begin
+                    pend_delta  <= pend_v ? (pend_delta + new_delta) : new_delta;
+                    pend_replay <= pend_replay | prp;
+                    pend_v      <= 1'b1;
+                end
             end
         end
     end
