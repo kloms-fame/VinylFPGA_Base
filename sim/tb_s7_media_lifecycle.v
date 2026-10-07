@@ -49,6 +49,7 @@ module tb_s7_media_lifecycle;
     wire        audio_file_valid;
     wire [31:0] audio_start_lba;
     wire [31:0] audio_total_sectors;
+    wire [31:0] audio_size_bytes;
     wire        audio_sec_busy, audio_sec_valid, audio_sec_done;
     wire [7:0]  audio_sec_byte, audio_sec_error;
     wire [8:0]  audio_sec_byte_index;
@@ -97,6 +98,7 @@ module tb_s7_media_lifecycle;
         .audio_file_valid       (audio_file_valid),
         .audio_start_lba        (audio_start_lba),
         .audio_total_sectors    (audio_total_sectors),
+        .audio_size_bytes       (audio_size_bytes),
         .audio_sec_req          (1'b0),
         .audio_sec_lba          (32'd0),
         .audio_sec_busy         (audio_sec_busy),

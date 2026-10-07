@@ -25,10 +25,11 @@ always @(posedge pixclk) begin
 end
 always @(posedge sdclk) low_sync<={low_sync[0],low};
 wav_stream_player #(.ADDR_WIDTH(10)) audio(.wr_clk(sdclk),.wr_rst_n(rst_n),.play_enable(play),
- .start_lba(32'd100),.total_sectors(32'd4),.sd_req(ar),.sd_lba(al),.sd_busy(ab),.sd_valid(av),
+ .start_lba(32'd100),.total_sectors(32'd4),.valid_samples(32'd1024),.sd_req(ar),.sd_lba(al),.sd_busy(ab),.sd_valid(av),
  .sd_byte(b),.sd_byte_index(idx),.sd_done(ad),.sd_error(8'd0),.rd_clk(pixclk),.rd_rst_n(rst_n),
  .sample_tick(tick),.sample_out(sample),.sample_valid(sample_valid),.sample_ready(1'b1),
- .sample_counter(counter),.stream_active(active),.stream_end(ended),.buffer_low(low));
+ .sample_counter(counter),.stream_active(active),.stream_end(ended),.buffer_low(low),
+ .skip_samples(8'd0),.sample_base(32'd0));
 mv_sector_mux mux(.clk(sdclk),.rst_n(rst_n),.audio_req(ar),.audio_lba(al),.video_req(vr),.video_lba(vl),
  .allow_video(!low_sync[1]),.audio_busy(ab),.video_busy(vb),.audio_valid(av),.video_valid(vv),
  .audio_done(ad),.video_done(vd),.sector_req(sreq),.sector_lba(sl),.sector_busy(busy),.sector_valid(valid),.sector_done(done));

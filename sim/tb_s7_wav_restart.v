@@ -13,11 +13,12 @@ module tb_s7_wav_restart;
  stream_session session(.clk(clk),.rst_n(rst),.requested(requested),.restart(restart),
  .storage_busy(busy),.video_busy(1'b0),.reader_idle(idle),.enable(enable),.start_toggle(toggle));
  wav_stream_player dut(.wr_clk(clk),.wr_rst_n(rst),.play_enable(enable),.start_lba(target),
- .total_sectors(32'd2),.sd_req(req),.sd_lba(lba),.sd_busy(busy),.sd_valid(valid),
+ .total_sectors(32'd2),.valid_samples(32'd512),.sd_req(req),.sd_lba(lba),.sd_busy(busy),.sd_valid(valid),
  .sd_byte(data),.sd_byte_index(idx),.sd_done(done),.sd_error(error),
  .rd_clk(pix),.rd_rst_n(rst),.sample_tick(tick),.sample_ready(1'b1),
  .sample_out(sample),.sample_valid(sv),.sample_counter(count),.stream_active(active),.stream_end(eof),
- .reader_idle(idle),.sample_consumed(consumed),.buffer_low(),.underrun_pulse());
+ .reader_idle(idle),.sample_consumed(consumed),.buffer_low(),.underrun_pulse(),
+ .skip_samples(8'd0),.sample_base(32'd0));
  always @(posedge clk) begin
   valid<=0;done<=0;
   if(!rst)begin phase<=0;busy<=0;byte_no<=0;end

@@ -34,7 +34,8 @@ module tb_s5_play;
 
     timebase_48k u_tb (
         .clk(clk), .rst_n(rst_n), .sample_tick(tb_tick), .running(tb_run),
-        .restart(tb_restart), .sample_count(tb_cnt), .cur_time_ms(tb_ms),
+        .restart(tb_restart), .load(1'b0), .load_sample(32'd0),
+        .sample_count(tb_cnt), .cur_time_ms(tb_ms),
         .sub_sample(tb_sub)
     );
 
@@ -64,7 +65,8 @@ module tb_s5_play;
         .enc_cw_tgl(pc_enc_cw), .enc_ccw_tgl(pc_enc_ccw), .confirm_tgl(pc_confirm),
         .key_up_tgl(pc_up), .key_down_tgl(pc_dn), .stop_tgl(pc_stop),
         .play_active(pc_active), .paused(pc_paused), .sel_song(pc_sel),
-        .volume(pc_vol), .track_step(pc_step), .track_dir(pc_dir)
+        .volume(pc_vol), .track_step(pc_step), .track_dir(pc_dir),
+        .seek_restart_in(1'b0), .seek_clear()
     );
 
     integer step_count = 0;

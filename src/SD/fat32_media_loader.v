@@ -61,6 +61,7 @@ module fat32_media_loader #(
     output wire        audio_file_valid,
     output wire [31:0] audio_start_lba,
     output wire [31:0] audio_total_sectors,
+    output wire [31:0] audio_size_bytes,
     input  wire        audio_sec_req,
     input  wire [31:0] audio_sec_lba,
     output wire        audio_sec_busy,
@@ -149,6 +150,7 @@ module fat32_media_loader #(
     reg         audio_file_valid_reg;
     reg  [31:0] audio_start_lba_reg;
     reg  [31:0] audio_total_sectors_reg;
+    reg  [31:0] audio_size_bytes_reg;
 
     // ---------------------------------------------------------------------
     // S4：INDEX.BIN 曲目索引（复用文件流器读其唯一扇区）
@@ -342,6 +344,7 @@ module fat32_media_loader #(
             audio_file_valid_reg    <= 1'b0;
             audio_start_lba_reg     <= 32'd0;
             audio_total_sectors_reg <= 32'd0;
+            audio_size_bytes_reg    <= 32'd0;
             audio_cluster_m2_d      <= 32'd0;
             audio_spc_shift_d       <= 3'd0;
             audio_data_start_d      <= 32'd0;
@@ -353,6 +356,7 @@ module fat32_media_loader #(
             audio_file_valid_reg    <= 1'b0;
             audio_start_lba_reg     <= 32'd0;
             audio_total_sectors_reg <= 32'd0;
+            audio_size_bytes_reg    <= 32'd0;
             audio_meta_pending      <= 1'b0;
         end else if ((idx_done && idx_valid) || song_sel_changed) begin
             // S5：索引有效时音频定位由"当前选中曲目"的条目给出（裸 PCM 语义）；
@@ -381,6 +385,7 @@ module fat32_media_loader #(
             audio_total_sectors_reg <= (audio_file_valid_calc &&
                                         (audio_total_sectors_calc != 32'd0)) ?
                                        audio_total_sectors_calc : 32'd0;
+            audio_size_bytes_reg    <= audio_file_valid_calc ? audio_size_d : 32'd0;
             audio_meta_pending      <= 1'b0;
         end
     end
@@ -396,6 +401,7 @@ module fat32_media_loader #(
     assign audio_file_valid = audio_file_valid_reg;
     assign audio_start_lba = audio_start_lba_reg;
     assign audio_total_sectors = audio_total_sectors_reg;
+    assign audio_size_bytes = audio_size_bytes_reg;
 
     // -------------------------------------------------------------------------
     // 请求锁存：上游 pulse 即使与子模块 busy 同拍也不会丢失。

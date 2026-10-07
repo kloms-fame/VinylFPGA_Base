@@ -9,13 +9,13 @@ wire toggle,req,mv,allowed,visible;wire[1:0]bank,wb;wire[31:0]lba;wire[23:0]rgb,
 integer y,k,pops=0,shown=0;
 ui_event_bridge bridge(.clk(clk),.rst_n(rst_n),.ev_valid(ev),.ev_code(code),.ev_arg(arg),.ev_aux(16'd0),.visual_tgl(toggle));
 s6_video_layer dut(.clk(clk),.rst_n(rst_n),.frame_start(fs),.play_active(play),.paused(paused),.restart(restart),
- .diagnostic(1'b0),.covers_ready(1'b1),.metadata_async(meta),.time_ms(ms),.visual_toggle(toggle),
+ .diagnostic(1'b0),.covers_ready(1'b1),.metadata_async(meta),.time_ms(ms),.seek_frame(16'd0),.visual_toggle(toggle),
  .raw_read_en(raw),.out_de(de),.out_x(x),.adjusted_de(de),.adjusted_x(x),
  .rgb_in(24'h123456),.rgb_out(rgb),.mv_read_active(mv),.mv_read_bank(bank),
  .fifo_read_allowed(allowed),.mv_window_visible(visible),.request_toggle(req),.request_lba(lba),.request_bank(wb),
  .done_toggle(done),.failed(1'b0));
 s6_video_layer #(.ENABLE(0)) rollback(.clk(clk),.rst_n(rst_n),.frame_start(fs),.play_active(play),.paused(paused),.restart(restart),
- .diagnostic(1'b0),.covers_ready(1'b1),.metadata_async(meta),.time_ms(ms),.visual_toggle(toggle),
+ .diagnostic(1'b0),.covers_ready(1'b1),.metadata_async(meta),.time_ms(ms),.seek_frame(16'd0),.visual_toggle(toggle),
  .raw_read_en(raw),.out_de(de),.out_x(x),.adjusted_de(de),.adjusted_x(x),
  .rgb_in(24'h123456),.rgb_out(bypass),.done_toggle(1'b0),.failed(1'b0));
 always @(posedge clk) begin

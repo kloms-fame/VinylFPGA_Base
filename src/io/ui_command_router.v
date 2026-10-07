@@ -115,7 +115,7 @@ module ui_command_router #(
     // ir_x_vol/ir_x_volup 仅用于建立"最近音量键"以支持 repeat 节流。
     reg        ir_x_valid;
     reg [3:0]  ir_x_evcode;
-    reg [2:0]  ir_x_key;
+    reg [3:0]  ir_x_key;
     reg        ir_x_dir;
     reg        ir_x_blank;    // 息屏切换（内部）
     reg        ir_x_restart;  // 重启（内部，打开确认框）
@@ -125,7 +125,7 @@ module ui_command_router #(
     always @* begin
         ir_x_valid   = 1'b0;
         ir_x_evcode  = EV_NONE;
-        ir_x_key     = 3'd0;
+        ir_x_key     = 4'd0;
         ir_x_dir     = 1'b0;
         ir_x_blank   = 1'b0;
         ir_x_restart = 1'b0;
@@ -141,9 +141,10 @@ module ui_command_router #(
                 IR_VOLUP  : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=3'd3; ir_x_vol=1'b1; ir_x_volup=1'b1; end
                 IR_VOLDN  : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=3'd4; ir_x_vol=1'b1; ir_x_volup=1'b0; end
                 IR_BLANK  : begin ir_x_valid=1'b1; ir_x_blank=1'b1; end
-                IR_SEEKP  : ir_x_valid = 1'b1;  // S7-06 前不支持
-                IR_SEEKM  : ir_x_valid = 1'b1;  // S7-06 前不支持
-                IR_REPLAY : ir_x_valid = 1'b1;  // S7-06 前不支持
+                // X2：Seek/重播翻译成"虚拟按键"，由 ui_event_bridge 解成 Seek 事件
+                IR_SEEKP  : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=4'd12; end
+                IR_SEEKM  : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=4'd13; end
+                IR_REPLAY : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=4'd14; end
                 IR_RESTART: begin ir_x_valid=1'b1; ir_x_restart=1'b1; end
                 IR_UP     : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=3'd3; end
                 IR_DOWN   : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=3'd4; end
@@ -155,7 +156,7 @@ module ui_command_router #(
         end
     end
 
-    wire ir_x_ok = ir_x_valid && (ir_x_evcode == EV_KEY_DOWN) && (ir_x_key == 3'd1);
+    wire ir_x_ok = ir_x_valid && (ir_x_evcode == EV_KEY_DOWN) && (ir_x_key == 4'd1);
     wire key02_down = is_key_down && (ev_arg == 16'd1);
     wire is_ir_ok   = is_ir_frame && ir_x_ok;
     // 有效操作：用于空闲清零与消隐唤醒（不含纯松开、DIP、IR repeat）
@@ -208,7 +209,7 @@ module ui_command_router #(
             end else if (ir_x_valid && dip_level[4] && (ir_x_evcode != EV_NONE)) begin
                 cmd_valid_c = 1'b1;
                 cmd_code_c  = ir_x_evcode;
-                cmd_arg_c   = {13'd0, ir_x_key};
+                cmd_arg_c   = {12'd0, ir_x_key};
                 cmd_aux_c   = (ir_x_evcode == EV_ENC_STEP) ? {14'd0, 1'b0, ir_x_dir} : 16'd0;
             end else if (is_ir_repeat && dip_level[4] && repeat_allow && repeat_gate_ok) begin
                 cmd_valid_c = 1'b1;

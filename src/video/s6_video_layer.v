@@ -6,7 +6,7 @@ module s6_video_layer #(
 )(
  input wire clk,rst_n,frame_start,play_active,paused,restart,diagnostic,
  input wire covers_ready, input wire [63:0] metadata_async,
- input wire [31:0] time_ms, input wire visual_toggle,
+ input wire [31:0] time_ms, input wire [15:0] seek_frame, input wire visual_toggle,
  input wire raw_read_en, out_de, input wire [9:0] out_x,
  input wire adjusted_de, input wire [9:0] adjusted_x,
  input wire [23:0] rgb_in, output wire [23:0] rgb_out,
@@ -67,7 +67,7 @@ module s6_video_layer #(
  mv_frame_scheduler scheduler(
   .clk(clk),.rst_n(rst_n),.frame_start(frame_start),.enable(schedule_enable),
   .paused(paused),.restart(restart),.time_ms(time_ms),.start_lba(meta2[31:0]),
-  .frame_count(meta2[47:32]),.done_toggle(done_toggle),.failed(failed),
+  .frame_count(meta2[47:32]),.seek_frame(seek_frame),.done_toggle(done_toggle),.failed(failed),
   .request_toggle(request_toggle),.request_lba(request_lba),.request_bank(request_bank),
   .display_valid(display_valid),.display_bank(mv_read_bank),.display_frame(display_frame),.waiting(waiting));
  always @(posedge clk or negedge rst_n) begin

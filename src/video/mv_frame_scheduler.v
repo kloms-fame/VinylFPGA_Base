@@ -7,6 +7,7 @@ module mv_frame_scheduler (
  input wire clk, rst_n, frame_start, enable, paused, restart,
  input wire [31:0] time_ms, start_lba,
  input wire [15:0] frame_count,
+ input wire [15:0] seek_frame,      // X2：Seek 定位目标帧（顶层按样本换算）
  input wire done_toggle, failed,
  output reg request_toggle, output reg [31:0] request_lba,
  output reg [1:0] request_bank,
@@ -22,6 +23,10 @@ module mv_frame_scheduler (
  reg [15:0] requested_frame, target_frame;
  reg [31:0] next_time;
  reg [3:0] settle;
+ // X2：restart/invalidate 期间把播放位置直接落到目标帧，而不是从 0 重新数。
+ wire [15:0] rst_frame = (frame_count == 16'd0) ? 16'd0 :
+                         ((seek_frame >= frame_count) ? (frame_count - 16'd1) : seek_frame);
+ wire [31:0] rst_next_time = ({16'd0, rst_frame} * 32'd100) + 32'd100;
  wire completed = busy && (done_sync[2]==request_toggle);
  wire invalidating = !enable || restart;
  wire can_issue = enable && !paused && !restart && settle==4'd15 && !busy &&
@@ -42,12 +47,12 @@ module mv_frame_scheduler (
  end
  always @(posedge clk or negedge rst_n) begin
   if(!rst_n) target_frame<=0;
-  else if(invalidating) target_frame<=0;
+  else if(invalidating) target_frame<=rst_frame;
   else if(!paused && time_ms>=next_time && target_frame+16'd1<frame_count) target_frame<=target_frame+1'b1;
  end
  always @(posedge clk or negedge rst_n) begin
   if(!rst_n) next_time<=100;
-  else if(invalidating) next_time<=100;
+  else if(invalidating) next_time<=rst_next_time;
   else if(!paused && time_ms>=next_time && target_frame+16'd1<frame_count) next_time<=next_time+32'd100;
  end
  always @(posedge clk or negedge rst_n) begin

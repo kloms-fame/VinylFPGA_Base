@@ -514,6 +514,10 @@ def cmd_pack(args) -> int:
                 audio = img.find_root_file(s.audio_name)
                 if audio.size == 0 or audio.first_cluster < 2:
                     raise PackError(f"{s.audio_name}: 目录项簇号/长度非法")
+                if audio.size & 1:
+                    raise PackError(
+                        f"{s.audio_name}: 音频字节数 {audio.size} 为奇数；"
+                        "16 bit 单声道 PCM 必须按偶数字节存放")
                 adata = img.read_file(audio.first_cluster, audio.size)
                 s.flags |= FLAG_AUDIO
                 s.audio_cluster = audio.first_cluster

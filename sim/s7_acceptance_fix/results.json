@@ -35,5 +35,7 @@
   "tb_s5_play": true,
   "tb_expansion_s1": true,
   "tb_io_startup_dip": true,
+  "tb_x2_seek": true,
+  "tb_x2_seek_wav": true,
   "tb_s7_wav_wrap": true
 }

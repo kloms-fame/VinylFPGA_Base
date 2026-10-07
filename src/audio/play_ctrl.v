@@ -33,8 +33,12 @@ module play_ctrl #(
     input  wire       stream_end,     // synchronized drained, successful EOF
     input  wire       end_mode_tgl,
     output reg [1:0]  end_mode,       // 0=pause, 1=repeat, 2=next
-    output reg        restart_request,
+    output wire       restart_request,
     input  wire       stop_tgl,       // legacy stop toggle (top uses routed stop_request)
+
+    // ---- X2：Seek / 重播 ----
+    input  wire       seek_restart_in, // 来自 seek_controller 的定位重启请求（1 拍）
+    output reg        seek_clear,      // 通知 seek_controller 把目标归零（切曲/重播/起播）
 
     output reg        play_active,
     output reg        paused,
@@ -43,6 +47,8 @@ module play_ctrl #(
     output reg        track_step,     // 1 拍：请求换封面（顶层层转成 fs_next/prev）
     output reg        track_dir       // 1=下一首 0=上一首
 );
+    reg restart_request_int;
+    assign restart_request = restart_request_int | seek_restart_in;
     // ---- CDC：3 级 FF + 边沿检测 ----
     reg cw_s1, cw_s2, cw_s3;
     reg ccw_s1, ccw_s2, ccw_s3;
@@ -101,12 +107,14 @@ module play_ctrl #(
             track_step  <= 1'b0;
             track_dir   <= 1'b1;
             end_mode <= 2'd0;
-            restart_request <= 1'b0;
+            restart_request_int <= 1'b0;
+            seek_clear <= 1'b0;
             eof_seen <= 1'b0;
             ended <= 1'b0;
         end else begin
             track_step <= 1'b0;
-            restart_request <= 1'b0;
+            restart_request_int <= 1'b0;
+            seek_clear <= 1'b0;
             if (mode_event) end_mode <= (end_mode == 2'd2) ? 2'd0 : end_mode + 1'b1;
             if (!stream_end) eof_seen <= 1'b0;
 
@@ -120,7 +128,8 @@ module play_ctrl #(
                     paused <= 1'b0;
                     ended <= 1'b0;
                     sel_song <= focus_index;
-                    restart_request <= 1'b1;
+                    restart_request_int <= 1'b1;
+                    seek_clear <= 1'b1;
                 end
             end else begin
                 if (p_cw || p_ccw) begin
@@ -129,13 +138,15 @@ module play_ctrl #(
                     track_dir <= p_cw;
                     paused <= 1'b0;
                     ended <= 1'b0;
-                    restart_request <= 1'b1;
+                    restart_request_int <= 1'b1;
+                    seek_clear <= 1'b1;
                     eof_seen <= 1'b1;
                 end else if (p_cf) begin
                     if (ended) begin
                         paused <= 1'b0;
                         ended <= 1'b0;
-                        restart_request <= 1'b1;
+                        restart_request_int <= 1'b1;
+                        seek_clear <= 1'b1;
                     end else paused <= ~paused;
                 end else if (stream_end && !eof_seen && !paused) begin
                     eof_seen <= 1'b1;
@@ -143,7 +154,8 @@ module play_ctrl #(
                         paused <= 1'b1;
                         ended <= 1'b1;
                     end else begin
-                        restart_request <= 1'b1;
+                        restart_request_int <= 1'b1;
+                        seek_clear <= 1'b1;
                         if (end_mode == 2'd2) begin
                             sel_song <= sel_next;
                             track_step <= 1'b1;

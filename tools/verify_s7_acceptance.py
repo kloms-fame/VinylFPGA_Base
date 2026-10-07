@@ -30,6 +30,8 @@ if __name__=='__main__':
         'tb_mv_audio_shared','tb_s6_video_layer','tb_sd_sector_adapter_timeout','tb_sd_card_bmp_fourbank',
         'tb_fat32_index_loader','tb_fat32_file_streamer','tb_fat32_volume_scanner',
         'tb_thumbnail_view_reader','tb_sdram_rd_arbiter','tb_s5_play','tb_expansion_s1','tb_io_startup_dip']
+    if not a.tests:
+        names = names + ['tb_x2_seek','tb_x2_seek_wav']
     results={name:run(name,top=name=='tb_s7_top') for name in names}
     if not a.tests:
         # 48 sectors = 12288 samples, three complete wraps of the 4096-sample FIFO.

@@ -160,9 +160,9 @@ class Fat32Builder:
 
 def build_fixture(path: Path, frag_cover: bool = False, frag_audio: bool = False,
                   song_count: int = 4, width: int = 64, height: int = 4,
-                  cover_prefix: str = "PIC") -> dict:
+                  cover_prefix: str = "PIC", audio_len: int = 2048) -> dict:
     bmp = make_bmp(width, height, 0x2468)
-    audio = bytes((i * 37 + 11) & 0xFF for i in range(2048))
+    audio = bytes((i * 37 + 11) & 0xFF for i in range(audio_len))
     bmp_sectors = math.ceil(len(bmp) / BPS)
     audio_sectors = math.ceil(len(audio) / BPS)
     need = song_count * bmp_sectors + audio_sectors + 12
@@ -228,6 +228,8 @@ def case_roundtrip() -> None:
                   f"{s['cover']['name']} 物理 LBA 运行段已记录")
     check(len(report["songs"][0]["cover"]["lba_runs"]) >= 2,
           "碎片封面被拆成多段 LBA（FAT 链仍正确）")
+    check(len(report["songs"][0]["audio"]["lba_runs"]) == 1,
+          "连续 PCM 布局保持单段 LBA（Seek 逐扇区 +1 前提）")
 
     rc = vp.main(["verify", "--image", str(img),
                   "--width", str(info["width"]), "--height", str(info["height"])])
@@ -304,6 +306,14 @@ def case_fragmented_audio() -> None:
     check(rc == 0, "显式允许后可出索引（风险已记录）")
 
 
+def case_odd_audio() -> None:
+    img = FIXTURE_DIR / "card_odd_audio.img"
+    info = build_fixture(img, audio_len=2047)
+    rc = vp.main(["pack", "--image", str(img), "--demo",
+                  "--width", str(info["width"]), "--height", str(info["height"])])
+    check(rc == 2, "奇数音频字节长度必须被拒绝")
+
+
 def case_song_named_fixture() -> None:
     """封面不叫 PIC1~4.BMP 的夹具：用来证明"封面来自索引"而不是旧 PIC 路径。"""
     img = FIXTURE_DIR / "card_song.img"
@@ -335,6 +345,7 @@ def main() -> int:
     case_count_overflow()
     case_cluster_range()
     case_fragmented_audio()
+    case_odd_audio()
     case_song_named_fixture()
     bad = [n for ok, n in results if not ok]
     print(f"\n{'PASS' if not bad else 'FAIL'}: vinyl_packer 自测 "

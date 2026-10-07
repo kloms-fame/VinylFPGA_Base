@@ -10,7 +10,8 @@ module tb_s7_play_policy;
  .enc_cw_tgl(cw),.enc_ccw_tgl(ccw),.confirm_tgl(cf),.key_up_tgl(1'b0),.key_down_tgl(1'b0),
  .stop_tgl(1'b0),.stop_request(stop),.media_lost(lost),.stream_end(eof),.end_mode_tgl(mode),
  .end_mode(policy),.restart_request(restart),.play_active(active),.paused(paused),
- .sel_song(song),.volume(vol),.track_step(step),.track_dir(dir));
+ .sel_song(song),.volume(vol),.track_step(step),.track_dir(dir),
+ .seek_restart_in(1'b0),.seek_clear());
  task cycles; input integer c; repeat(c) @(negedge clk); endtask
  task start; begin confirm=1;cycles(1);confirm=0;cycles(6);end endtask
  initial begin

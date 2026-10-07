@@ -44,6 +44,7 @@
 `include "audio/timebase_48k.v"
 `include "audio/play_ctrl.v"
 `include "audio/stream_session.v"
+`include "audio/seek_controller.v"
 `include "io/cover_navigation.v"
 `include "SD/media_probe.v"
 // Keep S4/S5 dependencies visible even if the GUI project list is stale.
@@ -391,6 +392,12 @@ wire        brw_ev_enc_cw_tgl;
 wire        brw_ev_enc_ccw_tgl;
 wire        brw_ev_key_up_tgl;
 wire        brw_ev_key_down_tgl;
+// X2：Seek / 重播事件（clk 域翻转电平，seek_controller 内部 3FF 还原）
+wire        brw_ev_seek_fwd5_tgl;
+wire        brw_ev_seek_bwd5_tgl;
+wire        brw_ev_replay_tgl;
+wire        brw_ev_seek_fwd2_tgl;
+wire        brw_ev_seek_bwd2_tgl;
 
 // ===================== S5：播放态（sd_card_clk 域） =====================
 wire        play_active_sd;
@@ -401,6 +408,18 @@ wire        play_track_step_sd;
 wire        play_track_dir_sd;
 wire [2:0]  song_total_sd;
 wire        audio_play_enable_gated;
+// X2：Seek 目标与重启握手（sd 域）
+wire [31:0] play_seek_target_sd;
+wire        play_seek_restart_sd;
+wire        play_seek_clear_sd;
+reg  [31:0] seek_cur_sample_sd;
+// Seek 目标 -> video 域（稳定窗口内 2FF）
+reg  [31:0] play_seek_target_v1, play_seek_target_v2;
+// 目标样本 -> 目标帧（1/4800 倒数乘法，误差 <0.01%）
+wire [43:0] seek_frame_prod = play_seek_target_v2 * 32'd3495;
+wire [19:0] seek_frame_calc = seek_frame_prod[43:24];
+wire [15:0] seek_frame_vid  = (seek_frame_calc > 20'h0FFFF) ? 16'hFFFF :
+                              seek_frame_calc[15:0];
 // 播放态慢变信号 -> video 域（两级同步）
 reg         play_active_v1, play_active_v2;
 reg         paused_v1, paused_v2;
@@ -468,6 +487,10 @@ wire        audio_blip_active;
 wire        audio_file_valid;
 wire [31:0] audio_start_lba;
 wire [31:0] audio_total_sectors;
+wire [31:0] audio_size_bytes;
+// X2：本曲真实样本总数（连续 PCM 布局，16 bit 单声道）；末扇区填充字节
+// 不再计入时间基、进度和 Seek 范围。
+wire [31:0] play_total_samples = {1'b0, audio_size_bytes[31:1]};
 wire        audio_play_enable;
 wire        wav_sec_req;
 wire [31:0] wav_sec_lba;
@@ -931,6 +954,7 @@ sd_card_bmp #(
     .audio_file_valid  (audio_file_valid),
     .audio_start_lba   (audio_start_lba),
     .audio_total_sectors(audio_total_sectors),
+    .audio_size_bytes  (audio_size_bytes),
     .audio_play_enable (audio_play_enable),
     .audio_sec_req     (probe_card_req),
     .audio_sec_lba     (probe_card_lba),
@@ -1032,8 +1056,93 @@ play_ctrl u_play_ctrl (
     .sel_song      (play_sel_song_sd),
     .volume        (play_volume_sd),
     .track_step    (play_track_step_sd),
-    .track_dir     (play_track_dir_sd)
+    .track_dir     (play_track_dir_sd),
+    .seek_restart_in (play_seek_restart_sd),
+    .seek_clear    (play_seek_clear_sd)
 );
+
+// ==========================================================================
+// X2：Seek / 重播控制器（sd 域）。只算目标样本位置并请求重启事务，
+// 真正的"停发新请求 / 等在途 / 清 FIFO / 预缓冲"仍由 stream_session 完成。
+// ==========================================================================
+seek_controller u_seek_controller (
+    .clk            (sd_card_clk),
+    .rst_n          (sdcard_rst_n),
+    .play_active    (play_active_sd),
+    .cur_sample     (seek_cur_sample_sd),
+    .total_samples  (play_total_samples),
+    .clear_pulse    (play_seek_clear_sd),
+    .seek_fwd5_tgl  (brw_ev_seek_fwd5_tgl),
+    .seek_bwd5_tgl  (brw_ev_seek_bwd5_tgl),
+    .seek_fwd2_tgl  (brw_ev_seek_fwd2_tgl),
+    .seek_bwd2_tgl  (brw_ev_seek_bwd2_tgl),
+    .replay_tgl     (brw_ev_replay_tgl),
+    .target_sample  (play_seek_target_sd),
+    .restart_req    (play_seek_restart_sd)
+);
+
+// 读侧样本位置 wav_sample_counter（video_clk）-> sd 域：
+// 每个被真实消费的 PCM 样本只翻转一次电平，sd 域 3FF 后还原单拍递增。
+// 不再跨域搬运 32 位格雷码并在 100 MHz 域做 32 级 XOR 解码；32 位影子
+// 计数只在 sd 域做窄加法，既保持单比特 CDC，也把 Seek 基准路径缩短。
+reg         wav_consumed_tgl_vid;
+reg         wav_consumed_tgl_sd1, wav_consumed_tgl_sd2, wav_consumed_tgl_sd3;
+wire        seek_sample_step_sd = stream_enable_sd &&
+                                  (wav_consumed_tgl_sd2 ^ wav_consumed_tgl_sd3);
+reg         seek_restart_sd_d;
+reg  [31:0] seek_target_sd_d;
+
+always @(posedge video_clk or negedge media_video_rst_n) begin
+    if (!media_video_rst_n)
+        wav_consumed_tgl_vid <= 1'b0;
+    else if (!stream_enable_vid[1])
+        wav_consumed_tgl_vid <= 1'b0;
+    else if (wav_sample_consumed)
+        wav_consumed_tgl_vid <= ~wav_consumed_tgl_vid;
+end
+
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+    if (!sdcard_rst_n) begin
+        wav_consumed_tgl_sd1 <= 1'b0;
+        wav_consumed_tgl_sd2 <= 1'b0;
+        wav_consumed_tgl_sd3 <= 1'b0;
+    end else begin
+        wav_consumed_tgl_sd1 <= wav_consumed_tgl_vid;
+        wav_consumed_tgl_sd2 <= wav_consumed_tgl_sd1;
+        wav_consumed_tgl_sd3 <= wav_consumed_tgl_sd2;
+    end
+end
+
+// Seek 重启脉冲后一拍，把影子位置对齐到最终目标；之后只按真实样本消费递增。
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+    if (!sdcard_rst_n) begin
+        seek_cur_sample_sd <= 32'd0;
+        seek_restart_sd_d  <= 1'b0;
+        seek_target_sd_d   <= 32'd0;
+    end else begin
+        seek_restart_sd_d <= play_seek_restart_sd;
+        seek_target_sd_d  <= play_seek_target_sd;
+        if (play_seek_clear_sd) begin
+            seek_cur_sample_sd <= 32'd0;
+        end else if (seek_restart_sd_d) begin
+            seek_cur_sample_sd <= seek_target_sd_d;
+        end else if (seek_sample_step_sd && (play_total_samples != 32'd0) &&
+                     (seek_cur_sample_sd < (play_total_samples - 32'd1))) begin
+            seek_cur_sample_sd <= seek_cur_sample_sd + 32'd1;
+        end
+    end
+end
+
+// Seek 目标 sd -> video（目标在整段停流窗口内保持稳定，2FF 足够）。
+always @(posedge video_clk or negedge media_video_rst_n) begin
+    if (!media_video_rst_n) begin
+        play_seek_target_v1 <= 32'd0;
+        play_seek_target_v2 <= 32'd0;
+    end else begin
+        play_seek_target_v1 <= play_seek_target_sd;
+        play_seek_target_v2 <= play_seek_target_v1;
+    end
+end
 
 // S5：播放态切曲复用既有"下一张/上一张"通路（browse_fsm 在播放态被抑制）
 wire play_fs_next_sd = play_track_step_sd &  play_track_dir_sd;
@@ -1933,6 +2042,13 @@ always @(posedge video_clk or negedge video_rst_n) begin
     end
 end
 
+// X2：Seek 后起始 LBA / 剩余扇区。target 已在 seek_controller 内钳位到
+// [0,total_samples-1]，所以 offset_sectors <= total_sectors-1，剩余至少 1 个扇区。
+wire [31:0] wav_seek_sector      = {24'd0, play_seek_target_sd[31:8]};
+wire [31:0] wav_start_lba_eff    = audio_start_lba + wav_seek_sector;
+wire [31:0] wav_total_sectors_eff= audio_total_sectors - wav_seek_sector;
+wire [31:0] wav_valid_samples    = play_total_samples - play_seek_target_sd;
+
 // 第十一讲核心：从 AUDIO.PCM 的连续扇区流式播放。
 wav_stream_player #(
     .ADDR_WIDTH        (12),
@@ -1941,8 +2057,10 @@ wav_stream_player #(
     .wr_clk            (sd_card_clk),
     .wr_rst_n          (sd_media_rst_n),
     .play_enable       (audio_play_enable_gated),
-    .start_lba         (audio_start_lba),
-    .total_sectors     (audio_total_sectors),
+    .start_lba         (wav_start_lba_eff),
+    .total_sectors     (wav_total_sectors_eff),
+    .valid_samples     (wav_valid_samples),
+    .skip_samples      (play_seek_target_sd[7:0]),
     .sd_req            (wav_sec_req),
     .sd_lba            (wav_sec_lba),
     .sd_busy           (wav_sec_busy),
@@ -1964,6 +2082,7 @@ wav_stream_player #(
     .reader_idle       (wav_reader_idle),
     .sample_consumed   (wav_sample_consumed),
     .buffer_low        (wav_buffer_low),
+    .sample_base       (play_seek_target_v2),
     .underrun_pulse    (wav_underrun_pulse)
 );
 
@@ -2061,7 +2180,7 @@ pcm_tap u_pcm_tap (
 );
 
 // total_sectors * 256 = 采样点数（PCM 连续布局、16 bit 单声道打包）
-wire [31:0] x1b_total_samples = {audio_total_sectors[23:0], 8'b0};
+wire [31:0] x1b_total_samples = play_total_samples;
 wire [31:0] x1b_th1 = x1b_total_samples >> 3;
 wire [31:0] x1b_th2 = x1b_total_samples >> 2;
 wire [31:0] x1b_th4 = x1b_total_samples >> 1;
@@ -2175,6 +2294,7 @@ s6_video_layer #(.ENABLE(S6_VIDEO_ENABLE)) u_s6_video_layer(
  .play_active(S5_PLAY_ENABLE && play_active_v2),.paused(paused_v2),
  .restart(play_track_restart_vid),.diagnostic(pat_mode),
  .covers_ready(media_preloaded_vid && stream_enable_vid[1]),.metadata_async(mv_metadata_sd),.time_ms(lyric_time_ms),
+ .seek_frame(seek_frame_vid),
  .visual_toggle(mv_visual_tgl),.raw_read_en(video_read_en),.out_de(de),.out_x(osd_pixel_x),
  .adjusted_de(adjusted_de),.adjusted_x(adjusted_pixel_x),.rgb_in(wave_rgb_eff),.rgb_out(s6_rgb),
  .mv_read_active(mv_read_active),.mv_read_bank(mv_read_bank),
@@ -2401,7 +2521,12 @@ ui_event_bridge u_ui_event_bridge (
     .key_up_tgl   (brw_ev_key_up_tgl),
     .visual_tgl   (mv_visual_tgl),
     .key_down_tgl (brw_ev_key_down_tgl),
-    .ws_mode_tgl  (ws_mode_tgl)
+    .ws_mode_tgl  (ws_mode_tgl),
+    .seek_fwd5_tgl(brw_ev_seek_fwd5_tgl),
+    .seek_bwd5_tgl(brw_ev_seek_bwd5_tgl),
+    .replay_tgl   (brw_ev_replay_tgl),
+    .seek_fwd2_tgl(brw_ev_seek_fwd2_tgl),
+    .seek_bwd2_tgl(brw_ev_seek_bwd2_tgl)
 );
 
 // ==========================================================================
@@ -2463,6 +2588,8 @@ timebase_48k u_timebase_48k (
     .sample_tick  (wav_sample_consumed),
     .running      (play_running_vid),
     .restart      (play_track_restart_vid),
+    .load         (play_track_restart_vid),
+    .load_sample  (play_seek_target_v2),
     .sample_count (),
     .cur_time_ms  (lyric_time_ms),
     .sub_sample   ()

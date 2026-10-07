@@ -46,7 +46,13 @@ module ui_event_bridge (
     output reg         visual_tgl,
     output reg         key_down_tgl,
     // ---- X1B：KEY10 循环 WS2812 灯效模式（0=全灭 / 1=律动 / 2=进度）----
-    output reg         ws_mode_tgl
+    output reg         ws_mode_tgl,
+    // ---- X2：Seek / 重播（红外 F8/EA/F6 + EC2 旋钮 SEEK）----
+    output reg         seek_fwd5_tgl,    // 红外 F8   +5 s
+    output reg         seek_bwd5_tgl,    // 红外 EA   -5 s
+    output reg         replay_tgl,       // 红外 F6   本曲重播
+    output reg         seek_fwd2_tgl,    // EC2 顺    +2 s
+    output reg         seek_bwd2_tgl     // EC2 逆    -2 s
 );
     `include "exp_event_defs.vh"
 
@@ -55,6 +61,7 @@ module ui_event_bridge (
         else if(ev_valid && ev_code==EV_KEY_DOWN && ev_arg==16'd7) visual_tgl<=~visual_tgl;
     end
     wire is_enc1_step = (ev_code == EV_ENC_STEP) && (ev_aux[1] == 1'b0);
+    wire is_enc2_step = (ev_code == EV_ENC_STEP) && (ev_aux[1] == 1'b1);
     wire is_key_down  = (ev_code == EV_KEY_DOWN);
 
     // EV_ENC_SW: ev_aux[1]=enc_id，ev_arg[0]=0 表示按下（fall）/ 1 表示释放。
@@ -85,6 +92,14 @@ module ui_event_bridge (
     wire ev_enc_ccw = key01_prev;
     wire ev_key_up  = is_key_down && (ev_arg == 16'd3);   // KEY04 上
     wire ev_key_dn  = is_key_down && (ev_arg == 16'd4);   // KEY05 下
+
+    // X2：红外 Seek/重播由 ui_command_router 翻译成 ev_arg=12/13/14 的"虚拟按键"；
+    //     EC2 旋钮转一步 = ±2 s（方向沿用 enc 约定：0=递增/向曲尾）。
+    wire ev_seek_fwd5 = is_key_down && (ev_arg == 16'd12);
+    wire ev_seek_bwd5 = is_key_down && (ev_arg == 16'd13);
+    wire ev_replay    = is_key_down && (ev_arg == 16'd14);
+    wire ev_seek_fwd2 = is_enc2_step && (ev_aux[0] == 1'b0);
+    wire ev_seek_bwd2 = is_enc2_step && (ev_aux[0] == 1'b1);
 
     // The event arbiter coalesces encoder pulses but carries the latest count.
     // Replay the modular delta, separated by eight source clocks for toggle CDC.
@@ -124,6 +139,11 @@ module ui_event_bridge (
             key_up_tgl  <= 1'b0;
             key_down_tgl<= 1'b0;
             ws_mode_tgl <= 1'b0;
+            seek_fwd5_tgl<=1'b0;
+            seek_bwd5_tgl<=1'b0;
+            replay_tgl   <=1'b0;
+            seek_fwd2_tgl<=1'b0;
+            seek_bwd2_tgl<=1'b0;
         end else begin
             if (ev_valid && is_key_down && ev_arg == 16'd10) home_tgl <= ~home_tgl;
             if (ev_valid && is_key_down && ev_arg == 16'd8) effect_tgl <= ~effect_tgl;
@@ -140,6 +160,11 @@ module ui_event_bridge (
             if (ev_valid && ev_enc_ccw) enc_ccw_tgl <= ~enc_ccw_tgl;
             if (ev_valid && ev_key_up)  key_up_tgl  <= ~key_up_tgl;
             if (ev_valid && ev_key_dn)  key_down_tgl<= ~key_down_tgl;
+            if (ev_valid && ev_seek_fwd5) seek_fwd5_tgl<=~seek_fwd5_tgl;
+            if (ev_valid && ev_seek_bwd5) seek_bwd5_tgl<=~seek_bwd5_tgl;
+            if (ev_valid && ev_replay)    replay_tgl   <=~replay_tgl;
+            if (ev_valid && ev_seek_fwd2) seek_fwd2_tgl<=~seek_fwd2_tgl;
+            if (ev_valid && ev_seek_bwd2) seek_bwd2_tgl<=~seek_bwd2_tgl;
         end
     end
 endmodule

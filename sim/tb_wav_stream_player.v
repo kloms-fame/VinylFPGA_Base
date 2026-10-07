@@ -49,6 +49,7 @@ module tb_wav_stream_player;
         .play_enable       (play_enable),
         .start_lba         (start_lba),
         .total_sectors     (total_sectors),
+        .valid_samples     (32'd256),
         .sd_req            (sd_req),
         .sd_lba            (sd_lba),
         .sd_busy           (sd_busy),
@@ -66,7 +67,9 @@ module tb_wav_stream_player;
         .sample_counter    (sample_counter),
         .stream_active     (stream_active),
         .stream_end        (stream_end),
-        .buffer_low        (buffer_low)
+        .buffer_low        (buffer_low),
+        .skip_samples      (8'd0),
+        .sample_base       (32'd0)
     );
 
     always #5 wr_clk = ~wr_clk;   // 100 MHz

@@ -46,6 +46,7 @@ module tb_wav_underrun;
         .play_enable       (play_enable),
         .start_lba         (start_lba),
         .total_sectors     (total_sectors),
+        .valid_samples     (32'd512),
         .sd_req            (sd_req),
         .sd_lba            (sd_lba),
         .sd_busy           (sd_busy),
@@ -64,6 +65,8 @@ module tb_wav_underrun;
         .stream_active     (stream_active),
         .stream_end        (),
         .buffer_low        (buffer_low),
+        .skip_samples      (8'd0),
+        .sample_base       (32'd0),
         .underrun_pulse    (underrun_pulse)
     );
 
