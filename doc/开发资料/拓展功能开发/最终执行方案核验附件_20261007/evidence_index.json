@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-07",
+  "snapshot": "prj/resource_opt_verified_20261005/S7_03b_key07_key11_20261006_s7",
+  "bit_sha256": "23fd3bb166f7627ad9fd43759081ca6202644380400208658eee661bb542cac6",
+  "input_count": 106,
+  "workspace_mismatches": 0,
+  "snapshot_mismatches": 0,
+  "directed_sim_pass_count": 11,
+  "project_include_only_count": 22,
+  "build_records": [
+    {
+      "path": "prj/resource_opt_verified_20261005/S7_03b_key07_key11_20261006_s7/final.qor",
+      "sha256": "bdd109622581bb6620fb16ac2e78ecea809ae613a937a3fd3c5875d04815cfbb"
+    },
+    {
+      "path": "prj/resource_opt_verified_20261005/S7_03b_key07_key11_20261006_s7/final.timing",
+      "sha256": "1dc105613c5a5c6c822941a44f2da393b1a97db741fd55ec8eb36c4a8d95d01f"
+    },
+    {
+      "path": "prj/resource_opt_verified_20261005/S7_03b_key07_key11_20261006_s7/final.area",
+      "sha256": "5751ce51c0470cba62badda444330d4c7ecfcde86eb569d029b8be92673cc344"
+    },
+    {
+      "path": "prj/resource_opt_verified_20261005/S7_03b_key07_key11_20261006_s7/final.constraints",
+      "sha256": "17d0fa7b3780e98ad5da76e8dce03f4f243638cadea6d58a734f6cc606efc218"
+    },
+    {
+      "path": "prj/resource_opt_verified_20261005/S7_03b_key07_key11_20261006_s7/bitstream.sha256",
+      "sha256": "f0f1e8eabc0789c3836549c1e59f9f4f71919a9ba110f086d520dc4c9a4be21c"
+    },
+    {
+      "path": "prj/resource_opt_verified_20261005/S7_03b_key07_key11_20261006_s7/native_build.log",
+      "sha256": "d916bf620de9f6f5dd45549656451566e980b53237343b4acee13e8b06e9c08a"
+    },
+    {
+      "path": "prj/resource_opt_verified_20261005/S7_03b_key07_key11_20261006_s7/release_download.log",
+      "sha256": "85fc322fc5c6dd59d034b01c241d639cb7ebbe3023c54705234a121140299012"
+    }
+  ]
+}

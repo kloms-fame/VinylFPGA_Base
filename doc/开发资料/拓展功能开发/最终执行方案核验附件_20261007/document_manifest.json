@@ -1,0 +1,80 @@
+[
+  {
+    "path": "doc/开发资料/拓展功能开发/EC11-B参数旋钮OSD设计分析与FPGA实现指南.md",
+    "bytes": 17312,
+    "lines": 337,
+    "sha256": "e472e8cc5de7d9d733b3b7e87cb98451b8f6b20846080455147e84e9a42ac9d3"
+  },
+  {
+    "path": "doc/开发资料/拓展功能开发/J2扩展板引脚按键映射标定.md",
+    "bytes": 17548,
+    "lines": 273,
+    "sha256": "63359e231d96a768364dc9c3a12d7e326cd4d46aa2e9a6d02c939c09f561eb19"
+  },
+  {
+    "path": "doc/开发资料/拓展功能开发/VinylFPGA_AI上下文文档_20261007.md",
+    "bytes": 43490,
+    "lines": 904,
+    "sha256": "a0a787dce54c09856818886733f26dbf6b6501aeb012e325e4899ff0c9eace1f"
+  },
+  {
+    "path": "doc/开发资料/拓展功能开发/VinylFPGA_S7-R6_EC2旋钮OSD调参_设计与实施方案_20261007.md",
+    "bytes": 54514,
+    "lines": 981,
+    "sha256": "037ed85fe9e08fd65d2d1e6e8740a55c21b23bb75e850fa8eeaf229df39bfb3d"
+  },
+  {
+    "path": "doc/开发资料/拓展功能开发/VinylFPGA_S7_基础拓展功能重排与后续开发报告_20261007.md",
+    "bytes": 34563,
+    "lines": 403,
+    "sha256": "ae5800c42d4b7a5b44445d43db2f7f8cfd29856cf234f7d16f9efe29924711f6"
+  },
+  {
+    "path": "doc/开发资料/拓展功能开发/VinylFPGA_后续开发报告_进度盘点与阶段重排_20261007.md",
+    "bytes": 80209,
+    "lines": 1114,
+    "sha256": "f20100e4f4cea3aac922754572bed439646ac6516c3c3e17413bc907cced2fbd"
+  },
+  {
+    "path": "doc/开发资料/拓展功能开发/VinylFPGA_后续开发方案_冻结基准_v1.0-F_20261007.md",
+    "bytes": 60580,
+    "lines": 607,
+    "sha256": "80ea634fa2c90e9c840624c547bc6c9b633182ce5a02242738a06083dfa13bba"
+  },
+  {
+    "path": "doc/开发资料/拓展功能开发/VinylFPGA_完美版开发方案_EC11B风格OSD旋钮_20261007.md",
+    "bytes": 31611,
+    "lines": 426,
+    "sha256": "bddb252f244def9fcd7ee8acfdca47af325287221113d448891da8374be3b747"
+  },
+  {
+    "path": "doc/开发资料/拓展功能开发/VinylFPGA_拓展功能优先_阶段重排与后续开发报告_20261007.md",
+    "bytes": 40019,
+    "lines": 298,
+    "sha256": "797e12a14bc0c4ee606119f324d7abf8146977df1e06ecb03b5bd4fb46f81990"
+  },
+  {
+    "path": "doc/开发资料/拓展功能开发/开发报告参考.md",
+    "bytes": 31000,
+    "lines": 274,
+    "sha256": "9e9f2fb1369fa2d169e418783e421c279bd39c26cad66b79850b023d2522a824"
+  },
+  {
+    "path": "doc/开发资料/拓展功能开发/开发方案.md",
+    "bytes": 24548,
+    "lines": 267,
+    "sha256": "e185fc30c22f9a45259ed50b681b1ca8ea18f2f379d70ce3675db5de14a7920d"
+  },
+  {
+    "path": "doc/开发资料/拓展功能开发/第1课_从官方例程到完赛工程_架构认知与FPGA思维框架.md",
+    "bytes": 26635,
+    "lines": 405,
+    "sha256": "045286523bba997279633025409c92665f5fde7adb89769f440400f6cdd5d2fb"
+  },
+  {
+    "path": "doc/开发资料/VinylFPGA_主链路开发报告_代码与规划交叉核对_20261005.md",
+    "bytes": 59850,
+    "lines": 821,
+    "sha256": "cd54bfcde7b079aaad248be94c380933105f875a883bf0d4f03f4f1d4e637abb"
+  }
+]

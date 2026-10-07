@@ -1,0 +1,13 @@
+{
+  "tb_s7_browse_semantics": true,
+  "tb_s7_play_policy": true,
+  "tb_s7_switch": true,
+  "tb_s7_ir_encoder": true,
+  "tb_s7_top": true,
+  "tb_media_supervisor": true,
+  "tb_health_monitor": true,
+  "tb_s6_video_layer": true,
+  "tb_mv_frame_scheduler": true,
+  "tb_wav_stream_player_flow": true,
+  "tb_io_startup_dip": true
+}

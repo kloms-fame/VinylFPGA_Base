@@ -1,0 +1,1302 @@
+[
+  {
+    "name": "clk",
+    "direction": "INPUT",
+    "location": "R7",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "NONE",
+    "packreg": "NONE"
+  },
+  {
+    "name": "exp_dip_n[5]",
+    "direction": "INPUT",
+    "location": "L12",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_dip_n[4]",
+    "direction": "INPUT",
+    "location": "K14",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_dip_n[3]",
+    "direction": "INPUT",
+    "location": "H4",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_dip_n[2]",
+    "direction": "INPUT",
+    "location": "J4",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_dip_n[1]",
+    "direction": "INPUT",
+    "location": "J3",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_dip_n[0]",
+    "direction": "INPUT",
+    "location": "L3",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLDOWN",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_enc1_a",
+    "direction": "INPUT",
+    "location": "P4",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_enc1_b",
+    "direction": "INPUT",
+    "location": "N4",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_enc1_sw_n",
+    "direction": "INPUT",
+    "location": "N3",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_enc2_a",
+    "direction": "INPUT",
+    "location": "M5",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_enc2_b",
+    "direction": "INPUT",
+    "location": "M3",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_enc2_sw_n",
+    "direction": "INPUT",
+    "location": "M4",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_ir_rx",
+    "direction": "INPUT",
+    "location": "K6",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_key_n[11]",
+    "direction": "INPUT",
+    "location": "K11",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_key_n[10]",
+    "direction": "INPUT",
+    "location": "J12",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_key_n[9]",
+    "direction": "INPUT",
+    "location": "L5",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_key_n[8]",
+    "direction": "INPUT",
+    "location": "L4",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_key_n[7]",
+    "direction": "INPUT",
+    "location": "G3",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_key_n[6]",
+    "direction": "INPUT",
+    "location": "G1",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_key_n[5]",
+    "direction": "INPUT",
+    "location": "H1",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_key_n[4]",
+    "direction": "INPUT",
+    "location": "H2",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_key_n[3]",
+    "direction": "INPUT",
+    "location": "L1",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_key_n[2]",
+    "direction": "INPUT",
+    "location": "M1",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_key_n[1]",
+    "direction": "INPUT",
+    "location": "M2",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "exp_key_n[0]",
+    "direction": "INPUT",
+    "location": "N1",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "key1",
+    "direction": "INPUT",
+    "location": "B2",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "NONE",
+    "packreg": "IREG"
+  },
+  {
+    "name": "key2",
+    "direction": "INPUT",
+    "location": "C1",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "NONE",
+    "packreg": "IREG"
+  },
+  {
+    "name": "key3",
+    "direction": "INPUT",
+    "location": "B1",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "rst_n",
+    "direction": "INPUT",
+    "location": "A2",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "NONE",
+    "packreg": "NONE"
+  },
+  {
+    "name": "sd_miso",
+    "direction": "INPUT",
+    "location": "B14",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "NONE",
+    "packreg": "NONE"
+  },
+  {
+    "name": "sw1",
+    "direction": "INPUT",
+    "location": "C8",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "sw2",
+    "direction": "INPUT",
+    "location": "C7",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "sw3",
+    "direction": "INPUT",
+    "location": "C6",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "sw4",
+    "direction": "INPUT",
+    "location": "C5",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "N/A",
+    "pull": "PULLUP",
+    "packreg": "IREG"
+  },
+  {
+    "name": "HDMI_CLK_P",
+    "direction": "OUTPUT",
+    "location": "K1",
+    "iostandard": "LVDS33",
+    "iotype": "PAD",
+    "drive": "NA",
+    "pull": "NONE",
+    "packreg": "DDRX1"
+  },
+  {
+    "name": "HDMI_CLK_P(n)",
+    "direction": "OUTPUT",
+    "location": "J1",
+    "iostandard": "LVDS33",
+    "iotype": "PAD",
+    "drive": "NA",
+    "pull": "NONE",
+    "packreg": "NONE"
+  },
+  {
+    "name": "HDMI_D0_P",
+    "direction": "OUTPUT",
+    "location": "F5",
+    "iostandard": "LVDS33",
+    "iotype": "PAD",
+    "drive": "NA",
+    "pull": "NONE",
+    "packreg": "DDRX1"
+  },
+  {
+    "name": "HDMI_D0_P(n)",
+    "direction": "OUTPUT",
+    "location": "F4",
+    "iostandard": "LVDS33",
+    "iotype": "PAD",
+    "drive": "NA",
+    "pull": "NONE",
+    "packreg": "NONE"
+  },
+  {
+    "name": "HDMI_D1_P",
+    "direction": "OUTPUT",
+    "location": "E3",
+    "iostandard": "LVDS33",
+    "iotype": "PAD",
+    "drive": "NA",
+    "pull": "NONE",
+    "packreg": "DDRX1"
+  },
+  {
+    "name": "HDMI_D1_P(n)",
+    "direction": "OUTPUT",
+    "location": "E4",
+    "iostandard": "LVDS33",
+    "iotype": "PAD",
+    "drive": "NA",
+    "pull": "NONE",
+    "packreg": "NONE"
+  },
+  {
+    "name": "HDMI_D2_P",
+    "direction": "OUTPUT",
+    "location": "B3",
+    "iostandard": "LVDS33",
+    "iotype": "PAD",
+    "drive": "NA",
+    "pull": "NONE",
+    "packreg": "DDRX1"
+  },
+  {
+    "name": "HDMI_D2_P(n)",
+    "direction": "OUTPUT",
+    "location": "D3",
+    "iostandard": "LVDS33",
+    "iotype": "PAD",
+    "drive": "NA",
+    "pull": "NONE",
+    "packreg": "NONE"
+  },
+  {
+    "name": "HDMI_DDC_SCL",
+    "direction": "OUTPUT",
+    "location": "P2",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "OREG"
+  },
+  {
+    "name": "board_buzzer_n",
+    "direction": "OUTPUT",
+    "location": "H11",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "exp_ext_o[5]",
+    "direction": "OUTPUT",
+    "location": "R12",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "NONE"
+  },
+  {
+    "name": "exp_ext_o[4]",
+    "direction": "OUTPUT",
+    "location": "P12",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "NONE"
+  },
+  {
+    "name": "exp_ext_o[3]",
+    "direction": "OUTPUT",
+    "location": "P14",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "NONE"
+  },
+  {
+    "name": "exp_ext_o[2]",
+    "direction": "OUTPUT",
+    "location": "N12",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "NONE"
+  },
+  {
+    "name": "exp_ext_o[1]",
+    "direction": "OUTPUT",
+    "location": "M11",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "NONE"
+  },
+  {
+    "name": "exp_ext_o[0]",
+    "direction": "OUTPUT",
+    "location": "M12",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "exp_led_n[3]",
+    "direction": "OUTPUT",
+    "location": "E2",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "exp_led_n[2]",
+    "direction": "OUTPUT",
+    "location": "F3",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "exp_led_n[1]",
+    "direction": "OUTPUT",
+    "location": "H5",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "exp_led_n[0]",
+    "direction": "OUTPUT",
+    "location": "H3",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "exp_ws2812_data",
+    "direction": "OUTPUT",
+    "location": "J11",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "NONE"
+  },
+  {
+    "name": "sd_dclk",
+    "direction": "OUTPUT",
+    "location": "A14",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "sd_mosi",
+    "direction": "OUTPUT",
+    "location": "A13",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "sd_ncs",
+    "direction": "OUTPUT",
+    "location": "A12",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "seg_data[7]",
+    "direction": "OUTPUT",
+    "location": "A6",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "NONE"
+  },
+  {
+    "name": "seg_data[6]",
+    "direction": "OUTPUT",
+    "location": "A7",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "seg_data[5]",
+    "direction": "OUTPUT",
+    "location": "A8",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "seg_data[4]",
+    "direction": "OUTPUT",
+    "location": "B5",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "seg_data[3]",
+    "direction": "OUTPUT",
+    "location": "A5",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "seg_data[2]",
+    "direction": "OUTPUT",
+    "location": "B6",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "seg_data[1]",
+    "direction": "OUTPUT",
+    "location": "C16",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "seg_data[0]",
+    "direction": "OUTPUT",
+    "location": "C15",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "seg_sel[5]",
+    "direction": "OUTPUT",
+    "location": "D11",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "seg_sel[4]",
+    "direction": "OUTPUT",
+    "location": "E11",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "seg_sel[3]",
+    "direction": "OUTPUT",
+    "location": "F10",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "seg_sel[2]",
+    "direction": "OUTPUT",
+    "location": "C13",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "seg_sel[1]",
+    "direction": "OUTPUT",
+    "location": "E10",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "seg_sel[0]",
+    "direction": "OUTPUT",
+    "location": "E12",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "uart_tx",
+    "direction": "OUTPUT",
+    "location": "D12",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "HDMI_DDC_SDA",
+    "direction": "INOUT",
+    "location": "R2",
+    "iostandard": "LVCMOS33",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "TREG"
+  },
+  {
+    "name": "dm0",
+    "direction": "OUTPUT",
+    "location": "S14",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "cke",
+    "direction": "OUTPUT",
+    "location": "S18",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "NONE"
+  },
+  {
+    "name": "we_n",
+    "direction": "OUTPUT",
+    "location": "S19",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "cas_n",
+    "direction": "OUTPUT",
+    "location": "S20",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "ras_n",
+    "direction": "OUTPUT",
+    "location": "S21",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "cs_n",
+    "direction": "OUTPUT",
+    "location": "S22",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "NONE"
+  },
+  {
+    "name": "addr[9]",
+    "direction": "OUTPUT",
+    "location": "S23",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "addr[8]",
+    "direction": "OUTPUT",
+    "location": "S24",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "addr[7]",
+    "direction": "OUTPUT",
+    "location": "S25",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "addr[6]",
+    "direction": "OUTPUT",
+    "location": "S26",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "addr[5]",
+    "direction": "OUTPUT",
+    "location": "S27",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "addr[4]",
+    "direction": "OUTPUT",
+    "location": "S28",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "dm2",
+    "direction": "OUTPUT",
+    "location": "S29",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "dm3",
+    "direction": "OUTPUT",
+    "location": "S61",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "addr[3]",
+    "direction": "OUTPUT",
+    "location": "S64",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "addr[2]",
+    "direction": "OUTPUT",
+    "location": "S65",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "addr[1]",
+    "direction": "OUTPUT",
+    "location": "S66",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "addr[0]",
+    "direction": "OUTPUT",
+    "location": "S67",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "addr[10]",
+    "direction": "OUTPUT",
+    "location": "S68",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "ba[0]",
+    "direction": "OUTPUT",
+    "location": "S69",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "ba[1]",
+    "direction": "OUTPUT",
+    "location": "S70",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "clk",
+    "direction": "OUTPUT",
+    "location": "S73",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "NONE"
+  },
+  {
+    "name": "dm1",
+    "direction": "OUTPUT",
+    "location": "S76",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "NONE",
+    "packreg": "OREG"
+  },
+  {
+    "name": "dq[0]",
+    "direction": "INOUT",
+    "location": "S1",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[6]",
+    "direction": "INOUT",
+    "location": "S11",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[7]",
+    "direction": "INOUT",
+    "location": "S12",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[1]",
+    "direction": "INOUT",
+    "location": "S2",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[23]",
+    "direction": "INOUT",
+    "location": "S31",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[22]",
+    "direction": "INOUT",
+    "location": "S32",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[21]",
+    "direction": "INOUT",
+    "location": "S35",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[20]",
+    "direction": "INOUT",
+    "location": "S36",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[19]",
+    "direction": "INOUT",
+    "location": "S37",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[18]",
+    "direction": "INOUT",
+    "location": "S38",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[17]",
+    "direction": "INOUT",
+    "location": "S41",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[16]",
+    "direction": "INOUT",
+    "location": "S42",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[31]",
+    "direction": "INOUT",
+    "location": "S48",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[30]",
+    "direction": "INOUT",
+    "location": "S49",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[2]",
+    "direction": "INOUT",
+    "location": "S5",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[29]",
+    "direction": "INOUT",
+    "location": "S52",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[28]",
+    "direction": "INOUT",
+    "location": "S53",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[27]",
+    "direction": "INOUT",
+    "location": "S54",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[26]",
+    "direction": "INOUT",
+    "location": "S55",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[25]",
+    "direction": "INOUT",
+    "location": "S58",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[24]",
+    "direction": "INOUT",
+    "location": "S59",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[3]",
+    "direction": "INOUT",
+    "location": "S6",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[4]",
+    "direction": "INOUT",
+    "location": "S7",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[8]",
+    "direction": "INOUT",
+    "location": "S78",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[9]",
+    "direction": "INOUT",
+    "location": "S79",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[5]",
+    "direction": "INOUT",
+    "location": "S8",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[10]",
+    "direction": "INOUT",
+    "location": "S82",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[11]",
+    "direction": "INOUT",
+    "location": "S83",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[12]",
+    "direction": "INOUT",
+    "location": "S84",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[13]",
+    "direction": "INOUT",
+    "location": "S85",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[14]",
+    "direction": "INOUT",
+    "location": "S88",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  },
+  {
+    "name": "dq[15]",
+    "direction": "INOUT",
+    "location": "S89",
+    "iostandard": "LVCMOS25",
+    "iotype": "PAD",
+    "drive": "8",
+    "pull": "PULLUP",
+    "packreg": "IREG;OREG"
+  }
+]

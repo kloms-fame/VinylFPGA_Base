@@ -1,0 +1,56 @@
+$ git rev-parse HEAD
+a35733905779a851ddb18ad0ccf9536fbd1a1067
+
+$ git branch -avv
+  backup/pre-linearize-20261004 d6b6f02 WAV音频播放
+* main                          a357339 [origin/main: ahead 1] S7-03b 交互修复：KEY07 主界面/播放态直达缩略图选曲，KEY11 回主界面
+  remotes/origin/main           29a4593 优化资源，继续后续开发阶段
+
+$ git log -20 --date=iso-strict --format=%h %ad %s
+a357339 2026-10-06T22:20:50+08:00 S7-03b 交互修复：KEY07 主界面/播放态直达缩略图选曲，KEY11 回主界面
+29a4593 2026-10-06T20:04:56+08:00 优化资源，继续后续开发阶段
+1c0a962 2026-10-06T19:51:17+08:00 S7-03 M5-M6: reject timing failures; retain M4 LUT -477 FF -505 BRAM -6 DSP -1
+ead2ee0 2026-10-06T19:35:55+08:00 S7-03 M4: save 6 BRAM9K with lossless banked logo; total LUT -477 FF -505 DSP -1
+636db9b 2026-10-06T19:15:24+08:00 S7-03 M12: reduce media LUT by 501 FF by 509 DSP by 1; close timing and verify SRAM boot
+d0b0e39 2026-10-06T18:54:52+08:00 S7-03 M0: reproduce resource baseline LUT16185 FF10191 BRAM46 DSP16 and automate verification
+ad06ded 2026-10-06T18:22:54+08:00 优化功能
+0828f4f 2026-10-06T16:23:22+08:00 S7-04 资源优化 R1：切断乘法组合链，时序收敛
+7f99785 2026-10-06T15:38:24+08:00 S7-03 统一事件、完整红外与 DIP 控制：事件总线 pending 位图、红外白名单/反码/节流、运行时 DIP 消隐/重启确认，并外提 fat32 像素加法收口时序
+6707a1d 2026-10-06T14:30:19+08:00 S7-02 交付说明：媒体故障恢复与错误反馈实现/验证/时序收敛记录
+4642e43 2026-10-06T14:27:44+08:00 S7-02 媒体故障恢复与错误反馈：收敛时序并瘦身监督器
+b0f2808 2026-10-06T13:32:33+08:00 S7-02 媒体故障恢复与错误反馈：新增 media_supervisor 挂载/扇区超时监督与 SD 复位代次，adapter 扇区超时释放，集中错误码 CDC 与 OSD 呈现
+57f5933 2026-10-06T13:13:22+08:00 S7-01 资源时序诊断与边界审计：新增 health_monitor 被动遥测与 STAT/ERR 串口输出
+e8f7d1a 2026-10-06T12:05:53+08:00 增加mv与黑胶模式
+06ba8e8 2026-10-06T11:00:43+08:00 S0-S5验收完成，修复已知问题
+a165f9a 2026-10-06T01:22:19+08:00 黑胶视觉层模块（S6 部分），顶层集成待收敛
+1beb7db 2026-10-06T00:41:51+08:00 音频播放与歌词渲染（S5），待验收
+7f8a2fc 2026-10-06T00:25:28+08:00 SD卡曲目索引体系（S4），待验收
+5b34188 2026-10-05T23:19:34+08:00 主界面选歌，待验收
+68d9b97 2026-10-05T22:35:38+08:00 开机 logo 待验证
+
+$ git rev-list --left-right --count main...backup/pre-linearize-20261004
+38	1
+
+$ git status --short
+ M prj/.lock.f
+ M prj/VinylFPGA_inst.bid
+ M prj/final_timing.rpt
+ M prj/gate.qor
+ M prj/place.qor
+ M prj/route.qor
+ M prj/top_route.check_timing
+?? "doc/\345\274\200\345\217\221\350\265\204\346\226\231/\346\213\223\345\261\225\345\212\237\350\203\275\345\274\200\345\217\221/"
+?? prj/VinylFPGA.al.prebak
+?? prj/_apply_params.tcl
+?? prj/_enum_cmds.tcl
+?? prj/_enum_cmds.txt
+?? prj/_probe_userparams.tcl
+?? prj/_scf_candidates/
+?? prj/_verify_launch.tcl
+?? prj/log/td_2026-10-06_20-35-15.logw
+?? prj/log/td_2026-10-06_21-16-38.logw
+?? prj/log/td_2026-10-06_21-21-37.logw
+?? prj/log/td_2026-10-06_21-38-21.logw
+?? prj/log/td_2026-10-07_09-24-02.logw
+?? prj/td_20261006_211708.logw
+?? prj/td_20261006_211818.logw
