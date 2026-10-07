@@ -1,0 +1,63 @@
+tb_s7_ir_encoder: PASS PASS repeated IR/encoder mixing, DIP5 and complement filtering
+tb_browse_fsm: PASS TEST_PASS browse_fsm_s3_smoke
+tb_s3_browse_integration: PASS TEST_PASS s3_browse_integration
+tb_video_fade_transition: PASS PASS: tb_video_fade_transition fade/page/cut and pixel arithmetic
+tb_boot_window: PASS PASS boot hold/early-skip/no-card timeout at frame boundaries
+tb_s7_media_lifecycle: PASS PASS real FAT32 CRC-bad to good, removal mid-cover, timeout, rescan and reload without global reset
+tb_s7_wav_restart: PASS PASS ten in-flight restarts, first-sample LBA scoreboard, successful drain vs error EOF
+tb_s7_encoder: PASS PASS coalesced encoder delta, reversal and 16-bit wrap
+tb_health_monitor: PASS TEST_PASS health_monitor
+tb_media_supervisor: PASS PASS: media_supervisor
+tb_s7_recovery_clear: PASS PASS recovery clears active error
+tb_s7_browse_semantics: PASS PASS s7_03b_mode_home_ownership
+tb_s7_play_policy: PASS PASS EOF pause/repeat/next, restart, four-song wrap, home/fault
+tb_s7_switch: PASS PASS 303 rapid steps across three modes, 16-frame page without fade, held bank ACK
+tb_s7_probe_mux: PASS PASS mux/probe boundary arbitration and payload isolation
+tb_s7_probe: PASS PASS idle probe isolation and client priority
+tb_s7_session: PASS PASS session waits for SD, MV, read-domain reset acknowledgement
+tb_s7_top: PASS PASS top UI keys, EOF replay, CRC remount, media fault silence and recovery
+tb_wav_stream_player: PASS PASS: wav stream player little-endian/prefill/drain/end
+tb_wav_stream_player_flow: PASS PASS: wav stream multi-sector high-water/order/drain
+tb_wav_underrun: PASS PASS underrun_pulse asserted after drain (sample_counter=1)
+TEST_PASS wav_underrun
+tb_mv_sector_mux: PASS TEST_PASS mv_sector_mux priority watermark ownership
+tb_mv_stream_player: PASS TEST_PASS mv_stream_player RGB565 exact pixels drain truncation CDC
+tb_mv_frame_scheduler: PASS TEST_PASS mv_frame_scheduler pause underload restart seek three slots 600s no drift
+tb_mv_audio_shared: PASS TEST_PASS mv_audio_shared 1024 ordered PCM samples concurrent video extra 1ms token delay
+tb_s6_video_layer: PASS TEST_PASS s6_video_layer 320x240 FIFO window KEY08 frame boundary rollback
+tb_sd_sector_adapter_timeout: PASS PASS: sd_sector_adapter timeout
+tb_sd_card_bmp_fourbank: PASS PASS: four-bank scheduler preload/switch/next_event/long-press/auto
+tb_fat32_index_loader: PASS TEST_PASS fat32_index_loader_s4
+tb_fat32_file_streamer: PASS PASS: FAT32 fragmented FAT chain
+tb_fat32_volume_scanner: PASS PASS: FAT32 volume scanner
+tb_thumbnail_view_reader: PASS PASS: tb_thumbnail_view_reader all checks passed (checks=307200, bursts=7200, requests=921600, gaps=7200, blankpop=0)
+tb_sdram_rd_arbiter: PASS PASS: handoff to thumbnail took 8 cycles (quiet window 8)
+PASS: tb_sdram_rd_arbiter all checks passed
+tb_s5_play: PASS TEST_PASS s5_play_timebase_lrc
+tb_expansion_s1: PASS PASS line [                  banner]
+PASS board SW feedback tone
+PASS line [              key04-down]
+PASS led biz pulse on press
+PASS buzzer feedback on key press
+PASS line [                key04-up]
+PASS led biz pulse self-clears
+PASS line [              key07-down]
+PASS line [                key07-up]
+PASS line [       dip1-presence-off]
+PASS line [                dip1-low]
+PASS line [        dip1-presence-on]
+PASS line [               dip1-high]
+PASS line [                enc1-fwd]
+PASS line [                ir-frame]
+PASS line [              media-info]
+PASS line [       media-verify-good]
+PASS line [       media-info-broken]
+PASS line [        media-verify-crc]
+PASS line [        boot-done-queued]
+PASS idle silent (no periodic flood)
+PASS ws2812 black frame transmitted
+TEST_PASS expansion_s1_smoke
+tb_io_startup_dip: PASS PASS DIP startup silent and simultaneous changes preserved
+tb_x2_seek: PASS PASS X2 seek_controller clamp/empty/pause/accumulate/100-round-trip
+tb_x2_seek_wav: PASS TEST_PASS x2_seek_wav timebase load + sector skip
+tb_s7_wav_wrap: PASS PASS: wav stream multi-sector high-water/order/drain

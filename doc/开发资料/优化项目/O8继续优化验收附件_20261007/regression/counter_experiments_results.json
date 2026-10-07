@@ -1,0 +1,200 @@
+[
+  {
+    "test": "ir_50000000",
+    "pass": true,
+    "elapsed_s": 87.223,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\ir_50000000.log"
+  },
+  {
+    "test": "ir_123457",
+    "pass": true,
+    "elapsed_s": 0.428,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\ir_123457.log"
+  },
+  {
+    "test": "ir_10000",
+    "pass": true,
+    "elapsed_s": 0.248,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\ir_10000.log"
+  },
+  {
+    "test": "ir_23273",
+    "pass": true,
+    "elapsed_s": 0.249,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\ir_23273.log"
+  },
+  {
+    "test": "ir_42667",
+    "pass": true,
+    "elapsed_s": 0.294,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\ir_42667.log"
+  },
+  {
+    "test": "ir_1000",
+    "pass": true,
+    "elapsed_s": 0.199,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\ir_1000.log"
+  },
+  {
+    "test": "ir_1",
+    "pass": true,
+    "elapsed_s": 0.221,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\ir_1.log"
+  },
+  {
+    "test": "ir_0",
+    "pass": true,
+    "elapsed_s": 0.218,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\ir_0.log"
+  },
+  {
+    "test": "buzz_default",
+    "pass": true,
+    "elapsed_s": 23.928,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_default.log"
+  },
+  {
+    "test": "buzz_bound_0",
+    "pass": true,
+    "elapsed_s": 0.397,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_bound_0.log"
+  },
+  {
+    "test": "buzz_bound_1",
+    "pass": true,
+    "elapsed_s": 0.311,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_bound_1.log"
+  },
+  {
+    "test": "buzz_bound_2",
+    "pass": true,
+    "elapsed_s": 0.363,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_bound_2.log"
+  },
+  {
+    "test": "buzz_bound_8",
+    "pass": true,
+    "elapsed_s": 0.361,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_bound_8.log"
+  },
+  {
+    "test": "buzz_bound_257",
+    "pass": true,
+    "elapsed_s": 0.359,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_bound_257.log"
+  },
+  {
+    "test": "buzz_bound_65536",
+    "pass": true,
+    "elapsed_s": 0.322,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_bound_65536.log"
+  },
+  {
+    "test": "buzz_bound_-1",
+    "pass": true,
+    "elapsed_s": 0.326,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_bound_-1.log"
+  },
+  {
+    "test": "buzz_max_0_key_half_period_cycles",
+    "pass": true,
+    "elapsed_s": 0.383,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_max_0_key_half_period_cycles.log"
+  },
+  {
+    "test": "buzz_max_1_dip_low_half_period_cycles",
+    "pass": true,
+    "elapsed_s": 0.349,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_max_1_dip_low_half_period_cycles.log"
+  },
+  {
+    "test": "buzz_max_2_dip_high_half_period_cycles",
+    "pass": true,
+    "elapsed_s": 0.325,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_max_2_dip_high_half_period_cycles.log"
+  },
+  {
+    "test": "buzz_max_3_ec1_pos_half_period_cycles",
+    "pass": true,
+    "elapsed_s": 0.331,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_max_3_ec1_pos_half_period_cycles.log"
+  },
+  {
+    "test": "buzz_max_4_ec1_neg_half_period_cycles",
+    "pass": true,
+    "elapsed_s": 0.308,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_max_4_ec1_neg_half_period_cycles.log"
+  },
+  {
+    "test": "buzz_max_5_ec2_pos_half_period_cycles",
+    "pass": true,
+    "elapsed_s": 0.335,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_max_5_ec2_pos_half_period_cycles.log"
+  },
+  {
+    "test": "buzz_max_6_ec2_neg_half_period_cycles",
+    "pass": true,
+    "elapsed_s": 0.316,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_max_6_ec2_neg_half_period_cycles.log"
+  },
+  {
+    "test": "buzz_max_7_ec1_switch_half_period_cycles",
+    "pass": true,
+    "elapsed_s": 0.32,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_max_7_ec1_switch_half_period_cycles.log"
+  },
+  {
+    "test": "buzz_max_8_ec2_switch_half_period_cycles",
+    "pass": true,
+    "elapsed_s": 0.331,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_max_8_ec2_switch_half_period_cycles.log"
+  },
+  {
+    "test": "buzz_max_9_key_duration_cycles",
+    "pass": true,
+    "elapsed_s": 0.335,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_max_9_key_duration_cycles.log"
+  },
+  {
+    "test": "buzz_max_10_dip_tone_duration_cycles",
+    "pass": true,
+    "elapsed_s": 0.342,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_max_10_dip_tone_duration_cycles.log"
+  },
+  {
+    "test": "buzz_max_11_encoder_step_duration_cycles",
+    "pass": true,
+    "elapsed_s": 0.333,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_max_11_encoder_step_duration_cycles.log"
+  },
+  {
+    "test": "buzz_max_12_encoder_switch_duration_cycles",
+    "pass": true,
+    "elapsed_s": 0.334,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_max_12_encoder_switch_duration_cycles.log"
+  },
+  {
+    "test": "buzz_max_13_ir_duration_cycles",
+    "pass": true,
+    "elapsed_s": 0.341,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_max_13_ir_duration_cycles.log"
+  },
+  {
+    "test": "buzz_alias_encoder_pos_half_period_cycles",
+    "pass": true,
+    "elapsed_s": 0.346,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_alias_encoder_pos_half_period_cycles.log"
+  },
+  {
+    "test": "buzz_alias_encoder_neg_half_period_cycles",
+    "pass": true,
+    "elapsed_s": 0.352,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_alias_encoder_neg_half_period_cycles.log"
+  },
+  {
+    "test": "buzz_alias_encoder_switch_half_period_cycles",
+    "pass": true,
+    "elapsed_s": 0.306,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results\\buzz_alias_encoder_switch_half_period_cycles.log"
+  }
+]

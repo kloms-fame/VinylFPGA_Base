@@ -1,0 +1,2 @@
+PASS WS_DRIVER pixels=16 real=0 clocks=40000 accepted=16 ignored=2155
+sim/tb_ws2812_driver_equiv.v:52: $finish called at 800071000 (1ps)

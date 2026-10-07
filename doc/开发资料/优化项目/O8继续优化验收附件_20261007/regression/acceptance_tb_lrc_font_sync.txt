@@ -1,0 +1,2 @@
+PASS synchronous font ROM: 5129 reads, 1024 addresses, random and boundary, exact glyphs and zero padding
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_lrc_font_sync.v:33: $finish called at 102591000 (1ps)

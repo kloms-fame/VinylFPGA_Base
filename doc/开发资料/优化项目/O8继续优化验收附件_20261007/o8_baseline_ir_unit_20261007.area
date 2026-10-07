@@ -1,0 +1,39 @@
+standard
+***Report Model: ir_nec_decoder Device: EG4S20BG256***
+
+IO Statistics
+#IO                        45   out of    188   23.94%
+  #input                    3
+  #output                  42
+  #inout                    0
+
+LUT Statistics
+#Total_luts               193
+  #lut4                   183
+  #lut5                    10
+  #lut6                     0
+  #lut5_mx41                0
+  #lut4_alu1b               0
+
+Utilization Statistics
+#lut                      679   out of  19600    3.46%
+#reg                      173   out of  19600    0.88%
+#bram                       0   out of     64    0.00%
+  #bram9k                   0
+  #fifo9k                   0
+#bram32k                    0   out of     16    0.00%
+#dsp                        0   out of     29    0.00%
+#pad                       45   out of    188   23.94%
+  #ireg                     1
+  #oreg                    42
+  #treg                     0
+#pll                        0   out of      4    0.00%
+#gclk                       0   out of     16    0.00%
+
+Report Hierarchy Area:
++-------------------------------------------------------------------------+
+|Instance    |Module         |lut     |ripple  |seq     |bram    |dsp     |
++-------------------------------------------------------------------------+
+|top         |ir_nec_decoder |436     |243     |216     |0       |0       |
+|  u_sync_ir |sync_bit       |0       |0       |1       |0       |0       |
++-------------------------------------------------------------------------+

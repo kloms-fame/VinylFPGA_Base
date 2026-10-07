@@ -26,14 +26,32 @@ module ir_nec_decoder #(
     localparam integer MIN_ONE    = (CLK_FREQ_HZ * 10) / 10000;
     localparam integer MAX_ONE    = (CLK_FREQ_HZ * 22) / 10000;
 
+    // Include the saturated endpoint itself, also when it is a power of two.
+    // Unsigned input preserves the original 32-bit counter/parameter comparison.
+    function integer counter_width;
+        input [31:0] maximum;
+        reg [31:0] remaining;
+        begin
+            remaining = maximum;
+            counter_width = 0;
+            while (remaining != 0) begin
+                counter_width = counter_width + 1;
+                remaining = remaining >> 1;
+            end
+            if (counter_width == 0) counter_width = 1;
+        end
+    endfunction
+    localparam integer LOW_COUNT_WIDTH = counter_width(MAX_LEADER);
+    localparam integer HIGH_COUNT_WIDTH = counter_width(MAX_SPACE);
+
     wire        ir_sync;
     wire        ir_fall;
     wire        ir_rise;
     reg         ir_d;
     reg  [1:0]  state;
-    reg  [31:0] low_cnt;
-    reg  [31:0] high_cnt;
-    reg  [31:0] low_width;
+    reg  [LOW_COUNT_WIDTH-1:0] low_cnt;
+    reg  [HIGH_COUNT_WIDTH-1:0] high_cnt;
+    reg  [LOW_COUNT_WIDTH-1:0] low_width;
     reg  [5:0]  bit_count;
     reg  [31:0] shift_reg;
     reg         frame_active;

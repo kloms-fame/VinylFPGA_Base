@@ -1,0 +1,7 @@
+{
+  "tb_x1x2_input_repair": true,
+  "tb_x1x2_timebase": true,
+  "tb_x1x2_mv_hold": true,
+  "tb_x1x2_display": true,
+  "tb_x1x2_lights": true
+}

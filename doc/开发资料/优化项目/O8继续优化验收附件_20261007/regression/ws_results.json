@@ -1,0 +1,12 @@
+{
+  "tb_ws2812_context_equiv_pixels1_real0": true,
+  "tb_ws2812_context_equiv_pixels3_real0": true,
+  "tb_ws2812_context_equiv_pixels8_real0": true,
+  "tb_ws2812_context_equiv_pixels16_real0": true,
+  "tb_ws2812_context_equiv_pixels8_real1": true,
+  "tb_ws2812_driver_equiv_pixels1_real0": true,
+  "tb_ws2812_driver_equiv_pixels3_real0": true,
+  "tb_ws2812_driver_equiv_pixels8_real0": true,
+  "tb_ws2812_driver_equiv_pixels16_real0": true,
+  "tb_ws2812_driver_equiv_pixels8_real1": true
+}

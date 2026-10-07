@@ -68,6 +68,10 @@ prj/resource_opt_20261005/seed*/
 # Per-round source snapshots and generated cycle-equivalence benches.
 prj/resource_opt_verified_20261005/
 sim/resource_opt_verified/
+sim/counter_r5_results/
+sim/ws2812_context/
+sim/x1x2_repair/o8_final/
+sim/x1x2_repair/ws_context_r5/
 
 # S4 曲目索引仿真夹具：.hex 是 RTL 仿真台必需的输入（$readmemh），必须入库；
 # .img 可由 `python tools/test_vinyl_packer.py` 现场重建，不入库避免重复体积。

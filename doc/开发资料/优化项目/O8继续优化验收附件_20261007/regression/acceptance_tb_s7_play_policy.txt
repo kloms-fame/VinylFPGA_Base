@@ -1,0 +1,2 @@
+PASS EOF pause/repeat/next, restart, four-song wrap, home/fault
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_s7_play_policy.v:34: $finish called at 1510000 (1ps)

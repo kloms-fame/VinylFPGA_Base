@@ -1,0 +1,2 @@
+PASS DIP startup silent and simultaneous changes preserved
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_io_startup_dip.v:30: $finish called at 520000 (1ps)

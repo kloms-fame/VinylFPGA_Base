@@ -1,0 +1,2 @@
+PASS IR freq=10000 cycles=20303 events=3 repeats=1 widths=7/6
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\counter_r5_results\ir_10000.v:65: $finish called at 203030000 (1ps)

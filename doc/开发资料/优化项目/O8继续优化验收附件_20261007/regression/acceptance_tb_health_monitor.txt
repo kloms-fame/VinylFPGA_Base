@@ -1,0 +1,2 @@
+PASS health current error, independent sticky flags, recovery/reset
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_health_monitor.v:19: $finish called at 100000 (1ps)

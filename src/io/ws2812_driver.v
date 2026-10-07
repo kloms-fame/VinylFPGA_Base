@@ -20,14 +20,19 @@ module ws2812_driver #(
     parameter integer BIT_CYCLES   = 63,
     parameter integer T0H_CYCLES   = 18,
     parameter integer T1H_CYCLES   = 35,
-    parameter integer RESET_CYCLES = 3000
+    parameter integer RESET_CYCLES = 3000,
+    // Streaming clients freeze their rendering context on accepted load and
+    // provide the requested pixel combinationally throughout the busy frame.
+    parameter integer STREAMING = 0
 )(
     input  wire        clk,
     input  wire        rst_n,
     input  wire        load,                             // 1 拍：锁存整帧并开始发射
     input  wire [PIXEL_COUNT*24-1:0] grb_in,             // GRB 顺序，高位先发
     output reg         busy,
-    output reg         dout
+    output reg         dout,
+    input wire [23:0]   stream_grb,
+    output wire [4:0]  stream_pixel_index
 );
     localparam [2:0] ST_IDLE         = 3'd0;
     localparam [2:0] ST_RESET_BEFORE = 3'd1;
@@ -40,16 +45,32 @@ module ws2812_driver #(
                               (PIXEL_COUNT <= 8)  ? 3 :
                               (PIXEL_COUNT <= 16) ? 4 : 5;
 
-    reg [23:0]       pixel_mem [0:PIXEL_COUNT-1];
     reg [2:0]        state;
     reg [PIX_W-1:0]  pixel_index;
     reg [4:0]        bit_in_pixel;
     reg [7:0]        cycle_count;
     reg [7:0]        low_cycles;
     reg [15:0]       reset_count;
-    integer          i;
-
-    wire [23:0] current_color = pixel_mem[pixel_index];
+    wire [23:0] current_color;
+    assign stream_pixel_index = pixel_index;
+    generate
+        if (STREAMING) begin : g_stream
+            assign current_color = stream_grb;
+        end else begin : g_frame
+            reg [23:0] pixel_mem [0:PIXEL_COUNT-1];
+            integer i;
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
+                    for (i = 0; i < PIXEL_COUNT; i = i + 1)
+                        pixel_mem[i] <= 24'd0;
+                end else if (load && (state == ST_IDLE)) begin
+                    for (i = 0; i < PIXEL_COUNT; i = i + 1)
+                        pixel_mem[i] <= grb_in[i*24 +: 24];
+                end
+            end
+            assign current_color = pixel_mem[pixel_index];
+        end
+    endgenerate
     wire        current_bit   = current_color[5'd23 - bit_in_pixel];
     wire [7:0]  high_cycles   = current_bit ? T1H_CYCLES[7:0] : T0H_CYCLES[7:0];
 
@@ -63,14 +84,7 @@ module ws2812_driver #(
             reset_count  <= 16'd0;
             busy         <= 1'b0;
             dout         <= 1'b0;
-            for (i = 0; i < PIXEL_COUNT; i = i + 1)
-                pixel_mem[i] <= 24'd0;
         end else begin
-            if (load && (state == ST_IDLE)) begin
-                for (i = 0; i < PIXEL_COUNT; i = i + 1)
-                    pixel_mem[i] <= grb_in[i*24 +: 24];
-            end
-
             case (state)
                 ST_IDLE: begin
                     dout        <= 1'b0;

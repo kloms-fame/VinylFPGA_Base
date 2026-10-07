@@ -102,37 +102,55 @@ module ws2812_effects #(
         endcase
     end
     wire [5:0] amplitude = (mute || level<8) ? 6'd0 : level[7:2];
-    wire [7:0] ar={2'b0,(wheel_r<amplitude ? wheel_r : amplitude)};
-    wire [7:0] ag={2'b0,(wheel_g<amplitude ? wheel_g : amplitude)};
-    wire [7:0] ab={2'b0,(wheel_b<amplitude ? wheel_b : amplitude)};
-    // Progress base is dim (max 15); the travelling point is at most 63.
-    reg [23:0] frame_rgb [0:PIXEL_COUNT-1];
-    reg [PIXEL_COUNT*24-1:0] frame_grb;
-    integer i;
-    always @* begin
-        for(i=0;i<PIXEL_COUNT;i=i+1) begin
-            frame_rgb[i]=24'd0;
-            if(mode==1) frame_rgb[i]={ar,ag,ab};
-            else if(mode==2) begin
-                if(i<progress) frame_rgb[i]={4'b0,wheel_r[5:2],4'b0,wheel_g[5:2],4'b0,wheel_b[5:2]};
-                if(i==runner) frame_rgb[i]={2'b0,wheel_r,2'b0,wheel_g,2'b0,wheel_b};
-            end
-            frame_grb[i*24 +:24]={frame_rgb[i][15:8],frame_rgb[i][23:16],frame_rgb[i][7:0]};
-        end
-    end
-
-    // ---- 黑帧补发：DIP6 关闭后必须真正推一帧全 0，而不是把数据线拉低 ----
-    wire [PIXEL_COUNT*24-1:0] tx_frame = enable ? frame_grb
-                                                : {PIXEL_COUNT*24{1'b0}};
-    wire frame_is_black = (tx_frame == {PIXEL_COUNT*24{1'b0}});
-
     reg  black_sent;
     reg  load_req;
     wire busy;
+
+    // Freeze the same load-edge values previously stored as a full pixel frame.
+    // A 33-bit rendering context replaces 24*PIXEL_COUNT frame bits and their mux.
+    // Live input changes while busy must only affect the next accepted frame.
+    reg [1:0] frame_mode;
+    reg [5:0] frame_r, frame_g, frame_b, frame_amplitude;
+    reg [3:0] frame_progress;
+    reg [2:0] frame_runner;
+    wire [4:0] pixel_index;
+    reg [23:0] pixel_grb;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            frame_mode <= 0;
+            frame_r <= 0; frame_g <= 0; frame_b <= 0;
+            frame_amplitude <= 0;
+            frame_progress <= 0;
+            frame_runner <= 0;
+        end else if (load_req && !busy) begin
+            frame_mode <= enable ? mode : 2'd0;
+            frame_r <= wheel_r; frame_g <= wheel_g; frame_b <= wheel_b;
+            frame_amplitude <= amplitude;
+            frame_progress <= progress;
+            frame_runner <= runner;
+        end
+    end
+    wire [5:0] ar = frame_r < frame_amplitude ? frame_r : frame_amplitude;
+    wire [5:0] ag = frame_g < frame_amplitude ? frame_g : frame_amplitude;
+    wire [5:0] ab = frame_b < frame_amplitude ? frame_b : frame_amplitude;
+    always @* begin
+        pixel_grb = 24'd0;
+        if (frame_mode == 1)
+            pixel_grb = {2'b0,ag,2'b0,ar,2'b0,ab};
+        else if (frame_mode == 2) begin
+            // Progress base is dim (max 15); travelling point is at most 63.
+            if (pixel_index < frame_progress)
+                pixel_grb = {4'b0,frame_g[5:2],4'b0,frame_r[5:2],4'b0,frame_b[5:2]};
+            if (pixel_index == frame_runner)
+                pixel_grb = {2'b0,frame_g,2'b0,frame_r,2'b0,frame_b};
+        end
+    end
+
+    // ---- 关闭后补发完整黑帧；此分支中 frame_mode 必然锁存为 0 ----
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)          black_sent <= 1'b0;
         else if (enable)     black_sent <= 1'b0;
-        else if (load_req && frame_is_black) black_sent <= 1'b1;
+        else if (load_req)   black_sent <= 1'b1;
     end
 
     always @* begin
@@ -147,12 +165,15 @@ module ws2812_effects #(
         .BIT_CYCLES   (BIT_CYCLES),
         .T0H_CYCLES   (T0H_CYCLES),
         .T1H_CYCLES   (T1H_CYCLES),
-        .RESET_CYCLES (RESET_CYCLES)
+        .RESET_CYCLES (RESET_CYCLES),
+        .STREAMING    (1)
     ) u_ws2812_driver (
         .clk    (clk),
         .rst_n  (rst_n),
         .load   (load_req),
-        .grb_in (tx_frame),
+        .grb_in ({PIXEL_COUNT*24{1'b0}}),
+        .stream_grb (pixel_grb),
+        .stream_pixel_index (pixel_index),
         .busy   (busy),
         .dout   (ws_data)
     );

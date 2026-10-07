@@ -1,0 +1,2 @@
+PASS WS_CONTEXT pixel=8 real=0 clocks=180000 frames=119 black=20 high=49402 modes=111 sectors=111111
+sim/tb_ws2812_context_equiv.v:74: $finish called at 3600071000 (1ps)

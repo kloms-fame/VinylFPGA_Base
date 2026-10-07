@@ -1,0 +1,40 @@
+standard
+***Report Model: quadrature_decoder Device: EG4S20BG256***
+
+IO Statistics
+#IO                        22   out of    188   11.70%
+  #input                    4
+  #output                  18
+  #inout                    0
+
+LUT Statistics
+#Total_luts                50
+  #lut4                    46
+  #lut5                     4
+  #lut6                     0
+  #lut5_mx41                0
+  #lut4_alu1b               0
+
+Utilization Statistics
+#lut                      106   out of  19600    0.54%
+#reg                       42   out of  19600    0.21%
+#bram                       0   out of     64    0.00%
+  #bram9k                   0
+  #fifo9k                   0
+#bram32k                    0   out of     16    0.00%
+#dsp                        0   out of     29    0.00%
+#pad                       22   out of    188   11.70%
+  #ireg                     2
+  #oreg                    18
+  #treg                     0
+#pll                        0   out of      4    0.00%
+#gclk                       0   out of     16    0.00%
+
+Report Hierarchy Area:
++----------------------------------------------------------------------------+
+|Instance   |Module             |lut     |ripple  |seq     |bram    |dsp     |
++----------------------------------------------------------------------------+
+|top        |quadrature_decoder |78      |28      |62      |0       |0       |
+|  u_sync_a |sync_bit           |0       |0       |1       |0       |0       |
+|  u_sync_b |sync_bit           |0       |0       |1       |0       |0       |
++----------------------------------------------------------------------------+

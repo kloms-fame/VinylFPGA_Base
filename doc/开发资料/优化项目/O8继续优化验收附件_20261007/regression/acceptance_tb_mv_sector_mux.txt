@@ -1,0 +1,2 @@
+TEST_PASS mv_sector_mux priority watermark ownership
+D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_mv_sector_mux.v:29: $finish called at 96000 (1ps)
