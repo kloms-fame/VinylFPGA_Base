@@ -1,2 +1,0 @@
-PASS: four-bank scheduler preload/switch/next_event/prev_event/no-auto
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_sd_card_bmp_fourbank.v:290: $finish called at 7485000 (1ps)

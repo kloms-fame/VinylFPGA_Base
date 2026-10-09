@@ -1,2 +1,0 @@
-PASS real 50MHz 63/18/35/3000 WS frames, RGB flow and long pulse (1ms refresh)
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_x1x2_lights.v:108: $finish called at 48501120000 (1ps)

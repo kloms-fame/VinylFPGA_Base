@@ -1,4 +1,0 @@
-WARNING: D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_s7_media_lifecycle.v:232: $readmemh(sim/s4_fixture/card_mem.hex): Not enough words in the file for the requested range [0:32767].
-WARNING: D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_s7_media_lifecycle.v:253: $readmemh(sim/s4_fixture/card_song_mem.hex): Not enough words in the file for the requested range [0:32767].
-PASS real FAT32 CRC-bad to good, removal mid-cover, timeout, rescan and reload without global reset
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_s7_media_lifecycle.v:271: $finish called at 298825000 (1ps)

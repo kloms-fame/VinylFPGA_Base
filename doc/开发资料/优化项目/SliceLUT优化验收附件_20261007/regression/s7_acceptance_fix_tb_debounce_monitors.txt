@@ -1,2 +1,0 @@
-PASS 25-channel monitor integration: startup DIP silence, concurrent press/release, EC1/2 opposite rotation and reversal
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_debounce_monitors.v:82: $finish called at 4881000 (1ps)

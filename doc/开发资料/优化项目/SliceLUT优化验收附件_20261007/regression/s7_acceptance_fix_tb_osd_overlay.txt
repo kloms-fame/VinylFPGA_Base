@@ -1,2 +1,0 @@
-PASS: tb_osd_overlay all checks passed
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_osd_overlay.v:201: $finish called at 436851000 (1ps)

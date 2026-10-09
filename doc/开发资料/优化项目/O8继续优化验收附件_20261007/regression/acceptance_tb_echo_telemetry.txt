@@ -1,9 +1,0 @@
-PASS line contains [ERR 0A]
-PASS line contains [STAT UR=0001]
-PASS line contains [BL=0002]
-PASS line contains [VF=0003]
-PASS line contains [OV=0004]
-PASS line contains [ERR=0A]
-PASS line contains [VER=07010001]
-TEST_PASS echo_telemetry
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_echo_telemetry.v:153: $finish called at 19022500000 (1ps)

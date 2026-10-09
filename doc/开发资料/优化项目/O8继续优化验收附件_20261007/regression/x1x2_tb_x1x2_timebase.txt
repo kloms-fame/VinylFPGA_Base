@@ -1,2 +1,0 @@
-PASS exact seek timebase, remainder, pause and replay
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_x1x2_timebase.v:23: $finish called at 12520000 (1ps)

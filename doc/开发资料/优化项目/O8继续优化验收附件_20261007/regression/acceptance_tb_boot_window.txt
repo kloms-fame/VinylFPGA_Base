@@ -1,2 +1,0 @@
-PASS boot hold/early-skip/no-card timeout at frame boundaries
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_boot_window.v:25: $finish called at 990000 (1ps)

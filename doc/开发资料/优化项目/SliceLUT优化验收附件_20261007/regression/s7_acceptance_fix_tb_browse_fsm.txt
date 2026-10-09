@@ -1,2 +1,0 @@
-TEST_PASS browse_fsm_s3_smoke
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_browse_fsm.v:259: $finish called at 1865000 (1ps)

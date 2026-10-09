@@ -1,2 +1,0 @@
-PASS mux/probe boundary arbitration and payload isolation
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_s7_probe_mux.v:42: $finish called at 390000 (1ps)

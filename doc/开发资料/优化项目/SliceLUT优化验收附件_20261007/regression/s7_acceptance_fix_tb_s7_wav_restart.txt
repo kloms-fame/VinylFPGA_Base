@@ -1,2 +1,0 @@
-PASS ten in-flight restarts, first-sample LBA scoreboard, successful drain vs error EOF
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_s7_wav_restart.v:54: $finish called at 311486000 (1ps)

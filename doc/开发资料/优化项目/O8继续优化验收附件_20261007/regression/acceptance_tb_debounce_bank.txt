@@ -1,6 +1,0 @@
-PASS debounce P=1 T=1 channels=25 phases=1 checked_clocks=57
-PASS debounce P=5 T=1 channels=25 phases=5 checked_clocks=255
-PASS debounce P=7 T=3 channels=25 phases=7 checked_clocks=803
-PASS debounce P=5000 T=80 channels=3 phases=3 checked_clocks=6470065
-PASS shared debounce: all phases, 25 channels, 8 ms, glitches, reset, threshold 1
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_debounce_bank.v:166: $finish called at 129401300000 (1ps)

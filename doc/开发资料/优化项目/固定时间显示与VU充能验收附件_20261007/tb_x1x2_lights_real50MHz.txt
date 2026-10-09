@@ -1,2 +1,0 @@
-PASS real 50MHz 63/18/35/3000 VU and bounded charge/absorption (1ms refresh)
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_x1x2_lights.v:101: $finish called at 43501120000 (1ps)

@@ -1,2 +1,0 @@
-PASS BUZZ cycles=23723 widths=15/9
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\counter_r5_results\buzz_bound_257.v:83: $finish called at 237230000 (1ps)

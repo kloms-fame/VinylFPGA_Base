@@ -1,1 +1,0 @@
-tb_top_control: PASS logo 4s skip guard and startup silence; PASS same-bank exit/re-entry, EC1 pause/resume and single KEY7 silent grid; PASS different-bank fade handshake and current bank1 reselect; PASS no-card fallback; TEST_PASS top_control

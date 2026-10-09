@@ -1,2 +1,0 @@
-PASS RGB right-flow history, four-pixel pulse, fill 0..8, mute, busy snapshot and black/resume; frames=604
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_x1x2_lights.v:131: $finish called at 9457080000 (1ps)

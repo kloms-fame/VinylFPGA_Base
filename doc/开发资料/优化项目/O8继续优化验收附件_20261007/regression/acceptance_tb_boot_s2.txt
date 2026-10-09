@@ -1,6 +1,0 @@
-PASS boot logo rendered: nonblack=43236 maxlum=592 mid_bright=5932 lower=7676
-PASS first-image handoff to browse state
-PASS skip event left STATE_BOOT at frame boundary
-PASS event consumed once, no re-entry
-TEST_PASS boot_s2_smoke
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_boot_s2.v:205: $finish called at 27820890000 (1ps)

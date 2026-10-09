@@ -1,2 +1,0 @@
-TEST_PASS s5_play_timebase_lrc
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_s5_play.v:207: $finish called at 9256965000 (1ps)

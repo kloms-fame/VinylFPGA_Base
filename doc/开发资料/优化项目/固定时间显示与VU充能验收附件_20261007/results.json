@@ -1,8 +1,0 @@
-{
-  "tb_x1x2_display": true,
-  "tb_x1x2_lights": true,
-  "tb_x1x2_lights_real50MHz": true,
-  "tb_ws2812_progress": true,
-  "tb_visual_feedback_top": true,
-  "tb_opt_metadata": true
-}

@@ -1,2 +1,0 @@
-PASS EC1 seek EC2 reserved and IR polarity
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_x1x2_input_repair.v:23: $finish called at 5960000 (1ps)

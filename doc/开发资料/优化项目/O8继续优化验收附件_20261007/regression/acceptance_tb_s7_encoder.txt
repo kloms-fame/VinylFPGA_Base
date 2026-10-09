@@ -1,2 +1,0 @@
-PASS coalesced encoder delta, reversal and 16-bit wrap
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_s7_encoder.v:20: $finish called at 8240000 (1ps)

@@ -1,2 +1,0 @@
-PASS IR freq=123457 cycles=55193 events=3 repeats=1 widths=11/10
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\counter_r5_results\ir_123457.v:65: $finish called at 551930000 (1ps)

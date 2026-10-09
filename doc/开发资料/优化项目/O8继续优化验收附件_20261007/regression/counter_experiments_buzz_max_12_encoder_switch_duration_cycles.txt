@@ -1,2 +1,0 @@
-PASS BUZZ cycles=20693 widths=15/18
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\counter_r5_results\buzz_max_12_encoder_switch_duration_cycles.v:83: $finish called at 206930000 (1ps)

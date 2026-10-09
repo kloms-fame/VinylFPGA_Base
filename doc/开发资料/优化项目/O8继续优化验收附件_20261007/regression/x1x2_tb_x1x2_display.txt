@@ -1,2 +1,0 @@
-PASS eight digits MM-SS blank NN, seek/replay/saturation and full scan
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_x1x2_display.v:31: $finish called at 43103000 (1ps)

@@ -1,2 +1,0 @@
-PASS repeated IR/encoder mixing, DIP5 and complement filtering
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_s7_ir_encoder.v:34: $finish called at 20480000 (1ps)

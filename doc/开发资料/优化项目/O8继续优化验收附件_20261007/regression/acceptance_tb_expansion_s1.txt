@@ -1,2 +1,0 @@
-PASS UART idle, 12 J2 keys, recovery, fault history, hotplug
-sim/tb_opt_no_uart.v:45: $finish called at 39740000 (1ps)

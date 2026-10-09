@@ -1,2 +1,0 @@
-PASS: FAT32 fragmented FAT chain
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_fat32_file_streamer.v:116: $finish called at 31175000 (1ps)

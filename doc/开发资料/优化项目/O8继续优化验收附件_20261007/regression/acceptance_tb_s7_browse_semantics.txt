@@ -1,2 +1,0 @@
-PASS s7_03b_mode_home_ownership
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_s7_browse_semantics.v:74: $finish called at 435000 (1ps)

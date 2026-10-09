@@ -1,2 +1,0 @@
-PASS: tb_param_menu_controller all checks passed
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_param_menu_controller.v:204: $finish called at 38712500000 (1ps)

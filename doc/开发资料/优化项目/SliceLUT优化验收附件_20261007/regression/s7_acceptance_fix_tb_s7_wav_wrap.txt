@@ -1,2 +1,0 @@
-PASS: wav stream multi-sector high-water/order/drain
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\s7_acceptance_fix\tb_s7_wav_wrap.v:225: $finish called at 3938980000 (1ps)

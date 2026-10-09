@@ -1,2 +1,0 @@
-TEST_PASS mv_stream_player RGB565 exact pixels drain truncation CDC
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_mv_stream_player.v:43: $finish called at 21670000 (1ps)

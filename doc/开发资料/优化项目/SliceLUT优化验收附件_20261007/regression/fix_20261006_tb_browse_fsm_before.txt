@@ -1,3 +1,0 @@
-FAIL: laying KEY7 enters grid once pulses=000000 expect=000001
-FAIL: tb_browse_fsm errors=1
-sim/tb_browse_fsm.v:230: $finish called at 1745000 (1ps)

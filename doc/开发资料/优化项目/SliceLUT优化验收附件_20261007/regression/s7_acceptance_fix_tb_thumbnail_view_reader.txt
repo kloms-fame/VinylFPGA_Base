@@ -1,2 +1,0 @@
-PASS: tb_thumbnail_view_reader all checks passed (checks=307200, bursts=7200, requests=921600, gaps=7200, blankpop=0)
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_thumbnail_view_reader.v:408: $finish called at 49923820000 (1ps)

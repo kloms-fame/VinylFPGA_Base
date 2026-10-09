@@ -1,3 +1,0 @@
-PASS: handoff to thumbnail took 8 cycles (quiet window 8)
-PASS: tb_sdram_rd_arbiter all checks passed
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_sdram_rd_arbiter.v:203: $finish called at 1577000 (1ps)

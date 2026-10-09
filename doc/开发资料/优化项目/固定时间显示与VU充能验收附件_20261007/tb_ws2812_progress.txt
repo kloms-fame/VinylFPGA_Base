@@ -1,2 +1,0 @@
-PASS exact progress division, boundaries, seek/replay, asynchronous clocks and resets: 424 cases
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_ws2812_progress.v:43: $finish called at 496314000 (1ps)

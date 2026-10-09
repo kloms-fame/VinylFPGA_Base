@@ -1,2 +1,0 @@
-TEST_PASS s7_04_param_menu_smoke
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_s7_04_param_menu.v:355: $finish called at 1485000 (1ps)

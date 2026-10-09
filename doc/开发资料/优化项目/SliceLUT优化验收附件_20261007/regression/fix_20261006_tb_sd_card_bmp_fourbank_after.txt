@@ -1,2 +1,0 @@
-PASS: four-bank scheduler preload/switch/next_event/long-press/auto
-sim/tb_sd_card_bmp_fourbank.v:306: $finish called at 4555000 (1ps)

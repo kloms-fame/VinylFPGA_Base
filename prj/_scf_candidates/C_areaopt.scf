@@ -1,9 +1,0 @@
-<Strategy Version="1">
-<Name>AreaOptimizeHigh</Name>
-<Type>syn</Type>
-<version>1</version>
-<description>Area optimize high</description>
-<GateProperty>
-<map_mode>area_prior</map_mode>
-</GateProperty>
-</Strategy>

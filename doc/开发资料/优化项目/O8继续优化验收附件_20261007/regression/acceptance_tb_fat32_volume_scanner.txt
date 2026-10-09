@@ -1,2 +1,0 @@
-PASS: FAT32 volume scanner
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_fat32_volume_scanner.v:180: $finish called at 10485000 (1ps)

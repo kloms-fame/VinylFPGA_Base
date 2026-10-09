@@ -1,2 +1,0 @@
-PASS recovery clears active error
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_s7_recovery_clear.v:16: $finish called at 310000 (1ps)

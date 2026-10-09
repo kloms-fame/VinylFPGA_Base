@@ -1,2 +1,0 @@
-PASS WS_DRIVER pixels=8 real=1 clocks=160000 accepted=10 ignored=8680
-sim/tb_ws2812_driver_equiv.v:52: $finish called at 3200071000 (1ps)

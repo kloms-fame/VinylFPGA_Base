@@ -1,2 +1,0 @@
-PASS VU 256 levels/fast attack/smooth decay; fill 0..8, bounded comet, endpoint absorption, seek/mute/off/reset; frames=804
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_x1x2_lights.v:127: $finish called at 12579540000 (1ps)

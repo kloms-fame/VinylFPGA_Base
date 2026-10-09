@@ -1,2 +1,0 @@
-PASS: tb_video_fade_transition fade/page/cut and pixel arithmetic
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_video_fade_transition.v:299: $finish called at 28049000 (1ps)

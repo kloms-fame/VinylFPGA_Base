@@ -1,2 +1,0 @@
-PASS: FAT32 media loader scan/load/pixel pipeline
-D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\sim\tb_fat32_media_loader.v:321: $finish called at 22015000 (1ps)
