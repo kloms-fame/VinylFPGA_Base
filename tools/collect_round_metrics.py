@@ -138,6 +138,57 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+MANIFEST_REQUIRED_FIELDS = (
+    "schema", "created_utc", "round", "files", "round_snapshot_files", "production_tests",
+    "top_level_tests_with_vendor_stubs", "generated_pressure_test", "baseline_bit_files",
+    "board_binding", "notes", "manifest_sha256",
+)
+
+
+def _validate_manifest(manifest: Any) -> dict[str, Any]:
+    if not isinstance(manifest, dict):
+        raise MetricsError("build manifest must be a JSON object")
+    missing = [field for field in MANIFEST_REQUIRED_FIELDS if field not in manifest]
+    if missing:
+        raise MetricsError("build manifest missing required schema fields: " + ", ".join(missing))
+    if manifest["schema"] != 1:
+        raise MetricsError(f"unsupported build manifest schema: {manifest['schema']!r}")
+    for field in ("created_utc", "round", "generated_pressure_test"):
+        if not isinstance(manifest[field], str) or not manifest[field]:
+            raise MetricsError(f"build manifest field {field} must be a non-empty string")
+    for field in ("files", "round_snapshot_files"):
+        records = manifest[field]
+        if not isinstance(records, dict) or not records:
+            raise MetricsError(f"build manifest field {field} must be a non-empty hash map")
+        for name, digest in records.items():
+            if not isinstance(name, str) or not isinstance(digest, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", digest):
+                raise MetricsError(f"build manifest field {field} contains an invalid hash entry")
+    for field in ("production_tests", "top_level_tests_with_vendor_stubs", "notes"):
+        if not isinstance(manifest[field], list) or any(not isinstance(item, str) for item in manifest[field]):
+            raise MetricsError(f"build manifest field {field} must be a list of strings")
+    if not manifest["production_tests"]:
+        raise MetricsError("build manifest production_tests cannot be empty")
+    bits = manifest["baseline_bit_files"]
+    if not isinstance(bits, list) or any(
+            not isinstance(item, dict) or not isinstance(item.get("path"), str)
+            or not isinstance(item.get("exists"), bool)
+            or not isinstance(item.get("sha256"), str)
+            or not re.fullmatch(r"[0-9a-fA-F]{64}", item["sha256"])
+            for item in bits):
+        raise MetricsError("build manifest baseline_bit_files has invalid entries")
+    if manifest["board_binding"] is not None and not isinstance(manifest["board_binding"], dict):
+        raise MetricsError("build manifest board_binding must be an object or null")
+    claimed_hash = manifest["manifest_sha256"]
+    if not isinstance(claimed_hash, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", claimed_hash):
+        raise MetricsError("build manifest manifest_sha256 must be a 64-digit SHA-256")
+    canonical_payload = {key: value for key, value in manifest.items() if key != "manifest_sha256"}
+    actual_hash = hashlib.sha256(
+        json.dumps(canonical_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+    if actual_hash.lower() != claimed_hash.lower():
+        raise MetricsError(f"build manifest manifest_sha256 mismatch: expected {claimed_hash}, computed {actual_hash}")
+    return manifest
+
+
 def freeze_manifest(round_dir: Path, bit_paths: list[Path] | None = None) -> Path:
     """Freeze source, project, tests, scripts, assets and locally available bit inputs."""
     import importlib.util
@@ -212,7 +263,7 @@ def _read_text(path: Path) -> str:
 
 
 def _metadata(round_dir: Path, manifest_path: Path) -> dict[str, Any]:
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest = _validate_manifest(json.loads(manifest_path.read_text(encoding="utf-8")))
     snapshot_files = manifest.get("round_snapshot_files")
     if not isinstance(snapshot_files, dict):
         raise MetricsError("build manifest is missing round_snapshot_files")

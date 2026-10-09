@@ -54,6 +54,38 @@ META = {
     "inputs_sha256": "a" * 64,
     "constraints_sha256": "b" * 64,
 }
+MANIFEST_FIELDS = (
+    "schema", "created_utc", "round", "files", "round_snapshot_files", "production_tests",
+    "top_level_tests_with_vendor_stubs", "generated_pressure_test", "baseline_bit_files",
+    "board_binding", "notes",
+)
+
+
+def make_manifest(snapshot_constraints):
+    payload = {
+        "schema": 1,
+        "created_utc": "2026-10-09T00:00:00+00:00",
+        "round": "test_round",
+        "files": {"tools/collect_round_metrics.py": "a" * 64},
+        "round_snapshot_files": snapshot_constraints,
+        "production_tests": ["tb_example"],
+        "top_level_tests_with_vendor_stubs": [],
+        "generated_pressure_test": "tb_s7_wav_wrap",
+        "baseline_bit_files": [],
+        "board_binding": None,
+        "notes": [],
+    }
+    payload["manifest_sha256"] = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+    return payload
+
+
+def write_metadata_fixture(round_dir, manifest):
+    (round_dir / "build_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    (round_dir / "native_build.tcl").write_text(
+        "set_param gate map_mode area_prior\nset_param place seed 5\n", encoding="utf-8")
+    (round_dir / "native_build.log").write_text(
+        "Created by          : Tang Dynasty v6.2.168116\n", encoding="utf-8")
 
 
 class CollectRoundMetricsTests(unittest.TestCase):
@@ -112,19 +144,32 @@ class CollectRoundMetricsTests(unittest.TestCase):
             round_dir = Path(temp)
             snapshot_constraints = {"constraints/timing.sdc": "b" * 64,
                                     "constraints/pin.adc": "c" * 64}
-            manifest = {
-                "files": {"constraints/timing.sdc": "a" * 64},
-                "round_snapshot_files": snapshot_constraints,
-                "manifest_sha256": "d" * 64,
-            }
-            (round_dir / "build_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-            (round_dir / "native_build.tcl").write_text(
-                "set_param gate map_mode area_prior\nset_param place seed 5\n", encoding="utf-8")
-            (round_dir / "native_build.log").write_text(
-                "Created by          : Tang Dynasty v6.2.168116\n", encoding="utf-8")
+            manifest = make_manifest(snapshot_constraints)
+            write_metadata_fixture(round_dir, manifest)
             metadata = _metadata(round_dir, round_dir / "build_manifest.json")
         expected = hashlib.sha256(json.dumps(snapshot_constraints, sort_keys=True).encode()).hexdigest()
         self.assertEqual(metadata["constraints_sha256"], expected)
+
+    def test_rejects_manifest_modified_without_recomputing_hash(self):
+        with tempfile.TemporaryDirectory() as temp:
+            round_dir = Path(temp)
+            manifest = make_manifest({"constraints/timing.sdc": "b" * 64})
+            manifest["round_snapshot_files"]["constraints/timing.sdc"] = "c" * 64
+            write_metadata_fixture(round_dir, manifest)
+            with self.assertRaisesRegex(MetricsError, "manifest_sha256 mismatch"):
+                _metadata(round_dir, round_dir / "build_manifest.json")
+
+    def test_rejects_manifest_missing_required_schema_field(self):
+        with tempfile.TemporaryDirectory() as temp:
+            round_dir = Path(temp)
+            manifest = make_manifest({"constraints/timing.sdc": "b" * 64})
+            del manifest["top_level_tests_with_vendor_stubs"]
+            manifest.pop("manifest_sha256")
+            manifest["manifest_sha256"] = hashlib.sha256(
+                json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+            write_metadata_fixture(round_dir, manifest)
+            with self.assertRaisesRegex(MetricsError, "top_level_tests_with_vendor_stubs"):
+                _metadata(round_dir, round_dir / "build_manifest.json")
 
 
 if __name__ == "__main__":

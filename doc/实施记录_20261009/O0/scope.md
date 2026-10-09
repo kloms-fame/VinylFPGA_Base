@@ -16,12 +16,12 @@
 
 ## 构建
 
-- 正式轮次：`opt_o0_baseline_r3`。r1/r2 是工具门禁补齐期间的独立审计构建；指标完全一致，O0 归档以哈希闭合的 r3 为准。
+- 正式轮次：`opt_o0_baseline_r4`。r1/r2/r3 是工具门禁补齐期间的独立审计构建；指标完全一致，O0 归档以 canonical manifest hash 校验通过的 r4 为准。
 - 工具：Tang Dynasty 6.2.168116。
 - 配置：`area_prior`，place seed 5，完整 gate/place/route、显式 `fix_hold`、final timing。
-- 构建命令：`python tools/resource_opt_round.py opt_o0_baseline_r3`，随后 `python tools/collect_round_metrics.py opt_o0_baseline_r3 --freeze-manifest --bit <现存基线bit路径>`，以及 `python tools/build_verified_round.py opt_o0_baseline_r3 --seed 5 --map-mode area_prior`。
-- EDA 报告及数据库：`prj/resource_opt_verified_20261005/opt_o0_baseline_r3/`（本地忽略目录）。完整输入快照为本目录 `build_manifest.json`；manifest 含 595 项工作树输入哈希及 110 项实际轮次快照哈希（含重定位 `.al`、源代码、约束和 `inputs.sha256.json`）。冻结后工作树文件 hash 校验为 0 mismatches。
-- 本轮 `final_verbose.area` 由统一构建脚本在 route/fix_hold 后直接导出；时序来自本轮 `final.qor`。报告和数据库均属于 r3。
+- 构建命令：`python tools/resource_opt_round.py opt_o0_baseline_r4`，随后 `python tools/collect_round_metrics.py opt_o0_baseline_r4 --freeze-manifest --bit <现存基线bit路径>`，以及 `python tools/build_verified_round.py opt_o0_baseline_r4 --seed 5 --map-mode area_prior`。
+- EDA 报告及数据库：`prj/resource_opt_verified_20261005/opt_o0_baseline_r4/`（本地忽略目录）。完整输入快照为本目录 `build_manifest.json`；manifest SHA-256 为 `e2ba311b5bb9d35dca46be276d605caca871c35e9906320459281cd87e26de86`，含 595 项工作树输入哈希及 110 项实际轮次快照哈希（含重定位 `.al`、源代码、约束和 `inputs.sha256.json`）。冻结后工作树文件 hash 校验为 0 mismatches。指标读取时重算 canonical JSON SHA-256，并验证 schema 必需字段；损坏或缺项会拒绝采集。
+- 本轮 `final_verbose.area` 由统一构建脚本在 route/fix_hold 后直接导出；时序来自本轮 `final.qor`。报告和数据库均属于 r4。
 
 ## final 指标
 
@@ -50,7 +50,7 @@
 - `python tools/test_vinyl_packer.py`：24/24 PASS。
 - `python tools/test_s6_assets.py`：PASS。
 - `python tools/verify_lrc_assets_repro.py`：PASS。
-- 指标解析样本：实际读取主工作区原生 `native_area_seed5/final_verbose.area` + `final.qor`，以及 MCP AUTO `mcp_auto/audit_20261009_route.area` + `audit_20261009_route.qor`。验证 ps/ns 换算与 AUTO/area_prior 策略不一致拒绝比较；两份历史样本均未提供 overflow 字段，故记录未知。自动化测试还验证工具版本与构建快照约束不一致时拒绝比较，且约束哈希来自本轮快照而非当前工作树。
+- 指标解析样本：实际读取主工作区原生 `native_area_seed5/final_verbose.area` + `final.qor`，以及 MCP AUTO `mcp_auto/audit_20261009_route.area` + `audit_20261009_route.qor`。验证 ps/ns 换算与 AUTO/area_prior 策略不一致拒绝比较；两份历史样本均未提供 overflow 字段，故记录未知。10 项自动化测试验证缺字段拒绝、manifest 被改后 hash 不符拒绝、工具版本与构建快照约束不一致拒绝比较，且约束哈希来自本轮快照而非当前工作树。
 
 ## 路径说明
 

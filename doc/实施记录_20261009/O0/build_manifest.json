@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "created_utc": "2026-10-09T12:23:04.842080+00:00",
-  "round": "opt_o0_baseline_r3",
+  "created_utc": "2026-10-09T12:30:34.229498+00:00",
+  "round": "opt_o0_baseline_r4",
   "files": {
     "constraints/pin.adc": "80d55e1a62bafbf36a47a08f5b08edb8945e64686072ad7c3ab6b37755ca795b",
     "constraints/timing.sdc": "5a9a1feb6d7edd8fba505a043e560eac7f5c7bd8ab1e8842494668a6263057e0",
@@ -564,7 +564,7 @@
     "tools/build_resource_opt.tcl": "ae3c438342d464e2e44fe58eaf05e62980fa992d4b0237e7bc1d3d16f9dc21ab",
     "tools/build_verified_round.py": "cbca3dc9750654143b87de20a732d325df2e8fdea595ba52dc943962f63319b0",
     "tools/check_streamer_transactions.py": "13f58d412660606a651efdba43fe87a25d8a7eef54ee7bccc531c3d574f8521e",
-    "tools/collect_round_metrics.py": "33bc0f43e8fa2df7f1dd96ffe3097f97a43feae0b85ec44ee578a216c43c4f73",
+    "tools/collect_round_metrics.py": "7bbfff9fec1d3c6aa1fdcd378a675fa4d93ebfa2033cadcef77e7a7e0a1d29d5",
     "tools/download_fix1315_seed3.tcl": "4f151f85fa37ceebec30acd0b480cea5594efbdc6c5fc3c06baac3a6ebee697d",
     "tools/download_lecture14.tcl": "650b8ae9bd40d175f32778ea942eecd45fd446b577805cc2f096260baedcc1ad",
     "tools/download_lecture15.tcl": "eb0d6e5e30dbef31d577be5030f859af9f574f9b3ae96d931522d6e4f337c0a1",
@@ -579,7 +579,7 @@
     "tools/release_verified_round.py": "cdfb633444ab0bdbda6943c47616052188bd5b4dc4603eaced759f736f470bf4",
     "tools/report_s703_resources.py": "d86cc112c70bfbf4d25144463d1d2f4a54ff145833d562e89d33f808f8a7ccf4",
     "tools/resource_opt_round.py": "109d0551ae0f60f9ac70be08c4d4406ce754985c9a41738fefc31667d0c59167",
-    "tools/test_collect_round_metrics.py": "995a061a3a6319b9861d2d1b04affee45b53a0a89057d96f014786d86e4c1add",
+    "tools/test_collect_round_metrics.py": "fe88e7b5c180cc6d532e01af8c1c1b5c322ae07a9ee7f26926ddd7c589c1c446",
     "tools/test_s6_assets.py": "f732de0e03f456b647c5b46baef904032bb53f151f1da03202942ff39b297dc7",
     "tools/test_vinyl_packer.py": "d1c31b16f1c81c3f51dc0a8dd686a7ca04b8b7641ddeb62d97cad815417c199a",
     "tools/verify_counter_opt.py": "9168c560aaaa54fa787154cb2a70abd6a76a3e77019f21d0bb0d49237ec68bbd",
@@ -708,7 +708,7 @@
     "src/video/s6_video_layer.v": "4507b3ed25d161fa445b50bdef1cef1245886126848c30d2eec5e5d69037ef07",
     "constraints/pin.adc": "80d55e1a62bafbf36a47a08f5b08edb8945e64686072ad7c3ab6b37755ca795b",
     "constraints/timing.sdc": "5a9a1feb6d7edd8fba505a043e560eac7f5c7bd8ab1e8842494668a6263057e0",
-    "VinylFPGA.al": "181b350c65c9ae96aab1295f722f170d8562b0df53f346d5c913fd11fbc4bc9a",
+    "VinylFPGA.al": "5145b163130c95bf8e46dba8cac94a91277356afd56fb0a4cca52d4d0c35e4df",
     "inputs.sha256.json": "e5ba9611229bf8c365270089a7c25c374b0ccb43602d0154a4a62568950a543f"
   },
   "production_tests": [
@@ -781,5 +781,5 @@
     "A local bit hash does not prove it is programmed on the current board.",
     "No current board-to-bit or board-to-card binding is asserted."
   ],
-  "manifest_sha256": "f35185d48180b364b415f40c4a786c9c9a1a1dc168f99763558015aacfffc4d8"
+  "manifest_sha256": "e2ba311b5bb9d35dca46be276d605caca871c35e9906320459281cd87e26de86"
 }
