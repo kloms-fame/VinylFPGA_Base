@@ -88,3 +88,6 @@ sim/s6_20261006/*.img
 sim/s6_20261006/*.json
 !sim/s6_20261006/index_v1.hex
 !sim/s6_20261006/index_v2.hex
+
+# Local isolated development worktrees
+.worktrees/
