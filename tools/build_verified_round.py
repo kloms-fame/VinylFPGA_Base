@@ -45,6 +45,7 @@ lines += ['set_param place seed ' + str(a.seed),
           # 不受该门槛限制，可消除第三方 HDMI IP 内 20 ps 级的结构性 hold 违例。
           'fix_hold', 'update_timing -mode final',
           'report_area -io_info -file ' + out('final.area'),
+          'report_area -verbose -file ' + out('final_verbose.area'),
           'report_qor -step route -file ' + out('final.qor'),
           'report_timing_summary -file ' + out('final.timing'),
           'report_timing_exception -file ' + out('final.exceptions'),
