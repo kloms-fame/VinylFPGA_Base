@@ -18,10 +18,9 @@ module s6_video_layer #(
 );
  reg [63:0] meta1,meta2;
  reg [2:0] visual_sync;
- reg visual_pending,prefer_vinyl,play_frame;
- reg [7:0] phase_frame;
- reg [9:0] raw_x,raw_y,out_y,adj_y;
- reg raw_q,out_q,adj_q;
+ reg visual_pending,prefer_vinyl;
+ reg [9:0] raw_x,raw_y,out_y;
+ reg raw_q,out_q;
  wire visual_event=visual_sync[2]^visual_sync[1];
  wire [32:0] mv_end_lba={1'b0,meta2[31:0]} + (meta2[47:32]*33'd300);
  wire mv_meta_valid=(meta2[63:56]==8'd1 && meta2[55:48]==8'd10 &&
@@ -50,14 +49,6 @@ module s6_video_layer #(
   if(!rst_n) prefer_vinyl<=0;
   else if(frame_start && play_active && (visual_pending^visual_event)) prefer_vinyl<=~prefer_vinyl;
  end
- always @(posedge clk or negedge rst_n) begin
-  if(!rst_n) play_frame<=0;
-  else if(frame_start) play_frame<=ENABLE && play_active && !diagnostic;
- end
- always @(posedge clk or negedge rst_n) begin
-  if(!rst_n) phase_frame<=0;
-  else if(frame_start) phase_frame<=time_ms[10:3];
- end
  // Scheduler display bank changes on this same edge; use the previous ready
  // bank for one extra video frame on first acquisition only (no torn frame).
  // Bank selection itself is wired from scheduler and settles before read_req.
@@ -79,9 +70,6 @@ module s6_video_layer #(
   if(!rst_n) out_q<=0; else out_q<=out_de;
  end
  always @(posedge clk or negedge rst_n) begin
-  if(!rst_n) adj_q<=0; else adj_q<=adjusted_de;
- end
- always @(posedge clk or negedge rst_n) begin
   if(!rst_n) raw_x<=0;
   else if(!raw_read_en) raw_x<=0;
   else raw_x<=raw_x+1'b1;
@@ -96,15 +84,10 @@ module s6_video_layer #(
   else if(frame_start) out_y<=0;
   else if(out_q && !out_de) out_y<=out_y+1'b1;
  end
- always @(posedge clk or negedge rst_n) begin
-  if(!rst_n) adj_y<=0;
-  else if(frame_start) adj_y<=0;
-  else if(adj_q && !adjusted_de) adj_y<=adj_y+1'b1;
- end
  assign fifo_read_allowed=!mv_read_active || (raw_x>=16 && raw_x<336 && raw_y>=64 && raw_y<304);
  assign mv_window_visible=out_x>=16 && out_x<336 && out_y>=64 && out_y<304;
- vinyl_renderer #(.VINYL_CX(176),.VINYL_CY(184),.VINYL_R(112),.LABEL_R(34)) renderer(
-  .clk(clk),.rst_n(rst_n),.de(adjusted_de),.pixel_x(adjusted_x),.pixel_y(adj_y),
-  .phase(phase_frame),.enable(play_frame && !mv_read_active),.rgb_in(rgb_in),.rgb_out(rgb_out),.hit());
+ // Reuse the existing selected cover/image stream. The former animated vinyl
+ // geometry only obscured this stream and required its own coordinate state.
+ assign rgb_out=rgb_in;
 endmodule
 `endif

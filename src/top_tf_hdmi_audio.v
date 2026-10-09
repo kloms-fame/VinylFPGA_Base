@@ -54,7 +54,6 @@
 `include "video/mv_sector_mux.v"
 `include "video/mv_stream_player.v"
 `include "video/mv_frame_scheduler.v"
-`include "display/vinyl_renderer.v"
 `include "video/s6_video_layer.v"
 `include "SD/media_supervisor.v"
 
