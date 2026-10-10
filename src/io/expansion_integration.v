@@ -68,6 +68,7 @@ module expansion_integration #(
 
     // ===================== X1：状态反馈执行器接线（clk 域）=====================
     input  wire [7:0]  pcm_level,          // X1B：PCM 包络（顶层已从视频域跨来）
+    input  wire [2:0]  ws_brightness_level, // D8：CSR 档位，同属 50 MHz clk 域
     input  wire        mv_mode_active,
     input  wire        ws_mode_tgl,        // X1B：KEY10 模式循环翻转电平
     output wire [3:0]  board_sw_level,     // X1C：母板 SW1-4 消抖后电平（上拨=1）
@@ -436,6 +437,7 @@ module expansion_integration #(
         .enable    (ws_enable),
         .mode_tgl  (ws_mode_tgl),
         .level     (pcm_level),
+        .brightness_level(ws_brightness_level),
         .mute      (1'b0),          // X5 前恒 0
         .ws_data   (exp_ws2812_data)
     );

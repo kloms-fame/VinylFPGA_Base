@@ -235,6 +235,7 @@ reg  [11:0] volume_bcd_frame;
 reg  [2:0]  brightness_level_frame;
 reg  [2:0]  contrast_level_frame;
 reg  [2:0]  rotation_level_frame;
+reg  [2:0]  ws_brightness_level_frame;
 reg  [1:0]  ec2_state_frame;
 reg  [2:0]  ec2_selected_frame;
 
@@ -454,9 +455,10 @@ wire [7:0] play_volume_csr;
 wire [2:0] brightness_level_csr;
 wire [2:0] contrast_level_csr;
 wire [2:0] rotation_level_csr;
+wire [2:0] ws_brightness_level_csr;
 wire       param_update_csr;
-wire [21:0] params_bundle_csr;
-wire [21:0] params_bundle_video;
+wire [24:0] params_bundle_csr;
+wire [24:0] params_bundle_video;
 wire [2:0] rotation_level_sd;
 wire       ui_tick_1ms;
 wire       ec2_step_valid;
@@ -735,13 +737,15 @@ ui_param_csr u_ui_param_csr(
     .wr_valid(param_csr_wr_valid), .wr_id(param_csr_wr_id), .wr_up(param_csr_wr_up),
     .volume(play_volume_csr), .brightness_level(brightness_level_csr),
     .contrast_level(contrast_level_csr), .rotation_level(rotation_level_csr),
+    .ws_level(ws_brightness_level_csr),
     .param_update(param_update_csr));
 
-// Atomic video snapshot: {ui_state, selection, ROT, CON, BRI, VOL}.
-assign params_bundle_csr = {ec2_ui_state, ec2_selected_param, rotation_level_csr,
-                            contrast_level_csr, brightness_level_csr, play_volume_csr};
+// Atomic video snapshot: {ui_state, selection, WSL, ROT, CON, BRI, VOL}.
+assign params_bundle_csr = {ec2_ui_state, ec2_selected_param, ws_brightness_level_csr,
+                            rotation_level_csr, contrast_level_csr,
+                            brightness_level_csr, play_volume_csr};
 assign play_volume_video = params_bundle_video[7:0];
-cdc_bundle_latest #(.WIDTH(22)) u_ui_params_cdc(
+cdc_bundle_latest #(.WIDTH(25)) u_ui_params_cdc(
     .src_clk(clk), .src_rst_n(exp_rst_n), .src_data(params_bundle_csr),
     .src_update(param_update_csr | ec2_ui_update), .dst_clk(video_clk),
     .dst_rst_n(media_video_rst_n), .dst_data(params_bundle_video));
@@ -776,6 +780,7 @@ always @(posedge video_clk or negedge media_video_rst_n) begin
         brightness_level_frame<= 3'd3;
         contrast_level_frame  <= 3'd2;
         rotation_level_frame  <= 3'd2;
+        ws_brightness_level_frame <= 3'd4;
         ec2_state_frame       <= 2'd0;
         ec2_selected_frame    <= 3'd0;
     end else if (frame_start) begin
@@ -784,8 +789,9 @@ always @(posedge video_clk or negedge media_video_rst_n) begin
         brightness_level_frame <= params_bundle_video[10:8];
         contrast_level_frame   <= params_bundle_video[13:11];
         rotation_level_frame   <= params_bundle_video[16:14];
-        ec2_selected_frame     <= params_bundle_video[19:17];
-        ec2_state_frame        <= params_bundle_video[21:20];
+        ws_brightness_level_frame <= params_bundle_video[19:17];
+        ec2_selected_frame     <= params_bundle_video[22:20];
+        ec2_state_frame        <= params_bundle_video[24:23];
     end
 end
 reset_sync u_media_video_reset(.clk(video_clk),
@@ -2360,6 +2366,7 @@ ec2_param_osd u_ec2_param_osd (
     .brightness_level (brightness_level_frame),
     .contrast_level   (contrast_level_frame),
     .rotation_level   (rotation_level_frame),
+    .ws_level         (ws_brightness_level_frame),
     .out_vs           (ec2_panel_vs),
     .out_de           (ec2_panel_de),
     .out_pixel_x      (ec2_panel_x),
@@ -2534,6 +2541,7 @@ expansion_integration #(
     .restart_req      (restart_req),
     // X1：状态反馈执行器接线
     .pcm_level        (pcm_level_clk),
+    .ws_brightness_level(ws_brightness_level_csr),
     .mv_mode_active   (mv_read_active),
     .ws_mode_tgl      (ws_mode_tgl),
     .board_sw_level   (board_sw_level_clk),
@@ -2589,7 +2597,7 @@ ec2_event_replay u_ec2_event_replay(
     .step_valid(ec2_step_valid), .step_up(ec2_step_up),
     .step_ready(ec2_step_ready), .press_event(ec2_press_event));
 
-ec2_param_controller #(.PARAM_COUNT(4)) u_ec2_param_controller(
+ec2_param_controller #(.PARAM_COUNT(5)) u_ec2_param_controller(
     .clk(clk), .rst_n(exp_rst_n), .enable(ec2_control_enable),
     .tick_1ms(ui_tick_1ms), .step_valid(ec2_step_valid),
     .step_up(ec2_step_up), .step_ready(ec2_step_ready),

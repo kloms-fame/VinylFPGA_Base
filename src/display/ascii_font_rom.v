@@ -68,6 +68,12 @@ module ascii_font_rom (
         row_mem[708] = 8'h3c; row_mem[709] = 8'h66; row_mem[710] = 8'h66; // X
         row_mem[672] = 8'h7e; row_mem[673] = 8'h18; row_mem[674] = 8'h18; row_mem[675] = 8'h18;
         row_mem[676] = 8'h18; row_mem[677] = 8'h18; row_mem[678] = 8'h18; // T
+        row_mem[696] = 8'h66; row_mem[697] = 8'h66; row_mem[698] = 8'h66; row_mem[699] = 8'h66;
+        row_mem[700] = 8'h7e; row_mem[701] = 8'h7e; row_mem[702] = 8'h66; // W
+
+        // Percentage sign for WSL values.
+        row_mem[297] = 8'h62; row_mem[298] = 8'h64; row_mem[299] = 8'h08;
+        row_mem[300] = 8'h10; row_mem[301] = 8'h26; row_mem[302] = 8'h46;
 
         // Ratio separator: '/'
         row_mem[376] = 8'h06; row_mem[377] = 8'h0c; row_mem[378] = 8'h18; row_mem[379] = 8'h30;

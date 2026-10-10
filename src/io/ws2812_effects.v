@@ -30,6 +30,7 @@ module ws2812_effects #(
     input  wire       enable,        // DIP6 WS 总使能（上拨=1）
     input  wire       mode_tgl,      // KEY10 单拍电平翻转（clk 域）
     input  wire [7:0] level,         // PCM 包络 0..255（clk 域，已跨域同步）
+    input  wire [2:0] brightness_level, // D8: 0/25/50/75/100% of safe palette
     input  wire       mute,          // X5 前恒 0
 
     output wire       ws_data
@@ -73,12 +74,17 @@ module ws2812_effects #(
     wire accept_frame = load_req && !busy;
     reg       frame_mode;
     reg [7:0] vu_envelope;
+    reg [2:0] brightness_frame;
     wire mode_start = (mode != frame_mode);
     // Exactly floor(level * 8 / 255): thresholds 32,64,...,224,255.
     wire [3:0] vu_count = vu_envelope == 255 ? 4'd8 : {1'b0,vu_envelope[7:5]};
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) frame_mode <= 1'b0;
         else if (accept_frame) frame_mode <= enable ? mode : 1'b0;
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) brightness_frame <= 3'd4;
+        else if (accept_frame) brightness_frame <= brightness_level;
     end
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) vu_envelope <= 0;
@@ -91,7 +97,7 @@ module ws2812_effects #(
     end
     wire [4:0] pixel_index;
     reg [7:0] red, green, blue;
-    wire [23:0] pixel_grb = {green,red,blue};
+    reg [7:0] red_scaled, green_scaled, blue_scaled;
     always @* begin
         red=0; green=0; blue=0;
         if (frame_mode == 1 && pixel_index < vu_count) begin
@@ -101,6 +107,30 @@ module ws2812_effects #(
             else red=63;
         end
     end
+
+    // Scale each safe palette component by shifts/adds; 100% is an exact
+    // bypass, and every scaled result stays at or below its original limit.
+    always @* begin
+        red_scaled=0; green_scaled=0; blue_scaled=0;
+        case (brightness_frame)
+            3'd1: begin
+                red_scaled=red >> 2; green_scaled=green >> 2; blue_scaled=blue >> 2;
+            end
+            3'd2: begin
+                red_scaled=red >> 1; green_scaled=green >> 1; blue_scaled=blue >> 1;
+            end
+            3'd3: begin
+                red_scaled=(red + (red << 1)) >> 2;
+                green_scaled=(green + (green << 1)) >> 2;
+                blue_scaled=(blue + (blue << 1)) >> 2;
+            end
+            3'd4: begin
+                red_scaled=red; green_scaled=green; blue_scaled=blue;
+            end
+            default: ;
+        endcase
+    end
+    wire [23:0] pixel_grb = {green_scaled,red_scaled,blue_scaled};
 
     // ---- 关闭后补发完整黑帧；此分支中 frame_mode 必然锁存为 0 ----
     always @(posedge clk or negedge rst_n) begin
