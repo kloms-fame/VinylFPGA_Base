@@ -28,7 +28,8 @@
 `define PLAYBACK_TIME_X           10'd24
 `define PLAYBACK_TIME_Y           10'd352
 `define PLAYBACK_PROGRESS_X       10'd24
-`define PLAYBACK_PROGRESS_Y       10'd372
+`define PLAYBACK_PROGRESS_Y       10'd370
+`define PLAYBACK_PROGRESS_H       10'd6
 `define PLAYBACK_PROGRESS_W       10'd240
 `define PLAYBACK_LYRIC_X          10'd356
 `define PLAYBACK_LYRIC_Y          10'd224

@@ -924,7 +924,7 @@ wire        display_ok        = pat_mode ? pat_done_s2 : display_valid_sync2;
 // 诊断模式下把 OSD / 转场 / 波形逐级旁路，屏幕上只留 SDRAM 读回数据本身
 wire [23:0] trans_rgb_eff     = pat_mode ? vout_data : transition_rgb;
 wire [23:0] osd_rgb_eff       = pat_mode ? trans_rgb_eff : osd_rgb_out;
-wire [23:0] wave_rgb_eff      = pat_mode ? osd_rgb_eff : waveform_rgb_out;
+wire [23:0] wave_rgb_eff      = pat_mode ? osd_rgb_eff : osd_rgb_out;
 
 localparam PAT_IDLE   = 2'd0;
 localparam PAT_REQ    = 2'd1;
@@ -1700,28 +1700,6 @@ assign osd_rgb_out = (!display_valid_sync2 && media_err_code_frame != 0) ? 24'h2
 
 
 
-// 第十二讲：音频波形+峰值条叠加。位于OSD之后、RGB转AXIS之前，
-// 纯像素级组合替换，不改变de/vs节拍，不影响HDMI音频数据岛调度。
-promax_audio_waveform #(
-    .WAVE_X      (64),
-    .WAVE_Y      (376),
-    .WAVE_WIDTH  (512),
-    .WAVE_HEIGHT (96),
-    .DECIMATE    (12)
-) u_promax_audio_waveform (
-    .clk             (video_clk),
-    .rst_n           (video_rst_n),
-    .vsync           (vs),
-    .de              (adjusted_de),
-    .rgb_in          (osd_rgb_out),
-    .pixel_x         (adjusted_pixel_x),
-    .enable          (waveform_enable_frame),
-    .pcm_tap_valid   (wav_sample_valid),
-    .pcm_tap_left    (wav_sample_left),
-    .rgb_out         (waveform_rgb_out),
-    .waveform_active (waveform_active)
-);
-
 frame_read_write #(
     .DYNAMIC_LINEAR   (1),
     .EXTERNAL_READ_BUSY(S6_VIDEO_ENABLE),
@@ -2280,8 +2258,8 @@ audio_arc_calculate #(
 
 // ===================== RGB/DE 转 AXIS 视频 =====================
 // ===================== S2：开机 Logo 图层（末级像素替换）=====================
-// 位置：波形叠加之后、RGB->AXIS 之前。boot_active=1 时整屏由 Logo 接管，
-// 盒外为纯黑；boot_active=0 时 final_rgb 完全等于 S1 的 waveform_rgb_out，
+// 位置：EC2 参数浮窗之后、RGB->AXIS 之前。boot_active=1 时整屏由 Logo 接管，
+// 盒外为纯黑；boot_active=0 时 final_rgb 完全等于 EC2 输出，
 // de/vs 节拍一行不改，因此不影响 HDMI 时序与音频数据岛调度。
 boot_layer #(
     .BOOT_ENABLE  (S2_BOOT_ENABLE),
@@ -2451,6 +2429,29 @@ playback_page u_playback_page (
     .out_pixel_x(playback_page_x),.out_rgb(playback_page_rgb)
 );
 
+// The page first paints an opaque canvas around the media window. Composite
+// the live waveform afterwards so cover pixels cannot show through its bars.
+// This is a combinational RGB overlay and keeps the aligned DE/VS/x stage.
+promax_audio_waveform #(
+    .WAVE_X      (64),
+    .WAVE_Y      (376),
+    .WAVE_WIDTH  (512),
+    .WAVE_HEIGHT (96),
+    .DECIMATE    (12)
+) u_promax_audio_waveform (
+    .clk             (video_clk),
+    .rst_n           (video_rst_n),
+    .vsync           (playback_page_vs),
+    .de              (playback_page_de),
+    .rgb_in          (playback_page_rgb),
+    .pixel_x         (playback_page_x),
+    .enable          (waveform_enable_frame && !pat_mode),
+    .pcm_tap_valid   (wav_sample_valid),
+    .pcm_tap_left    (wav_sample_left),
+    .rgb_out         (waveform_rgb_out),
+    .waveform_active (waveform_active)
+);
+
 // D6: one frame-coherent overlay snapshot, above user media layers and below
 // Boot/blank priority. Its synchronous ASCII ROM adds one aligned RGB/DE/VS beat.
 ec2_param_osd u_ec2_param_osd (
@@ -2459,7 +2460,7 @@ ec2_param_osd u_ec2_param_osd (
     .vs               (playback_page_vs),
     .de               (playback_page_de),
     .pixel_x          (playback_page_x),
-    .rgb_in           (playback_page_rgb),
+    .rgb_in           (waveform_rgb_out),
     .visible          ((ec2_state_frame != 2'd0) && !pat_mode),
     .ui_state         (ec2_state_frame),
     .selected_param   (ec2_selected_frame),

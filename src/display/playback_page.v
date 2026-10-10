@@ -3,8 +3,8 @@
 `define EXP_PLAYBACK_PAGE_V
 `include "playback_layout.vh"
 
-// D10b: static playback page. The existing media rectangle and waveform
-// remain in the incoming stream; only page backgrounds and text are added.
+// D10b: static playback page. The media rectangle remains in the incoming
+// stream; the waveform is composited after this page so its canvas is opaque.
 // One shared synchronous font port serves title, artist, time and lyric text.
 module playback_page (
     input  wire         clk,
@@ -43,6 +43,7 @@ module playback_page (
     localparam [23:0] LYRIC_COLOR    = 24'hFFE860;
     localparam [23:0] PROGRESS_COLOR = 24'h45D7B0;
     localparam [23:0] TRACK_COLOR    = 24'h273744;
+    localparam [23:0] PROGRESS_KNOB_COLOR = 24'hE8F7F5;
 
     localparam [1:0] TEXT_TITLE  = 2'd0;
     localparam [1:0] TEXT_ARTIST = 2'd1;
@@ -101,7 +102,7 @@ module playback_page (
     reg [23:0] base_rgb_q;
     reg page_enable_q;
     reg text_hit_q;
-    reg [3:0] font_col_q;
+    reg [3:0] font_px_col_q;
     reg [1:0] text_kind_q;
     reg [9:0] pixel_y_q;
     reg [7:0] progress_fill_q;
@@ -110,6 +111,7 @@ module playback_page (
     reg ascii_mode;
     reg [7:0] direct_glyph;
     reg [3:0] selected_column;
+    reg [3:0] selected_pixel_col;
     reg [3:0] selected_row;
     reg [1:0] selected_kind;
     reg [7:0] selected_ascii;
@@ -147,6 +149,7 @@ module playback_page (
         ascii_mode = 1'b0;
         direct_glyph = 8'd0;
         selected_column = 4'd0;
+        selected_pixel_col = 4'd0;
         selected_row = 4'd0;
         selected_kind = TEXT_TITLE;
         selected_ascii = 8'h20;
@@ -158,6 +161,7 @@ module playback_page (
         if (title_region) begin
             selected_kind = TEXT_TITLE;
             selected_column = title_dx[7:4];
+            selected_pixel_col = title_dx[3:0];
             selected_row = line_y - `PLAYBACK_TITLE_Y;
             if (title_fallback) begin
                 if (selected_column < 8) begin
@@ -184,6 +188,7 @@ module playback_page (
         end else if (artist_region) begin
             selected_kind = TEXT_ARTIST;
             selected_column = artist_dx[7:4];
+            selected_pixel_col = artist_dx[3:0];
             selected_row = line_y - `PLAYBACK_ARTIST_Y;
             if (artist_fallback) begin
                 if (selected_column < 9) begin
@@ -210,6 +215,7 @@ module playback_page (
         end else if (time_region) begin
             selected_kind = TEXT_TIME;
             selected_column = time_dx[7:4];
+            selected_pixel_col = time_dx[3:0];
             selected_row = line_y - `PLAYBACK_TIME_Y;
             if (selected_column < 13) begin
                 text_request = 1'b1;
@@ -220,6 +226,7 @@ module playback_page (
         end else if (lyric_region) begin
             selected_kind = TEXT_LYRIC;
             selected_column = lyric_dx[7:4];
+            selected_pixel_col = lyric_dx[3:0];
             selected_row = line_y - `PLAYBACK_LYRIC_Y;
             if (lyric_fallback) begin
                 if (selected_column < 9) begin
@@ -238,10 +245,7 @@ module playback_page (
     wire preserve_media =
         (pixel_x >= `PLAYBACK_MV_X0) && (pixel_x < `PLAYBACK_MV_X1) &&
         (line_y >= `PLAYBACK_MV_Y0) && (line_y < `PLAYBACK_MV_Y1);
-    wire preserve_wave =
-        (pixel_x >= `PLAYBACK_WAVE_X0) && (pixel_x < `PLAYBACK_WAVE_X1) &&
-        (line_y >= `PLAYBACK_WAVE_Y0) && (line_y < `PLAYBACK_WAVE_Y1);
-    wire [23:0] base_rgb_in = (enable && de && !preserve_media && !preserve_wave)
+    wire [23:0] base_rgb_in = (enable && de && !preserve_media)
                             ? BG_COLOR : rgb_in;
 
     always @(posedge clk or negedge rst_n) begin
@@ -252,7 +256,7 @@ module playback_page (
             base_rgb_q <= 24'h000000;
             page_enable_q <= 1'b0;
             text_hit_q <= 1'b0;
-            font_col_q <= 4'd0;
+            font_px_col_q <= 4'd0;
             text_kind_q <= TEXT_TITLE;
             pixel_y_q <= 10'd0;
             progress_fill_q <= 8'd0;
@@ -270,7 +274,7 @@ module playback_page (
             base_rgb_q <= base_rgb_in;
             page_enable_q <= enable;
             text_hit_q <= text_request;
-            font_col_q <= selected_column;
+            font_px_col_q <= selected_pixel_col;
             text_kind_q <= selected_kind;
             pixel_y_q <= line_y;
             progress_fill_q <= progress_fill;
@@ -281,11 +285,22 @@ module playback_page (
     end
 
     wire [9:0] progress_dx = out_pixel_x - `PLAYBACK_PROGRESS_X;
+    wire [9:0] progress_dy = pixel_y_q - `PLAYBACK_PROGRESS_Y;
+    wire [9:0] progress_inset = ((progress_dy == 0) ||
+                                 (progress_dy == (`PLAYBACK_PROGRESS_H - 10'd1)))
+                               ? 10'd2
+                               : ((progress_dy == 10'd1) ||
+                                  (progress_dy == (`PLAYBACK_PROGRESS_H - 10'd2)))
+                               ? 10'd1 : 10'd0;
     wire in_progress_bar = out_de &&
-        (pixel_y_q >= `PLAYBACK_PROGRESS_Y) &&
-        (pixel_y_q < (`PLAYBACK_PROGRESS_Y + 10'd4)) &&
-        (out_pixel_x >= `PLAYBACK_PROGRESS_X) &&
-        (out_pixel_x < (`PLAYBACK_PROGRESS_X + `PLAYBACK_PROGRESS_W));
+        (progress_dy < `PLAYBACK_PROGRESS_H) &&
+        (progress_dx >= progress_inset) &&
+        (progress_dx < (`PLAYBACK_PROGRESS_W - progress_inset));
+    wire progress_thumb = (progress_fill_q >= 8'd2) &&
+        (progress_dy >= 10'd1) &&
+        (progress_dy <= (`PLAYBACK_PROGRESS_H - 10'd2)) &&
+        (progress_dx >= ({2'b00, progress_fill_q} - 10'd2)) &&
+        (progress_dx < ({2'b00, progress_fill_q} + 10'd2));
     wire in_left_panel =
         (out_pixel_x >= `PLAYBACK_META_X0) && (out_pixel_x < `PLAYBACK_META_X1) &&
         (pixel_y_q >= `PLAYBACK_META_Y0) && (pixel_y_q < `PLAYBACK_META_Y1);
@@ -300,7 +315,7 @@ module playback_page (
                         (out_pixel_x == (`PLAYBACK_INFO_X1 - 10'd1)) ||
                         (pixel_y_q == `PLAYBACK_INFO_Y0) ||
                         (pixel_y_q == (`PLAYBACK_INFO_Y1 - 10'd1));
-    wire font_pixel = font_row[4'd15 - font_col_q];
+    wire font_pixel = font_row[4'd15 - font_px_col_q];
 
     always @* begin
         out_rgb = base_rgb_q;
@@ -310,8 +325,12 @@ module playback_page (
             else if (in_right_panel)
                 out_rgb = right_border ? BORDER_COLOR : PANEL_COLOR;
 
-            if (in_progress_bar)
-                out_rgb = (progress_dx < progress_fill_q) ? PROGRESS_COLOR : TRACK_COLOR;
+            if (in_progress_bar) begin
+                if (progress_thumb)
+                    out_rgb = PROGRESS_KNOB_COLOR;
+                else
+                    out_rgb = (progress_dx < progress_fill_q) ? PROGRESS_COLOR : TRACK_COLOR;
+            end
 
             if (text_hit_q && font_pixel) begin
                 case (text_kind_q)
