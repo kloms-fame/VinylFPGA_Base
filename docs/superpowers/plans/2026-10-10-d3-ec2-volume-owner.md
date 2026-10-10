@@ -16,7 +16,7 @@
 - 新建 `src/io/ec2_param_controller.v`：消费路由后的 EC2 步数/按压，管理 VOL 的 SELECT/ADJUST、快速计数差重放和超时。
 - 新建 `src/io/ui_param_csr.v`：唯一 VOL 状态、0～255 饱和和 16 级步进。
 - 新建 `src/io/volume_intent_bridge.v`：SD 域已接受的 up/down 意图到 50 MHz 域的有序异步 FIFO。
-- 新建 `src/io/ui_param_snapshot.v`：以既有 `cdc_bundle_latest` 将 CSR 音量原子送往 video 域。
+- 复用 top 中既有 `cdc_bundle_latest`：将 CSR 音量从 50 MHz 控制域原子送往 video 音频域，避免重复封装 CDC。
 - 修改 `src/audio/play_ctrl.v`：保留播放态门控与事件优先级，移除本地 VOL 状态，输出已接受的方向意图。
 - 修改 `src/top_tf_hdmi_audio.v`：实例化新模块、仲裁 CSR 请求、把 CSR 快照接入音频增益。
 - 修改 `prj/VinylFPGA.al`：登记新 RTL，避免 TD 将模块解析为 black box。

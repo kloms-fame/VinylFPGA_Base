@@ -10,12 +10,7 @@
 // Normal pause retains buffered data; EOF replay and every track step request a
 // drained stream_session restart. Storage failures are not successful EOF.
 // =============================================================================
-module play_ctrl #(
-    parameter [7:0] VOL_DEFAULT = 8'd200,
-    parameter [7:0] VOL_STEP    = 8'd16,
-    parameter [7:0] VOL_MIN     = 8'd32,
-    parameter [7:0] VOL_MAX     = 8'd255
-)(
+module play_ctrl (
     input  wire       clk,
     input  wire       rst_n,
 
@@ -43,8 +38,8 @@ module play_ctrl #(
     output reg        play_active,
     output reg        paused,
     output reg [1:0]  sel_song,
-    output reg [7:0]  volume,
-    output reg        volume_update, // one source-clock pulse after volume changes
+    output reg        volume_intent_valid, // one accepted PLAY-domain direction pulse
+    output reg        volume_intent_up,
     output reg        track_step,     // 1 拍：请求换封面（顶层层转成 fs_next/prev）
     output reg        track_dir       // 1=下一首 0=上一首
 );
@@ -96,18 +91,13 @@ module play_ctrl #(
     wire [1:0] sel_next = (sel_song >= (tot - 3'd1)) ? 2'd0 : (sel_song + 2'd1);
     wire [1:0] sel_prev = (sel_song == 2'd0) ? (tot - 3'd1) : (sel_song - 2'd1);
 
-    wire [8:0] vol_up_sum = {1'b0, volume} + {1'b0, VOL_STEP};
-    wire [8:0] vol_dn_sub = {1'b0, volume} - {1'b0, VOL_STEP};
-    wire [7:0] vol_up_next = (vol_up_sum > {1'b0, VOL_MAX}) ? VOL_MAX : vol_up_sum[7:0];
-    wire [7:0] vol_dn_next = ({1'b0, volume} < ({1'b0, VOL_MIN}+{1'b0,VOL_STEP})) ? VOL_MIN : vol_dn_sub[7:0];
-
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             play_active <= 1'b0;
             paused      <= 1'b0;
             sel_song    <= 2'd0;
-            volume      <= VOL_DEFAULT;
-            volume_update <= 1'b0;
+            volume_intent_valid <= 1'b0;
+            volume_intent_up    <= 1'b0;
             track_step  <= 1'b0;
             track_dir   <= 1'b1;
             end_mode <= 2'd0;
@@ -117,7 +107,7 @@ module play_ctrl #(
             ended <= 1'b0;
         end else begin
             track_step <= 1'b0;
-            volume_update <= 1'b0;
+            volume_intent_valid <= 1'b0;
             restart_request_int <= 1'b0;
             seek_clear <= 1'b0;
             if (mode_event) end_mode <= (end_mode == 2'd2) ? 2'd0 : end_mode + 1'b1;
@@ -169,15 +159,11 @@ module play_ctrl #(
                     end
                 end
                 if (p_up) begin
-                    if (vol_up_next != volume) begin
-                        volume <= vol_up_next;
-                        volume_update <= 1'b1;
-                    end
+                    volume_intent_valid <= 1'b1;
+                    volume_intent_up    <= 1'b1;
                 end else if (p_dn) begin
-                    if (vol_dn_next != volume) begin
-                        volume <= vol_dn_next;
-                        volume_update <= 1'b1;
-                    end
+                    volume_intent_valid <= 1'b1;
+                    volume_intent_up    <= 1'b0;
                 end
             end
         end

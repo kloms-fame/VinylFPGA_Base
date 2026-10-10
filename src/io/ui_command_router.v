@@ -33,7 +33,8 @@ module ui_command_router #(
     parameter integer IR_REPEAT_MIN_MS    = 150,    // 音量 repeat 节流下限
     parameter integer IR_REPEAT_TIMEOUT_MS= 250,    // 连发超时（清最近键）
     parameter integer BLANK_TIMEOUT_MS    = 60000,  // DIP4 自动消隐空闲期限
-    parameter integer RESTART_CONFIRM_MS  = 3000    // 重启确认窗口
+    parameter integer RESTART_CONFIRM_MS  = 3000,   // 重启确认窗口
+    parameter integer USE_EXTERNAL_MS_TICK= 0
 )(
     input  wire        clk,
     input  wire        rst_n,
@@ -46,6 +47,7 @@ module ui_command_router #(
 
     // 运行时 DIP 电平（消抖后，上拨=1）
     input  wire [5:0]  dip_level,
+    input  wire        tick_1ms,
 
     // 业务命令流（复用 EV_* 编码，红外已翻译；组合输出，单拍有效）
     output wire        cmd_valid,
@@ -58,6 +60,7 @@ module ui_command_router #(
     output wire        led_enable,         // DIP3 LED 总使能（S7-05 接入执行器）
     output wire        ws_enable,          // DIP6 WS 总使能（S7-05 接入执行器）
     output reg         restart_req,        // 重启确认后的一拍脉冲
+    output wire        restart_confirm_active,
 
     // ===================== X1A：给 LED 执行器的"已接受"单拍脉冲 =====================
     // ir_accepted：通过白名单 + 双反码校验、且 DIP5 开启的有效红外帧（每帧一拍）。
@@ -165,7 +168,8 @@ module ui_command_router #(
 
     // ---- 1 ms 预分频（饱和回绕，组合 tick）----
     reg [MS_W-1:0] ms_cnt;
-    wire ms_tick = (ms_cnt >= (MS_CYCLES - 1));
+    wire local_ms_tick = (ms_cnt >= (MS_CYCLES - 1));
+    wire ms_tick = USE_EXTERNAL_MS_TICK ? tick_1ms : local_ms_tick;
 
     // ---- 消隐管理（DIP4 自动 + 遥控手动）----
     reg [IDLE_W-1:0] idle_cnt;
@@ -183,6 +187,7 @@ module ui_command_router #(
 
     // 消隐唤醒吞首键：消隐期间第一个有效操作只唤醒（未处于重启确认框）
     wire wake_only = blank_active && ev_action && !restart_armed;
+    assign restart_confirm_active = restart_armed;
     // 遥控息屏切换触发（DIP5 关闭时不生效）
     wire ir_blank_toggle = ev_valid && ir_x_blank && dip_level[4];
 
@@ -255,10 +260,12 @@ module ui_command_router #(
             biz_accepted <= biz_action_c;
 
             // 1 ms 预分频
-            if (ms_cnt >= (MS_CYCLES - 1))
-                ms_cnt <= {MS_W{1'b0}};
-            else
-                ms_cnt <= ms_cnt + 1'b1;
+            if (!USE_EXTERNAL_MS_TICK) begin
+                if (ms_cnt >= (MS_CYCLES - 1))
+                    ms_cnt <= {MS_W{1'b0}};
+                else
+                    ms_cnt <= ms_cnt + 1'b1;
+            end
 
             // 空闲计时：有效操作清零；DIP4 关闭也清零并唤醒；每 ms 递增（饱和）
             if (ev_action || !dip_level[3])

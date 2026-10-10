@@ -72,7 +72,11 @@ module expansion_integration #(
     input  wire        ws_mode_tgl,        // X1B：KEY10 模式循环翻转电平
     output wire [3:0]  board_sw_level,     // X1C：母板 SW1-4 消抖后电平（上拨=1）
     output wire        disp_mode_tgl,      // X1C：母板 KEY3(B1) 每按一次翻转
-    output wire        dip2_slideshow_enable // D1：J2 DIP2 消抖电平（上拨=1）
+    output wire        dip2_slideshow_enable, // D1：J2 DIP2 消抖电平（上拨=1）
+    output wire        ui_tick_1ms,          // D3：共享50MHz毫秒使能
+    output wire [15:0] enc2_count_raw,        // D3：EC2 当前累计计数，用于禁用期基线
+    output wire        ui_actions_ready,      // D3：DIP1在场且输入稳定
+    output wire        restart_confirm_active // D3：重启确认期间不消费EC2
 );
 
     // 事件编码常量（与 ui_event_bus 共用，module 作用域）
@@ -95,6 +99,7 @@ module expansion_integration #(
     wire        enc2_step_pulse;
     wire        enc2_direction;
     wire [15:0] enc2_count;
+    assign enc2_count_raw = enc2_count;
     wire        enc2_sw_fall_pulse;
     wire        enc2_sw_rise_pulse;
 
@@ -111,6 +116,7 @@ module expansion_integration #(
     wire [3:0]  cmd_code;
     wire [15:0] cmd_arg;
     wire [15:0] cmd_aux;
+    wire        router_restart_confirm_active;
 
     // X1A：router 给出的"已接受"单拍脉冲（LED1/LED2 业务化输入）
     wire        ir_accepted;
@@ -119,6 +125,9 @@ module expansion_integration #(
     wire [7:0] err_code;
     assign uart_tx = 1'b1;
     wire debounce_ce;
+    ui_ms_tick #(.CYCLES_PER_MS(CLK_FREQ_HZ / 1000)) u_ui_ms_tick (
+        .clk(clk), .rst_n(rst_n), .tick_1ms(ui_tick_1ms)
+    );
     debounce_tick #(.TICK_CYCLES(DEBOUNCE_TICK_CYCLES)) u_debounce_tick (
         .clk(clk), .rst_n(rst_n), .tick_ce(debounce_ce)
     );
@@ -238,9 +247,11 @@ module expansion_integration #(
         end
     end
     wire action_valid = ev_valid && exp_actions_ready && dip_level[0];
+    assign ui_actions_ready = exp_actions_ready && dip_level[0];
+    assign restart_confirm_active = router_restart_confirm_active;
 
     // ---- S7-03：业务命令路由（红外白名单/repeat、DIP5 使能、消隐唤醒、重启确认）----
-    ui_command_router u_ui_command_router (
+    ui_command_router #(.USE_EXTERNAL_MS_TICK(1)) u_ui_command_router (
         .clk                (clk),
         .rst_n              (rst_n),
         .ev_valid           (action_valid),
@@ -248,6 +259,7 @@ module expansion_integration #(
         .ev_arg             (ev_arg),
         .ev_aux             (ev_aux),
         .dip_level          (dip_level),
+        .tick_1ms           (ui_tick_1ms),
         .cmd_valid          (cmd_valid),
         .cmd_code           (cmd_code),
         .cmd_arg            (cmd_arg),
@@ -256,6 +268,7 @@ module expansion_integration #(
         .led_enable         (led_enable),
         .ws_enable          (ws_enable),
         .restart_req        (restart_req),
+        .restart_confirm_active(router_restart_confirm_active),
         .ir_accepted        (ir_accepted),
         .biz_accepted       (biz_accepted)
     );

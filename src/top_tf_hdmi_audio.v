@@ -16,10 +16,15 @@
 `include "io/expansion_io_hub.v"
 `include "io/ui_event_bus.v"
 `include "io/ui_command_router.v"
+`include "io/ui_ms_tick.v"
 `include "io/health_monitor.v"
 `include "io/buzzer_feedback.v"
 `include "io/expansion_integration.v"
 `include "io/ui_event_bridge.v"
+`include "io/ui_param_csr.v"
+`include "io/ec2_param_controller.v"
+`include "io/ec2_event_replay.v"
+`include "io/volume_intent_bridge.v"
 // X1：状态反馈执行器（LED / WS2812 / 数码管业务 mux）
 `include "io/led_business_driver.v"
 `include "io/ws2812_driver.v"
@@ -304,6 +309,7 @@ wire        thumb_mem_enable;       // mem 域：缩略图取像允许发请求
 wire        ui_ev_valid;
 reg         boot_skip_toggle_clk;
 wire        boot_active;
+reg  [1:0]  boot_active_clk_sync;
 wire [23:0] boot_rgb;
 wire [23:0] final_rgb;
 
@@ -313,6 +319,9 @@ wire        ui_event_valid;
 wire [3:0]  ui_event_code;
 wire [15:0] ui_event_arg;
 wire [15:0] ui_event_aux;
+wire [15:0] exp_enc2_count_raw;
+wire        ui_actions_ready_clk;
+wire        restart_confirm_active_clk;
 // S7-03：运行时状态 / 使能冻结输出（clk 域）
 wire        blank_active;   // 消隐激活（DIP4 自动 + 遥控息屏手动）
 wire        led_enable;     // DIP3 LED 总使能（S7-05 接入执行器）
@@ -363,6 +372,19 @@ always @(posedge sd_card_clk or negedge sd_media_rst_n) begin
         play_media_lost_sd <= play_media_lost;
     end
 end
+reg [1:0] media_ready_clk_sync;
+always @(posedge clk or negedge exp_rst_n) begin
+    if (!exp_rst_n) begin
+        media_ready_clk_sync <= 2'b00;
+        boot_active_clk_sync <= 2'b11;
+    end else begin
+        media_ready_clk_sync <= {media_ready_clk_sync[0], media_mount_ok_sd};
+        boot_active_clk_sync <= {boot_active_clk_sync[0], boot_active};
+    end
+end
+assign ec2_control_enable = media_ready_clk_sync[1] &&
+                            !boot_active_clk_sync[1] && !blank_active &&
+                            ui_actions_ready_clk && !restart_confirm_active_clk;
 
 // sd 域：browse_fsm 还原/路由出的控制脉冲。
 wire        brw_fs_next;        // 全屏：下一张
@@ -387,8 +409,8 @@ wire        brw_ev_seek_bwd2_tgl;
 wire        play_active_sd;
 wire        paused_sd;
 wire [1:0]  play_sel_song_sd;
-wire [7:0]  play_volume_sd;
-wire        play_volume_update_sd;
+wire        play_volume_intent_valid_sd;
+wire        play_volume_intent_up_sd;
 wire        play_track_step_sd;
 wire        play_track_dir_sd;
 wire [2:0]  song_total_sd;
@@ -413,6 +435,27 @@ wire [15:0] seek_frame_vid  = (seek_frame_calc > 20'h0FFFF) ? 16'hFFFF :
 reg         play_active_v1, play_active_v2;
 reg         paused_v1, paused_v2;
 wire [7:0] play_volume_video;
+wire [7:0] play_volume_csr;
+wire       play_volume_update_csr;
+wire       ui_tick_1ms;
+wire       ec2_control_enable;
+wire       ec2_step_valid;
+wire       ec2_step_up;
+wire       ec2_step_ready;
+wire       ec2_press_event;
+wire       ec2_volume_req_valid;
+wire       ec2_volume_req_up;
+wire       ec2_volume_req_ready;
+wire       volume_bridge_src_ready;
+wire       volume_bridge_src_overflow;
+wire       volume_bridge_dst_valid;
+wire       volume_bridge_dst_up;
+wire       volume_bridge_dst_ready;
+wire       volume_csr_wr_valid;
+wire       volume_csr_wr_up;
+wire       volume_bridge_async_rst_n;
+wire       volume_bridge_src_rst_n;
+wire       volume_bridge_dst_rst_n;
 // 切曲 -> video 域时基复位（电平翻转 + 边沿检测）
 wire        play_track_tgl_sd;
 reg         play_track_tgl_v1, play_track_tgl_v2, play_track_tgl_v3;
@@ -637,11 +680,41 @@ assign sd_media_rst_n = sdcard_rst_n & media_sd_rst_n;
 cdc_bundle_latest #(.WIDTH(64)) u_mv_metadata_cdc(
     .src_clk(sd_card_clk),.src_rst_n(sd_media_rst_n),.src_data(mv_metadata_sd),.src_update(mv_metadata_update_sd),
     .dst_clk(video_clk),.dst_rst_n(media_video_rst_n),.dst_data(mv_metadata_video));
-// Volume changes are user-event paced, but use the same bundle contract so a
-// multi-bit step cannot be sampled as a mixed value at an audio sample edge.
+// One volume CSR lives in the 50 MHz UI domain. PLAY-domain intents return
+// through a reset-coupled asynchronous FIFO; EC2 writes the same CSR directly.
+assign volume_bridge_async_rst_n = exp_rst_n;
+reset_sync u_volume_bridge_src_reset(
+    .clk(sd_card_clk), .ext_rst_n(volume_bridge_async_rst_n),
+    .rst_n_sync(volume_bridge_src_rst_n));
+reset_sync u_volume_bridge_dst_reset(
+    .clk(clk), .ext_rst_n(volume_bridge_async_rst_n),
+    .rst_n_sync(volume_bridge_dst_rst_n));
+
+volume_intent_bridge u_volume_intent_bridge(
+    .src_clk(sd_card_clk), .src_rst_n(volume_bridge_src_rst_n),
+    .src_valid(play_volume_intent_valid_sd), .src_up(play_volume_intent_up_sd),
+    .src_ready(volume_bridge_src_ready), .src_overflow(volume_bridge_src_overflow),
+    .dst_clk(clk), .dst_rst_n(volume_bridge_dst_rst_n),
+    .dst_valid(volume_bridge_dst_valid), .dst_up(volume_bridge_dst_up),
+    .dst_ready(volume_bridge_dst_ready));
+
+assign volume_bridge_dst_ready = volume_bridge_dst_valid;
+assign ec2_volume_req_ready = !volume_bridge_dst_valid;
+assign volume_csr_wr_valid = volume_bridge_dst_valid || ec2_volume_req_valid;
+assign volume_csr_wr_up = volume_bridge_dst_valid ? volume_bridge_dst_up
+                                                  : ec2_volume_req_up;
+
+ui_param_csr u_ui_param_csr(
+    .clk(clk), .rst_n(exp_rst_n),
+    .wr_valid(volume_csr_wr_valid), .wr_up(volume_csr_wr_up),
+    .volume(play_volume_csr), .volume_update(play_volume_update_csr));
+
+// The bundled snapshot keeps the whole CSR value stable across the pixel/audio
+// domain and republishes it after a destination-only media reset.
 cdc_bundle_latest #(.WIDTH(8)) u_play_volume_cdc(
-    .src_clk(sd_card_clk),.src_rst_n(sd_media_rst_n),.src_data(play_volume_sd),.src_update(play_volume_update_sd),
-    .dst_clk(video_clk),.dst_rst_n(media_video_rst_n),.dst_data(play_volume_video));
+    .src_clk(clk), .src_rst_n(exp_rst_n), .src_data(play_volume_csr),
+    .src_update(play_volume_update_csr), .dst_clk(video_clk),
+    .dst_rst_n(media_video_rst_n), .dst_data(play_volume_video));
 reset_sync u_media_video_reset(.clk(video_clk),
  .ext_rst_n(video_rst_n & media_sd_rst_n),.rst_n_sync(media_video_rst_n));
 always @(posedge video_clk or negedge media_video_rst_n) begin
@@ -1009,8 +1082,8 @@ play_ctrl u_play_ctrl (
     .play_active   (play_active_sd),
     .paused        (paused_sd),
     .sel_song      (play_sel_song_sd),
-    .volume        (play_volume_sd),
-    .volume_update (play_volume_update_sd),
+    .volume_intent_valid(play_volume_intent_valid_sd),
+    .volume_intent_up   (play_volume_intent_up_sd),
     .track_step    (play_track_step_sd),
     .track_dir     (play_track_dir_sd),
     .seek_restart_in (play_seek_restart_sd),
@@ -1895,9 +1968,8 @@ wire audio_silent = boot_active || (S5_PLAY_ENABLE &&
                      !stream_enable_vid[1] || !wav_stream_active));
 
 // 16点正弦 LUT 峰值约 12000，200/255 缩放后仍保留足够余量，避免削波爆音。
-// S5：音量改由播放态控制（KEY04/05，带饱和钳位）；暂停时压到 0 静音。
-wire [7:0] audio_volume_eff = audio_silent ? 8'd0 :
-                              (S5_PLAY_ENABLE ? play_volume_video : 8'd200);
+// EC2、KEY/IR 与音频增益均只读写同一份 VOL CSR；暂停/启动静音仍沿用原门控。
+wire [7:0] audio_volume_eff = audio_silent ? 8'd0 : play_volume_video;
 assign audio_volume = audio_volume_eff;
 
 // S5：暂停时冻结播放器采样节拍（音频位置与歌词时基同时停住），
@@ -2371,7 +2443,11 @@ expansion_integration #(
     .ws_mode_tgl      (ws_mode_tgl),
     .board_sw_level   (board_sw_level_clk),
     .disp_mode_tgl    (disp_mode_tgl_clk),
-    .dip2_slideshow_enable(dip2_slideshow_enable_clk)
+    .dip2_slideshow_enable(dip2_slideshow_enable_clk),
+    .ui_tick_1ms      (ui_tick_1ms),
+    .enc2_count_raw   (exp_enc2_count_raw),
+    .ui_actions_ready (ui_actions_ready_clk),
+    .restart_confirm_active(restart_confirm_active_clk)
 );
 
 // ==========================================================================
@@ -2407,6 +2483,26 @@ ui_event_bridge u_ui_event_bridge (
     .seek_bwd2_tgl(brw_ev_seek_bwd2_tgl)
 );
 
+// EC2 consumes only events that survived the existing UI router. The live
+// counter is sampled as the disabled-period baseline so wake/recovery motion
+// cannot be replayed later as volume changes.
+ec2_event_replay u_ec2_event_replay(
+    .clk(clk), .rst_n(exp_rst_n), .enable(ec2_control_enable),
+    .count_current(exp_enc2_count_raw),
+    .ev_valid(ui_event_valid), .ev_code(ui_event_code),
+    .ev_arg(ui_event_arg), .ev_aux(ui_event_aux),
+    .step_valid(ec2_step_valid), .step_up(ec2_step_up),
+    .step_ready(ec2_step_ready), .press_event(ec2_press_event));
+
+ec2_param_controller u_ec2_param_controller(
+    .clk(clk), .rst_n(exp_rst_n), .enable(ec2_control_enable),
+    .tick_1ms(ui_tick_1ms), .step_valid(ec2_step_valid),
+    .step_up(ec2_step_up), .step_ready(ec2_step_ready),
+    .press_event(ec2_press_event),
+    .external_volume_event(volume_bridge_dst_valid),
+    .vol_req_valid(ec2_volume_req_valid), .vol_req_up(ec2_volume_req_up),
+    .vol_req_ready(ec2_volume_req_ready), .ui_state());
+
 // ==========================================================================
 // S2：Boot 状态跨域握手
 //   1) clk 域：任一已确认事件 -> 翻转电平（单比特电平翻转是标准 CDC 手法，
@@ -2426,8 +2522,8 @@ end
 
 // ==========================================================================
 // S5：播放态跨越 sd_card_clk -> video_clk
-//   play_active/paused 是慢变单比特电平，使用两级同步；volume 是多位值，
-//   由 u_play_volume_cdc 以 bundled-data 握手保持原子性；
+//   play_active/paused 是慢变单比特电平，使用两级同步；唯一 VOL CSR 位于
+//   50 MHz UI 域，经 u_play_volume_cdc 的 bundled-data 握手原子送到音频域；
 //   track_step 是单拍事件，用"电平翻转 + 目标域边沿检测"搬过去做时基复位。
 // ==========================================================================
 always @(posedge video_clk or negedge video_rst_n) begin
