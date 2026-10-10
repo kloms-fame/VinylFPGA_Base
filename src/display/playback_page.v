@@ -3,9 +3,9 @@
 `define EXP_PLAYBACK_PAGE_V
 `include "playback_layout.vh"
 
-// D10b: static playback page. The media rectangle remains in the incoming
+// D10b-D12: playback page with the media rectangle preserved in the incoming
 // stream; the waveform is composited after this page so its canvas is opaque.
-// One shared synchronous font port serves title, artist, time and lyric text.
+// One shared synchronous font port serves title, artist, time and five lyrics.
 module playback_page (
     input  wire         clk,
     input  wire         rst_n,
@@ -20,9 +20,13 @@ module playback_page (
     input  wire [127:0] title_glyphs,
     input  wire [127:0] artist_glyphs,
     input  wire [7:0]   line_count,
-    input  wire         lyric_valid,
-    input  wire [4:0]   lyric_length,
-    input  wire [127:0] lyric_glyphs,
+    input  wire         lyric_window_valid,
+    input  wire [5:0]   lyric_row_valid,
+    input  wire [41:0]  lyric_row_indices,
+    input  wire [29:0]  lyric_row_lengths,
+    input  wire [767:0] lyric_row_glyphs,
+    input  wire [6:0]   lyric_highlight_index,
+    input  wire [5:0]   lyric_scroll_offset,
     input  wire [127:0] no_lyrics_glyphs,
     input  wire [7:0]   progress_fill,
     input  wire [103:0] time_ascii,
@@ -40,7 +44,6 @@ module playback_page (
     localparam [23:0] BORDER_COLOR   = 24'h314153;
     localparam [23:0] TEXT_COLOR     = 24'hE6EEF5;
     localparam [23:0] SUBTEXT_COLOR  = 24'hA7B8C8;
-    localparam [23:0] LYRIC_COLOR    = 24'hFFE860;
     localparam [23:0] PROGRESS_COLOR = 24'h45D7B0;
     localparam [23:0] TRACK_COLOR    = 24'h273744;
     localparam [23:0] PROGRESS_KNOB_COLOR = 24'hE8F7F5;
@@ -104,6 +107,7 @@ module playback_page (
     reg text_hit_q;
     reg [3:0] font_px_col_q;
     reg [1:0] text_kind_q;
+    reg [23:0] text_color_q;
     reg [9:0] pixel_y_q;
     reg [7:0] progress_fill_q;
 
@@ -115,14 +119,13 @@ module playback_page (
     reg [3:0] selected_row;
     reg [1:0] selected_kind;
     reg [7:0] selected_ascii;
+    reg [23:0] selected_text_color;
     reg title_fallback;
     reg artist_fallback;
-    reg lyric_fallback;
 
     wire [9:0] title_dx = pixel_x - `PLAYBACK_TITLE_X;
     wire [9:0] artist_dx = pixel_x - `PLAYBACK_ARTIST_X;
     wire [9:0] time_dx = pixel_x - `PLAYBACK_TIME_X;
-    wire [9:0] lyric_dx = pixel_x - `PLAYBACK_LYRIC_X;
     wire title_region = enable && de &&
         (line_y >= `PLAYBACK_TITLE_Y) && (line_y < (`PLAYBACK_TITLE_Y + 10'd16)) &&
         (pixel_x >= `PLAYBACK_TITLE_X) && (pixel_x < (`PLAYBACK_TITLE_X + 10'd256));
@@ -132,13 +135,28 @@ module playback_page (
     wire time_region = enable && de &&
         (line_y >= `PLAYBACK_TIME_Y) && (line_y < (`PLAYBACK_TIME_Y + 10'd16)) &&
         (pixel_x >= `PLAYBACK_TIME_X) && (pixel_x < (`PLAYBACK_TIME_X + 10'd208));
-    wire lyric_region = enable && de &&
-        (line_y >= `PLAYBACK_LYRIC_Y) && (line_y < (`PLAYBACK_LYRIC_Y + 10'd16)) &&
-        (pixel_x >= `PLAYBACK_LYRIC_X) && (pixel_x < (`PLAYBACK_LYRIC_X + 10'd256));
     wire [7:0] selected_font_glyph = ascii_mode ? ascii_glyph : direct_glyph;
     wire [11:0] font_addr_full = {selected_font_glyph, 4'b0000} + {8'd0, selected_row};
     wire [SONG_FONT_ADDR_W-1:0] font_addr = font_addr_full[SONG_FONT_ADDR_W-1:0];
     wire [15:0] font_row;
+    wire lyric_font_request;
+    wire [7:0] lyric_font_glyph;
+    wire [3:0] lyric_font_column;
+    wire [3:0] lyric_font_pixel_column;
+    wire [3:0] lyric_font_row;
+    wire [23:0] lyric_text_color;
+
+    lrc_five_osd u_lrc_five_osd (
+        .enable(enable),.de(de),.pixel_x(pixel_x),.pixel_y(line_y),
+        .window_valid(lyric_window_valid),.row_valid(lyric_row_valid),
+        .row_indices(lyric_row_indices),.row_lengths(lyric_row_lengths),
+        .row_glyphs(lyric_row_glyphs),.highlight_index(lyric_highlight_index),
+        .scroll_offset(lyric_scroll_offset),.line_count(line_count),
+        .no_lyrics_glyphs(no_lyrics_glyphs),.font_request(lyric_font_request),
+        .font_glyph(lyric_font_glyph),.font_column(lyric_font_column),
+        .font_pixel_column(lyric_font_pixel_column),.font_row(lyric_font_row),
+        .text_color(lyric_text_color)
+    );
 
     song_font_rom u_shared_song_font (
         .clk(clk), .addr(font_addr), .dout(font_row)
@@ -155,11 +173,12 @@ module playback_page (
         selected_ascii = 8'h20;
         title_fallback = (title_length == 0);
         artist_fallback = (artist_length == 0);
-        lyric_fallback = (line_count == 0);
         ascii_code = 8'h20;
+        selected_text_color = TEXT_COLOR;
 
         if (title_region) begin
             selected_kind = TEXT_TITLE;
+            selected_text_color = TEXT_COLOR;
             selected_column = title_dx[7:4];
             selected_pixel_col = title_dx[3:0];
             selected_row = line_y - `PLAYBACK_TITLE_Y;
@@ -187,6 +206,7 @@ module playback_page (
             end
         end else if (artist_region) begin
             selected_kind = TEXT_ARTIST;
+            selected_text_color = SUBTEXT_COLOR;
             selected_column = artist_dx[7:4];
             selected_pixel_col = artist_dx[3:0];
             selected_row = line_y - `PLAYBACK_ARTIST_Y;
@@ -214,6 +234,7 @@ module playback_page (
             end
         end else if (time_region) begin
             selected_kind = TEXT_TIME;
+            selected_text_color = SUBTEXT_COLOR;
             selected_column = time_dx[7:4];
             selected_pixel_col = time_dx[3:0];
             selected_row = line_y - `PLAYBACK_TIME_Y;
@@ -223,22 +244,14 @@ module playback_page (
                 selected_ascii = packed_ascii_at(time_ascii, selected_column);
                 ascii_code = selected_ascii;
             end
-        end else if (lyric_region) begin
+        end else if (lyric_font_request) begin
             selected_kind = TEXT_LYRIC;
-            selected_column = lyric_dx[7:4];
-            selected_pixel_col = lyric_dx[3:0];
-            selected_row = line_y - `PLAYBACK_LYRIC_Y;
-            if (lyric_fallback) begin
-                if (selected_column < 9) begin
-                    text_request = 1'b1;
-                    direct_glyph = packed_glyph_at(no_lyrics_glyphs, selected_column);
-                end
-            end else if (lyric_valid) begin
-                if (selected_column < lyric_length) begin
-                    text_request = 1'b1;
-                    direct_glyph = packed_glyph_at(lyric_glyphs, selected_column);
-                end
-            end
+            selected_column = lyric_font_column;
+            selected_pixel_col = lyric_font_pixel_column;
+            selected_row = lyric_font_row;
+            direct_glyph = lyric_font_glyph;
+            text_request = lyric_font_request;
+            selected_text_color = lyric_text_color;
         end
     end
 
@@ -258,6 +271,7 @@ module playback_page (
             text_hit_q <= 1'b0;
             font_px_col_q <= 4'd0;
             text_kind_q <= TEXT_TITLE;
+            text_color_q <= TEXT_COLOR;
             pixel_y_q <= 10'd0;
             progress_fill_q <= 8'd0;
             out_vs <= 1'b1;
@@ -276,6 +290,7 @@ module playback_page (
             text_hit_q <= text_request;
             font_px_col_q <= selected_pixel_col;
             text_kind_q <= selected_kind;
+            text_color_q <= selected_text_color;
             pixel_y_q <= line_y;
             progress_fill_q <= progress_fill;
             out_vs <= vs;
@@ -335,7 +350,7 @@ module playback_page (
             if (text_hit_q && font_pixel) begin
                 case (text_kind_q)
                     TEXT_ARTIST, TEXT_TIME: out_rgb = SUBTEXT_COLOR;
-                    TEXT_LYRIC: out_rgb = LYRIC_COLOR;
+                    TEXT_LYRIC: out_rgb = text_color_q;
                     default: out_rgb = TEXT_COLOR;
                 endcase
             end

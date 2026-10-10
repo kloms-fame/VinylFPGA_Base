@@ -59,6 +59,9 @@
 `include "display/song_font_rom.v"
 `include "display/lrc_osd.v"
 `include "display/lrc_multisong_osd.v"
+`include "display/lrc_window_controller.v"
+`include "display/lrc_scroll_controller.v"
+`include "display/lrc_five_osd.v"
 `include "display/brightness_contrast_steps.v"
 `include "display/ascii_font_rom.v"
 `include "display/playback_progress.v"
@@ -2334,9 +2337,8 @@ s6_video_layer #(.ENABLE(S6_VIDEO_ENABLE)) u_s6_video_layer(
  .request_toggle(mv_req_tgl),.request_lba(mv_request_lba),.request_bank(mv_request_bank),
  .done_toggle(mv_done_tgl),.failed(mv_failed));
 
-// ===================== S5：单行歌词叠加（末级，开机 Logo 之下）================
+// ===================== D11/D12：六槽歌词窗口与单口字库像素仲裁 ================
 wire [23:0] lrc_rgb;
-wire        lrc_hit;
 wire [1:0] song_id_frame;
 wire       song_generation_frame;
 wire [6:0] song_line_rom_index;
@@ -2354,10 +2356,20 @@ wire [127:0] song_artist_glyphs;
 wire song_text_valid;
 wire [7:0] song_page_ascii_code;
 wire [7:0] song_line_count_frame;
-wire current_lyric_valid;
-wire [6:0] current_lyric_index;
-wire [4:0] current_lyric_length;
-wire [127:0] current_lyric_glyphs;
+wire lyric_target_valid;
+wire [6:0] lyric_target_index;
+wire lyric_window_valid;
+wire lyric_window_ready;
+wire [6:0] lyric_window_center;
+wire [5:0] lyric_row_valid;
+wire [41:0] lyric_row_indices;
+wire [29:0] lyric_row_lengths;
+wire [767:0] lyric_row_glyphs;
+wire lyric_scroll_active;
+wire [5:0] lyric_scroll_offset;
+wire [6:0] lyric_highlight_index;
+wire lyric_scroll_commit;
+assign lrc_rgb = s6_rgb;
 song_text_rom u_song_text_rom (
     .clk(video_clk),.song_id(song_id_frame),.line_index(song_line_rom_index),
     .line_count(song_line_count_rom),.line_valid(song_line_rom_valid),
@@ -2368,33 +2380,34 @@ song_text_rom u_song_text_rom (
     .no_lyrics_glyphs(song_no_lyrics_glyphs),.ui_ascii_code(song_page_ascii_code),
     .ui_glyph(song_ui_glyph)
 );
-lrc_multisong_osd #(.RENDER_ENABLE(1'b0)) u_lrc_osd (
-    .clk      (video_clk),
-    .rst_n    (video_rst_n),
-    .vs       (vs),
-    .de       (adjusted_de),
-    .pixel_x  (adjusted_pixel_x),
-    .enable   (S5_PLAY_ENABLE && play_active_v2 && !pat_mode),
-    .time_ms  (lyric_time_ms),
-    .song_id_async(song_metadata_video[1:0]),
+lrc_window_controller u_lrc_window_controller (
+    .clk(video_clk),.rst_n(video_rst_n),.vs(vs),
+    .enable(S5_PLAY_ENABLE && play_active_v2 && !pat_mode),
+    .time_ms(lyric_time_ms),.song_id_async(song_metadata_video[1:0]),
     .generation_async(song_metadata_video[2]),
-    .rom_line_count(song_line_count_rom),
-    .rom_line_valid(song_line_rom_valid),
-    .rom_line_time_ms(song_line_rom_time_ms),
-    .rom_line_length(song_line_rom_length),
+    .rom_line_count(song_line_count_rom),.rom_line_valid(song_line_rom_valid),
+    .rom_line_time_ms(song_line_rom_time_ms),.rom_line_length(song_line_rom_length),
     .rom_line_glyphs(song_line_rom_glyphs),
-    .no_lyrics_glyphs(song_no_lyrics_glyphs),
-    .song_id_frame(song_id_frame),
-    .generation_frame(song_generation_frame),
-    .rom_line_index(song_line_rom_index),
-    .song_line_count_frame(song_line_count_frame),
-    .current_lyric_valid(current_lyric_valid),
-    .current_lyric_index(current_lyric_index),
-    .current_lyric_length(current_lyric_length),
-    .current_lyric_glyphs(current_lyric_glyphs),
-    .rgb_in   (s6_rgb),
-    .rgb_out  (lrc_rgb),
-    .hit      (lrc_hit)
+    .scroll_active(lyric_scroll_active),.scroll_target_index(lyric_highlight_index),
+    .scroll_commit(lyric_scroll_commit),
+    .song_id_frame(song_id_frame),.generation_frame(song_generation_frame),
+    .rom_line_index(song_line_rom_index),.song_line_count_frame(song_line_count_frame),
+    .target_valid(lyric_target_valid),.target_index(lyric_target_index),
+    .window_valid(lyric_window_valid),.window_ready(lyric_window_ready),
+    .window_center_index(lyric_window_center),.row_valid(lyric_row_valid),
+    .row_indices(lyric_row_indices),.row_lengths(lyric_row_lengths),
+    .row_glyphs(lyric_row_glyphs)
+);
+lrc_scroll_controller u_lrc_scroll_controller (
+    .clk(video_clk),.rst_n(video_rst_n),.vs(vs),
+    .enable(S5_PLAY_ENABLE && play_active_v2 && !pat_mode),.paused(paused_v2),
+    .song_id(song_id_frame),.generation(song_generation_frame),
+    .target_valid(lyric_target_valid),.target_index(lyric_target_index),
+    .window_valid(lyric_window_valid),.window_ready(lyric_window_ready),
+    .window_center_index(lyric_window_center),.row_valid(lyric_row_valid),
+    .row_indices(lyric_row_indices),.scroll_active(lyric_scroll_active),
+    .scroll_offset(lyric_scroll_offset),.highlight_index(lyric_highlight_index),
+    .scroll_commit(lyric_scroll_commit)
 );
 
 // D10a: exact 240-pixel progress and elapsed/total text are updated in the
@@ -2421,8 +2434,12 @@ playback_page u_playback_page (
     .song_id(song_id_frame),.title_length(song_title_length),
     .artist_length(song_artist_length),.title_glyphs(song_title_glyphs),
     .artist_glyphs(song_artist_glyphs),.line_count(song_line_count_frame),
-    .lyric_valid(current_lyric_valid),.lyric_length(current_lyric_length),
-    .lyric_glyphs(current_lyric_glyphs),.no_lyrics_glyphs(song_no_lyrics_glyphs),
+    .lyric_window_valid(lyric_window_valid),.lyric_row_valid(lyric_row_valid),
+    .lyric_row_indices(lyric_row_indices),.lyric_row_lengths(lyric_row_lengths),
+    .lyric_row_glyphs(lyric_row_glyphs),
+    .lyric_highlight_index(lyric_highlight_index),
+    .lyric_scroll_offset(lyric_scroll_offset),
+    .no_lyrics_glyphs(song_no_lyrics_glyphs),
     .progress_fill(playback_progress_fill),.time_ascii(playback_time_ascii),
     .ascii_glyph(song_ui_glyph),.ascii_code(song_page_ascii_code),
     .out_vs(playback_page_vs),.out_de(playback_page_de),
