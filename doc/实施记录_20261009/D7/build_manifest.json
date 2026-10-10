@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-10",
+  "stage": "D7_ROT",
+  "source_revision": "main at parent 792e982 plus D7 candidate",
+  "hash_algorithm": "SHA-256",
+  "source_hashes": {
+    "src/io/ui_param_csr.v": "17EEFDC5F1C2DC8BAD6A6942F778BC0D6CE531BCF9F26DDCB3FC07A082E7539E",
+    "src/io/ec2_param_controller.v": "EFC2B9BF24EA9528777BBD60FBB50954630CC801C8B495EC957F4348A5C371ED",
+    "src/io/slideshow_controller.v": "60A7E70F42C7EC713C4F59909F6E83B73970AF6A465085F41056EA2BD65004F9",
+    "src/top_tf_hdmi_audio.v": "942340134B67CF624DE6F7B56F024ADA4C389927AA811B28AC4524542AE50054",
+    "src/display/ec2_param_osd.v": "C48440D1148AFA27C3312B342914C25E814F310FE8ECAABFBE6911588C9D99FD",
+    "src/display/ascii_font_rom.v": "2958D458FAC1118DDD3DA62BBF8C4DE0F34003986C2BD529A619365D1C9D7AD2"
+  },
+  "project_hashes": {
+    "workspace_prj/VinylFPGA.al": "6B949A8FCE8E5D87ACD1041401851FB27B5EEFE63DE0A26731C2FB79306A7E4C",
+    "snapshot_prj/VinylFPGA.al": "E3E2A82567E488085EE61FBC1513B3A891E511E68A9AEAC3EEFD0CFD0696A89C"
+  },
+  "snapshot_constraint_hashes": {
+    "constraints/pin.adc": "80D55E1A62BAFBF36A47A08F5B08EDB8945E64686072AD7C3AB6B37755CA795B",
+    "constraints/timing.sdc": "667A2A436A9CA11004F86D3C29AAA9005D53FE94F41593E60EAD656AF5D939B8"
+  },
+  "timing_report_hash": "6210F17BD61D67B4899330B6A463FBE6BC3EB94B4A851583027BF73E57526291",
+  "build_note": "SynthPilot snapshot used copied sources and snapshot-local paths; this records opt_gate only. No route or bitstream."
+}

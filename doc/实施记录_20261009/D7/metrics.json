@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-10",
+  "stage": "D7_ROT",
+  "branch": "main",
+  "parent_commit": "792e982",
+  "design_decision": "Keep the user's earlier 3 second carousel default and add OFF/2/3/5/10/20 second presets. This preserves the existing 3 second behavior while retaining the planned 5 second preset.",
+  "tool": {
+    "name": "SynthPilot MCP",
+    "td_version": "TD6.2.168116",
+    "device": "EG4S20BG256",
+    "database": "eagle_s20.db",
+    "snapshot": "prj/resource_opt_verified_20261005/d7_rot_20261010_r1/",
+    "duration_ms": 55216,
+    "last_step": "opt_gate",
+    "elaboration": "PASS",
+    "opt_rtl": "PASS",
+    "opt_gate": "PASS",
+    "legalize_phy_inst": "PASS"
+  },
+  "area": {
+    "lut_utilization": "15307/19600 (78.10%)",
+    "total_luts": 10157,
+    "registers": "9644/19600 (49.20%)",
+    "qor_registers": 9627,
+    "slices": 2575,
+    "bram9k": "43/64",
+    "dsp": "10/29",
+    "delta_from_d4_d6": {
+      "lut_utilization_count": 358,
+      "total_luts": 362,
+      "registers": 40,
+      "slices": -2,
+      "bram9k": 0,
+      "dsp": 0
+    }
+  },
+  "timing": {
+    "setup_wns_ns": -0.297,
+    "setup_tns_ns": -1.334,
+    "setup_violated_endpoints": 7,
+    "hold_wns_ns": 0.490,
+    "hold_tns_ns": 0.0,
+    "hold_violated_endpoints": 0,
+    "critical_path": "frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[0] -> frame_read_write_m0/frame_fifo_read_m0/state_reg[2], ext_mem_clk domain",
+    "related_path_note": "A separate sd_card_clk path valid_reg -> osd_error_code_reg[0] has -0.196 ns slack. Neither listed worst path traverses the ROT timer. Gate-level timing estimation regressed from the D4-D6 candidate and requires place/route correlation and/or follow-up timing work."
+  },
+  "verification": {
+    "synthesis": "PASS through opt_gate",
+    "timing_release": "NOT PASS: setup timing violations remain",
+    "simulation": "not run",
+    "place_and_route": "not run",
+    "bitgen": "not run; user generates the bitstream",
+    "hardware_acceptance": "pending"
+  },
+  "manual": "doc/实施记录_20261009/D7/manual.md"
+}

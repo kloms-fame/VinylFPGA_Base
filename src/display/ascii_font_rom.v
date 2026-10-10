@@ -46,6 +46,8 @@ module ascii_font_rom (
         row_mem[548] = 8'h66; row_mem[549] = 8'h6c; row_mem[550] = 8'h78; // D
         row_mem[552] = 8'h7e; row_mem[553] = 8'h60; row_mem[554] = 8'h60; row_mem[555] = 8'h7c;
         row_mem[556] = 8'h60; row_mem[557] = 8'h60; row_mem[558] = 8'h7e; // E
+        row_mem[560] = 8'h7e; row_mem[561] = 8'h60; row_mem[562] = 8'h60; row_mem[563] = 8'h7c;
+        row_mem[564] = 8'h60; row_mem[565] = 8'h60; row_mem[566] = 8'h60; // F
         row_mem[584] = 8'h3c; row_mem[585] = 8'h18; row_mem[586] = 8'h18; row_mem[587] = 8'h18;
         row_mem[588] = 8'h18; row_mem[589] = 8'h18; row_mem[590] = 8'h3c; // I
         row_mem[592] = 8'h1e; row_mem[593] = 8'h0c; row_mem[594] = 8'h0c; row_mem[595] = 8'h0c;
@@ -64,6 +66,8 @@ module ascii_font_rom (
         row_mem[692] = 8'h66; row_mem[693] = 8'h3c; row_mem[694] = 8'h18; // V
         row_mem[704] = 8'h66; row_mem[705] = 8'h66; row_mem[706] = 8'h3c; row_mem[707] = 8'h18;
         row_mem[708] = 8'h3c; row_mem[709] = 8'h66; row_mem[710] = 8'h66; // X
+        row_mem[672] = 8'h7e; row_mem[673] = 8'h18; row_mem[674] = 8'h18; row_mem[675] = 8'h18;
+        row_mem[676] = 8'h18; row_mem[677] = 8'h18; row_mem[678] = 8'h18; // T
 
         // Ratio separator: '/'
         row_mem[376] = 8'h06; row_mem[377] = 8'h0c; row_mem[378] = 8'h18; row_mem[379] = 8'h30;

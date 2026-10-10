@@ -2,7 +2,8 @@
 `define EXP_EC2_PARAM_CONTROLLER_V
 // EC2 panel state and one-entry held parameter request, all in the 50 MHz UI domain.
 module ec2_param_controller #(
-    parameter integer HIDE_TIMEOUT_MS = 1800
+    parameter integer HIDE_TIMEOUT_MS = 1800,
+    parameter integer PARAM_COUNT = 4
 )(
     input  wire       clk,
     input  wire       rst_n,
@@ -14,10 +15,10 @@ module ec2_param_controller #(
     input  wire       press_event,
     input  wire       external_volume_event,
     output reg        param_req_valid,
-    output reg  [1:0] param_req_id,
+    output reg  [2:0] param_req_id,
     output reg        param_req_up,
     input  wire       param_req_ready,
-    output reg  [1:0] selected_param,
+    output reg  [2:0] selected_param,
     output reg  [1:0] ui_state,
     output reg        ui_update
 );
@@ -25,9 +26,10 @@ module ec2_param_controller #(
     localparam [1:0] STATE_SELECT = 2'd1;
     localparam [1:0] STATE_ADJUST = 2'd2;
 
-    localparam [1:0] PARAM_VOL = 2'd0;
+    localparam [2:0] PARAM_VOL = 3'd0;
     localparam [1:0] PARAM_BRI = 2'd1;
     localparam [1:0] PARAM_CON = 2'd2;
+    localparam [2:0] LAST_PARAM = PARAM_COUNT - 1;
 
     localparam integer TIMEOUT_W = 11;
     reg [TIMEOUT_W-1:0] idle_ms;
@@ -86,11 +88,11 @@ module ec2_param_controller #(
                         end
                         STATE_SELECT: begin
                             if (step_up)
-                                selected_param <= (selected_param == PARAM_CON)
-                                                ? PARAM_VOL : selected_param + 2'd1;
+                                selected_param <= (selected_param == LAST_PARAM)
+                                                ? PARAM_VOL : selected_param + 3'd1;
                             else
                                 selected_param <= (selected_param == PARAM_VOL)
-                                                ? PARAM_CON : selected_param - 2'd1;
+                                ? LAST_PARAM : selected_param - 3'd1;
                         end
                         STATE_ADJUST: begin
                             param_req_valid <= 1'b1;

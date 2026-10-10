@@ -234,8 +234,9 @@ reg  [7:0]  volume_frame;
 reg  [11:0] volume_bcd_frame;
 reg  [2:0]  brightness_level_frame;
 reg  [2:0]  contrast_level_frame;
+reg  [2:0]  rotation_level_frame;
 reg  [1:0]  ec2_state_frame;
-reg  [1:0]  ec2_selected_frame;
+reg  [2:0]  ec2_selected_frame;
 
 wire [3:0]  state_code;
 wire [6:0]  seg_data_0;
@@ -445,26 +446,28 @@ wire [31:0] seek_frame_rem_next = seek_frame_rem - 32'd4800;
 wire [19:0] seek_frame_calc = seek_frame_calc_reg;
 wire [15:0] seek_frame_vid  = (seek_frame_calc > 20'h0FFFF) ? 16'hFFFF :
                               seek_frame_calc[15:0];
-// 播放状态位 -> video 域（两级同步）；VOL/BRI/CON 与面板状态共享一组原子CDC。
+// 播放状态位 -> video 域（两级同步）；用户参数与面板状态共享原子快照。
 reg         play_active_v1, play_active_v2;
 reg         paused_v1, paused_v2;
 wire [7:0] play_volume_video;
 wire [7:0] play_volume_csr;
 wire [2:0] brightness_level_csr;
 wire [2:0] contrast_level_csr;
+wire [2:0] rotation_level_csr;
 wire       param_update_csr;
-wire [17:0] params_bundle_csr;
-wire [17:0] params_bundle_video;
+wire [21:0] params_bundle_csr;
+wire [21:0] params_bundle_video;
+wire [2:0] rotation_level_sd;
 wire       ui_tick_1ms;
 wire       ec2_step_valid;
 wire       ec2_step_up;
 wire       ec2_step_ready;
 wire       ec2_press_event;
 wire       ec2_param_req_valid;
-wire [1:0] ec2_param_req_id;
+wire [2:0] ec2_param_req_id;
 wire       ec2_param_req_up;
 wire       ec2_param_req_ready;
-wire [1:0] ec2_selected_param;
+wire [2:0] ec2_selected_param;
 wire [1:0] ec2_ui_state;
 wire       ec2_ui_update;
 wire       volume_bridge_src_ready;
@@ -473,7 +476,7 @@ wire       volume_bridge_dst_valid;
 wire       volume_bridge_dst_up;
 wire       volume_bridge_dst_ready;
 wire       param_csr_wr_valid;
-wire [1:0] param_csr_wr_id;
+wire [2:0] param_csr_wr_id;
 wire       param_csr_wr_up;
 wire       volume_bridge_async_rst_n;
 wire       volume_bridge_src_rst_n;
@@ -723,7 +726,7 @@ volume_intent_bridge u_volume_intent_bridge(
 assign volume_bridge_dst_ready = volume_bridge_dst_valid;
 assign ec2_param_req_ready = !volume_bridge_dst_valid;
 assign param_csr_wr_valid = volume_bridge_dst_valid || ec2_param_req_valid;
-assign param_csr_wr_id = volume_bridge_dst_valid ? 2'd0 : ec2_param_req_id;
+assign param_csr_wr_id = volume_bridge_dst_valid ? 3'd0 : ec2_param_req_id;
 assign param_csr_wr_up = volume_bridge_dst_valid ? volume_bridge_dst_up
                                                  : ec2_param_req_up;
 
@@ -731,16 +734,23 @@ ui_param_csr u_ui_param_csr(
     .clk(clk), .rst_n(exp_rst_n),
     .wr_valid(param_csr_wr_valid), .wr_id(param_csr_wr_id), .wr_up(param_csr_wr_up),
     .volume(play_volume_csr), .brightness_level(brightness_level_csr),
-    .contrast_level(contrast_level_csr), .param_update(param_update_csr));
+    .contrast_level(contrast_level_csr), .rotation_level(rotation_level_csr),
+    .param_update(param_update_csr));
 
-// Atomic source bundle layout: {ui_state, selection, CON, BRI, VOL}.
-assign params_bundle_csr = {ec2_ui_state, ec2_selected_param, contrast_level_csr,
-                            brightness_level_csr, play_volume_csr};
+// Atomic video snapshot: {ui_state, selection, ROT, CON, BRI, VOL}.
+assign params_bundle_csr = {ec2_ui_state, ec2_selected_param, rotation_level_csr,
+                            contrast_level_csr, brightness_level_csr, play_volume_csr};
 assign play_volume_video = params_bundle_video[7:0];
-cdc_bundle_latest #(.WIDTH(18)) u_ui_params_cdc(
+cdc_bundle_latest #(.WIDTH(22)) u_ui_params_cdc(
     .src_clk(clk), .src_rst_n(exp_rst_n), .src_data(params_bundle_csr),
     .src_update(param_update_csr | ec2_ui_update), .dst_clk(video_clk),
     .dst_rst_n(media_video_rst_n), .dst_data(params_bundle_video));
+
+// ROT has its own reliable latest-value bridge into the 100 MHz scheduler.
+cdc_bundle_latest #(.WIDTH(3)) u_rotation_param_cdc(
+    .src_clk(clk), .src_rst_n(exp_rst_n), .src_data(rotation_level_csr),
+    .src_update(param_update_csr), .dst_clk(sd_card_clk),
+    .dst_rst_n(sd_media_rst_n), .dst_data(rotation_level_sd));
 
 function [11:0] volume_to_bcd;
     input [7:0] value;
@@ -765,15 +775,17 @@ always @(posedge video_clk or negedge media_video_rst_n) begin
         volume_bcd_frame      <= 12'h200;
         brightness_level_frame<= 3'd3;
         contrast_level_frame  <= 3'd2;
+        rotation_level_frame  <= 3'd2;
         ec2_state_frame       <= 2'd0;
-        ec2_selected_frame    <= 2'd0;
+        ec2_selected_frame    <= 3'd0;
     end else if (frame_start) begin
         volume_frame           <= params_bundle_video[7:0];
         volume_bcd_frame       <= volume_to_bcd(params_bundle_video[7:0]);
         brightness_level_frame <= params_bundle_video[10:8];
         contrast_level_frame   <= params_bundle_video[13:11];
-        ec2_state_frame        <= params_bundle_video[15:14];
-        ec2_selected_frame     <= params_bundle_video[17:16];
+        rotation_level_frame   <= params_bundle_video[16:14];
+        ec2_selected_frame     <= params_bundle_video[19:17];
+        ec2_state_frame        <= params_bundle_video[21:20];
     end
 end
 reset_sync u_media_video_reset(.clk(video_clk),
@@ -1351,11 +1363,12 @@ assign slideshow_enable_sd = dip2_slideshow_enable_sd && media_mount_ok_sd &&
                              display_valid && !thumb_mode_sd && !play_active_sd &&
                              (song_total_sd > 3'd1);
 slideshow_controller #(
- .CLK_FREQ_HZ(100_000_000),.PERIOD_MS(3000)
+ .CLK_FREQ_HZ(100_000_000)
 ) u_slideshow_controller (
  .clk(sd_card_clk),.rst_n(sd_media_rst_n),.enable(slideshow_enable_sd),
  .busy(cover_busy),
  .manual_action(brw_fs_next || brw_fs_prev),
+ .period_level(rotation_level_sd),
  .auto_next(slideshow_auto_next_sd));
 
  cover_navigation u_cover_navigation(
@@ -2346,6 +2359,7 @@ ec2_param_osd u_ec2_param_osd (
     .volume_bcd       (volume_bcd_frame),
     .brightness_level (brightness_level_frame),
     .contrast_level   (contrast_level_frame),
+    .rotation_level   (rotation_level_frame),
     .out_vs           (ec2_panel_vs),
     .out_de           (ec2_panel_de),
     .out_pixel_x      (ec2_panel_x),
@@ -2575,7 +2589,7 @@ ec2_event_replay u_ec2_event_replay(
     .step_valid(ec2_step_valid), .step_up(ec2_step_up),
     .step_ready(ec2_step_ready), .press_event(ec2_press_event));
 
-ec2_param_controller u_ec2_param_controller(
+ec2_param_controller #(.PARAM_COUNT(4)) u_ec2_param_controller(
     .clk(clk), .rst_n(exp_rst_n), .enable(ec2_control_enable),
     .tick_1ms(ui_tick_1ms), .step_valid(ec2_step_valid),
     .step_up(ec2_step_up), .step_ready(ec2_step_ready),

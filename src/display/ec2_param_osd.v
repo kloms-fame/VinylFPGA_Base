@@ -14,30 +14,33 @@ module ec2_param_osd (
     input  wire [23:0] rgb_in,
     input  wire        visible,
     input  wire [1:0]  ui_state,       // 1=SELECT, 2=ADJUST
-    input  wire [1:0]  selected_param,// 0=VOL, 1=BRI, 2=CON
+    input  wire [2:0]  selected_param,// 0=VOL, 1=BRI, 2=CON, 3=ROT
     input  wire [7:0]  volume,
     input  wire [11:0] volume_bcd,
     input  wire [2:0]  brightness_level,
     input  wire [2:0]  contrast_level,
+    input  wire [2:0]  rotation_level,
     output reg         out_vs,
     output reg         out_de,
     output reg  [9:0]  out_pixel_x,
     output reg  [23:0] out_rgb
 );
-    localparam [1:0] PARAM_VOL = 2'd0;
-    localparam [1:0] PARAM_BRI = 2'd1;
-    localparam [1:0] PARAM_CON = 2'd2;
+    localparam [2:0] PARAM_VOL = 3'd0;
+    localparam [2:0] PARAM_BRI = 3'd1;
+    localparam [2:0] PARAM_CON = 3'd2;
+    localparam [2:0] PARAM_ROT = 3'd3;
 
     reg [9:0] line_y;
     reg       de_q;
     reg       vs_q;
     reg       visible_d;
     reg [1:0] state_d;
-    reg [1:0] selected_d;
+    reg [2:0] selected_d;
     reg [7:0] volume_d;
     reg [11:0] volume_bcd_d;
     reg [2:0] brightness_d;
     reg [2:0] contrast_d;
+    reg [2:0] rotation_d;
     reg [9:0] pixel_y_d;
     reg [23:0] rgb_d;
 
@@ -72,13 +75,23 @@ module ec2_param_osd (
                     3'd4: ratio_text = {8'h35,8'h2f,8'h34,8'h58}; // 5/4X
                     default: ;
                 endcase
-            end else begin
+            end else if (param_id == PARAM_CON) begin
                 case (level)
                     3'd0: ratio_text = {8'h31,8'h2f,8'h32,8'h58}; // 1/2X
                     3'd1: ratio_text = {8'h33,8'h2f,8'h34,8'h58}; // 3/4X
                     3'd2: ratio_text = {8'h31,8'h58,8'h20,8'h20}; // 1X
                     3'd3: ratio_text = {8'h35,8'h2f,8'h34,8'h58}; // 5/4X
                     3'd4: ratio_text = {8'h33,8'h2f,8'h32,8'h58}; // 3/2X
+                    default: ;
+                endcase
+            end else begin
+                case (level)
+                    3'd0: ratio_text = {8'h4F,8'h46,8'h46,8'h20}; // OFF
+                    3'd1: ratio_text = {8'h32,8'h53,8'h20,8'h20}; // 2S
+                    3'd2: ratio_text = {8'h33,8'h53,8'h20,8'h20}; // 3S
+                    3'd3: ratio_text = {8'h35,8'h53,8'h20,8'h20}; // 5S
+                    3'd4: ratio_text = {8'h31,8'h30,8'h53,8'h20}; // 10S
+                    3'd5: ratio_text = {8'h32,8'h30,8'h53,8'h20}; // 20S
                     default: ;
                 endcase
             end
@@ -111,6 +124,13 @@ module ec2_param_osd (
                         3'd0: font_char = 7'd66; // B
                         3'd1: font_char = 7'd82; // R
                         default: font_char = 7'd73; // I
+                    endcase
+                end
+                PARAM_ROT: begin
+                    case (text_slot)
+                        3'd0: font_char = 7'd82; // R
+                        3'd1: font_char = 7'd79; // O
+                        default: font_char = 7'd84; // T
                     endcase
                 end
                 default: begin
@@ -148,8 +168,12 @@ module ec2_param_osd (
                     default: font_char = 7'h20;
                 endcase
             end else begin
-                ratio_value = ratio_text(selected_param,
-                    selected_param == PARAM_BRI ? brightness_level : contrast_level);
+                if (selected_param == PARAM_BRI)
+                    ratio_value = ratio_text(selected_param, brightness_level);
+                else if (selected_param == PARAM_CON)
+                    ratio_value = ratio_text(selected_param, contrast_level);
+                else
+                    ratio_value = ratio_text(selected_param, rotation_level);
                 case (text_slot)
                     3'd0: font_char = ratio_value[31:24];
                     3'd1: font_char = ratio_value[23:16];
@@ -182,6 +206,7 @@ module ec2_param_osd (
             volume_bcd_d  <= 12'd0;
             brightness_d  <= 3'd3;
             contrast_d    <= 3'd2;
+            rotation_d    <= 3'd2;
         end else begin
             de_q <= de;
             vs_q <= vs;
@@ -202,6 +227,7 @@ module ec2_param_osd (
             volume_bcd_d <= volume_bcd;
             brightness_d <= brightness_level;
             contrast_d   <= contrast_level;
+            rotation_d   <= rotation_level;
         end
     end
 
@@ -234,14 +260,27 @@ module ec2_param_osd (
     wire [7:0] volume_bar_len = volume_d - (volume_d >> 3);
     reg [8:0] level_bar_len;
     always @* begin
-        case (selected_d == PARAM_BRI ? brightness_d : contrast_d)
-            3'd0: level_bar_len = 9'd0;
-            3'd1: level_bar_len = 9'd56;
-            3'd2: level_bar_len = 9'd112;
-            3'd3: level_bar_len = 9'd168;
-            3'd4: level_bar_len = 9'd224;
-            default: level_bar_len = 9'd168;
-        endcase
+        level_bar_len = 9'd168;
+        if (selected_d == PARAM_ROT) begin
+            case (rotation_d)
+                3'd0: level_bar_len = 9'd0;
+                3'd1: level_bar_len = 9'd45;
+                3'd2: level_bar_len = 9'd90;
+                3'd3: level_bar_len = 9'd134;
+                3'd4: level_bar_len = 9'd179;
+                3'd5: level_bar_len = 9'd224;
+                default: level_bar_len = 9'd224;
+            endcase
+        end else begin
+            case (selected_d == PARAM_BRI ? brightness_d : contrast_d)
+                3'd0: level_bar_len = 9'd0;
+                3'd1: level_bar_len = 9'd56;
+                3'd2: level_bar_len = 9'd112;
+                3'd3: level_bar_len = 9'd168;
+                3'd4: level_bar_len = 9'd224;
+                default: level_bar_len = 9'd168;
+            endcase
+        end
     end
     wire bar_filled = (selected_d == PARAM_VOL)
                     ? (bar_x < {2'b00, volume_bar_len})

@@ -3,38 +3,52 @@
 // Picture rotation scheduler in the 100 MHz SD domain.
 // It only requests a step; cover_navigation owns selection and transition I/O.
 module slideshow_controller #(
-    parameter integer CLK_FREQ_HZ = 100_000_000,
-    parameter integer PERIOD_MS = 3000
+    parameter integer CLK_FREQ_HZ = 100_000_000
 ) (
-    input  wire clk,
-    input  wire rst_n,
-    input  wire enable,
-    input  wire busy,
-    input  wire manual_action,
-    output reg  auto_next
+    input  wire       clk,
+    input  wire       rst_n,
+    input  wire       enable,
+    input  wire       busy,
+    input  wire       manual_action,
+    input  wire [2:0] period_level, // 0=OFF, 1=2s, 2=3s, 3=5s, 4=10s, 5=20s
+    output reg        auto_next
 );
-    localparam integer CYCLES_PER_MS = CLK_FREQ_HZ / 1000;
-    localparam integer MS_COUNTER_WIDTH = (CYCLES_PER_MS <= 2) ? 1 : $clog2(CYCLES_PER_MS);
-    localparam integer ELAPSED_WIDTH = (PERIOD_MS <= 2) ? 1 : $clog2(PERIOD_MS);
+    localparam integer SEC_COUNTER_WIDTH = (CLK_FREQ_HZ <= 2) ? 1 : $clog2(CLK_FREQ_HZ);
+    localparam [2:0] DEFAULT_PERIOD_LEVEL = 3'd2;
     localparam [2:0] IDLE              = 3'd0,
                      AUTO_WAIT_START   = 3'd1,
                      AUTO_WAIT_END     = 3'd2,
                      MANUAL_WAIT_START = 3'd3,
                      MANUAL_WAIT_END   = 3'd4;
 
-    reg [MS_COUNTER_WIDTH-1:0] ms_counter;
-    reg [ELAPSED_WIDTH-1:0] elapsed_ms;
+    reg [SEC_COUNTER_WIDTH-1:0] second_counter;
+    reg [4:0] elapsed_seconds;
+    reg [2:0] period_level_q;
     reg [2:0] state;
     reg pending;
     reg busy_q;
+    reg [4:0] period_seconds;
 
-    wire ms_tick = (ms_counter == CYCLES_PER_MS - 1);
-    wire period_due = ms_tick && (elapsed_ms == PERIOD_MS - 1);
+    always @* begin
+        case (period_level)
+            3'd1: period_seconds = 5'd2;
+            3'd2: period_seconds = 5'd3;
+            3'd3: period_seconds = 5'd5;
+            3'd4: period_seconds = 5'd10;
+            3'd5: period_seconds = 5'd20;
+            default: period_seconds = 5'd0;
+        endcase
+    end
+
+    wire period_active = enable && (period_level != 3'd0);
+    wire period_changed = (period_level != period_level_q);
+    wire second_tick = (second_counter == CLK_FREQ_HZ - 1);
+    wire period_due = period_active && !period_changed && second_tick &&
+                      (elapsed_seconds == period_seconds - 5'd1);
     wire auto_issue = (state == IDLE) && !manual_action && !busy_q &&
-                      (pending || period_due);
+                      !period_changed && (pending || period_due);
 
     // Register navigation busy before it participates in control decisions.
-    // This keeps display-index decode off the 100 MHz FSM input path.
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
             busy_q <= 1'b0;
@@ -44,19 +58,26 @@ module slideshow_controller #(
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
-            ms_counter <= {MS_COUNTER_WIDTH{1'b0}};
-        else if (!enable)
-            ms_counter <= {MS_COUNTER_WIDTH{1'b0}};
-        else if (ms_tick)
-            ms_counter <= {MS_COUNTER_WIDTH{1'b0}};
+            period_level_q <= DEFAULT_PERIOD_LEVEL;
         else
-            ms_counter <= ms_counter + 1'b1;
+            period_level_q <= period_level;
+    end
+
+    // A local one-second clock enable avoids transferring the 50 MHz UI tick
+    // and keeps elapsed rotation time in a compact five-bit seconds counter.
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            second_counter <= {SEC_COUNTER_WIDTH{1'b0}};
+        else if (!period_active || period_changed || second_tick)
+            second_counter <= {SEC_COUNTER_WIDTH{1'b0}};
+        else
+            second_counter <= second_counter + 1'b1;
     end
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
             state <= IDLE;
-        else if (!enable)
+        else if (!period_active)
             state <= IDLE;
         else if (manual_action)
             state <= busy_q ? MANUAL_WAIT_END : MANUAL_WAIT_START;
@@ -89,25 +110,25 @@ module slideshow_controller #(
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
-            elapsed_ms <= {ELAPSED_WIDTH{1'b0}};
-        else if (!enable || manual_action)
-            elapsed_ms <= {ELAPSED_WIDTH{1'b0}};
+            elapsed_seconds <= 5'd0;
+        else if (!period_active || manual_action || period_changed)
+            elapsed_seconds <= 5'd0;
         else if (((state == AUTO_WAIT_END) || (state == MANUAL_WAIT_END)) && !busy_q)
-            elapsed_ms <= {ELAPSED_WIDTH{1'b0}};
+            elapsed_seconds <= 5'd0;
         else if (state == IDLE && pending && !busy_q)
-            elapsed_ms <= {ELAPSED_WIDTH{1'b0}};
-        else if (state == IDLE && !pending && ms_tick) begin
-            if (elapsed_ms == PERIOD_MS - 1)
-                elapsed_ms <= {ELAPSED_WIDTH{1'b0}};
+            elapsed_seconds <= 5'd0;
+        else if (state == IDLE && !pending && second_tick) begin
+            if (elapsed_seconds == period_seconds - 5'd1)
+                elapsed_seconds <= 5'd0;
             else
-                elapsed_ms <= elapsed_ms + 1'b1;
+                elapsed_seconds <= elapsed_seconds + 5'd1;
         end
     end
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
             pending <= 1'b0;
-        else if (!enable || manual_action)
+        else if (!period_active || manual_action || period_changed)
             pending <= 1'b0;
         else if (((state == AUTO_WAIT_END) || (state == MANUAL_WAIT_END)) && !busy_q)
             pending <= 1'b0;
@@ -121,7 +142,7 @@ module slideshow_controller #(
         if (!rst_n)
             auto_next <= 1'b0;
         else
-            auto_next <= enable && auto_issue;
+            auto_next <= period_active && auto_issue;
     end
 endmodule
 `endif
