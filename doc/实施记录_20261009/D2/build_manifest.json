@@ -1,0 +1,24 @@
+{
+  "source_image": "doc/资源/sd卡/card.img",
+  "source_image_sha256": "a7103f4072a90b59d69555354a6c7a0e686c8ece84d71cc5d4289608abcaadfc",
+  "generator": "tools/gen_test_tone.py",
+  "image_builder": "tools/make_test_tone_image.py",
+  "packer": "tools/vinyl_packer.py",
+  "artifacts": {
+    "pcm": "prj/resource_opt_verified_20261005/d2_testtone_20261010/AUDIO.PCM",
+    "pcm_sha256": "c415185a33f23338f586c7f5cffa64791b48a2f2352167be9b722888b7f29e75",
+    "image": "prj/resource_opt_verified_20261005/d2_testtone_20261010/card_test_tone.img",
+    "image_sha256": "37112a5fbafbdaf65fc8fea3ad32cfd448dadde65793fec4a7bd5c2577413e38",
+    "pack_report": "prj/resource_opt_verified_20261005/d2_testtone_20261010/build_manifest.pack.json"
+  },
+  "image_contract": {
+    "display_track": 1,
+    "index_entry": 0,
+    "audio_file": "AUDIO.PCM",
+    "audio_bytes": 480000,
+    "other_tracks_audio": false,
+    "index_entries_crc32": "0xC70A2107",
+    "verified": true
+  },
+  "rtl_build": "NOT_REQUIRED; D2 changes media artifacts only"
+}
