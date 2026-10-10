@@ -1,0 +1,988 @@
+Created by          : Tang Dynasty v6.2.168116
+                    : Copyright (c) 2012-2025 Anlogic Inc.
+Generated           : Sat Oct 10 19:57:46 2026
+
+Top Model           : top
+Device              : EG4S20BG256
+Speed               : NA
+STA coverage        : 99.96%
+Constraint File     : D:/Data_Backup/VinylFPGA_Workspace_Base/VinylFPGA_D10_SynthPilot_20261010/constraints/timing.sdc;
+Confidence          : Synthesized
+Check Corner        : Both (Slow and Fast)
+CRPR Enabled        : Yes
+Report Scheme       : 10 end point(s) per path group, 1 path(s) per end point
+
+
+Check Status
+-------------
+
+Corner   | Max      Min
+------------------------------------
+Slow     | yes      yes
+Fast     | yes      yes
+
+       Clock-Id:       C-Freq       Fanout   Clock-Name
+--------------------------------------------------------------------------------
+           clk0:      100.000         4510   sd_card_clk
+           clk1:       25.000         3550   video_clk
+           clk2:       50.000         1199   clk
+           clk3:      125.000          949   ext_mem_clk
+           clk4:      125.000           50   hdmi_5x_clk
+           clk5:      125.000            1   ext_mem_clk_sft
+--------------------------------------------------------------------------------
+
+
+
+Logic Level Distribution
+--------------------------------------------------
+
+  Name      Max         0         1         2         3         4         5         6         7         8         9        10     11-15     16-20     21-25     26-30       >30
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  clk0        8         0         0         0         0         0         0         0         0         5         0         0         0         0         0         0         0
+  clk1        0         0         0         0         0         0         0         0         0         0         0         0         0         0         0         0         0
+  clk2        0         0         0         0         0         0         0         0         0         0         0         0         0         0         0         0         0
+  clk3        7         0         0         0         0         0         0         6         1         0         0         0         0         0         0         0         0
+  clk4        0         0         0         0         0         0         0         0         0         0         0         0         0         0         0         0         0
+  clk5        0         0         0         0         0         0         0         0         0         0         0         0         0         0         0         0         0
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+Logic level paths for clock sd_card_clk as capture clock
+--------------------------------------------------
+
+Paths of level 8, 5 in total
+--------------------
+
+
+Slack               : 0.564ns
+Begin Point         : sd_card_bmp_m0/fat32_media_loader_m0/idx_started_reg.clk (rising edge triggered by clock sd_card_clk  { rise@0.000000ns  fall@5.000000ns  period=10.000000 })
+End Point           : sd_card_bmp_m0/osd_error_code_reg[0].d (rising edge triggered by clock sd_card_clk  { rise@0.000000ns  fall@5.000000ns  period=10.000000 })
+Check Type          : setup
+Process             : slow
+Budget              : 10.000ns { sd_card_clk rising@10.000ns - sd_card_clk rising@0.000ns }
+Data Path Delay     : 9.320ns (cell 3.544ns (38%), net 5.776ns (62%))
+Clock Skew          : 0.000ns
+Logic Level         : 8 ( LUT4=5  LUT5=1  LUT3=1  LUT2=1 )
+Max Fanout          : 6
+Clock Uncertainty   : 0.000ns (sdc uncertainty: 0.000ns, default uncertainty: 0.000ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[0]
+net (fo=1)                              0.000          0.000          net: sys_pll_m0/clk0_buf,  ../src/IP/sys_pll.v(40)
+                                                                      pin: sys_pll_m0/bufg_feedback.clki
+GCLK                                    0.000          0.000          pin: sys_pll_m0/bufg_feedback.clko
+net (fo=4511)                           0.000          0.000          net: sd_card_clk,  ../src/top_tf_hdmi_audio.v(188)
+                                                                      pin: sd_card_bmp_m0/fat32_media_loader_m0/idx_started_reg.clk
+launch edge                             0.000    r     0.000
+--------------------------------------------------------------------  ---------------
+SEQ (clk2q)                             0.146    r     0.146          pin: sd_card_bmp_m0/fat32_media_loader_m0/idx_started_reg.q
+net (fo=6)                              0.770          0.916          net: sd_card_bmp_m0/fat32_media_loader_m0/idx_started,  ../src/SD/fat32_media_loader.v(163)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_5.a
+LUT2                                    0.408    f     1.324       1  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_5.o
+net (fo=6)                              0.770          2.094          net: sd_card_bmp_m0/fat32_media_loader_m0/media_error_b2_n1,  NOFILE(0)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_6.a
+LUT5                                    0.424    f     2.518       2  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_6.o
+net (fo=2)                              0.600          3.118          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_7,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_8.a
+LUT3                                    0.408    f     3.526       3  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_8.o
+net (fo=1)                              0.562          4.088          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_9,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_10.a
+LUT4                                    0.408    f     4.496       4  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_10.o
+net (fo=3)                              0.651          5.147          net: sd_card_bmp_m0/media_error[1],  ../src/SD/sd_card_bmp.v(89)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_12.a
+LUT4                                    0.408    f     5.555       5  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_12.o
+net (fo=1)                              0.562          6.117          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_13,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_21.a
+LUT4                                    0.408    f     6.525       6  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_21.o
+net (fo=1)                              0.562          7.087          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_22,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_25.a
+LUT4                                    0.408    f     7.495       7  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_25.o
+net (fo=5)                              0.737          8.232          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_26,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[0]_syn_4.a
+LUT4                                    0.408    f     8.640       8  pin: sd_card_bmp_m0/osd_error_code_reg[0]_syn_4.o
+net (fo=1)                              0.562          9.202          net: sd_card_bmp_m0/osd_error_code_reg[0]_syn_2,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[0].d
+SEQ (reg)                               0.118    f     9.320          net: sd_card_bmp_m0/osd_error_code[0],  ../src/SD/sd_card_bmp.v(30)
+--------------------------------------------------------------------  ---------------
+Arrival                                                9.320
+
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[0]
+net (fo=1)                              0.000          0.000          net: sys_pll_m0/clk0_buf,  ../src/IP/sys_pll.v(40)
+                                                                      pin: sys_pll_m0/bufg_feedback.clki
+GCLK                                    0.000          0.000          pin: sys_pll_m0/bufg_feedback.clko
+net (fo=4511)                           0.000          0.000          net: sd_card_clk,  ../src/top_tf_hdmi_audio.v(188)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[0].clk
+capture edge                           10.000    r    10.000
+--------------------------------------------------------------------  ---------------
+setup                                  -0.116          9.884
+clock uncertainty                       0.000          9.884
+clock pessimism                         0.000          9.884
+--------------------------------------------------------------------  ---------------
+Required                                               9.884
+--------------------------------------------------------------------  ---------------
+Slack                                                  0.564
+
+Slack               : 0.564ns
+Begin Point         : sd_card_bmp_m0/fat32_media_loader_m0/idx_started_reg.clk (rising edge triggered by clock sd_card_clk  { rise@0.000000ns  fall@5.000000ns  period=10.000000 })
+End Point           : sd_card_bmp_m0/osd_error_code_reg[1].d (rising edge triggered by clock sd_card_clk  { rise@0.000000ns  fall@5.000000ns  period=10.000000 })
+Check Type          : setup
+Process             : slow
+Budget              : 10.000ns { sd_card_clk rising@10.000ns - sd_card_clk rising@0.000ns }
+Data Path Delay     : 9.320ns (cell 3.544ns (38%), net 5.776ns (62%))
+Clock Skew          : 0.000ns
+Logic Level         : 8 ( LUT4=5  LUT5=1  LUT3=1  LUT2=1 )
+Max Fanout          : 6
+Clock Uncertainty   : 0.000ns (sdc uncertainty: 0.000ns, default uncertainty: 0.000ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[0]
+net (fo=1)                              0.000          0.000          net: sys_pll_m0/clk0_buf,  ../src/IP/sys_pll.v(40)
+                                                                      pin: sys_pll_m0/bufg_feedback.clki
+GCLK                                    0.000          0.000          pin: sys_pll_m0/bufg_feedback.clko
+net (fo=4511)                           0.000          0.000          net: sd_card_clk,  ../src/top_tf_hdmi_audio.v(188)
+                                                                      pin: sd_card_bmp_m0/fat32_media_loader_m0/idx_started_reg.clk
+launch edge                             0.000    r     0.000
+--------------------------------------------------------------------  ---------------
+SEQ (clk2q)                             0.146    r     0.146          pin: sd_card_bmp_m0/fat32_media_loader_m0/idx_started_reg.q
+net (fo=6)                              0.770          0.916          net: sd_card_bmp_m0/fat32_media_loader_m0/idx_started,  ../src/SD/fat32_media_loader.v(163)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_5.a
+LUT2                                    0.408    f     1.324       1  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_5.o
+net (fo=6)                              0.770          2.094          net: sd_card_bmp_m0/fat32_media_loader_m0/media_error_b2_n1,  NOFILE(0)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_6.a
+LUT5                                    0.424    f     2.518       2  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_6.o
+net (fo=2)                              0.600          3.118          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_7,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_8.a
+LUT3                                    0.408    f     3.526       3  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_8.o
+net (fo=1)                              0.562          4.088          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_9,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_10.a
+LUT4                                    0.408    f     4.496       4  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_10.o
+net (fo=3)                              0.651          5.147          net: sd_card_bmp_m0/media_error[1],  ../src/SD/sd_card_bmp.v(89)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_12.a
+LUT4                                    0.408    f     5.555       5  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_12.o
+net (fo=1)                              0.562          6.117          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_13,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_21.a
+LUT4                                    0.408    f     6.525       6  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_21.o
+net (fo=1)                              0.562          7.087          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_22,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_25.a
+LUT4                                    0.408    f     7.495       7  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_25.o
+net (fo=5)                              0.737          8.232          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_26,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[1]_syn_4.a
+LUT4                                    0.408    f     8.640       8  pin: sd_card_bmp_m0/osd_error_code_reg[1]_syn_4.o
+net (fo=1)                              0.562          9.202          net: sd_card_bmp_m0/osd_error_code_reg[1]_syn_2,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[1].d
+SEQ (reg)                               0.118    f     9.320          net: sd_card_bmp_m0/osd_error_code[1],  ../src/SD/sd_card_bmp.v(30)
+--------------------------------------------------------------------  ---------------
+Arrival                                                9.320
+
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[0]
+net (fo=1)                              0.000          0.000          net: sys_pll_m0/clk0_buf,  ../src/IP/sys_pll.v(40)
+                                                                      pin: sys_pll_m0/bufg_feedback.clki
+GCLK                                    0.000          0.000          pin: sys_pll_m0/bufg_feedback.clko
+net (fo=4511)                           0.000          0.000          net: sd_card_clk,  ../src/top_tf_hdmi_audio.v(188)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[1].clk
+capture edge                           10.000    r    10.000
+--------------------------------------------------------------------  ---------------
+setup                                  -0.116          9.884
+clock uncertainty                       0.000          9.884
+clock pessimism                         0.000          9.884
+--------------------------------------------------------------------  ---------------
+Required                                               9.884
+--------------------------------------------------------------------  ---------------
+Slack                                                  0.564
+
+Slack               : 0.564ns
+Begin Point         : sd_card_bmp_m0/fat32_media_loader_m0/idx_started_reg.clk (rising edge triggered by clock sd_card_clk  { rise@0.000000ns  fall@5.000000ns  period=10.000000 })
+End Point           : sd_card_bmp_m0/osd_error_code_reg[2].d (rising edge triggered by clock sd_card_clk  { rise@0.000000ns  fall@5.000000ns  period=10.000000 })
+Check Type          : setup
+Process             : slow
+Budget              : 10.000ns { sd_card_clk rising@10.000ns - sd_card_clk rising@0.000ns }
+Data Path Delay     : 9.320ns (cell 3.544ns (38%), net 5.776ns (62%))
+Clock Skew          : 0.000ns
+Logic Level         : 8 ( LUT4=5  LUT5=1  LUT3=1  LUT2=1 )
+Max Fanout          : 6
+Clock Uncertainty   : 0.000ns (sdc uncertainty: 0.000ns, default uncertainty: 0.000ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[0]
+net (fo=1)                              0.000          0.000          net: sys_pll_m0/clk0_buf,  ../src/IP/sys_pll.v(40)
+                                                                      pin: sys_pll_m0/bufg_feedback.clki
+GCLK                                    0.000          0.000          pin: sys_pll_m0/bufg_feedback.clko
+net (fo=4511)                           0.000          0.000          net: sd_card_clk,  ../src/top_tf_hdmi_audio.v(188)
+                                                                      pin: sd_card_bmp_m0/fat32_media_loader_m0/idx_started_reg.clk
+launch edge                             0.000    r     0.000
+--------------------------------------------------------------------  ---------------
+SEQ (clk2q)                             0.146    r     0.146          pin: sd_card_bmp_m0/fat32_media_loader_m0/idx_started_reg.q
+net (fo=6)                              0.770          0.916          net: sd_card_bmp_m0/fat32_media_loader_m0/idx_started,  ../src/SD/fat32_media_loader.v(163)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_5.a
+LUT2                                    0.408    f     1.324       1  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_5.o
+net (fo=6)                              0.770          2.094          net: sd_card_bmp_m0/fat32_media_loader_m0/media_error_b2_n1,  NOFILE(0)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_6.a
+LUT5                                    0.424    f     2.518       2  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_6.o
+net (fo=2)                              0.600          3.118          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_7,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_8.a
+LUT3                                    0.408    f     3.526       3  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_8.o
+net (fo=1)                              0.562          4.088          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_9,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_10.a
+LUT4                                    0.408    f     4.496       4  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_10.o
+net (fo=3)                              0.651          5.147          net: sd_card_bmp_m0/media_error[1],  ../src/SD/sd_card_bmp.v(89)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_12.a
+LUT4                                    0.408    f     5.555       5  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_12.o
+net (fo=1)                              0.562          6.117          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_13,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_21.a
+LUT4                                    0.408    f     6.525       6  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_21.o
+net (fo=1)                              0.562          7.087          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_22,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_25.a
+LUT4                                    0.408    f     7.495       7  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_25.o
+net (fo=5)                              0.737          8.232          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_26,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[2]_syn_4.a
+LUT4                                    0.408    f     8.640       8  pin: sd_card_bmp_m0/osd_error_code_reg[2]_syn_4.o
+net (fo=1)                              0.562          9.202          net: sd_card_bmp_m0/osd_error_code_reg[2]_syn_2,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[2].d
+SEQ (reg)                               0.118    f     9.320          net: sd_card_bmp_m0/osd_error_code[2],  ../src/SD/sd_card_bmp.v(30)
+--------------------------------------------------------------------  ---------------
+Arrival                                                9.320
+
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[0]
+net (fo=1)                              0.000          0.000          net: sys_pll_m0/clk0_buf,  ../src/IP/sys_pll.v(40)
+                                                                      pin: sys_pll_m0/bufg_feedback.clki
+GCLK                                    0.000          0.000          pin: sys_pll_m0/bufg_feedback.clko
+net (fo=4511)                           0.000          0.000          net: sd_card_clk,  ../src/top_tf_hdmi_audio.v(188)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[2].clk
+capture edge                           10.000    r    10.000
+--------------------------------------------------------------------  ---------------
+setup                                  -0.116          9.884
+clock uncertainty                       0.000          9.884
+clock pessimism                         0.000          9.884
+--------------------------------------------------------------------  ---------------
+Required                                               9.884
+--------------------------------------------------------------------  ---------------
+Slack                                                  0.564
+
+Slack               : 0.564ns
+Begin Point         : sd_card_bmp_m0/fat32_media_loader_m0/idx_started_reg.clk (rising edge triggered by clock sd_card_clk  { rise@0.000000ns  fall@5.000000ns  period=10.000000 })
+End Point           : sd_card_bmp_m0/osd_error_code_reg[4].d (rising edge triggered by clock sd_card_clk  { rise@0.000000ns  fall@5.000000ns  period=10.000000 })
+Check Type          : setup
+Process             : slow
+Budget              : 10.000ns { sd_card_clk rising@10.000ns - sd_card_clk rising@0.000ns }
+Data Path Delay     : 9.320ns (cell 3.544ns (38%), net 5.776ns (62%))
+Clock Skew          : 0.000ns
+Logic Level         : 8 ( LUT4=5  LUT5=1  LUT3=1  LUT2=1 )
+Max Fanout          : 6
+Clock Uncertainty   : 0.000ns (sdc uncertainty: 0.000ns, default uncertainty: 0.000ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[0]
+net (fo=1)                              0.000          0.000          net: sys_pll_m0/clk0_buf,  ../src/IP/sys_pll.v(40)
+                                                                      pin: sys_pll_m0/bufg_feedback.clki
+GCLK                                    0.000          0.000          pin: sys_pll_m0/bufg_feedback.clko
+net (fo=4511)                           0.000          0.000          net: sd_card_clk,  ../src/top_tf_hdmi_audio.v(188)
+                                                                      pin: sd_card_bmp_m0/fat32_media_loader_m0/idx_started_reg.clk
+launch edge                             0.000    r     0.000
+--------------------------------------------------------------------  ---------------
+SEQ (clk2q)                             0.146    r     0.146          pin: sd_card_bmp_m0/fat32_media_loader_m0/idx_started_reg.q
+net (fo=6)                              0.770          0.916          net: sd_card_bmp_m0/fat32_media_loader_m0/idx_started,  ../src/SD/fat32_media_loader.v(163)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_5.a
+LUT2                                    0.408    f     1.324       1  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_5.o
+net (fo=6)                              0.770          2.094          net: sd_card_bmp_m0/fat32_media_loader_m0/media_error_b2_n1,  NOFILE(0)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_6.a
+LUT5                                    0.424    f     2.518       2  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_6.o
+net (fo=2)                              0.600          3.118          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_7,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_8.a
+LUT3                                    0.408    f     3.526       3  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_8.o
+net (fo=1)                              0.562          4.088          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_9,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_10.a
+LUT4                                    0.408    f     4.496       4  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_10.o
+net (fo=3)                              0.651          5.147          net: sd_card_bmp_m0/media_error[1],  ../src/SD/sd_card_bmp.v(89)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_12.a
+LUT4                                    0.408    f     5.555       5  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_12.o
+net (fo=1)                              0.562          6.117          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_13,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_21.a
+LUT4                                    0.408    f     6.525       6  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_21.o
+net (fo=1)                              0.562          7.087          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_22,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_25.a
+LUT4                                    0.408    f     7.495       7  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_25.o
+net (fo=5)                              0.737          8.232          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_26,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_27.a
+LUT4                                    0.408    f     8.640       8  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_27.o
+net (fo=1)                              0.562          9.202          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_2,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4].d
+SEQ (reg)                               0.118    f     9.320          net: sd_card_bmp_m0/osd_error_code[4],  ../src/SD/sd_card_bmp.v(30)
+--------------------------------------------------------------------  ---------------
+Arrival                                                9.320
+
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[0]
+net (fo=1)                              0.000          0.000          net: sys_pll_m0/clk0_buf,  ../src/IP/sys_pll.v(40)
+                                                                      pin: sys_pll_m0/bufg_feedback.clki
+GCLK                                    0.000          0.000          pin: sys_pll_m0/bufg_feedback.clko
+net (fo=4511)                           0.000          0.000          net: sd_card_clk,  ../src/top_tf_hdmi_audio.v(188)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4].clk
+capture edge                           10.000    r    10.000
+--------------------------------------------------------------------  ---------------
+setup                                  -0.116          9.884
+clock uncertainty                       0.000          9.884
+clock pessimism                         0.000          9.884
+--------------------------------------------------------------------  ---------------
+Required                                               9.884
+--------------------------------------------------------------------  ---------------
+Slack                                                  0.564
+
+Slack               : 0.564ns
+Begin Point         : sd_card_bmp_m0/fat32_media_loader_m0/idx_started_reg.clk (rising edge triggered by clock sd_card_clk  { rise@0.000000ns  fall@5.000000ns  period=10.000000 })
+End Point           : sd_card_bmp_m0/osd_error_code_reg[5].d (rising edge triggered by clock sd_card_clk  { rise@0.000000ns  fall@5.000000ns  period=10.000000 })
+Check Type          : setup
+Process             : slow
+Budget              : 10.000ns { sd_card_clk rising@10.000ns - sd_card_clk rising@0.000ns }
+Data Path Delay     : 9.320ns (cell 3.544ns (38%), net 5.776ns (62%))
+Clock Skew          : 0.000ns
+Logic Level         : 8 ( LUT4=5  LUT5=1  LUT3=1  LUT2=1 )
+Max Fanout          : 6
+Clock Uncertainty   : 0.000ns (sdc uncertainty: 0.000ns, default uncertainty: 0.000ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[0]
+net (fo=1)                              0.000          0.000          net: sys_pll_m0/clk0_buf,  ../src/IP/sys_pll.v(40)
+                                                                      pin: sys_pll_m0/bufg_feedback.clki
+GCLK                                    0.000          0.000          pin: sys_pll_m0/bufg_feedback.clko
+net (fo=4511)                           0.000          0.000          net: sd_card_clk,  ../src/top_tf_hdmi_audio.v(188)
+                                                                      pin: sd_card_bmp_m0/fat32_media_loader_m0/idx_started_reg.clk
+launch edge                             0.000    r     0.000
+--------------------------------------------------------------------  ---------------
+SEQ (clk2q)                             0.146    r     0.146          pin: sd_card_bmp_m0/fat32_media_loader_m0/idx_started_reg.q
+net (fo=6)                              0.770          0.916          net: sd_card_bmp_m0/fat32_media_loader_m0/idx_started,  ../src/SD/fat32_media_loader.v(163)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_5.a
+LUT2                                    0.408    f     1.324       1  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_5.o
+net (fo=6)                              0.770          2.094          net: sd_card_bmp_m0/fat32_media_loader_m0/media_error_b2_n1,  NOFILE(0)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_6.a
+LUT5                                    0.424    f     2.518       2  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_6.o
+net (fo=2)                              0.600          3.118          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_7,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_8.a
+LUT3                                    0.408    f     3.526       3  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_8.o
+net (fo=1)                              0.562          4.088          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_9,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_10.a
+LUT4                                    0.408    f     4.496       4  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_10.o
+net (fo=3)                              0.651          5.147          net: sd_card_bmp_m0/media_error[1],  ../src/SD/sd_card_bmp.v(89)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_12.a
+LUT4                                    0.408    f     5.555       5  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_12.o
+net (fo=1)                              0.562          6.117          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_13,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_21.a
+LUT4                                    0.408    f     6.525       6  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_21.o
+net (fo=1)                              0.562          7.087          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_22,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_25.a
+LUT4                                    0.408    f     7.495       7  pin: sd_card_bmp_m0/osd_error_code_reg[4]_syn_25.o
+net (fo=5)                              0.737          8.232          net: sd_card_bmp_m0/osd_error_code_reg[4]_syn_26,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[5]_syn_3.a
+LUT4                                    0.408    f     8.640       8  pin: sd_card_bmp_m0/osd_error_code_reg[5]_syn_3.o
+net (fo=1)                              0.562          9.202          net: sd_card_bmp_m0/osd_error_code_reg[5]_syn_2,  ../src/SD/sd_card_bmp.v(228)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[5].d
+SEQ (reg)                               0.118    f     9.320          net: sd_card_bmp_m0/osd_error_code[5],  ../src/SD/sd_card_bmp.v(30)
+--------------------------------------------------------------------  ---------------
+Arrival                                                9.320
+
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[0]
+net (fo=1)                              0.000          0.000          net: sys_pll_m0/clk0_buf,  ../src/IP/sys_pll.v(40)
+                                                                      pin: sys_pll_m0/bufg_feedback.clki
+GCLK                                    0.000          0.000          pin: sys_pll_m0/bufg_feedback.clko
+net (fo=4511)                           0.000          0.000          net: sd_card_clk,  ../src/top_tf_hdmi_audio.v(188)
+                                                                      pin: sd_card_bmp_m0/osd_error_code_reg[5].clk
+capture edge                           10.000    r    10.000
+--------------------------------------------------------------------  ---------------
+setup                                  -0.116          9.884
+clock uncertainty                       0.000          9.884
+clock pessimism                         0.000          9.884
+--------------------------------------------------------------------  ---------------
+Required                                               9.884
+--------------------------------------------------------------------  ---------------
+Slack                                                  0.564
+
+Logic level paths for clock video_clk as capture clock
+--------------------------------------------------
+
+Logic level paths for clock clk as capture clock
+--------------------------------------------------
+
+Logic level paths for clock ext_mem_clk as capture clock
+--------------------------------------------------
+
+Paths of level 7, 1 in total
+--------------------
+
+
+Slack               : 0.646ns
+Begin Point         : frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[18].clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : frame_read_write_m0/frame_fifo_read_m0/state_reg[2].d (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+Check Type          : setup
+Process             : slow
+Budget              : 8.000ns { ext_mem_clk rising@8.000ns - ext_mem_clk rising@0.000ns }
+Data Path Delay     : 7.238ns (cell 3.321ns (45%), net 3.917ns (55%))
+Clock Skew          : 0.000ns
+Logic Level         : 7 ( ADDER=4  LUT5=3 )
+Max Fanout          : 14
+Clock Uncertainty   : 0.000ns (sdc uncertainty: 0.000ns, default uncertainty: 0.000ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=949)                            0.000          0.000          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[18].clk
+launch edge                             0.000    r     0.000
+--------------------------------------------------------------------  ---------------
+SEQ (clk2q)                             0.146    r     0.146          pin: frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[18].q
+net (fo=4)                              0.697          0.843          net: frame_read_write_m0/frame_fifo_write_m0/write_cnt[18],  ../src/SD/frame_fifo_write.v(70)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_131.e[1]
+ADDER                                   0.715    f     1.558       1  pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_131.fco
+net (fo=1)                              0.000          1.558          net: frame_read_write_m0/frame_fifo_write_m0/add4_syn_124,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_132.fci
+ADDER                                   0.387    f     1.945       2  pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_132.fx[0]
+net (fo=1)                              0.562          2.507          net: frame_read_write_m0/frame_fifo_write_m0/into_burst_b[20],  NOFILE(0)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_101.b[1]
+ADDER                                   0.539    f     3.046       3  pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_101.fco
+net (fo=1)                              0.000          3.046          net: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_45,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_103.fci
+ADDER                                   0.144    f     3.190       4  pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_103.f[0]
+net (fo=2)                              0.600          3.790          net: frame_read_write_m0/frame_fifo_write_m0/into_burst_n3,  NOFILE(0)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_163.a
+LUT5                                    0.424    f     4.214       5  pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_163.o
+net (fo=14)                             0.934          5.148          net: frame_read_write_m0/frame_fifo_write_m0/O_wr_busy_n1,  NOFILE(0)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_174.a
+LUT5                                    0.424    f     5.572       6  pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_174.o
+net (fo=1)                              0.562          6.134          net: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_175,  ../src/SD/frame_fifo_read.v(201)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_182.a
+LUT5                                    0.424    f     6.558       7  pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_182.o
+net (fo=1)                              0.562          7.120          net: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_106,  ../src/SD/frame_fifo_read.v(201)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/state_reg[2].d
+SEQ (reg)                               0.118    f     7.238          net: frame_read_write_m0/frame_fifo_read_m0/state_reg_syn_1[2],  ../src/SD/frame_fifo_read.v(186)
+--------------------------------------------------------------------  ---------------
+Arrival                                                7.238
+
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=949)                            0.000          0.000          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/state_reg[2].clk
+capture edge                            8.000    r     8.000
+--------------------------------------------------------------------  ---------------
+setup                                  -0.116          7.884
+clock uncertainty                       0.000          7.884
+clock pessimism                         0.000          7.884
+--------------------------------------------------------------------  ---------------
+Required                                               7.884
+--------------------------------------------------------------------  ---------------
+Slack                                                  0.646
+
+Paths of level 6, 6 in total
+--------------------
+
+
+Slack               : 1.227ns
+Begin Point         : frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : u_thumbnail_view_reader/burst_base_mem_reg[7].ce (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+Check Type          : setup
+Process             : slow
+Budget              : 8.000ns { ext_mem_clk rising@8.000ns - ext_mem_clk rising@0.000ns }
+Data Path Delay     : 6.615ns (cell 2.888ns (43%), net 3.727ns (57%))
+Clock Skew          : 0.000ns
+Logic Level         : 6 ( ADDER=4  LUT5=1  LUT3=1 )
+Max Fanout          : 14
+Clock Uncertainty   : 0.000ns (sdc uncertainty: 0.000ns, default uncertainty: 0.000ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=949)                            0.000          0.000          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].clk
+launch edge                             0.000    r     0.000
+--------------------------------------------------------------------  ---------------
+SEQ (clk2q)                             0.146    r     0.146          pin: frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].q
+net (fo=4)                              0.697          0.843          net: frame_read_write_m0/frame_fifo_write_m0/write_cnt[14],  ../src/SD/frame_fifo_write.v(70)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_130.e[1]
+ADDER                                   0.715    f     1.558       1  pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_130.fco
+net (fo=1)                              0.000          1.558          net: frame_read_write_m0/frame_fifo_write_m0/add4_syn_120,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_131.fci
+ADDER                                   0.264    r     1.822       2  pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_131.f[1]
+net (fo=1)                              0.562          2.384          net: frame_read_write_m0/frame_fifo_write_m0/into_burst_b[17],  NOFILE(0)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_98.b[0]
+ADDER                                   0.627    f     3.011       3  pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_98.fco
+net (fo=1)                              0.000          3.011          net: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_41,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_101.fci
+ADDER                                   0.073    f     3.084          pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_101.fco
+net (fo=1)                              0.000          3.084          net: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_45,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_103.fci
+ADDER                                   0.144    f     3.228       4  pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_103.f[0]
+net (fo=2)                              0.600          3.828          net: frame_read_write_m0/frame_fifo_write_m0/into_burst_n3,  NOFILE(0)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_163.a
+LUT5                                    0.424    f     4.252       5  pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_163.o
+net (fo=14)                             0.934          5.186          net: frame_read_write_m0/frame_fifo_write_m0/O_wr_busy_n1,  NOFILE(0)
+                                                                      pin: u_thumbnail_view_reader/start_burst_syn_21.a
+LUT3                                    0.408    f     5.594       6  pin: u_thumbnail_view_reader/start_burst_syn_21.o
+net (fo=14)                             0.934          6.528          net: u_thumbnail_view_reader/start_burst,  ../src/display/thumbnail_view_reader.v(239)
+                                                                      pin: u_thumbnail_view_reader/burst_base_mem_reg[7].ce
+SEQ (reg)                               0.087    r     6.615
+--------------------------------------------------------------------  ---------------
+Arrival                                                6.615
+
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=949)                            0.000          0.000          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: u_thumbnail_view_reader/burst_base_mem_reg[7].clk
+capture edge                            8.000    r     8.000
+--------------------------------------------------------------------  ---------------
+setup                                  -0.158          7.842
+clock uncertainty                       0.000          7.842
+clock pessimism                         0.000          7.842
+--------------------------------------------------------------------  ---------------
+Required                                               7.842
+--------------------------------------------------------------------  ---------------
+Slack                                                  1.227
+
+Slack               : 1.227ns
+Begin Point         : frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : u_thumbnail_view_reader/burst_base_mem_reg[8].ce (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+Check Type          : setup
+Process             : slow
+Budget              : 8.000ns { ext_mem_clk rising@8.000ns - ext_mem_clk rising@0.000ns }
+Data Path Delay     : 6.615ns (cell 2.888ns (43%), net 3.727ns (57%))
+Clock Skew          : 0.000ns
+Logic Level         : 6 ( ADDER=4  LUT5=1  LUT3=1 )
+Max Fanout          : 14
+Clock Uncertainty   : 0.000ns (sdc uncertainty: 0.000ns, default uncertainty: 0.000ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=949)                            0.000          0.000          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].clk
+launch edge                             0.000    r     0.000
+--------------------------------------------------------------------  ---------------
+SEQ (clk2q)                             0.146    r     0.146          pin: frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].q
+net (fo=4)                              0.697          0.843          net: frame_read_write_m0/frame_fifo_write_m0/write_cnt[14],  ../src/SD/frame_fifo_write.v(70)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_130.e[1]
+ADDER                                   0.715    f     1.558       1  pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_130.fco
+net (fo=1)                              0.000          1.558          net: frame_read_write_m0/frame_fifo_write_m0/add4_syn_120,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_131.fci
+ADDER                                   0.264    r     1.822       2  pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_131.f[1]
+net (fo=1)                              0.562          2.384          net: frame_read_write_m0/frame_fifo_write_m0/into_burst_b[17],  NOFILE(0)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_98.b[0]
+ADDER                                   0.627    f     3.011       3  pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_98.fco
+net (fo=1)                              0.000          3.011          net: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_41,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_101.fci
+ADDER                                   0.073    f     3.084          pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_101.fco
+net (fo=1)                              0.000          3.084          net: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_45,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_103.fci
+ADDER                                   0.144    f     3.228       4  pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_103.f[0]
+net (fo=2)                              0.600          3.828          net: frame_read_write_m0/frame_fifo_write_m0/into_burst_n3,  NOFILE(0)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_163.a
+LUT5                                    0.424    f     4.252       5  pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_163.o
+net (fo=14)                             0.934          5.186          net: frame_read_write_m0/frame_fifo_write_m0/O_wr_busy_n1,  NOFILE(0)
+                                                                      pin: u_thumbnail_view_reader/start_burst_syn_21.a
+LUT3                                    0.408    f     5.594       6  pin: u_thumbnail_view_reader/start_burst_syn_21.o
+net (fo=14)                             0.934          6.528          net: u_thumbnail_view_reader/start_burst,  ../src/display/thumbnail_view_reader.v(239)
+                                                                      pin: u_thumbnail_view_reader/burst_base_mem_reg[8].ce
+SEQ (reg)                               0.087    r     6.615
+--------------------------------------------------------------------  ---------------
+Arrival                                                6.615
+
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=949)                            0.000          0.000          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: u_thumbnail_view_reader/burst_base_mem_reg[8].clk
+capture edge                            8.000    r     8.000
+--------------------------------------------------------------------  ---------------
+setup                                  -0.158          7.842
+clock uncertainty                       0.000          7.842
+clock pessimism                         0.000          7.842
+--------------------------------------------------------------------  ---------------
+Required                                               7.842
+--------------------------------------------------------------------  ---------------
+Slack                                                  1.227
+
+Slack               : 1.227ns
+Begin Point         : frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : u_thumbnail_view_reader/burst_base_mem_reg[9].ce (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+Check Type          : setup
+Process             : slow
+Budget              : 8.000ns { ext_mem_clk rising@8.000ns - ext_mem_clk rising@0.000ns }
+Data Path Delay     : 6.615ns (cell 2.888ns (43%), net 3.727ns (57%))
+Clock Skew          : 0.000ns
+Logic Level         : 6 ( ADDER=4  LUT5=1  LUT3=1 )
+Max Fanout          : 14
+Clock Uncertainty   : 0.000ns (sdc uncertainty: 0.000ns, default uncertainty: 0.000ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=949)                            0.000          0.000          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].clk
+launch edge                             0.000    r     0.000
+--------------------------------------------------------------------  ---------------
+SEQ (clk2q)                             0.146    r     0.146          pin: frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].q
+net (fo=4)                              0.697          0.843          net: frame_read_write_m0/frame_fifo_write_m0/write_cnt[14],  ../src/SD/frame_fifo_write.v(70)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_130.e[1]
+ADDER                                   0.715    f     1.558       1  pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_130.fco
+net (fo=1)                              0.000          1.558          net: frame_read_write_m0/frame_fifo_write_m0/add4_syn_120,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_131.fci
+ADDER                                   0.264    r     1.822       2  pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_131.f[1]
+net (fo=1)                              0.562          2.384          net: frame_read_write_m0/frame_fifo_write_m0/into_burst_b[17],  NOFILE(0)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_98.b[0]
+ADDER                                   0.627    f     3.011       3  pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_98.fco
+net (fo=1)                              0.000          3.011          net: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_41,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_101.fci
+ADDER                                   0.073    f     3.084          pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_101.fco
+net (fo=1)                              0.000          3.084          net: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_45,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_103.fci
+ADDER                                   0.144    f     3.228       4  pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_103.f[0]
+net (fo=2)                              0.600          3.828          net: frame_read_write_m0/frame_fifo_write_m0/into_burst_n3,  NOFILE(0)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_163.a
+LUT5                                    0.424    f     4.252       5  pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_163.o
+net (fo=14)                             0.934          5.186          net: frame_read_write_m0/frame_fifo_write_m0/O_wr_busy_n1,  NOFILE(0)
+                                                                      pin: u_thumbnail_view_reader/start_burst_syn_21.a
+LUT3                                    0.408    f     5.594       6  pin: u_thumbnail_view_reader/start_burst_syn_21.o
+net (fo=14)                             0.934          6.528          net: u_thumbnail_view_reader/start_burst,  ../src/display/thumbnail_view_reader.v(239)
+                                                                      pin: u_thumbnail_view_reader/burst_base_mem_reg[9].ce
+SEQ (reg)                               0.087    r     6.615
+--------------------------------------------------------------------  ---------------
+Arrival                                                6.615
+
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=949)                            0.000          0.000          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: u_thumbnail_view_reader/burst_base_mem_reg[9].clk
+capture edge                            8.000    r     8.000
+--------------------------------------------------------------------  ---------------
+setup                                  -0.158          7.842
+clock uncertainty                       0.000          7.842
+clock pessimism                         0.000          7.842
+--------------------------------------------------------------------  ---------------
+Required                                               7.842
+--------------------------------------------------------------------  ---------------
+Slack                                                  1.227
+
+Slack               : 1.227ns
+Begin Point         : frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : u_thumbnail_view_reader/burst_base_mem_reg[10].ce (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+Check Type          : setup
+Process             : slow
+Budget              : 8.000ns { ext_mem_clk rising@8.000ns - ext_mem_clk rising@0.000ns }
+Data Path Delay     : 6.615ns (cell 2.888ns (43%), net 3.727ns (57%))
+Clock Skew          : 0.000ns
+Logic Level         : 6 ( ADDER=4  LUT5=1  LUT3=1 )
+Max Fanout          : 14
+Clock Uncertainty   : 0.000ns (sdc uncertainty: 0.000ns, default uncertainty: 0.000ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=949)                            0.000          0.000          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].clk
+launch edge                             0.000    r     0.000
+--------------------------------------------------------------------  ---------------
+SEQ (clk2q)                             0.146    r     0.146          pin: frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].q
+net (fo=4)                              0.697          0.843          net: frame_read_write_m0/frame_fifo_write_m0/write_cnt[14],  ../src/SD/frame_fifo_write.v(70)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_130.e[1]
+ADDER                                   0.715    f     1.558       1  pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_130.fco
+net (fo=1)                              0.000          1.558          net: frame_read_write_m0/frame_fifo_write_m0/add4_syn_120,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_131.fci
+ADDER                                   0.264    r     1.822       2  pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_131.f[1]
+net (fo=1)                              0.562          2.384          net: frame_read_write_m0/frame_fifo_write_m0/into_burst_b[17],  NOFILE(0)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_98.b[0]
+ADDER                                   0.627    f     3.011       3  pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_98.fco
+net (fo=1)                              0.000          3.011          net: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_41,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_101.fci
+ADDER                                   0.073    f     3.084          pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_101.fco
+net (fo=1)                              0.000          3.084          net: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_45,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_103.fci
+ADDER                                   0.144    f     3.228       4  pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_103.f[0]
+net (fo=2)                              0.600          3.828          net: frame_read_write_m0/frame_fifo_write_m0/into_burst_n3,  NOFILE(0)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_163.a
+LUT5                                    0.424    f     4.252       5  pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_163.o
+net (fo=14)                             0.934          5.186          net: frame_read_write_m0/frame_fifo_write_m0/O_wr_busy_n1,  NOFILE(0)
+                                                                      pin: u_thumbnail_view_reader/start_burst_syn_21.a
+LUT3                                    0.408    f     5.594       6  pin: u_thumbnail_view_reader/start_burst_syn_21.o
+net (fo=14)                             0.934          6.528          net: u_thumbnail_view_reader/start_burst,  ../src/display/thumbnail_view_reader.v(239)
+                                                                      pin: u_thumbnail_view_reader/burst_base_mem_reg[10].ce
+SEQ (reg)                               0.087    r     6.615
+--------------------------------------------------------------------  ---------------
+Arrival                                                6.615
+
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=949)                            0.000          0.000          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: u_thumbnail_view_reader/burst_base_mem_reg[10].clk
+capture edge                            8.000    r     8.000
+--------------------------------------------------------------------  ---------------
+setup                                  -0.158          7.842
+clock uncertainty                       0.000          7.842
+clock pessimism                         0.000          7.842
+--------------------------------------------------------------------  ---------------
+Required                                               7.842
+--------------------------------------------------------------------  ---------------
+Slack                                                  1.227
+
+Slack               : 1.227ns
+Begin Point         : frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : u_thumbnail_view_reader/burst_base_mem_reg[11].ce (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+Check Type          : setup
+Process             : slow
+Budget              : 8.000ns { ext_mem_clk rising@8.000ns - ext_mem_clk rising@0.000ns }
+Data Path Delay     : 6.615ns (cell 2.888ns (43%), net 3.727ns (57%))
+Clock Skew          : 0.000ns
+Logic Level         : 6 ( ADDER=4  LUT5=1  LUT3=1 )
+Max Fanout          : 14
+Clock Uncertainty   : 0.000ns (sdc uncertainty: 0.000ns, default uncertainty: 0.000ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=949)                            0.000          0.000          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].clk
+launch edge                             0.000    r     0.000
+--------------------------------------------------------------------  ---------------
+SEQ (clk2q)                             0.146    r     0.146          pin: frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].q
+net (fo=4)                              0.697          0.843          net: frame_read_write_m0/frame_fifo_write_m0/write_cnt[14],  ../src/SD/frame_fifo_write.v(70)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_130.e[1]
+ADDER                                   0.715    f     1.558       1  pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_130.fco
+net (fo=1)                              0.000          1.558          net: frame_read_write_m0/frame_fifo_write_m0/add4_syn_120,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_131.fci
+ADDER                                   0.264    r     1.822       2  pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_131.f[1]
+net (fo=1)                              0.562          2.384          net: frame_read_write_m0/frame_fifo_write_m0/into_burst_b[17],  NOFILE(0)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_98.b[0]
+ADDER                                   0.627    f     3.011       3  pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_98.fco
+net (fo=1)                              0.000          3.011          net: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_41,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_101.fci
+ADDER                                   0.073    f     3.084          pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_101.fco
+net (fo=1)                              0.000          3.084          net: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_45,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_103.fci
+ADDER                                   0.144    f     3.228       4  pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_103.f[0]
+net (fo=2)                              0.600          3.828          net: frame_read_write_m0/frame_fifo_write_m0/into_burst_n3,  NOFILE(0)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_163.a
+LUT5                                    0.424    f     4.252       5  pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_163.o
+net (fo=14)                             0.934          5.186          net: frame_read_write_m0/frame_fifo_write_m0/O_wr_busy_n1,  NOFILE(0)
+                                                                      pin: u_thumbnail_view_reader/start_burst_syn_21.a
+LUT3                                    0.408    f     5.594       6  pin: u_thumbnail_view_reader/start_burst_syn_21.o
+net (fo=14)                             0.934          6.528          net: u_thumbnail_view_reader/start_burst,  ../src/display/thumbnail_view_reader.v(239)
+                                                                      pin: u_thumbnail_view_reader/burst_base_mem_reg[11].ce
+SEQ (reg)                               0.087    r     6.615
+--------------------------------------------------------------------  ---------------
+Arrival                                                6.615
+
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=949)                            0.000          0.000          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: u_thumbnail_view_reader/burst_base_mem_reg[11].clk
+capture edge                            8.000    r     8.000
+--------------------------------------------------------------------  ---------------
+setup                                  -0.158          7.842
+clock uncertainty                       0.000          7.842
+clock pessimism                         0.000          7.842
+--------------------------------------------------------------------  ---------------
+Required                                               7.842
+--------------------------------------------------------------------  ---------------
+Slack                                                  1.227
+
+Slack               : 1.227ns
+Begin Point         : frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].clk (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+End Point           : u_thumbnail_view_reader/burst_base_mem_reg[12].ce (rising edge triggered by clock ext_mem_clk  { rise@0.000000ns  fall@4.000000ns  period=8.000000 })
+Check Type          : setup
+Process             : slow
+Budget              : 8.000ns { ext_mem_clk rising@8.000ns - ext_mem_clk rising@0.000ns }
+Data Path Delay     : 6.615ns (cell 2.888ns (43%), net 3.727ns (57%))
+Clock Skew          : 0.000ns
+Logic Level         : 6 ( ADDER=4  LUT5=1  LUT3=1 )
+Max Fanout          : 14
+Clock Uncertainty   : 0.000ns (sdc uncertainty: 0.000ns, default uncertainty: 0.000ns)
+
+Delay Type          Location             Incr           Path   Level  Netlist Info
+--------------------------------------------------------------------  ---------------
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=949)                            0.000          0.000          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].clk
+launch edge                             0.000    r     0.000
+--------------------------------------------------------------------  ---------------
+SEQ (clk2q)                             0.146    r     0.146          pin: frame_read_write_m0/frame_fifo_write_m0/write_cnt_reg[14].q
+net (fo=4)                              0.697          0.843          net: frame_read_write_m0/frame_fifo_write_m0/write_cnt[14],  ../src/SD/frame_fifo_write.v(70)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_130.e[1]
+ADDER                                   0.715    f     1.558       1  pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_130.fco
+net (fo=1)                              0.000          1.558          net: frame_read_write_m0/frame_fifo_write_m0/add4_syn_120,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_131.fci
+ADDER                                   0.264    r     1.822       2  pin: frame_read_write_m0/frame_fifo_write_m0/add4_syn_131.f[1]
+net (fo=1)                              0.562          2.384          net: frame_read_write_m0/frame_fifo_write_m0/into_burst_b[17],  NOFILE(0)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_98.b[0]
+ADDER                                   0.627    f     3.011       3  pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_98.fco
+net (fo=1)                              0.000          3.011          net: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_41,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_101.fci
+ADDER                                   0.073    f     3.084          pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_101.fco
+net (fo=1)                              0.000          3.084          net: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_45,  ../src/SD/frame_fifo_write.v(95)
+                                                                      pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_103.fci
+ADDER                                   0.144    f     3.228       4  pin: frame_read_write_m0/frame_fifo_write_m0/lt2_syn_103.f[0]
+net (fo=2)                              0.600          3.828          net: frame_read_write_m0/frame_fifo_write_m0/into_burst_n3,  NOFILE(0)
+                                                                      pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_163.a
+LUT5                                    0.424    f     4.252       5  pin: frame_read_write_m0/frame_fifo_read_m0/sel2_syn_163.o
+net (fo=14)                             0.934          5.186          net: frame_read_write_m0/frame_fifo_write_m0/O_wr_busy_n1,  NOFILE(0)
+                                                                      pin: u_thumbnail_view_reader/start_burst_syn_21.a
+LUT3                                    0.408    f     5.594       6  pin: u_thumbnail_view_reader/start_burst_syn_21.o
+net (fo=14)                             0.934          6.528          net: u_thumbnail_view_reader/start_burst,  ../src/display/thumbnail_view_reader.v(239)
+                                                                      pin: u_thumbnail_view_reader/burst_base_mem_reg[12].ce
+SEQ (reg)                               0.087    r     6.615
+--------------------------------------------------------------------  ---------------
+Arrival                                                6.615
+
+source latency                          0.000          0.000
+port                R7                  0.000          0.000          pin: clk
+hierarchy                               0.000          0.000          pin: clk_syn_2.ipad
+PAD                                     0.000          0.000          pin: clk_syn_2.di
+net (fo=1196)                           0.000          0.000          net: clk_dup_1,  ../src/top_tf_hdmi_audio.v(74)
+                                                                      pin: sys_pll_m0/pll_inst.refclk
+PLL                                     0.000          0.000          pin: sys_pll_m0/pll_inst.clkc[1]
+net (fo=949)                            0.000          0.000          net: U3/u2_ram/u1_init_ref/Sdr_clk,  ../src/include/sdr_init_ref.enc.v(16)
+                                                                      pin: u_thumbnail_view_reader/burst_base_mem_reg[12].clk
+capture edge                            8.000    r     8.000
+--------------------------------------------------------------------  ---------------
+setup                                  -0.158          7.842
+clock uncertainty                       0.000          7.842
+clock pessimism                         0.000          7.842
+--------------------------------------------------------------------  ---------------
+Required                                               7.842
+--------------------------------------------------------------------  ---------------
+Slack                                                  1.227
+
+Logic level paths for clock hdmi_5x_clk as capture clock
+--------------------------------------------------
+
+Logic level paths for clock ext_mem_clk_sft as capture clock
+--------------------------------------------------

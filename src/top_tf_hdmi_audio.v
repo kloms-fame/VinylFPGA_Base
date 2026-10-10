@@ -61,6 +61,8 @@
 `include "display/lrc_multisong_osd.v"
 `include "display/brightness_contrast_steps.v"
 `include "display/ascii_font_rom.v"
+`include "display/playback_progress.v"
+`include "display/playback_page.v"
 `include "display/ec2_param_osd.v"
 `include "video/mv_sector_mux.v"
 `include "video/mv_stream_player.v"
@@ -2372,6 +2374,7 @@ wire [4:0] song_artist_length;
 wire [127:0] song_title_glyphs;
 wire [127:0] song_artist_glyphs;
 wire song_text_valid;
+wire [7:0] song_page_ascii_code;
 wire [7:0] song_line_count_frame;
 wire current_lyric_valid;
 wire [6:0] current_lyric_index;
@@ -2384,9 +2387,10 @@ song_text_rom u_song_text_rom (
     .line_glyphs(song_line_rom_glyphs),.song_text_valid(song_text_valid),
     .title_length(song_title_length),.artist_length(song_artist_length),
     .title_glyphs(song_title_glyphs),.artist_glyphs(song_artist_glyphs),
-    .no_lyrics_glyphs(song_no_lyrics_glyphs),.ui_ascii_code(8'd0),.ui_glyph(song_ui_glyph)
+    .no_lyrics_glyphs(song_no_lyrics_glyphs),.ui_ascii_code(song_page_ascii_code),
+    .ui_glyph(song_ui_glyph)
 );
-lrc_multisong_osd u_lrc_osd (
+lrc_multisong_osd #(.RENDER_ENABLE(1'b0)) u_lrc_osd (
     .clk      (video_clk),
     .rst_n    (video_rst_n),
     .vs       (vs),
@@ -2415,15 +2419,47 @@ lrc_multisong_osd u_lrc_osd (
     .hit      (lrc_hit)
 );
 
+// D10a: exact 240-pixel progress and elapsed/total text are updated in the
+// vertical blank interval from the same consumed-sample timebase as lyrics.
+wire [7:0] playback_progress_fill;
+wire [103:0] playback_time_ascii;
+wire playback_time_known;
+playback_progress u_playback_progress (
+    .clk(video_clk),.rst_n(video_rst_n),.vs(vs),
+    .elapsed_samples(lyric_sample_count),.total_samples(play_total_samples),
+    .progress_fill(playback_progress_fill),.time_ascii(playback_time_ascii),
+    .time_known(playback_time_known)
+);
+
+// D10b: static playback page is one aligned RGB/DE/VS/x stage before EC2.
+wire playback_page_vs;
+wire playback_page_de;
+wire [9:0] playback_page_x;
+wire [23:0] playback_page_rgb;
+playback_page u_playback_page (
+    .clk(video_clk),.rst_n(video_rst_n),.vs(vs),.de(adjusted_de),
+    .pixel_x(adjusted_pixel_x),
+    .enable(S5_PLAY_ENABLE && play_active_v2 && !pat_mode),.rgb_in(lrc_rgb),
+    .song_id(song_id_frame),.title_length(song_title_length),
+    .artist_length(song_artist_length),.title_glyphs(song_title_glyphs),
+    .artist_glyphs(song_artist_glyphs),.line_count(song_line_count_frame),
+    .lyric_valid(current_lyric_valid),.lyric_length(current_lyric_length),
+    .lyric_glyphs(current_lyric_glyphs),.no_lyrics_glyphs(song_no_lyrics_glyphs),
+    .progress_fill(playback_progress_fill),.time_ascii(playback_time_ascii),
+    .ascii_glyph(song_ui_glyph),.ascii_code(song_page_ascii_code),
+    .out_vs(playback_page_vs),.out_de(playback_page_de),
+    .out_pixel_x(playback_page_x),.out_rgb(playback_page_rgb)
+);
+
 // D6: one frame-coherent overlay snapshot, above user media layers and below
 // Boot/blank priority. Its synchronous ASCII ROM adds one aligned RGB/DE/VS beat.
 ec2_param_osd u_ec2_param_osd (
     .clk              (video_clk),
     .rst_n            (video_rst_n),
-    .vs               (vs),
-    .de               (adjusted_de),
-    .pixel_x          (adjusted_pixel_x),
-    .rgb_in           (lrc_rgb),
+    .vs               (playback_page_vs),
+    .de               (playback_page_de),
+    .pixel_x          (playback_page_x),
+    .rgb_in           (playback_page_rgb),
     .visible          ((ec2_state_frame != 2'd0) && !pat_mode),
     .ui_state         (ec2_state_frame),
     .selected_param   (ec2_selected_frame),
