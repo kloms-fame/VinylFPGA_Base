@@ -1,0 +1,2759 @@
+[
+  {
+    "path": "doc/hw/config.json",
+    "bytes": 165385,
+    "encoding": "utf-8-sig",
+    "lines": 4780,
+    "sha256": "dc5d3c2e8df9e4eabce9c31b50a2753e51158753ae2e5bc9985c585b941c3013"
+  },
+  {
+    "path": "doc/refs/fpgahw-bbe167-HX4S20开发板手册-HDL版2410.pdf",
+    "bytes": 2423520,
+    "extracted": "document_0.txt",
+    "units": 23,
+    "chars": 12604,
+    "sha256": "e6d066fdc433259697bcf5dfe9eb791cf8a87d289c75e69fa40172d716afccfe"
+  },
+  {
+    "path": "doc/优化方案/仅供参考资料内容.md",
+    "bytes": 20212,
+    "encoding": "utf-8-sig",
+    "lines": 456,
+    "sha256": "f046c3119f5603d5e92a1a853f921d5ba9b00ded0dfc0f5ff1ee24355921266d"
+  },
+  {
+    "path": "doc/优化方案/回归赛题删减无用功能.txt",
+    "bytes": 2881,
+    "encoding": "utf-8-sig",
+    "lines": 29,
+    "sha256": "65252796fe706e39868f47cd75e0ebcacf36c1da5ece74da3301d1b6b111aecd"
+  },
+  {
+    "path": "doc/开发方案/EC11-B 风格 EC2 浮窗调参.md",
+    "bytes": 46453,
+    "encoding": "utf-8-sig",
+    "lines": 1069,
+    "sha256": "4c429eb116f7cdfaaf4e7bd76b5916564cc8fc350ddbbf5b8b1a788d534ab52a"
+  },
+  {
+    "path": "doc/开发方案/J2扩展板引脚按键映射标定.md",
+    "bytes": 17821,
+    "encoding": "utf-8-sig",
+    "lines": 273,
+    "sha256": "56d9dc62fdf55a1f3fb86bd3f7c59ef15fc12f3e99c46ec6648b56c9be3a8944"
+  },
+  {
+    "path": "doc/开发方案/播放态开发方案.md",
+    "bytes": 25527,
+    "encoding": "utf-8-sig",
+    "lines": 562,
+    "sha256": "d57732d792f8d2fe6a9c14bc8b8f5d9e225fcef8a92f2a1299c76ccef43863da"
+  },
+  {
+    "path": "doc/开发方案/第1课_从官方例程到完赛工程_架构认知与FPGA思维框架.md",
+    "bytes": 26635,
+    "encoding": "utf-8-sig",
+    "lines": 405,
+    "sha256": "045286523bba997279633025409c92665f5fde7adb89769f440400f6cdd5d2fb"
+  },
+  {
+    "path": "doc/资源/lyrics/demo.lrc",
+    "bytes": 284,
+    "encoding": "utf-8-sig",
+    "lines": 9,
+    "sha256": "a9019113eda6a08fd30a73a33345fb67e652b79c739949de21bad1b090c6b361"
+  },
+  {
+    "path": "doc/资源/lyrics/demo_preview.png",
+    "bytes": 2342,
+    "sha256": "cb1d6cc91c03f65c6410f645ffe70f1175c0ca300d95ce1b32b371ed5101abb3"
+  },
+  {
+    "path": "doc/资源/s2_boot_logo_preview.png",
+    "bytes": 18678,
+    "sha256": "43361eab788d8860cbaa998e6384ed1e46fc075e1df9a74f312de6d65f7a1766"
+  },
+  {
+    "path": "doc/资源/sd卡/AUDIO.PCM",
+    "bytes": 23560704,
+    "sha256": "bf2e41ca37f3903c9b5b4063c60617e06060d53eee118df1a55a106c973947f7"
+  },
+  {
+    "path": "doc/资源/sd卡/card.img",
+    "bytes": 27700736,
+    "sha256": "a7103f4072a90b59d69555354a6c7a0e686c8ece84d71cc5d4289608abcaadfc"
+  },
+  {
+    "path": "doc/资源/sd卡/card_A.img",
+    "bytes": 27700736,
+    "sha256": "a7103f4072a90b59d69555354a6c7a0e686c8ece84d71cc5d4289608abcaadfc"
+  },
+  {
+    "path": "doc/资源/sd卡/card_A_broken.img",
+    "bytes": 27700736,
+    "sha256": "b0af54a893503e84877793c9c4a238ad4fbebc1fcf150cd392d644c5499e4da4"
+  },
+  {
+    "path": "doc/资源/sd卡/card_B_broken.img",
+    "bytes": 27700736,
+    "sha256": "8154ab8bacdd90cb2fce809497121940ae1fbfbf6727a3a0268cd30680abfcba"
+  },
+  {
+    "path": "doc/资源/sd卡/card_S5.img",
+    "bytes": 27700736,
+    "sha256": "3683e44b5eebc2a9625fe60f9b1e26ad2dd54d7aac4a645531c6e4be60a8b8ee"
+  },
+  {
+    "path": "doc/资源/sd卡/card_S6.img",
+    "bytes": 74509824,
+    "sha256": "a8be9d182a9b206a39f8baffe5277fe93fd1308221ffed14d7c0af70611b42ef"
+  },
+  {
+    "path": "doc/资源/sd卡/card_SONG.img",
+    "bytes": 27700736,
+    "sha256": "4d136e0c0eb4f5d6e2c41690c0b10761cd84efee31a98c9c2ea26bc70782630a"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0001.png",
+    "bytes": 914,
+    "sha256": "98654d4a8fd4b9aa5f6ccd3c06ec39a62b7464e2cd5c5ca97f583589df8e39b9"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0002.png",
+    "bytes": 83950,
+    "sha256": "1e0cbe5d6d2ea0c4eb73f95d0631c18a0b99fea0a259e30a7914741a99869ecc"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0003.png",
+    "bytes": 80891,
+    "sha256": "af745f75c873e190817ac48f704f4a302ec275ac1a431538a6b58d0872a4f0cf"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0004.png",
+    "bytes": 86481,
+    "sha256": "7264fb9b4fc9e13a1c717e29038e2ceee96df036ead08d09e5df8bac8504509c"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0005.png",
+    "bytes": 85208,
+    "sha256": "9b60271663ce676d8b7d427cbe5249a5fa8e2e11f6597156f27719a0b4b1fcb6"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0006.png",
+    "bytes": 85382,
+    "sha256": "72aac227d65234a9b9a73f8149d5d990803cce959fc553e19bbc7bf48f0a3bc0"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0007.png",
+    "bytes": 85301,
+    "sha256": "ad6d7712b987f1f9a2517315c41918e87fbc46e2ab500d1475d06f5cb4ce4634"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0008.png",
+    "bytes": 78156,
+    "sha256": "3f7020946716b337f5f6752e2df531da3bac364282b670c35a8a80270914f4f2"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0009.png",
+    "bytes": 80588,
+    "sha256": "7c1db51ce73414b354c8e9816f5ce08f24cfd53d65f0ef440a405a9ff6dab89f"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0010.png",
+    "bytes": 79278,
+    "sha256": "ae47cc1b2098153439164e2311f358745a06bf6d65f86eabf3b71775ac5540aa"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0011.png",
+    "bytes": 48332,
+    "sha256": "7e83679f0a2cd07f6195e706e0b6db3b87b3c219734dd989777903312932abb5"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0012.png",
+    "bytes": 51026,
+    "sha256": "8c5664637a0f81c58f89f642573be0cf808c333d697f0111797365a578b1f0c0"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0013.png",
+    "bytes": 49855,
+    "sha256": "1739a72bc280c8da4ebf99e8ca04ba5ce733e98ec1868296cb4ea26bf9f0f6c8"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0014.png",
+    "bytes": 53569,
+    "sha256": "ad0a164913523d68db5c6f3bbb623a29c8e3c22b73f4b62751934b6f2c36bd36"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0015.png",
+    "bytes": 48014,
+    "sha256": "c4008d660954833a1e53d46b6db10ea192e57bcc54455a30edb47950ce910ef9"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0016.png",
+    "bytes": 51239,
+    "sha256": "4448643cfe8163a1262b27e0f01871b0ae1b5860f9833b0a0ef0ee501a549ff3"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0017.png",
+    "bytes": 52901,
+    "sha256": "a86ab5096e22da741890e12d444b8ef11b8b7a2dd13651fcf39a6c18997d7452"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0018.png",
+    "bytes": 52736,
+    "sha256": "345d091d6f94616792e6a5cc09f6e3941421442549aa5af9254b8dacce410df6"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0019.png",
+    "bytes": 52140,
+    "sha256": "5b33ce750379e5f1b565e2fbfc688a70891b3464bc53c54b9a2281547a89e0f5"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0020.png",
+    "bytes": 55758,
+    "sha256": "6e661a16cb9beff8b0f6f4167a660ddd202f6bc34e532c313ff251887026be2a"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0021.png",
+    "bytes": 40466,
+    "sha256": "91dfc06ce81da0c345a49169c0ebc3fd15bb0e4e5e2db6ac99ef49089803d7d1"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0022.png",
+    "bytes": 41001,
+    "sha256": "c245220a5451343c8144c450b041eb57a050fe33dbad5beef93298be20aebe7c"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0023.png",
+    "bytes": 45497,
+    "sha256": "d75f7b7a4816d4b1302cbcf64bc90ac6842febf6f88d3ab11c740125b503ca18"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0024.png",
+    "bytes": 37108,
+    "sha256": "73b479d48f38e7c5ab67a32355e3942ecad85f1c80af0d8372a05d4de606687b"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0025.png",
+    "bytes": 31313,
+    "sha256": "24559cb88baffc89044b133552ea03af6aac992a5b43c5ca149448c8bace0366"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0026.png",
+    "bytes": 87591,
+    "sha256": "37d806539c242ad77f4d5ffc0e86c323443db88aa04efcf55bbc6f08e1291864"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0027.png",
+    "bytes": 88143,
+    "sha256": "0eb208530d0b8a6736c88d2fce1ae1758bd6683ad4ee083ef58de66403d4f7df"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0028.png",
+    "bytes": 87355,
+    "sha256": "e3faea92cb22bd2d59656e50ba0b0645a0098450a8329f037af52310fd50f340"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0029.png",
+    "bytes": 87828,
+    "sha256": "ffe36e357baabc9d1e28751fe1cdc33a4b2b9d543431b4cd109ad261e419b1af"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0030.png",
+    "bytes": 88944,
+    "sha256": "960698995452f3b2e56db226ae97a07623e87283a0fda67605b0cde94dcb9890"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0031.png",
+    "bytes": 89286,
+    "sha256": "cc42eb06dcac13a2b5f2dd680b6e6f53f5a91acb917a6e98c43d69556ec91244"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0032.png",
+    "bytes": 87762,
+    "sha256": "a8c36e568647111fde40f3a5b53d92464ce58115e6c758f76cbbe58d44bb4b39"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0033.png",
+    "bytes": 92395,
+    "sha256": "8ff172d7b6121e30053b897d0205b2cb8c861841c5b1ae660bbe4288e8183bb0"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0034.png",
+    "bytes": 93274,
+    "sha256": "ced90d9a78d7b3a36d4f5c48a874bf31484e076aa0b63de447c443f5ce149dd0"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0035.png",
+    "bytes": 94094,
+    "sha256": "299af2961049a9aeae3960c04f9d56583a4bd6e64dced6fe75399ca3566687e4"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0036.png",
+    "bytes": 93756,
+    "sha256": "65f16b9d2709cef5f4a8630600a1c39fc303137dc4add5f455b231b69fbdfdff"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0037.png",
+    "bytes": 91672,
+    "sha256": "7a51f5e66d4a865b16f5ff17d6469d274d6ae1664d21605107a8d91a0715df9a"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0038.png",
+    "bytes": 91504,
+    "sha256": "cc71824ca807c374ccd4ef1ccbc26e50758eb4ba6fcdc312a6005fd332f7437e"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0039.png",
+    "bytes": 91948,
+    "sha256": "940a624bd8c71d47a1acdbd957ec8820bb4f7b1447ab2ec65081acfc966849a5"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0040.png",
+    "bytes": 92282,
+    "sha256": "332f2ffb623bc6b8e3ec659be23cf6e2cc8117c164179eb1b3fd09e1c09d4ed2"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0041.png",
+    "bytes": 92323,
+    "sha256": "9bd1da31e5305dfa8d03846c04bc460bc1576b0f9296e658080234d07a238cc7"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0042.png",
+    "bytes": 82506,
+    "sha256": "8bc7ef43f2d8ac61aa6f185090e6490b2401d22cb634857972345cdcef51af4d"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0043.png",
+    "bytes": 82990,
+    "sha256": "4c663f334a11d457c522d08c33369068d2c500e8786d77e3b3a5e3ff5154149b"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0044.png",
+    "bytes": 83627,
+    "sha256": "4387a46021092dfb2b5ce34ad48b7b25e63d9016cfe3450f8803725a96a9532a"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0045.png",
+    "bytes": 85609,
+    "sha256": "163628133f3c0dcda3f2c25c7a0d1a88d9c547bb42d2f4c70f8ca0575b47f047"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0046.png",
+    "bytes": 86061,
+    "sha256": "6ac19ba04708ed6750addfccfca0621bb9da42d16717f44839eaf08472edfb74"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0047.png",
+    "bytes": 86661,
+    "sha256": "071dae2e02802f92ddf415ed1f71d4041c195d4d2cb68cfceeabdcd0cf8f4045"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0048.png",
+    "bytes": 84866,
+    "sha256": "f3218a71d00e046ac416b1b86acc3f432a550249df40ec02e2b3dbf6a6cbf9dd"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0049.png",
+    "bytes": 84679,
+    "sha256": "47cbdafc4b99c859cda4f2158cc3a244fba41890496bbbcac51f252f9b7d975e"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0050.png",
+    "bytes": 83820,
+    "sha256": "4568ba7cb0b8a99d4923af9242000aaf0e7a0a665d7fa012180e330dd240809d"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0051.png",
+    "bytes": 83047,
+    "sha256": "24a09aed1520a29a4abf626b116800a682005d7deb4b41225ea6d2c8bb0cbe35"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0052.png",
+    "bytes": 83502,
+    "sha256": "a69018fb2927bad2f8600a903adf3048fcdaa5520481f97f55c40aed6ca1c1ee"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0053.png",
+    "bytes": 83507,
+    "sha256": "eac24972f41d9ba76dd431b5c9d4e17a87e07ed3b7a796d7b7578bfc01f44cf7"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0054.png",
+    "bytes": 84093,
+    "sha256": "ffe835f7c716ff05c26000b4009e59d954edb4c6853128bcaf458b609f355e48"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0055.png",
+    "bytes": 84062,
+    "sha256": "e9c011bb98a72466ddc34a45553e076720b5333f5dae20bede5211ab14390985"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0056.png",
+    "bytes": 86847,
+    "sha256": "5ab26764b3bc2c14eaf95fe280ca867a9d4f803df545b75a19a06a0b52a5b17a"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0057.png",
+    "bytes": 86754,
+    "sha256": "7416fda2cb001332f083e0f04f60516163e6a1136bf4141817dca1cd04e4b8f2"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0058.png",
+    "bytes": 85765,
+    "sha256": "656c89f2ba7c434cdb301fc44122cedcdd246b0856f05de6a486fdc49c9dcd33"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0059.png",
+    "bytes": 88799,
+    "sha256": "ee045b45d32233b40b9c4a06e38da58e6875586397cf51ebf61ea2a1fa45c0d3"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0060.png",
+    "bytes": 89716,
+    "sha256": "4c7cf4138962f94ad8152b319a0327ad2a1766355314ebdbe9226e8c29dd907b"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0061.png",
+    "bytes": 91326,
+    "sha256": "abc0ebe4af8a859f56ff08976f43668a8b9421dc8174fb218ec8da5525906463"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0062.png",
+    "bytes": 91816,
+    "sha256": "1ba40015336e2d342d338cf9657a4a9a94c9d1b140ef056832e005a2f7b5f473"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0063.png",
+    "bytes": 91497,
+    "sha256": "edb1bb8ca40cff9c15011b59cd1e0b93a7e4d5795500bba369ba9b9476faf3c1"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0064.png",
+    "bytes": 91485,
+    "sha256": "7c105948be25b32fd6cfffb62d044e93b9386c700916e4ab72cfa39438995c55"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0065.png",
+    "bytes": 88933,
+    "sha256": "e0b548474884f17840ff802e494b1c4503822f23c90282f0003edf5bff91368c"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0066.png",
+    "bytes": 89486,
+    "sha256": "1a41bf22b1c02d7fd45159ad2bb62ee4f8e94c4f9f8855b355c23bdd4832dc65"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0067.png",
+    "bytes": 88804,
+    "sha256": "984e8a0414f7cb7ba778d78577c339418353597a3854d4c6a3d1cd786862adac"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0068.png",
+    "bytes": 91086,
+    "sha256": "6c69bdee8f3ad0cfd2cafc4ffbdee8337d03bfef91f9270d27678a4ba97a2487"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0069.png",
+    "bytes": 91495,
+    "sha256": "e3796c0772a0bcb0683dc6a51f408e0fd21340ebed7aa9aefc5bd24d97ba26df"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0070.png",
+    "bytes": 90592,
+    "sha256": "037b348b63a8eb69d95ab4c01aa4005dc74a42c8f0f96a166d53e87b95ac9724"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0071.png",
+    "bytes": 91558,
+    "sha256": "fe05fc0415b3746486a0dfe6928556b6a33b3d8d3833e6a2e5d7fb14b6823888"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0072.png",
+    "bytes": 91936,
+    "sha256": "ed529c2e5c2e6b11a56e9cc8c22a96b5673789f624841b8e715db19d64e2a3f1"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0073.png",
+    "bytes": 93687,
+    "sha256": "e968b736d39c71d3d3bb247cc3bb9479b49fdfe038b9f88d5147734581b0563f"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0074.png",
+    "bytes": 95333,
+    "sha256": "41816fed8b102860c07c23e0edb7b0254005e91a5508d287dbd28e62b589a639"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0075.png",
+    "bytes": 91099,
+    "sha256": "75ef86fd4a632cbd62308e9dc84951c69d97a9bf41a0cc615ed11ecd7cb3da0d"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0076.png",
+    "bytes": 80656,
+    "sha256": "082e5769c159bf450f5bd819ca3776780d66fb183b4a8281e7bce29e9b72993f"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0077.png",
+    "bytes": 80515,
+    "sha256": "80213b8af996640bf6eaf12c023a95cfd52f2291a6e68129ffcfe8fc49792851"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0078.png",
+    "bytes": 81648,
+    "sha256": "1e519c75587e0755abd6762d7538a67b29e0f39d672040dd3de907d5945239b8"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0079.png",
+    "bytes": 80498,
+    "sha256": "a88afd59ff21b84df2952a87cc79e4a9a35d467bbfa9a15f9a58e7bcef2e5275"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0080.png",
+    "bytes": 76743,
+    "sha256": "fd0a82760dce02782418ecb74280c1183e20ab13ab540cedf8559724acaca2e9"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0081.png",
+    "bytes": 95242,
+    "sha256": "c3e7044ac4a473dc09b46542d2c09fc2efd2147f758abc67ef3b00e321adcec9"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0082.png",
+    "bytes": 92867,
+    "sha256": "2c7adee8b55249b2dfd5bdf5e293ef02b9d3ba79b8551cc0561f43477fc9376e"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0083.png",
+    "bytes": 90538,
+    "sha256": "009afb69978e58d3532f4f9cc4bb6382df3269b7589c29762fdc978ba5fa7dd8"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0084.png",
+    "bytes": 90225,
+    "sha256": "e65b5af2b42ba6c2024381d38835074f80cd91f689476298bf922753cbf29326"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0085.png",
+    "bytes": 91242,
+    "sha256": "207597f43c59032d2a600046a86cf6d3e630909d1a41c74b88f996b9d314213c"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0086.png",
+    "bytes": 95796,
+    "sha256": "7388ca89d5353e8acb18ddffee0e9b7fbc49b9a8475392ee30d3cad0083b8e0d"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0087.png",
+    "bytes": 98757,
+    "sha256": "ad772b835b525572f55fce04aba534e2866a643d495d1fe357ca6aee84f04353"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0088.png",
+    "bytes": 95167,
+    "sha256": "dbf0994d9b55f9b87b3e31731ab5ad5e1f609c4a0b3312a66848ebfc6df949cd"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0089.png",
+    "bytes": 102135,
+    "sha256": "8abb7c48f7879d39d3d546229f5ff625118d72d556156c5c783d9204af19874e"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0090.png",
+    "bytes": 103514,
+    "sha256": "c846a2fde0d2509ef8c0007c5a1fef14442fdcffe780794cdb7243fad5afadce"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0091.png",
+    "bytes": 99684,
+    "sha256": "21823ce4d218c337a2f017a159a9aec28b294f84b5eab49b8e2695bcedcae3cd"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0092.png",
+    "bytes": 98854,
+    "sha256": "81d85ce5bbc6a2f8b605bcafa58db95b294449b6207e66eb66811d0b9205c8b4"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0093.png",
+    "bytes": 101558,
+    "sha256": "e512b52d7cb64c98b79d21299339b9166d9c7eea6e8e47b11f487e886a598598"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0094.png",
+    "bytes": 100325,
+    "sha256": "f07541b305c3c022156709e2cd406e5523911aa0a798ad79262d6fec5f256a3c"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0095.png",
+    "bytes": 96636,
+    "sha256": "e5acddaa14fe4df19891eadc565b0a336900d5d5ba4771fd060d6bb098b8d699"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0096.png",
+    "bytes": 66461,
+    "sha256": "83ed0e99273a2df6eef1f1ae6805a8a0c8f0721eb23e322311260e97dd1c7f65"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0097.png",
+    "bytes": 70251,
+    "sha256": "d1d379c7ea5343a6da902382602fd6883ab0cca0ae71d022993e6446adc882f3"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0098.png",
+    "bytes": 75451,
+    "sha256": "61586736f2f37e1fd2ced05079d92ddda875e9b3c0119015d21504c58b8acd07"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0099.png",
+    "bytes": 77868,
+    "sha256": "6f051de24d2d36040b52a6aa50bbbd1493f984d0810ec086279377940343e936"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0100.png",
+    "bytes": 79923,
+    "sha256": "85797a8df2c18ee928460e275f38f2e26ffffc52b3d815965be92518b89c7c28"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0101.png",
+    "bytes": 80482,
+    "sha256": "cb64156393ba03d8336c17fb1b23333512edbf21102344a27a511a99bf598e79"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0102.png",
+    "bytes": 80484,
+    "sha256": "7a18f75e9a202c1676f41a9c29384bd70af8c9c7ad35ac59e9aaaf134ee3b290"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0103.png",
+    "bytes": 79718,
+    "sha256": "22211ba13e8ddd13162923a682e6cfae3ec0149d2001a8e3fff8d2e510272e6f"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0104.png",
+    "bytes": 78262,
+    "sha256": "6225827c00f708b3f49e255e33bd2ce870430df872720ec08c7b9816bb026768"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0105.png",
+    "bytes": 73773,
+    "sha256": "9ea644b42ee027d26459274ea77e3eb17043bf33f9e563d5f7cd4def57ced3a7"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0106.png",
+    "bytes": 85960,
+    "sha256": "6ce115e4125045b69afdbc4a0dfb7540e39b3b44007485664807cfc242ded2f9"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0107.png",
+    "bytes": 86334,
+    "sha256": "f5f14f9d3f8c53ba2e9c2a399fccbc695ade845768451a158409d43be5eb54a5"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0108.png",
+    "bytes": 86375,
+    "sha256": "0e950c621262054e51dd4672d2f80d0162dc1b2f9adb9c07180b760d79ca74c0"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0109.png",
+    "bytes": 87448,
+    "sha256": "ea5efcd09bcb4f12f730fbaba02057ecc1fe0e55c662122c9973bda509eb2fb4"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0110.png",
+    "bytes": 88268,
+    "sha256": "5eaf67fcdadd992f2dbaa6436915a63757e658372c5fbb2ba0c029a34d19444e"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0111.png",
+    "bytes": 88555,
+    "sha256": "d0d9e9eecc16f46cccc44db2bbeeb74a9ec32e093a3c7952315eb9819924912b"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0112.png",
+    "bytes": 89411,
+    "sha256": "724ace580c3436510ecf7364c9df91d19883612b17507bf79c9bd75b8d4d67a5"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0113.png",
+    "bytes": 89790,
+    "sha256": "dccc99dfe1bf3131768b87d02d4d1c12472fbac798d8233120b11e3525b8b42c"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0114.png",
+    "bytes": 113175,
+    "sha256": "c8169f62fad6a01d7f336918add70a464beeefb1ce11f449eabde3d78d635299"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0115.png",
+    "bytes": 110356,
+    "sha256": "7529840fe818c84ed63b66e393b54f5fc908bc2d7649df0432bd3bd0470e7293"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0116.png",
+    "bytes": 111194,
+    "sha256": "5068b518c8edfbc6edd9372fa6e80c61daaea5dcead44d122fd63bfb7b6d8c38"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0117.png",
+    "bytes": 111760,
+    "sha256": "0feed5c0e69004c58b347920acb3d9377c787f02bc207445dee3939cc66bbefb"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0118.png",
+    "bytes": 111133,
+    "sha256": "d61596a29ecc79e124606ddb01d7914d6f3a4d0ae029960ae59647cfbd74c3db"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0119.png",
+    "bytes": 110539,
+    "sha256": "13708312c6cd567b3ad68943a3356a790de388f70b13ad1c70516a901979c904"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0120.png",
+    "bytes": 108000,
+    "sha256": "ab6e1918c8756ff540969ccf04e0b7afa126821ee168bb1c88c1e73bb33e936b"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0121.png",
+    "bytes": 113526,
+    "sha256": "870e8782f88cd7ae09178e770c56fe1b3ab1db2de44f8953b96249bd21abc81f"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0122.png",
+    "bytes": 82272,
+    "sha256": "544bed062b92126afded798c14e6efa9aa016a25b3892818779bf06fbc96b7b4"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0123.png",
+    "bytes": 85766,
+    "sha256": "88ee6a0508e2b1417f09533eb54f8d599517a773f1cfb2d5ab8cc58110edad58"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0124.png",
+    "bytes": 87653,
+    "sha256": "18aea070fe4e9dda9f006f8afc4ea68827496832419563b6cbc53a29aa58f0b4"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0125.png",
+    "bytes": 90308,
+    "sha256": "cfc57cb7e75dd5dc051ed059058101e4d1cbd2d2ac99543207ee65b9ee20c06c"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0126.png",
+    "bytes": 90752,
+    "sha256": "00372371a6d721f871aea8c7cb0651f2a6cde293c3e56c1026ac9cb23b2bd8e0"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0127.png",
+    "bytes": 90319,
+    "sha256": "31c1ba844b948f43cac2a725a1cc59cecee72c4ebc3d1dd88e44988bae3b3301"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0128.png",
+    "bytes": 88558,
+    "sha256": "e5946bf6a4053536ae5d200f95a92adfe10603d9e8f2c29c7eadeb530af908b6"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0129.png",
+    "bytes": 90275,
+    "sha256": "d3d752d42149dfb72c18543e02c062b9e4e8b3d4263285a9a02dc8375e298461"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0130.png",
+    "bytes": 87359,
+    "sha256": "48465f0a1b23030c1f0fb974d3e3b56c9996e2489e11381737a31545aa6d86ba"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0131.png",
+    "bytes": 90934,
+    "sha256": "370a0043d45e729f7ab293b00a708cacd67be5612a55cfb769687a434507a12d"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0132.png",
+    "bytes": 94139,
+    "sha256": "1d021c3df943c923b73fe2be56617eb94aaf2059bc0aa31ebb0c47c51a2a53a6"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0133.png",
+    "bytes": 91988,
+    "sha256": "481633fbc149d9de99a549eef1c3eb9d1d028e673a6e2386bbf65988af4dce6f"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0134.png",
+    "bytes": 93033,
+    "sha256": "f46b5a3cf61a60cc22fe3b7aea17a28bca0c8067d89c3d0c78a5fc6a27e2c07f"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0135.png",
+    "bytes": 92878,
+    "sha256": "0c7ed07913b226b16757e7f21095504ebe7b385277117e2222c776ac8e1cb64d"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0136.png",
+    "bytes": 93568,
+    "sha256": "3d63254ca1b203e1ed281ae9328d9af2d6e3c9fc993ecf97b2022b93babdc448"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0137.png",
+    "bytes": 96630,
+    "sha256": "6ed7e38670294edba8b4534b914dc7f0e79cbd823a99817ce93a4ee8969ba612"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0138.png",
+    "bytes": 95232,
+    "sha256": "07d9536a6c8b3a809edb0f05bcc39c23595b347131d20ec2b17d9a4fbb5f9fa0"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0139.png",
+    "bytes": 95695,
+    "sha256": "faccd650278448ad564b4cae5cf99866b9d05f49518ea29d75203003f3e72316"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0140.png",
+    "bytes": 98676,
+    "sha256": "b63fb7b974473ab1f88ffa8f06ab60c6e40022652968d9e4245e397182a160f6"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0141.png",
+    "bytes": 99655,
+    "sha256": "342d5122d5f5d9b788e758701bed592c12a1bbebde3ca39f1fe19d646a4da9c1"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0142.png",
+    "bytes": 96206,
+    "sha256": "eac2ca9c3791b35dcdad3b7de60cb27d67914c66595728af19ab744009d1d6a4"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0143.png",
+    "bytes": 94816,
+    "sha256": "1731019fee60d2cafc2294014c99a7495d045b930d485fc9b88f4ca18aa4681b"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0144.png",
+    "bytes": 98631,
+    "sha256": "6609165712886f56efc4db97cb8019a69f190b86fb9a92953878d23e272f2abb"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0145.png",
+    "bytes": 99999,
+    "sha256": "18cf16191340e86500f4904fbb52a8bd75a37d06a250ab976fc1fee75269a38b"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0146.png",
+    "bytes": 104598,
+    "sha256": "45e90c345f932b7848671576e28d82c89de605bc7ac3e3a307b57358a86e0fe5"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0147.png",
+    "bytes": 104988,
+    "sha256": "5afd0d7837affa209b55bb5576ca2a51be0ca3203730ee53639d81494cd9d939"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0148.png",
+    "bytes": 101802,
+    "sha256": "0500388d9ad10e41e09f30c3a24b521c4c8a1dc8851de2568a9087d8ab99b3f9"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0149.png",
+    "bytes": 101985,
+    "sha256": "4ed6fd49a31ea8f06befd6d2fa21b0dd2ba620cb0f7630db47460637b2e14007"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0150.png",
+    "bytes": 105871,
+    "sha256": "972c63d643ff8d74a68cf6ba4892eaeb941e3db769cc1c03c500ca0241025475"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0151.png",
+    "bytes": 114975,
+    "sha256": "58b1262cf47de7e360d3e183e86e389f4156cf412817a042c04424758b195ac2"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0152.png",
+    "bytes": 109481,
+    "sha256": "8238285eaa5e058498873dbfd10d575474478784f0bf6dddfe4dba2d68314fba"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0153.png",
+    "bytes": 110541,
+    "sha256": "92ab4514a5319f157864069cc292539f22da7735bffdd41df78f9e0fd8af6a14"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0154.png",
+    "bytes": 105767,
+    "sha256": "bbcb73fdcc39feebd5d341510f30092c986d3df8b55e8e83bd85cad546bb3626"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0155.png",
+    "bytes": 113012,
+    "sha256": "7c6226528f304c06b9b3131ab23f13fa0b9ad55eb52d9b1b706a299eb6242fef"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0156.png",
+    "bytes": 112817,
+    "sha256": "d42d99ae5d5799da1de5ad9dc106a2a1e55db63af5ca35c33bf21d16363e4d9b"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0157.png",
+    "bytes": 113346,
+    "sha256": "706ba74d7c1a76a1514a1b3525fa7316fa82032c930f5ed4119b608486f3e34b"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0158.png",
+    "bytes": 115396,
+    "sha256": "0f466cc4ee0806750463bee1b20e1cfa883c422afbd36a8e46770c66b5da404e"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0159.png",
+    "bytes": 115006,
+    "sha256": "824e5b1d239882d7fcea700d8e8b993520313c34a9aaf3b41865211dd3d2029a"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0160.png",
+    "bytes": 116071,
+    "sha256": "0193a6abdb6140c0224d6d4b1d14fb19411815d8e0c66b0ed51bc0afca7bfe92"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0161.png",
+    "bytes": 116745,
+    "sha256": "35cbcbb44894253292d8e3787ba04fed7be4a26f5c5e20b8cf668bec2b78674c"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0162.png",
+    "bytes": 117147,
+    "sha256": "5d1b37b9f7340a27b52675c70ea2ff1c079725db33ea676bf8307c7fdd551a77"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0163.png",
+    "bytes": 117062,
+    "sha256": "e2b8c3edba46a711c8ce1e437da769e77faf1da708ad2e9e288d4293ff8f3626"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0164.png",
+    "bytes": 113961,
+    "sha256": "c5410ab03a7e7a12cd22d3e0d8a92479d3c0c05bcf0a2abc5b8a7ed319a43440"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0165.png",
+    "bytes": 112081,
+    "sha256": "9101ede62e8a0b116400d387312982cf59a1e99b35be8ee4a2bb2f5751e6517a"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0166.png",
+    "bytes": 113585,
+    "sha256": "3481f7e2c85d147008f5e72dcda791f550e16b3b7d2b2f9053615be832cd2e40"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0167.png",
+    "bytes": 114627,
+    "sha256": "45021ff9619f89d657e8b1e9cbc7b91c97bc014a56c4f13c6667705ed2222e9f"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0168.png",
+    "bytes": 113475,
+    "sha256": "62782a7a783e3913df02776a3a329fa65f3ca271e7fcb88a3e31bc7d513e7512"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0169.png",
+    "bytes": 115842,
+    "sha256": "4f75f1ac4b7cfa3eb708e3f6e387cb7df0fe92f44f3811f3ce452ef63823da1d"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0170.png",
+    "bytes": 115157,
+    "sha256": "f343e68cf3f2b6f546bb3059e2c896e4555cbb6b46811277a676499741cff2cd"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0171.png",
+    "bytes": 116716,
+    "sha256": "aac691cf6a24589f2011e62ea7c106aca0cc9989e9f2adbac14cc331ccb4f094"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0172.png",
+    "bytes": 113541,
+    "sha256": "3eb5d2cbbfc51ce2364b6b481f4ccc0c3201ebd8285ff69a39e92f01576cb33d"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0173.png",
+    "bytes": 112285,
+    "sha256": "61121e2ff61b907f9713e01d70fd4bca43d890d611982cdfee49fdf3a38d3590"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0174.png",
+    "bytes": 108139,
+    "sha256": "52be851ca4f838b703a372f2c19facffd8f81e3a0ce6617ef314f41f972fcfa5"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0175.png",
+    "bytes": 88750,
+    "sha256": "4cdff41a85edd78f6f1806c15ff37a0f28bf66b35bf6013d8fa96226f1743553"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0176.png",
+    "bytes": 112154,
+    "sha256": "28022df8afe3f967b63f738f3387ce2a010e19e359d3a13bf686914fd3d7447e"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0177.png",
+    "bytes": 112373,
+    "sha256": "c3181b91385b3d9684e80e6f78f5ecd708d9a133b586442cc3ccaaec8f7e6393"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0178.png",
+    "bytes": 115088,
+    "sha256": "c2fbb695b25df668a324d0cd8f1423a2f03e66b2741993a5782e3ea645080a0d"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0179.png",
+    "bytes": 108167,
+    "sha256": "45dae85426c4f4f69f880d20b0d3935a78b68abe62eb55ec7ceb914f71249b06"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0180.png",
+    "bytes": 106262,
+    "sha256": "a351f457d8fb941f152cc5bda29ab212f39638f81728bf3a70fac0303624cd0b"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0181.png",
+    "bytes": 113658,
+    "sha256": "f596fdf851516d87f8f3c4a9b10668d654dea8f235ffcd843b3e904678857202"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0182.png",
+    "bytes": 123096,
+    "sha256": "3d35c0711000ab74c9d46ca5d53f4c32b8d534a784e50d26c7b338e752b3744c"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0183.png",
+    "bytes": 127265,
+    "sha256": "8ddbdaa2aecd6a4eed71e0bfb2b6bbc629b5186ba2e7c0ce51e6a4b788be07ab"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0184.png",
+    "bytes": 87879,
+    "sha256": "aaa79db9e57e9082c73d4a09101ba1cf0f7e5f4b43008a20e09a1f74db2eb421"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0185.png",
+    "bytes": 94746,
+    "sha256": "29a102576b0136b5c632705c67ee6cb37581704d1369270144c723e1a4370173"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0186.png",
+    "bytes": 95728,
+    "sha256": "2aa79d41d7452f4b23928e5913f21a24f2ca34ac76c0c8e9fac52eb116028d76"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0187.png",
+    "bytes": 94282,
+    "sha256": "54498c47cc3a57a1a1fa12b754df611cbe2f75e9123588e3b71f8d8ea7d0f95e"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0188.png",
+    "bytes": 95768,
+    "sha256": "5af381e7923f728b01c46339adc87e13f3d7ee975b2c431fe0c733e9b2fdbb9d"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0189.png",
+    "bytes": 95572,
+    "sha256": "d546cdd80037e55e389b73cea31c72f0d633dd52e935d57a4777c69fb705fcb4"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0190.png",
+    "bytes": 98087,
+    "sha256": "4799c1031abe9b7a26be055a73a071e55a257645ba189464061975ebb1cd2b94"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0191.png",
+    "bytes": 97240,
+    "sha256": "c9a845bf3af3e7569cae4202796ecb1014f5208980715012f262e3b501d749d3"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0192.png",
+    "bytes": 92353,
+    "sha256": "53014a3a065ed9d83b9247361636bfa0cb6314579e3dae4f8ae2c4b0e9503ba4"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0193.png",
+    "bytes": 95165,
+    "sha256": "3c046c528b7cfdfda305a006da9524991d270e3b16903d3bac835c338ac9a256"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0194.png",
+    "bytes": 97032,
+    "sha256": "9b2b5401022237ff19bb4ebf11a31582b71de6900da56e0993295ee39ce780d5"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0195.png",
+    "bytes": 95762,
+    "sha256": "1ce89e98a1d2dd812181dcc154bc9b4dc781a4b4661af0c5263481e4e6dbedf2"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0196.png",
+    "bytes": 94786,
+    "sha256": "7f8a9a6897fd9f593786eeac145df265f2ae5a62b7c91258a1d6cf9db0831020"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0197.png",
+    "bytes": 91781,
+    "sha256": "4c8af8939b18140615b97798fc75448afa8d85cb2fc5a9025ff3a3033e044051"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0198.png",
+    "bytes": 92001,
+    "sha256": "5859c1d86f10a55dd4a2ca1d2a51ee3d6941e9c8a81f5707a454d962ce2c55b6"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0199.png",
+    "bytes": 96265,
+    "sha256": "7c3c0361e033533af20cd6acc68cd20284d105545b26d557c407889c27c343a1"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0200.png",
+    "bytes": 95142,
+    "sha256": "ba95b3c7fdf3e17abf6be827ca314f6daa105bcd3dd230967429fe9a3c979e0e"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0201.png",
+    "bytes": 95534,
+    "sha256": "b9d58961c41f5a700a89736af06376a85e7dadadb81f1239d718d8581b118a7a"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0202.png",
+    "bytes": 99218,
+    "sha256": "b0c0e1ae59e241f9b92bab6571c52693bbd2cf8eeb9036fa878fe30869c37f11"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0203.png",
+    "bytes": 100830,
+    "sha256": "6463355e719d3b3d0fbcd36ddd812967ec9c1c19e0123c3785bbe8df59a2e787"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0204.png",
+    "bytes": 97266,
+    "sha256": "b472fcaa1d88038f81cd7851713028906f5c595a210482e2b4ee2eade35c15c6"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0205.png",
+    "bytes": 95769,
+    "sha256": "5dc268c19ace5d2cdfeb7beb91610d51834695ffa7e6b502491e7273c10f1e2a"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0206.png",
+    "bytes": 97988,
+    "sha256": "d56455b44af83384086e7cb21e44c5e78c7298b391877093383c2bc01905cbdf"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0207.png",
+    "bytes": 96962,
+    "sha256": "9a9d1ec183496e1043c2182318e6ce6fc57a2ed0d8db0f6ca8c858c249e49fae"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0208.png",
+    "bytes": 99155,
+    "sha256": "0149aa62213f133a060599da7889d424d782bd6aaace611e9f1869bc7fc8e6cb"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0209.png",
+    "bytes": 96862,
+    "sha256": "a467351fbb92a15bc06ffc808ce3bf8b8bf3a55def5a548bb7345544be21b903"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0210.png",
+    "bytes": 95261,
+    "sha256": "cbddf0337d3ad6e97743844af15b0ba8deeca664296c1e8a1708eb1ff9d95d9b"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0211.png",
+    "bytes": 92133,
+    "sha256": "cfedfacc9567b99b2a57b87a9f4899ed389ef01f143f30a68bbe9a73d40089ef"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0212.png",
+    "bytes": 85762,
+    "sha256": "53446cc9a8e8c665df034287a613fa38503e3af152d52d70474ae61e696f8c2c"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0213.png",
+    "bytes": 90930,
+    "sha256": "b8cb08343092adea3827677eab53e73b8a3627bcd486c8aba24653c2f8432f59"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0214.png",
+    "bytes": 89890,
+    "sha256": "d2497fee3d2bb41e59f5c44cb2157277b0518975b2656473ad25955a624cdfa3"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0215.png",
+    "bytes": 93721,
+    "sha256": "a8fca9987822d049749fcddf43b07789e637c7b13e77e063665d2642e0996f68"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0216.png",
+    "bytes": 95170,
+    "sha256": "81705a77a2c2cf610af4f1679bd38ba754dfd30c7a53a074c99b956bba16c41f"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0217.png",
+    "bytes": 92472,
+    "sha256": "d2f3a412478b61eb7bdff56980bcbcac5d10ab344ea811f2bdb00c1deaba8bd6"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0218.png",
+    "bytes": 92634,
+    "sha256": "b8ea20b4c548537ad08543bde683e610e38c98635211cbe99e477789536fc36f"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0219.png",
+    "bytes": 87539,
+    "sha256": "c1f4838980cebd9bf619d2907a2093e4bb376e10e388b9f0ee231901c966d7d1"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0220.png",
+    "bytes": 87563,
+    "sha256": "7fbf105d5190f8f1cf891043f8e419b250a7cc5d174fa3498c7b9ab689cfabe9"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0221.png",
+    "bytes": 89036,
+    "sha256": "eec32db5db66bd95a426b72564db443f35be134b9f0b135ebbca87c1f7867112"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0222.png",
+    "bytes": 87832,
+    "sha256": "e625f28c72fc23fc7b2f24db0b8048c0fcc0a533813a69f97487ca93954f4cb9"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0223.png",
+    "bytes": 89818,
+    "sha256": "87fc631698291e367da1cd719728b8c349cbb31689bee1a48e7f78aa03e1de6d"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0224.png",
+    "bytes": 91213,
+    "sha256": "15489b76c94370766374dea0f86fbf7be3a2104c6dfdc060294bce973fd464a6"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0225.png",
+    "bytes": 90259,
+    "sha256": "0b1406f7668647ec0f66ad8bac2c0f3eb0df4d1d9f053136b60421d32d92a5af"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0226.png",
+    "bytes": 92414,
+    "sha256": "066df1d63c6d22949596cc521f2dc386a9d27b5a97e47c653a226b65898bde1f"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0227.png",
+    "bytes": 91138,
+    "sha256": "52230350d0b6e3d05ea6072a83a9418015606891f78205a6cfd1e16b08852c86"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0228.png",
+    "bytes": 90698,
+    "sha256": "9e1a45fbe4102c63369037eff5a449828d1df3c25cfb966e0911f694656b8347"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0229.png",
+    "bytes": 89291,
+    "sha256": "ff663d2f45e14b4593c9b1ebe8f6162a9408b69448f917d416d98a20ce15a5a4"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0230.png",
+    "bytes": 88048,
+    "sha256": "9157d2d38f6b158d3c63d6bbabaeda750c9d6eddb416f2f23f0ebdebe53832be"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0231.png",
+    "bytes": 89653,
+    "sha256": "03975fac3e577842178cd5878157da0fe1082428092c1f22c2cd83e4c2e75dbd"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0232.png",
+    "bytes": 86742,
+    "sha256": "7e2d76634c5e07eb4a37ef5b5d3a37bf1b76a260c6511332a6a2d52880cd175c"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0233.png",
+    "bytes": 90531,
+    "sha256": "44f983f7c65a74e14e57588fe2ca60bcb370c9ef0a803fbdc8cf51d6e8ef1a65"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0234.png",
+    "bytes": 91971,
+    "sha256": "ccd1aae413f595ee8a3938b3d6f9845003cc245a972785b9ef449d81c504e516"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0235.png",
+    "bytes": 90534,
+    "sha256": "37d0ad6a176689030f84801bad447ca02fbb3c63123cac1c331a89c42c9c4eee"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0236.png",
+    "bytes": 94109,
+    "sha256": "3059b3bb4f7c3c0e48f0e628ed155829f6eeea598d71d91ac17a889eee126896"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0237.png",
+    "bytes": 94161,
+    "sha256": "97879660ea8b85128c7d1c328f2ee85e41e0cb1bf022a765af4b59712f8fc1d4"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0238.png",
+    "bytes": 95705,
+    "sha256": "99cad303e25b855295f61d4e9ef75383665dbaa084843b7277dd1b1147e41ad3"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0239.png",
+    "bytes": 93989,
+    "sha256": "9e8710c830d9777c0e5f9e1002fc501a84f2cbaee355e4148b8b12a18771aba3"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0240.png",
+    "bytes": 88940,
+    "sha256": "830cab75d3ab1268458e880bd423fbfc632fb0940e479e238895c3098ca7ea82"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0241.png",
+    "bytes": 91832,
+    "sha256": "42ecf75f892698a55f37598362294f4c5a130b422355948946234f001c7f4088"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0242.png",
+    "bytes": 92873,
+    "sha256": "9fb9ca807100bbe206c5e87b3a28a0c60d4d08f763e12dd283d5cf7277c7abed"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0243.png",
+    "bytes": 92773,
+    "sha256": "33fdbd0b90b453aaaeb06fb8b7c4e2e9cdedb2101c90e19afb2d8ae75a5be4d1"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0244.png",
+    "bytes": 94718,
+    "sha256": "7b435d908758d1c3bc041cc1cee7f7026d00f394a9d7ea519e056cea5985f9cd"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0245.png",
+    "bytes": 90881,
+    "sha256": "b8e1fe154c6f548d5ee966fcab393fa0b49824fbd877e8a1492b14dcd0827600"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0246.png",
+    "bytes": 91720,
+    "sha256": "a6f862a4561e03f5736c6928a5efac85911d2887e8dd9fc42c82947d098e980c"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0247.png",
+    "bytes": 103748,
+    "sha256": "3eb5ba1c858807627b8cccb5d4f4845d22bc69caf0b64d9415dd1b6e62a1f3de"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0248.png",
+    "bytes": 101115,
+    "sha256": "1549c1eb11c6324231600749cbdc2f8b9fee63043b2111381e076f0131604ea0"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0249.png",
+    "bytes": 99472,
+    "sha256": "100719144510ae031838dc111dbbe6e897d5202703c34d2d030e4192c1c47434"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0250.png",
+    "bytes": 99128,
+    "sha256": "d830819b5a984143f49c1fab8f98889ee56ee49f0cd0b99ec4c1ff7869fad2bf"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0251.png",
+    "bytes": 94531,
+    "sha256": "7cab9afa9b07a6b0f8b38a8c9d1d00d6e198dd70a0f6172b56ad928f69317f12"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0252.png",
+    "bytes": 93681,
+    "sha256": "2613871fe2f03396754bc28386b6d51e769cba4eea012fc7b57594b824d48b3f"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0253.png",
+    "bytes": 97042,
+    "sha256": "5b60f5c5b75a11e010dce172c8af378d1c1dc2355d1325709d5ad1a2c2333812"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0254.png",
+    "bytes": 99467,
+    "sha256": "507c0d62da9f1254ec637dd564684c1adf0eeb6213cd07c15bd3642c7bc38ffc"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0255.png",
+    "bytes": 101878,
+    "sha256": "fffa914166bbafc0d087178f5fcbdc50a2088f2ed17e022ecb7ceeb6eab951ff"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0256.png",
+    "bytes": 100266,
+    "sha256": "94bb02617176263c183bb6c5ddd1e14087c9e510eccf8ff609aab4ee16221528"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0257.png",
+    "bytes": 104767,
+    "sha256": "9cc8c5ce42f3f43243067c1bd9a9686455b4a3a7a5ea5e210ab867c7517adf83"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0258.png",
+    "bytes": 105209,
+    "sha256": "b7ae4ea32f1916c3c92bbc39fcedc2199d17127e45840c52cc5d2aa5111071bf"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0259.png",
+    "bytes": 106252,
+    "sha256": "792698094fb12dd05af87ccbc4ba438bb73e2be959f7d34599e9c03307893358"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0260.png",
+    "bytes": 104483,
+    "sha256": "61ea84f3fbf83ace50a8c9fa2ec04ad7640013db8f287d7cfc161293ba5efbe6"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0261.png",
+    "bytes": 105831,
+    "sha256": "c1fd178d19834395e8bbf23e5fc4b4d2ba8f39fadcb51af7ebb322f1696e1640"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0262.png",
+    "bytes": 103685,
+    "sha256": "d499fa479fc483ee21be4805f2165326c2cc50992aae58dc7341c6661ba68125"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0263.png",
+    "bytes": 102226,
+    "sha256": "647e8e92bf0122e9b3a52fab761fcfdb26d5b44d963a9d298be3a78458823ebe"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0264.png",
+    "bytes": 97584,
+    "sha256": "573d62c29ee0984f51cc8b46ccea9b382a78bdf521882803bfa36c8baaa25e02"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0265.png",
+    "bytes": 101232,
+    "sha256": "fc0280195bb0e1654dbdb94bd7242985f835e59b31930f5ffba68dcb21e38822"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0266.png",
+    "bytes": 99127,
+    "sha256": "0506bc367467a1aea171bdac87b4ef9862dcc382558c2b03b5acd9e0d7170997"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0267.png",
+    "bytes": 98812,
+    "sha256": "6bfed61dedaad8aab42cf9898f9cd1be085f11f2e10727c467c6eae560e5fe13"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0268.png",
+    "bytes": 95035,
+    "sha256": "17f771ff814189a81dbed99ebe831364e4f4ec0c970eb1cd3c453dfce791f665"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0269.png",
+    "bytes": 96454,
+    "sha256": "20c8d5960c428d301fe9d96da4a54ad7f0659379862f7e530c35fa775b615368"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0270.png",
+    "bytes": 97571,
+    "sha256": "cae316e21bae426db2e0fe4f97b8ccaeac4ab7363a64fdebfeb53378f7b247d8"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0271.png",
+    "bytes": 92213,
+    "sha256": "2cd0a656bde4da59147800ba9c53328c2bdb66b2c1f382876cda52eb9094c5c0"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0272.png",
+    "bytes": 97171,
+    "sha256": "9f87d527b203cc796e737688ac3f18aec8ad0863d532e2255113660377e53e50"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0273.png",
+    "bytes": 97622,
+    "sha256": "1f07c8b6f9743b4113a25a5e0869d44749bc9208f5d3ce9783fab1ccfaa8bd7c"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0274.png",
+    "bytes": 97658,
+    "sha256": "5dd6131d432ce59f274228da9e438f9f9266594e91e2940e22f691b83f253b52"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0275.png",
+    "bytes": 101011,
+    "sha256": "8d1aafc4d93bfd17dae40f1f8d2f8b94cd8915aa067f36b6762c25a835e8735f"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0276.png",
+    "bytes": 100867,
+    "sha256": "670a1a392d0a058174f3998af181d802cbee7a8a567e09520861872a6629bd66"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0277.png",
+    "bytes": 104437,
+    "sha256": "faaacdf332033e6c5d9a5baff854ddf2a096142dfc7b733c1750c6df3ea32b4a"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0278.png",
+    "bytes": 106942,
+    "sha256": "ae7a4e412439b7cfea42b2109fa1ca83cca3fc0284f80ef11db97dee37cf935d"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0279.png",
+    "bytes": 98828,
+    "sha256": "37b92ff193618eaa663c1f660e92a6180de9197c142d5ece871b990992c22a01"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0280.png",
+    "bytes": 94720,
+    "sha256": "409ac504975bbe397afc5c3cbdd4ff05cbadcf94aace1e762ea636575e8b9d3b"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0281.png",
+    "bytes": 100201,
+    "sha256": "2acf5afd10e829c8fc4e2b96fec2da958d606a3725b55dfb3389ab3f0d485e17"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0282.png",
+    "bytes": 103023,
+    "sha256": "41b6397e103272eee873f0568791715c32dbc50684ce842847cfeedb265bb17e"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0283.png",
+    "bytes": 103356,
+    "sha256": "933b799edc9f4c9ed1f3a3d89ab8e9ee63a1dba006df315dfbc1c560a4bd84b3"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0284.png",
+    "bytes": 106770,
+    "sha256": "6a2f12d8443d64eb9b2a5862d73c17a95271723a73499344f96d4e0065e8c9a5"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0285.png",
+    "bytes": 105130,
+    "sha256": "1ab76e3ca1d2cd88d906044b9d551f2f8ac4e8748bb767ca1718b5817b650a34"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0286.png",
+    "bytes": 102553,
+    "sha256": "f8608c4ccaeaa08ea3a011092cc81461b8e27a914ac526c9a4692560ac261a45"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0287.png",
+    "bytes": 99799,
+    "sha256": "af30205e3c29baa1d8c72102465be41f0390a7aae0cbac966db119860f69297e"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0288.png",
+    "bytes": 91577,
+    "sha256": "0c5db7ee1920fbdf684569d383e659351c314ddaed493439b560d5aea48edbf6"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0289.png",
+    "bytes": 93056,
+    "sha256": "b240f879c61dfd45fbf3979fb9c1c20697a688a2329cd0269e23d13df89e52cd"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0290.png",
+    "bytes": 88610,
+    "sha256": "1fd05c33741058cac45ae9fa6c8c92e5f8ad5181483152037c31370145925759"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0291.png",
+    "bytes": 93074,
+    "sha256": "a4bfc23fc7566b9105248907475cfbaf98b40e22f2ca4e34fa18b27843587e2d"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0292.png",
+    "bytes": 93826,
+    "sha256": "2b7f1880e8f796098de890fe1d9a794216013cf36862c68b364a3abec639ec8d"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0293.png",
+    "bytes": 95259,
+    "sha256": "96bc684d5908a7b3b9eed2615a6619b1e68f7d04cecf50c4633356c17946e5ab"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0294.png",
+    "bytes": 94869,
+    "sha256": "0152bcf9000d7d5f5ab89586d808524f54ff8936eecd2e7e1428b0ac76d27729"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0295.png",
+    "bytes": 92881,
+    "sha256": "834cf96ae40279ff1904095d26a908bb5328917381533bf5a5c439a39bf6933c"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0296.png",
+    "bytes": 93703,
+    "sha256": "00d1d6172b1f4c783a56632714aaca167c895f40467f3285ea582929aa3b8eda"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0297.png",
+    "bytes": 94043,
+    "sha256": "47c9017ea3d5e83994ad09daec78aa07f77bcbd63d43b326f8c073da2a999778"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0298.png",
+    "bytes": 94026,
+    "sha256": "780d3a8828467a42c9b047a7a6bb62724ef2f7ff18ae4daac3458c122d4845be"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0299.png",
+    "bytes": 95839,
+    "sha256": "d5feb11ad077803780d650facb3f4ab9c5055ddba6dfb717e99b6a7718069080"
+  },
+  {
+    "path": "doc/资源/sd卡/frames_s6/f_0300.png",
+    "bytes": 94605,
+    "sha256": "5c74791d0cf6ba4116120fc0c7a0dcd88133a5bd5b73afb4ba060cd3b60b2329"
+  },
+  {
+    "path": "doc/资源/sd卡/INDEX.json",
+    "bytes": 2480,
+    "encoding": "utf-8-sig",
+    "lines": 108,
+    "sha256": "58f2923c14fc93d5fdaf87676ec01e7a66d1903a53cc1d68022ebc4f7c7c2a76"
+  },
+  {
+    "path": "doc/资源/sd卡/INDEX_A.json",
+    "bytes": 2480,
+    "encoding": "utf-8-sig",
+    "lines": 108,
+    "sha256": "58f2923c14fc93d5fdaf87676ec01e7a66d1903a53cc1d68022ebc4f7c7c2a76"
+  },
+  {
+    "path": "doc/资源/sd卡/INDEX_B.json",
+    "bytes": 2484,
+    "encoding": "utf-8-sig",
+    "lines": 108,
+    "sha256": "5afe27b10dcfb262649514ed20164581ecc5edc0b11a05e554280923081f71ad"
+  },
+  {
+    "path": "doc/资源/sd卡/INDEX_S5.json",
+    "bytes": 3584,
+    "encoding": "utf-8-sig",
+    "lines": 150,
+    "sha256": "1bd6cbac01df43c1c701e542b6bf72277b5f3b0a608cc48621e093e1c39eac67"
+  },
+  {
+    "path": "doc/资源/sd卡/INDEX_S6.json",
+    "bytes": 3950,
+    "encoding": "utf-8-sig",
+    "lines": 162,
+    "sha256": "4aa89513a1595b26c5e3f02d27475f9c8accf6fa2be1c29ad628b0b97e5b5b25"
+  },
+  {
+    "path": "doc/资源/sd卡/PIC1.BMP",
+    "bytes": 921654,
+    "sha256": "f9938325dcf16100ef4cd08ab2827e1e646878ae54518cb1604dc04875dca218"
+  },
+  {
+    "path": "doc/资源/sd卡/PIC2.BMP",
+    "bytes": 921654,
+    "sha256": "958c09c75d9c1c329419b59b74c5b338f299e05648b1f76c8b93a1e567bb7665"
+  },
+  {
+    "path": "doc/资源/sd卡/PIC3.BMP",
+    "bytes": 921654,
+    "sha256": "e84c4a500b919251a0df1ab6b8448e2d94438065fca0fe14a520e3c658e06bdd"
+  },
+  {
+    "path": "doc/资源/sd卡/PIC4.BMP",
+    "bytes": 921654,
+    "sha256": "78c9692b7c47af62e82220ba294e71548507da16990aa04f7c3dd58987b3ca06"
+  },
+  {
+    "path": "doc/资源/sd卡/rick.mp4",
+    "bytes": 11190181,
+    "sha256": "c693295686c6edadbf30b065a1ad12076b7277d9d5adea11ee35f6d4363af178"
+  },
+  {
+    "path": "doc/资源/sd卡/songs_B.json",
+    "bytes": 331,
+    "encoding": "utf-8-sig",
+    "lines": 21,
+    "sha256": "3f7f66d42c52a8f19cf2ca4946543d7dd8a96edad46a37d9418426d08b116a20"
+  },
+  {
+    "path": "doc/资源/sd卡/songs_S5.json",
+    "bytes": 414,
+    "encoding": "utf-8-sig",
+    "lines": 24,
+    "sha256": "dc7b42295f81ca9f88e2ede6abb7ceab560594c4959e21c8254c8379b7eac3b9"
+  },
+  {
+    "path": "doc/资源/sd卡/songs_S6.json",
+    "bytes": 444,
+    "encoding": "utf-8-sig",
+    "lines": 25,
+    "sha256": "129bbc0ac3b8d3e39390c09b71830bb54d4dc895c28b7cd142ddea4e9f7cf3a6"
+  },
+  {
+    "path": "doc/资源/sd卡/TRACK1.MV",
+    "bytes": 46080000,
+    "sha256": "491644a183a76e3b5f48cd66d6f4307a01b50dcacf8fdb28d18ff820f1a2d7c5"
+  },
+  {
+    "path": "doc/资源/sd卡/TRACK1.MV.json",
+    "bytes": 296,
+    "encoding": "utf-8-sig",
+    "lines": 11,
+    "sha256": "370b5e32dc239bc545577521fac49c52ede8e329fd3a72b70200bceb37fb3ea7"
+  },
+  {
+    "path": "doc/资源/sd卡/UIRES.BIN",
+    "bytes": 9896960,
+    "sha256": "96fbd93b6586a4475dcb58c6e43c35342fc82edcb0cd79b8ab48be2ed38ef679"
+  },
+  {
+    "path": "doc/资源/sd卡/write_card.bat",
+    "bytes": 261,
+    "encoding": "utf-8-sig",
+    "lines": 3,
+    "sha256": "69d36d8851d1ee9807b3519277321995ee7fa726c2686ac94b57d21e9ac45bf7"
+  },
+  {
+    "path": "doc/资源/sd卡/write_card.ps1",
+    "bytes": 3796,
+    "encoding": "utf-8-sig",
+    "lines": 91,
+    "sha256": "4353c607ced9ea65223c2f5a3bfbac99437ee33c8f3739d9fd592fd9233aaae5"
+  },
+  {
+    "path": "doc/资源/sd卡/测试验收.md",
+    "bytes": 6234,
+    "encoding": "utf-8-sig",
+    "lines": 139,
+    "sha256": "2e753193204bc73dbc8febe88a26121415e2ba6b3ad3084fe624bfc66d194142"
+  },
+  {
+    "path": "doc/资源/开机logo透明背景.png",
+    "bytes": 159970,
+    "sha256": "650b3236141606c0de8e7f57ddf311934c866e30c21d92a7417ff399c696d081"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第一讲：赛题介绍和赛题解读/2026年FPGA竞赛完赛指南（选题一）.pdf",
+    "bytes": 1243517,
+    "extracted": "document_1.txt",
+    "units": 10,
+    "chars": 4343,
+    "sha256": "83e8e76e7e58a5609afd7952953e0a0fb756818fcbb463b8cc4282b7424fd991"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第一讲：赛题介绍和赛题解读/赛题解析一_选题一.pptx",
+    "bytes": 3857566,
+    "extracted": "document_2.txt",
+    "units": 24,
+    "chars": 5432,
+    "sha256": "240f22cc02cec6c3679c7da4ebf67f8633dc5495b1530eaa9ba9bc738bcdbd1f"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第七讲：FAT32文件系统升级/第6课_FAT32文件系统/fat32_file_streamer.v",
+    "bytes": 8593,
+    "encoding": "utf-8-sig",
+    "lines": 207,
+    "sha256": "4c6a91390d85caf2924eee29267e1bf6181c702e115c565105208e2213466595"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第七讲：FAT32文件系统升级/第6课_FAT32文件系统/fat32_volume_scanner.v",
+    "bytes": 16539,
+    "encoding": "utf-8-sig",
+    "lines": 407,
+    "sha256": "a538b7acde4ba756e36672934bf74680c3d3ebeddae84dc448fd7fa6f06395ff"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第七讲：FAT32文件系统升级/第6课_FAT32文件系统/media_frame_loader.v",
+    "bytes": 8679,
+    "encoding": "utf-8-sig",
+    "lines": 218,
+    "sha256": "d11b442a765081f999092992e223558c64a6756e51d2291009fc3e4aac60515e"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第七讲：FAT32文件系统升级/第6课_FAT32文件系统/media_ingest_frontend.v",
+    "bytes": 3518,
+    "encoding": "utf-8-sig",
+    "lines": 80,
+    "sha256": "3e11e7d41e442000596b0e8eb24c694d94d119cd9bec35f581604078bd3e6d1b"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第七讲：FAT32文件系统升级/第6课_FAT32文件系统/media_ingest_pipeline.v",
+    "bytes": 9669,
+    "encoding": "utf-8-sig",
+    "lines": 231,
+    "sha256": "1acfa3520ae878f60df7adc798b8c0f2a831506853443d34759c2ca785a41e61"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第七讲：FAT32文件系统升级/第6课_FAT32文件系统/media_storage_ingest_top.v",
+    "bytes": 6010,
+    "encoding": "utf-8-sig",
+    "lines": 145,
+    "sha256": "26c0585f4ab637ab43a98bbaa5cdfa8bb2c6f0ab2f4f05e9e2865e5f84175d5c"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第七讲：FAT32文件系统升级/第6课_FAT32文件系统/sd_media_service.v",
+    "bytes": 3035,
+    "encoding": "utf-8-sig",
+    "lines": 76,
+    "sha256": "4aff86edf8c00e020db06d11435beb151534a49abe621c452d37964afb4fabab"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第七讲：FAT32文件系统升级/第6课_FAT32文件系统/sd_sector_replay_buffer.v",
+    "bytes": 4230,
+    "encoding": "utf-8-sig",
+    "lines": 118,
+    "sha256": "0944caa2706c614f1ef0d9e83da52174fc34df516ed77a242f6ca17264e7e3a9"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第七讲：FAT32文件系统升级/第6课_FAT32文件系统/sd_spi_byte_engine.v",
+    "bytes": 3079,
+    "encoding": "utf-8-sig",
+    "lines": 92,
+    "sha256": "0ff2a1f17f3b3955ee1e45ce5d28d16dea57f17ea19a2b7335d6e12067c5d417"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第七讲：FAT32文件系统升级/第6课_FAT32文件系统/sd_spi_command.v",
+    "bytes": 7250,
+    "encoding": "utf-8-sig",
+    "lines": 206,
+    "sha256": "0c82828a34b6d3130fbdfc16bc27fc910b6c8bdc48888df71b5a58f66c76d2a4"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第七讲：FAT32文件系统升级/第6课_FAT32文件系统/sd_spi_init.v",
+    "bytes": 12392,
+    "encoding": "utf-8-sig",
+    "lines": 317,
+    "sha256": "b4f9b8e1b2523c86c5cf1c9ee0977f11babc60886012f34fb217158690f4cfc2"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第七讲：FAT32文件系统升级/第6课_FAT32文件系统/sd_spi_sector_reader.v",
+    "bytes": 10117,
+    "encoding": "utf-8-sig",
+    "lines": 275,
+    "sha256": "fd59a14bf6a2a66d3e7ffd2a442bc456ce3b47e1632f8401d1883f5c6fab6133"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第七讲：FAT32文件系统升级/第6课_FAT32文件系统升级.md",
+    "bytes": 62329,
+    "encoding": "utf-8-sig",
+    "lines": 1171,
+    "sha256": "e9542b6d68d1f116d03bdf2724284da547ce9263f3cb2d7368561135d171c8fe"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第三讲：按键切换与自动轮播/第2课_按键与轮播/_修改起点_官方原版/sd_card_bmp.v",
+    "bytes": 14969,
+    "encoding": "utf-8-sig",
+    "lines": 395,
+    "sha256": "5319465074e1eb7da1f29d8454b81054bf7e633dd5cc6d7b40f232eeb9c1dadc"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第三讲：按键切换与自动轮播/第2课_按键与轮播/dual_key_chord_router.v",
+    "bytes": 4346,
+    "encoding": "utf-8-sig",
+    "lines": 122,
+    "sha256": "5929e4faca074f164c06d216684aa65cf09359e97100bac935dc09483615377a"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第三讲：按键切换与自动轮播/第2课_按键与轮播/dual_key_long_hold_guard.v",
+    "bytes": 2720,
+    "encoding": "utf-8-sig",
+    "lines": 84,
+    "sha256": "a5ff1257019a32ae7a9c6f1032f16cedb9cc6c4066b04813c014724c833739b9"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第三讲：按键切换与自动轮播/第2课_按键与轮播/fast_boot_gate.v",
+    "bytes": 1692,
+    "encoding": "utf-8-sig",
+    "lines": 32,
+    "sha256": "e049bfff4837de88907f6f2e697dc09346874b1e308faad4ddb0bb5d01e4d7b0"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第三讲：按键切换与自动轮播/第2课_按键与轮播/media_policy.v",
+    "bytes": 1127,
+    "encoding": "utf-8-sig",
+    "lines": 37,
+    "sha256": "e4c123c1073531780c36adc3774c20c68a5ed234ff325702726418c9d516a2f5"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第三讲：按键切换与自动轮播/第2课_按键与轮播/seg7_panel.v",
+    "bytes": 7612,
+    "encoding": "utf-8-sig",
+    "lines": 207,
+    "sha256": "7a884b7a2b755528e9571cf8cb13d0e28df217419b0b34aa66278b7bb881dc50"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第三讲：按键切换与自动轮播/第2课_按键切换与自动轮播.md",
+    "bytes": 72329,
+    "encoding": "utf-8-sig",
+    "lines": 1378,
+    "sha256": "2b5a5909a2fa7501f81d7ee55d1a0a2f4f8382187597e95d3f12d6eb1fa0e496"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第九讲：OSD字幕叠加/第9课_OSD字幕叠加/_说明.md",
+    "bytes": 1158,
+    "encoding": "utf-8-sig",
+    "lines": 17,
+    "sha256": "fc5640e7a9f354c5500d7f44e2a7fae4baac16750d0f0a49204507d5f96efe11"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第九讲：OSD字幕叠加/第9课_OSD字幕叠加/osd_overlay_24.v",
+    "bytes": 2390,
+    "encoding": "utf-8-sig",
+    "lines": 75,
+    "sha256": "6cb07216b732a2634cfe87a50f600e9bb8748d1289a8e5be0abd2086eddccbfe"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第九讲：OSD字幕叠加/第9课_OSD字幕叠加/promax_text_overlay.v",
+    "bytes": 21034,
+    "encoding": "utf-8-sig",
+    "lines": 325,
+    "sha256": "b563c45bf09f001fc8822f31c86959b52b1949f78a4f56e1768dd3ac4d12b3b3"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第九讲：OSD字幕叠加/第9课_OSD字幕叠加/status_osd_overlay.v",
+    "bytes": 4685,
+    "encoding": "utf-8-sig",
+    "lines": 91,
+    "sha256": "7f63fe8e7326b948f3cd028f627ec57815d7d563848160ceee54875aeaa220f4"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第九讲：OSD字幕叠加/第9课_OSD字幕叠加/subtitle_frame_commit.v",
+    "bytes": 1533,
+    "encoding": "utf-8-sig",
+    "lines": 51,
+    "sha256": "4049c911722c6838d65796c3e359333e9bc9be81fab9782fa27cb44c0c39565f"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第九讲：OSD字幕叠加/第9课_OSD字幕叠加/subtitle_uart_controller.v",
+    "bytes": 12424,
+    "encoding": "utf-8-sig",
+    "lines": 296,
+    "sha256": "ffa3291bfec618d00dcf83f0d6e00d95a56425b01a415431d89df698f5fdb49a"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第九讲：OSD字幕叠加/第9课_OSD字幕叠加/timestamp_osd.v",
+    "bytes": 8015,
+    "encoding": "utf-8-sig",
+    "lines": 174,
+    "sha256": "95db44c2e0c27c7b44fefc28130ac53afbe81ee735dbece14e5f489faeb0f0c5"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第九讲：OSD字幕叠加/第9课_OSD字幕叠加.md",
+    "bytes": 35143,
+    "encoding": "utf-8-sig",
+    "lines": 834,
+    "sha256": "bbf61d4b76fcb71836ccce03b5f99d41b3d6f84f03f254f9e58ac12eead2382e"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_从官方例程到完赛工程_架构认知与FPGA思维框架.md",
+    "bytes": 26635,
+    "encoding": "utf-8-sig",
+    "lines": 405,
+    "sha256": "045286523bba997279633025409c92665f5fde7adb89769f440400f6cdd5d2fb"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/_IP核需在TD中生成.txt",
+    "bytes": 2462,
+    "encoding": "utf-8-sig",
+    "lines": 41,
+    "sha256": "4ea30bb1d05bc61c30e8971ba717d530413b999b2a8817096db136561eb1c7fb"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/audio_arc_calculate.v",
+    "bytes": 1702,
+    "encoding": "utf-8-sig",
+    "lines": 70,
+    "sha256": "552d8d86afd237666b30ae08f31247808e89eb024efde5efc670b82eb617a7dc"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/hdmi1.4b_transmitter_core/hdmi_1_4b_transmitter_core_wrapper.enc.v",
+    "bytes": 328975,
+    "encoding": "utf-8-sig",
+    "lines": 5041,
+    "sha256": "867e0b0bdd874bc383d00918c9e1be3fe01edf41f343b6a0d73e262776596a63"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/hdmi_audio_tone_i2s_64fs.v",
+    "bytes": 3589,
+    "encoding": "utf-8-sig",
+    "lines": 103,
+    "sha256": "729cb1635091b7630e5b68306e9f51fff4e3e06bae8ce08cc3d7323b3fb9d5cf"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/hdmi_phy_warpper.v",
+    "bytes": 4017,
+    "encoding": "utf-8-sig",
+    "lines": 124,
+    "sha256": "416b082b0987001bdbc0a7e20a557cb8fb1dca34e25dc881e6d28a8cb3cf4300"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/I2S_receiver.v",
+    "bytes": 4205,
+    "encoding": "utf-8-sig",
+    "lines": 150,
+    "sha256": "08904598b42c2e1a4836cd9fb3293bc6c791ea2f79e35c7663a33127dc97f47b"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/include/global_def.v",
+    "bytes": 373,
+    "encoding": "utf-8-sig",
+    "lines": 13,
+    "sha256": "04f854d7fe2f7816705b988ec59822fc258e4ed3a13529e36d0b9e6233a2682f"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/include/sdr_as_ram.enc.v",
+    "bytes": 7538,
+    "encoding": "utf-8-sig",
+    "lines": 152,
+    "sha256": "767dbdfbd83d42223b77dfa7deab42ce8216a8fd6f6cb41b7e7593d9a345ba57"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/include/sdr_init_ref.enc.v",
+    "bytes": 9059,
+    "encoding": "utf-8-sig",
+    "lines": 247,
+    "sha256": "6da5945f4af793610d0d64c65c7e5d2d1c86ed4c11bc5fdeacd27eb03178b9f6"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/include/sdr_wrrd.enc.v",
+    "bytes": 15637,
+    "encoding": "utf-8-sig",
+    "lines": 255,
+    "sha256": "c7d7fe07d75f66aa88d9f986b3006319c995162434f104f9990664b374cdfdd2"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/IP/afifo_16_32_256.v",
+    "bytes": 34123,
+    "encoding": "utf-8-sig",
+    "lines": 852,
+    "sha256": "3d29b06655482184a9ad157b9bd71b79032debe3199168d3b4d9570fdac31835"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/IP/afifo_32_16_256.v",
+    "bytes": 34123,
+    "encoding": "utf-8-sig",
+    "lines": 852,
+    "sha256": "7c3ee41f30be75ae686c9abff3a840fc5439209cda077e4aa275eac0dab9f564"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/IP/PLL_HDMI_AUDIO.v",
+    "bytes": 2757,
+    "encoding": "utf-8-sig",
+    "lines": 97,
+    "sha256": "1e174c1dc4edbce9c61d6b390aca3b7b94022b60995a92981d5278247b7f5867"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/IP/sdram.v",
+    "bytes": 1108,
+    "encoding": "utf-8-sig",
+    "lines": 44,
+    "sha256": "1487e8583bbf52fe6d079a2854c10ebff2e569a3872a9088c1c9717ba14d17fe"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/IP/sys_pll.v",
+    "bytes": 2493,
+    "encoding": "utf-8-sig",
+    "lines": 95,
+    "sha256": "ea4ed09b2ff026b7b31eb76f51ef5afa388aa552e538e02d013cc8e7464ba563"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/IP/video_pll.v",
+    "bytes": 2315,
+    "encoding": "utf-8-sig",
+    "lines": 88,
+    "sha256": "d5a2b3d3d0618d19619c36af0143f8bf9338415eef2eadd22456510ade9c6092"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/lane_lvds_10_1.v",
+    "bytes": 4421,
+    "encoding": "utf-8-sig",
+    "lines": 157,
+    "sha256": "de9529321354f04837e051d0ec1681cf44783d4be3284703a788e081147500bc"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/SD/ax_debounce.v",
+    "bytes": 2201,
+    "encoding": "utf-8-sig",
+    "lines": 86,
+    "sha256": "93aa6dd38051250cc7f777c88466ac180afe9bcdce7838b9ea506455d8cbc9b8"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/SD/bmp_read.v",
+    "bytes": 11339,
+    "encoding": "utf-8-sig",
+    "lines": 322,
+    "sha256": "8b81edee7e1ac61e02652c9416c05f6a32768acd5a9639365bc7bf87fa4febaa"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/SD/color_bar.v",
+    "bytes": 9141,
+    "encoding": "utf-8-sig",
+    "lines": 327,
+    "sha256": "afe1f56714ec58d2477ba1717e5a36c5a0da5fe5c07d70d11aa5ace710c4b152"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/SD/frame_fifo_read.v",
+    "bytes": 10172,
+    "encoding": "utf-8-sig",
+    "lines": 272,
+    "sha256": "5952075b213ec638f5c9bb238d4d4162685f9e9b5e752674f0e68a92dbec83ac"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/SD/frame_fifo_write.v",
+    "bytes": 11551,
+    "encoding": "utf-8-sig",
+    "lines": 292,
+    "sha256": "ef0f46443b6f79ebb9fbba8f39b11dca90ee7e9ae4637c1d45786744d964e540"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/SD/frame_read_write.v",
+    "bytes": 11057,
+    "encoding": "utf-8-sig",
+    "lines": 193,
+    "sha256": "f9d7d04d81a8c8a3e226f855387971cf2308421bdd4c08c0ab465e9e40aa5cbd"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/SD/sd_card_bmp.v",
+    "bytes": 14969,
+    "encoding": "utf-8-sig",
+    "lines": 395,
+    "sha256": "5319465074e1eb7da1f29d8454b81054bf7e633dd5cc6d7b40f232eeb9c1dadc"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/SD/sd_card_cmd.v",
+    "bytes": 8550,
+    "encoding": "utf-8-sig",
+    "lines": 353,
+    "sha256": "a1a50502afd4e8b238b0627cd5f204c04738e761d49ab48f33da35e22ba4a5fa"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/SD/sd_card_sec_read_write.v",
+    "bytes": 5620,
+    "encoding": "utf-8-sig",
+    "lines": 255,
+    "sha256": "c245c07e3b0056808d86e06aad74348494e2a7050d493a3d4141d97ccf115203"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/SD/sd_card_top.v",
+    "bytes": 7277,
+    "encoding": "utf-8-sig",
+    "lines": 127,
+    "sha256": "d5031b5b809a8df0a2c8cca194a511c5f74236e810cbe5e8436359f9e5f26a39"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/SD/sdram.v",
+    "bytes": 2412,
+    "encoding": "utf-8-sig",
+    "lines": 109,
+    "sha256": "2d985c2477384e677c25714241e1a50206def8916aa03189a5b313b2d22dfc99"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/SD/seg_decoder.v",
+    "bytes": 766,
+    "encoding": "utf-8-sig",
+    "lines": 30,
+    "sha256": "4592b6e4d2e9e8b7e4ab5266d850d30e43537ab9c4157d4221e3f8dfd342decd"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/SD/seg_scan.v",
+    "bytes": 1847,
+    "encoding": "utf-8-sig",
+    "lines": 93,
+    "sha256": "08759c329c33cdb7a6070e0b46773f0a6c9c8052b51652dec29406b9a9dac1e3"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/SD/spi_master.v",
+    "bytes": 3655,
+    "encoding": "utf-8-sig",
+    "lines": 137,
+    "sha256": "37f7a21144fa5cca3cc5c3b5f68a5ad40b3108336b600e45a1367734ac61403c"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/SD/video_define.v",
+    "bytes": 21,
+    "encoding": "utf-8-sig",
+    "lines": 1,
+    "sha256": "77748966850a8f5af0d77f2cdb08006088ba5e1a31b98391fba6cc61c5247da2"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/SD/video_delay.v",
+    "bytes": 1595,
+    "encoding": "utf-8-sig",
+    "lines": 52,
+    "sha256": "f47c4b63f8baa6d8874c87dca5b72dfdadd19f4a107403da98752bce98936433"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/SD/video_timing_data.v",
+    "bytes": 2432,
+    "encoding": "utf-8-sig",
+    "lines": 84,
+    "sha256": "c6f75501e98dd5995f687aafb40455beffe45b426137b5089a73ac3a036f7282"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/startup_pulse.v",
+    "bytes": 713,
+    "encoding": "utf-8-sig",
+    "lines": 35,
+    "sha256": "396e1e56febb8028339e646bc2f06b83e07ab11ef840e447422fb941956741c9"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/top_tf_hdmi_audio.v",
+    "bytes": 12329,
+    "encoding": "utf-8-sig",
+    "lines": 411,
+    "sha256": "9dd5befa87d128be39ec7a70eab0f04c78440d11d8a6a18a789ccd535f90f3ab"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/video_rgb_to_axis_640x480.v",
+    "bytes": 1749,
+    "encoding": "utf-8-sig",
+    "lines": 67,
+    "sha256": "1c8fc26c789f87227036bea034f1ab6fc5633f2ab2684be422c54687a290fb96"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第二讲：官方例程架构与FPGA快速完赛设计思维/第1课_官方例程/video_source_test.v",
+    "bytes": 2983,
+    "encoding": "utf-8-sig",
+    "lines": 121,
+    "sha256": "39cc05c9684a594d4254d11e66e97344053ab75bdb00f3f5a301643fd7aadbfc"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第五讲：系统稳定性/第4课_系统稳定性/bmp24_decoder.v",
+    "bytes": 15021,
+    "encoding": "utf-8-sig",
+    "lines": 386,
+    "sha256": "06b246de39d973f411b7c10e82a1897ad7fa44773446e5de84eb41260fcf5bff"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第五讲：系统稳定性/第4课_系统稳定性/config_flash_journal.v",
+    "bytes": 11278,
+    "encoding": "utf-8-sig",
+    "lines": 284,
+    "sha256": "255b668c3c1e3feb255b9be047f61e2e3d96184c7c83909cf3e9cb828ebcf2ea"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第五讲：系统稳定性/第4课_系统稳定性/config_journal.v",
+    "bytes": 6229,
+    "encoding": "utf-8-sig",
+    "lines": 156,
+    "sha256": "3cdfdac1b35d726e3ba8be524daaf2035a1ad698936ceba3f4f0bd86ee45213e"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第五讲：系统稳定性/第4课_系统稳定性/fast_boot_gate.v",
+    "bytes": 1692,
+    "encoding": "utf-8-sig",
+    "lines": 32,
+    "sha256": "e049bfff4837de88907f6f2e697dc09346874b1e308faad4ddb0bb5d01e4d7b0"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第五讲：系统稳定性/第4课_系统稳定性/media_recovery_fsm.v",
+    "bytes": 1998,
+    "encoding": "utf-8-sig",
+    "lines": 54,
+    "sha256": "b959ae8cec711eb0f5b80fa05b2ff54263380a1b8bd87509b32f723a3f3f9207"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第五讲：系统稳定性/第4课_系统稳定性/player_config_persistence.v",
+    "bytes": 13290,
+    "encoding": "utf-8-sig",
+    "lines": 331,
+    "sha256": "f6fcdb6b1c1c0d43d36fefba3c24246a030b98aa6690dbfcdb7cd35130f69690"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第五讲：系统稳定性/第4课_系统稳定性/spi_byte_engine.v",
+    "bytes": 3247,
+    "encoding": "utf-8-sig",
+    "lines": 98,
+    "sha256": "7f4eb1fa86e01610451ec140ab5aaaa24052977b5df972c2f08b68dc8404e7ea"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第五讲：系统稳定性/第4课_系统稳定性/status_osd_overlay.v",
+    "bytes": 4685,
+    "encoding": "utf-8-sig",
+    "lines": 91,
+    "sha256": "7f63fe8e7326b948f3cd028f627ec57815d7d563848160ceee54875aeaa220f4"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第五讲：系统稳定性/第4课_系统稳定性/uart_rx_byte.v",
+    "bytes": 2736,
+    "encoding": "utf-8-sig",
+    "lines": 91,
+    "sha256": "0f8099c8052a9152d80464a5c73fac39cc22857bf9f4c562d23e7c9fdc423af7"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第五讲：系统稳定性/第4课_系统稳定性/uart_status_reporter.v",
+    "bytes": 9885,
+    "encoding": "utf-8-sig",
+    "lines": 269,
+    "sha256": "cd21292d820b3cd94dc52199f735d98d84a090821871c368a469b5bc0a2d9650"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第五讲：系统稳定性/第4课_系统稳定性/uart_tx_byte.v",
+    "bytes": 1638,
+    "encoding": "utf-8-sig",
+    "lines": 54,
+    "sha256": "d95e41077380e99f32d4c2697805772f3505e2f7b88a70e64ac9475c2f55bca0"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第五讲：系统稳定性/第4课_系统稳定性/w25q64_preflight_reader.v",
+    "bytes": 9591,
+    "encoding": "utf-8-sig",
+    "lines": 260,
+    "sha256": "42268808045584d4e3fc7572fbc3b5881431da161dfb0a2b30e70d2bba1fa9d5"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第五讲：系统稳定性/第4课_系统稳定性/w25q64_record_store.v",
+    "bytes": 20432,
+    "encoding": "utf-8-sig",
+    "lines": 495,
+    "sha256": "93f95bd98962e360b72dddc0acef5999fb1eef8bc23ba16b20433e78c0a3f69a"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第五讲：系统稳定性/第4课_系统稳定性增强.md",
+    "bytes": 38268,
+    "encoding": "utf-8-sig",
+    "lines": 813,
+    "sha256": "e2ed0ab2d5ee51d3e15c92a22935fe2a6494ce7e53ca8dbbabb96c78c96ab68d"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第八讲：四bank帧缓存架构/第8课_四bank帧缓存/_IP核需在TD中生成.txt",
+    "bytes": 1119,
+    "encoding": "utf-8-sig",
+    "lines": 21,
+    "sha256": "fc7d213fad69d3bae93572258b918faba843c7a51ce87c6e827f83756d35a097"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第八讲：四bank帧缓存架构/第8课_四bank帧缓存/afifo_32_16_256.v",
+    "bytes": 34490,
+    "encoding": "utf-8-sig",
+    "lines": 860,
+    "sha256": "0d87651f9c9fd542a7ee43a89ce6502784c0c41ca828de259dcc0a8b6159d2cb"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第八讲：四bank帧缓存架构/第8课_四bank帧缓存/fifo_prefetch_2.v",
+    "bytes": 2299,
+    "encoding": "utf-8-sig",
+    "lines": 72,
+    "sha256": "c5c088f4e195f1c193ef84f0ecb70e0dc83adf88736b31fcb58ffba036d3a76d"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第八讲：四bank帧缓存架构/第8课_四bank帧缓存/media_frame_loader.v",
+    "bytes": 8679,
+    "encoding": "utf-8-sig",
+    "lines": 218,
+    "sha256": "d11b442a765081f999092992e223558c64a6756e51d2291009fc3e4aac60515e"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第八讲：四bank帧缓存架构/第8课_四bank帧缓存/media_frame_reader.v",
+    "bytes": 14897,
+    "encoding": "utf-8-sig",
+    "lines": 370,
+    "sha256": "336d00a6a570b48636767f71564cf09a0a439d0572e58857ea6105ac01bd25f7"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第八讲：四bank帧缓存架构/第8课_四bank帧缓存/media_player_control.v",
+    "bytes": 5409,
+    "encoding": "utf-8-sig",
+    "lines": 162,
+    "sha256": "ed13672b02506b2d6e815ac7c25f820c997d135e543e72d02dfdb091fde1a736"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第八讲：四bank帧缓存架构/第8课_四bank帧缓存/media_sdram_write_cdc.v",
+    "bytes": 7941,
+    "encoding": "utf-8-sig",
+    "lines": 218,
+    "sha256": "65a25f2c4519609841aa09445d63344352019fd600790a3759047ef47ef8c44b"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第八讲：四bank帧缓存架构/第8课_四bank帧缓存/media_video_pipeline.v",
+    "bytes": 10392,
+    "encoding": "utf-8-sig",
+    "lines": 249,
+    "sha256": "443635696ca2c1485bd5addb3a311e37587e8c73ffc7a6c87ba609ef2c59c4e3"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第八讲：四bank帧缓存架构/第8课_四bank帧缓存/rgb_video_adapter.v",
+    "bytes": 2684,
+    "encoding": "utf-8-sig",
+    "lines": 56,
+    "sha256": "edcca4a11291e590e48ab292567dba3eb40b185f021e00112b8155db9bd19e68"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第八讲：四bank帧缓存架构/第8课_四bank帧缓存/video_fade_transition.v",
+    "bytes": 7994,
+    "encoding": "utf-8-sig",
+    "lines": 183,
+    "sha256": "2408e5cabe59232a0e9516f0463048d7c7f5d90e99f338c39f3eb9b7a3a04139"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第八讲：四bank帧缓存架构/第8课_四bank帧缓存/video_timing_ctrl.v",
+    "bytes": 3080,
+    "encoding": "utf-8-sig",
+    "lines": 62,
+    "sha256": "102ebea7ad166cb4f13e54ea704cbc9b9b6ec93c81838a5a964061483b12d71d"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第八讲：四bank帧缓存架构/第8课_四bank帧缓存架构.md",
+    "bytes": 74304,
+    "encoding": "utf-8-sig",
+    "lines": 1405,
+    "sha256": "30e75bb7119e3062d3857d48f0c707b65dbf69a2b75be88d03f634b2470e1fc2"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第六讲：Flash固化与上电自启/第5课_Flash固化与上电自启.md",
+    "bytes": 55997,
+    "encoding": "utf-8-sig",
+    "lines": 1160,
+    "sha256": "8937572fb060fa93c907e3c0020685cc4577312b6935db870f882b113f1881d2"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第六讲：Flash固化与上电自启/第5课_Flash固化与复位/_IP核需在TD中生成.txt",
+    "bytes": 1263,
+    "encoding": "utf-8-sig",
+    "lines": 21,
+    "sha256": "7aa0a1e7e243d6762f03b1af3dda5fba9c5a5f09e6dc19b19e4304f19c8ce9a1"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第六讲：Flash固化与上电自启/第5课_Flash固化与复位/global_def_125.v",
+    "bytes": 373,
+    "encoding": "utf-8-sig",
+    "lines": 13,
+    "sha256": "04f854d7fe2f7816705b988ec59822fc258e4ed3a13529e36d0b9e6233a2682f"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第六讲：Flash固化与上电自启/第5课_Flash固化与复位/media_player_promax_top.sdc",
+    "bytes": 4327,
+    "encoding": "utf-8-sig",
+    "lines": 60,
+    "sha256": "abf0f61da5bca01f01d91d052918ab38d825b8d1b64e60ce5641e5f01482c9f3"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第六讲：Flash固化与上电自启/第5课_Flash固化与复位/reset_sync.v",
+    "bytes": 1350,
+    "encoding": "utf-8-sig",
+    "lines": 32,
+    "sha256": "422024379917ce7895550df38c07600a32ecf11c4bb643e91abd235ddd42fd9d"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第六讲：Flash固化与上电自启/第5课_Flash固化与复位/sync_2ff.v",
+    "bytes": 1486,
+    "encoding": "utf-8-sig",
+    "lines": 35,
+    "sha256": "691a3ea359a4ac443ab87d3202a1f3398f16e46b83066efd485f25f912f47fe9"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第六讲：Flash固化与上电自启/第5课_Flash固化与复位/sys_pll_promax_40.v",
+    "bytes": 2148,
+    "encoding": "utf-8-sig",
+    "lines": 109,
+    "sha256": "66b07acad5f77c901de7e7ef5997da1e08600f7085f60050fcd00923f53e8d13"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十一讲：WAV音频播放/第10课_WAV音频播放/_说明.md",
+    "bytes": 1154,
+    "encoding": "utf-8-sig",
+    "lines": 16,
+    "sha256": "41c9a155fcd51469f3d7ac75b686933c7c23edacf44bcd8443148946e16634a5"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十一讲：WAV音频播放/第10课_WAV音频播放/audio_source_mux.v",
+    "bytes": 1655,
+    "encoding": "utf-8-sig",
+    "lines": 43,
+    "sha256": "4e755bdeb8f2e13157636f94bc3bcdf8b19b876489720783de751ca7bd69e04a"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十一讲：WAV音频播放/第10课_WAV音频播放/media_hdmi_audio_bridge.v",
+    "bytes": 3357,
+    "encoding": "utf-8-sig",
+    "lines": 89,
+    "sha256": "e41086b1d12ab4556c2152aa2f60596921d90e9fb7223e467fa433a09c2c974f"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十一讲：WAV音频播放/第10课_WAV音频播放/pcm_content_mux.v",
+    "bytes": 856,
+    "encoding": "utf-8-sig",
+    "lines": 29,
+    "sha256": "0935d932acf9a4c5971f994a7a07e6eb1451fe96aff53c79bcef4ec4816de37d"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十一讲：WAV音频播放/第10课_WAV音频播放/sync_fade_gain.v",
+    "bytes": 2808,
+    "encoding": "utf-8-sig",
+    "lines": 75,
+    "sha256": "400429304f46d3ce16fc99fc48eb53e6f174cc58010fa82ea0dbc17650562067"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十一讲：WAV音频播放/第10课_WAV音频播放/wav_stream_player.v",
+    "bytes": 9842,
+    "encoding": "utf-8-sig",
+    "lines": 234,
+    "sha256": "1947200d4aad410bd8e23d9b598e57edbcc7d55e17789f856268f7c6bf7aefa2"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十一讲：WAV音频播放/第10课_WAV音频播放.md",
+    "bytes": 24145,
+    "encoding": "utf-8-sig",
+    "lines": 604,
+    "sha256": "71f198287fdde2b6ba61471a147d7302e67eae3714e859586be54e95a55b083d"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十三讲：图片缩放与缩略图/第12课_图片缩放与缩略图/bilinear_8q8.v",
+    "bytes": 2052,
+    "encoding": "utf-8-sig",
+    "lines": 30,
+    "sha256": "89230ad6e5531b6d9bd3a563d20dc69425d32eb2407f7dd80e8a78ed5b87dd9e"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十三讲：图片缩放与缩略图/第12课_图片缩放与缩略图/thumbnail_layout.v",
+    "bytes": 1776,
+    "encoding": "utf-8-sig",
+    "lines": 48,
+    "sha256": "b06c547502ff8f47e3d70992544b9097345888d5540050d2a5aec0feba0763dd"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十三讲：图片缩放与缩略图/第12课_图片缩放与缩略图.md",
+    "bytes": 25832,
+    "encoding": "utf-8-sig",
+    "lines": 489,
+    "sha256": "4830cfed7d41939d6fd0eef50fe0b0db6e879d96b0365d459c356253bbaca7cf"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十二讲：音频波形可视化/第11课_音频波形可视化/promax_audio_waveform.v",
+    "bytes": 4913,
+    "encoding": "utf-8-sig",
+    "lines": 140,
+    "sha256": "9c0a9b0043808e33e22f0ee1f97ff1b9bc2582edc14698c71ee6d3e56ed0f7d7"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十二讲：音频波形可视化/第11课_音频波形可视化.md",
+    "bytes": 21965,
+    "encoding": "utf-8-sig",
+    "lines": 434,
+    "sha256": "cc9c573be89d6c337b085efde4d70ad59f9dcba0faa9bbf0ae9856379e1480bb"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十五讲：缩略图交互选择/第14课_缩略图交互选择/media_player_control.v",
+    "bytes": 5409,
+    "encoding": "utf-8-sig",
+    "lines": 162,
+    "sha256": "ed13672b02506b2d6e815ac7c25f820c997d135e543e72d02dfdb091fde1a736"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十五讲：缩略图交互选择/第14课_缩略图交互选择/media_policy.v",
+    "bytes": 1127,
+    "encoding": "utf-8-sig",
+    "lines": 37,
+    "sha256": "e4c123c1073531780c36adc3774c20c68a5ed234ff325702726418c9d516a2f5"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十五讲：缩略图交互选择/第14课_缩略图交互选择/thumbnail_controller.v",
+    "bytes": 1632,
+    "encoding": "utf-8-sig",
+    "lines": 26,
+    "sha256": "12af6bf5b01276e9abf231c3888ee3f306334b07b6e67a54ee95c19029c0fc3a"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十五讲：缩略图交互选择/第14课_缩略图交互选择/thumbnail_layout.v",
+    "bytes": 1776,
+    "encoding": "utf-8-sig",
+    "lines": 48,
+    "sha256": "b06c547502ff8f47e3d70992544b9097345888d5540050d2a5aec0feba0763dd"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十五讲：缩略图交互选择/第14课_缩略图交互选择.md",
+    "bytes": 28717,
+    "encoding": "utf-8-sig",
+    "lines": 563,
+    "sha256": "a335862353354da024f6775d0f6e3d018105e92079acccc7253c7863358ef999"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十六讲：产品包装与应用场景思路/第17课_应用场景设计方法论.md",
+    "bytes": 21000,
+    "encoding": "utf-8-sig",
+    "lines": 268,
+    "sha256": "121ab13d35b82f12b5ee0305425b0f1bdb9fd2233a500d53c09d9d245c2c7e9a"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十六讲：产品包装与应用场景思路/第17课_附录_严选场景详解.md",
+    "bytes": 15709,
+    "encoding": "utf-8-sig",
+    "lines": 180,
+    "sha256": "5c1384d75885bb42366ab7b43e66ed1a311d2144d481385d9f0a0a790d107ffa"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十四讲：亮度对比度调节/第13课_亮度对比度调节/brightness_contrast_adjust.v",
+    "bytes": 1762,
+    "encoding": "utf-8-sig",
+    "lines": 42,
+    "sha256": "77b4bc58ff3039ad1c625cc04e80a6369944859b3b7a438e3751779c701339a2"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十四讲：亮度对比度调节/第13课_亮度对比度调节/param_menu_controller.v",
+    "bytes": 5968,
+    "encoding": "utf-8-sig",
+    "lines": 163,
+    "sha256": "68844b5e5824ad8591566c707171f1310f8ff4eabc24aa19d3bdbbeb7fbc521e"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十四讲：亮度对比度调节/第13课_亮度对比度调节.md",
+    "bytes": 32339,
+    "encoding": "utf-8-sig",
+    "lines": 667,
+    "sha256": "b068a48c5f17fed614df9a43efe39fd943a83a68527d26482eec2c377672c6b2"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十讲：图片转场特效/第十课_图片转场特效/_说明.md",
+    "bytes": 836,
+    "encoding": "utf-8-sig",
+    "lines": 13,
+    "sha256": "961be8c167e7b16058602aaebdc8c9362938d44ca13752c31324069528eb0dbf"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十讲：图片转场特效/第十课_图片转场特效/frame_blend.v",
+    "bytes": 1357,
+    "encoding": "utf-8-sig",
+    "lines": 43,
+    "sha256": "dd5a9ca0ca2faadda78ed1c30da8ac4b26064980de7914840b325a6ab78438b2"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十讲：图片转场特效/第十课_图片转场特效/video_fade_transition.v",
+    "bytes": 7994,
+    "encoding": "utf-8-sig",
+    "lines": 183,
+    "sha256": "2408e5cabe59232a0e9516f0463048d7c7f5d90e99f338c39f3eb9b7a3a04139"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第十讲：图片转场特效/第十课_图片转场特效.md",
+    "bytes": 36529,
+    "encoding": "utf-8-sig",
+    "lines": 849,
+    "sha256": "076e20ef17084db0e91b665e90882193d9f1ad2cb8cfefc400bbfcf9953746cf"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第四讲：HDMI音频输出基础/第3课_HDMI音频基础/hdmi_audio_acr_packetizer.v",
+    "bytes": 2198,
+    "encoding": "utf-8-sig",
+    "lines": 69,
+    "sha256": "ad881027db5aafcb6418ccefc306ea180750523bea95436278c395798326712b"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第四讲：HDMI音频输出基础/第3课_HDMI音频基础/hdmi_audio_infoframe_packetizer.v",
+    "bytes": 1584,
+    "encoding": "utf-8-sig",
+    "lines": 48,
+    "sha256": "ac4af542aa190d43323ddd45fd6eecef712c573a4a57abe6e91ebe5dddc5ae61"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第四讲：HDMI音频输出基础/第3课_HDMI音频基础/hdmi_audio_packet_scheduler.v",
+    "bytes": 3500,
+    "encoding": "utf-8-sig",
+    "lines": 93,
+    "sha256": "216d8ee51aac51c1eb2ac071c36ed153beea928cc0273d38ef59f19bf822de8f"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第四讲：HDMI音频输出基础/第3课_HDMI音频基础/hdmi_audio_sample_packetizer.v",
+    "bytes": 5456,
+    "encoding": "utf-8-sig",
+    "lines": 138,
+    "sha256": "85177298bb0463d2ecfbae2ea5a36792d0538a6a8720d890f78ba5b6597238fe"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第四讲：HDMI音频输出基础/第3课_HDMI音频基础/hdmi_audio_symbol_core.v",
+    "bytes": 6517,
+    "encoding": "utf-8-sig",
+    "lines": 164,
+    "sha256": "ef05ef0aa8770255d7c60a7459d63e44fe5caf9fa3cdfa6cfa2f7e4ea5762a20"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第四讲：HDMI音频输出基础/第3课_HDMI音频基础/hdmi_bch8.v",
+    "bytes": 931,
+    "encoding": "utf-8-sig",
+    "lines": 31,
+    "sha256": "b8b73dba7fddce6eeb49f1c6745af8853a265b4cfc44a0ca4425b10f201cd2d9"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第四讲：HDMI音频输出基础/第3课_HDMI音频基础/hdmi_data_island_mapper.v",
+    "bytes": 1648,
+    "encoding": "utf-8-sig",
+    "lines": 43,
+    "sha256": "711eca917fbcb9aa69153b0678411a155b70d05ecffb353f9a2eefa4e93ea542"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第四讲：HDMI音频输出基础/第3课_HDMI音频基础/hdmi_data_island_scheduler.v",
+    "bytes": 6275,
+    "encoding": "utf-8-sig",
+    "lines": 175,
+    "sha256": "3cbc82d784ee52c9a1ddf7420a7a1403429f47d99b8b4f11fe28a06911e9d1ef"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第四讲：HDMI音频输出基础/第3课_HDMI音频基础/hdmi_terc4_encoder.v",
+    "bytes": 873,
+    "encoding": "utf-8-sig",
+    "lines": 27,
+    "sha256": "03879709456f4857d861833fd2290b4469a03e0fecb2d3f830ff939912ee8daa"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第四讲：HDMI音频输出基础/第3课_HDMI音频基础/hdmi_tmds_channel_encoder.v",
+    "bytes": 4085,
+    "encoding": "utf-8-sig",
+    "lines": 117,
+    "sha256": "a2a8d1422f82f3cf826dcdfc6ed824745617ea358e220021ea48f9cda5d7ac3d"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第四讲：HDMI音频输出基础/第3课_HDMI音频基础/m06_pcm_contract_adapter.v",
+    "bytes": 1770,
+    "encoding": "utf-8-sig",
+    "lines": 49,
+    "sha256": "33e0a6ea7f76480935c27b94ee39ff7918697ede4555083327e96ba9834430c4"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第四讲：HDMI音频输出基础/第3课_HDMI音频基础/media_hdmi_audio_bridge.v",
+    "bytes": 3357,
+    "encoding": "utf-8-sig",
+    "lines": 89,
+    "sha256": "e41086b1d12ab4556c2152aa2f60596921d90e9fb7223e467fa433a09c2c974f"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第四讲：HDMI音频输出基础/第3课_HDMI音频基础/pcm_media_tone.v",
+    "bytes": 7312,
+    "encoding": "utf-8-sig",
+    "lines": 176,
+    "sha256": "e709e9331f323a8738feb84970b498c609a746256b1e3b78d7c02326e547b0e0"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第四讲：HDMI音频输出基础/第3课_HDMI音频基础/pcm_test_tone.v",
+    "bytes": 2541,
+    "encoding": "utf-8-sig",
+    "lines": 74,
+    "sha256": "eaf6fe15573bd49062bdc9390e99f08214af26940d23cca9323499c63002a6ff"
+  },
+  {
+    "path": "doc/赛题一相关资料/FPGA创新设计赛道安路赛项（完赛系列）/第四讲：HDMI音频输出基础/第3课_HDMI音频输出基础.md",
+    "bytes": 26340,
+    "encoding": "utf-8-sig",
+    "lines": 548,
+    "sha256": "9e8bf01858e8b0d7743bc3511fb84b5d21ba2e05d82053ab043b81583ae62a93"
+  },
+  {
+    "path": "doc/赛题一相关资料/全国大学生嵌入式芯片与系统设计竞赛'2026FPGA赛道选题指南-安路科技 (1).pdf",
+    "bytes": 1159270,
+    "extracted": "document_3.txt",
+    "units": 35,
+    "chars": 22763,
+    "sha256": "d24fc67c995ec836e9b3b7c7243e561237c3381a862bf1541026f2221a0a4218"
+  },
+  {
+    "path": "doc/赛题一相关资料/赛题解析一.pptx",
+    "bytes": 4183818,
+    "extracted": "document_4.txt",
+    "units": 24,
+    "chars": 5953,
+    "sha256": "4dbd1aabe8ecae231e8cd591302c6616c03953afc44e1dcd0e309461eabc3532"
+  }
+]

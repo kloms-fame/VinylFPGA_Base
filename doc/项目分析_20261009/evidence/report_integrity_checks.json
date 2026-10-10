@@ -1,0 +1,13 @@
+{
+  "report_links_valid": true,
+  "original_484_docs_unchanged": true,
+  "source_constraints_inputs_unchanged": true,
+  "tracked_code_project_diff_empty": true,
+  "baseline_regression_passed": 50,
+  "numeric_report_comparison_verified": true,
+  "report_sizes": {
+    "全量文件阅读与证据索引.md": 111601,
+    "逐功能人工验收清单.md": 4396,
+    "项目现状_赛题对照_资源优化与分阶段开发方案.md": 29186
+  }
+}

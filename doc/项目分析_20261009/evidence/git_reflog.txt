@@ -1,0 +1,145 @@
+afd8bfb HEAD@{2026-10-09T18:15:46+08:00}: commit: 后续拓展功能开发
+cb12d8d HEAD@{2026-10-09T17:44:24+08:00}: reset: moving to cb12d8da4beed54011734e003a693e9fd15ab546
+cf53bd3 HEAD@{2026-10-09T17:44:24+08:00}: checkout: moving from codex/current-dev-20261009 to main
+12cab2b HEAD@{2026-10-09T17:44:20+08:00}: commit: 保存当前开发现场 2026-10-09
+cf53bd3 HEAD@{2026-10-09T17:44:20+08:00}: checkout: moving from main to codex/current-dev-20261009
+cf53bd3 HEAD@{2026-10-09T10:06:22+08:00}: commit: 阶段U4：压缩五行歌词为四字符资源受限显示
+0ebeb89 HEAD@{2026-10-09T09:48:59+08:00}: commit: 阶段U3：接入资源受限EC2浮窗与五行歌词
+0fd7e68 HEAD@{2026-10-09T09:07:13+08:00}: commit: 阶段R1：缓存UIRES描述符几何校验并收敛状态路径
+49cb93f HEAD@{2026-10-09T08:47:51+08:00}: commit: 阶段R0：拆分像素与UIRES地址路径，建立可复现的TD优化基线
+6bfe956 HEAD@{2026-10-08T22:48:48+08:00}: commit: 修复顶层元数据声明顺序以保证仿真编译
+1501aa0 HEAD@{2026-10-08T22:25:53+08:00}: commit (amend): 阶段Task10：统一事件路由审计与并发回归
+05ffbd4 HEAD@{2026-10-08T22:25:31+08:00}: commit: 阶段Task10：统一事件路由审计与并发回归
+abf60f5 HEAD@{2026-10-08T22:14:27+08:00}: commit: 阶段C2.12：Logo逐行跨度压缩并完成物理实现评估
+7976e99 HEAD@{2026-10-08T21:58:56+08:00}: commit: 阶段C2.11：WS2812灯效查表化并移除实时乘法
+f656437 HEAD@{2026-10-08T21:49:56+08:00}: commit: 阶段C2.10：黑胶几何去乘法器并改善门级资源时序
+842232c HEAD@{2026-10-08T21:42:19+08:00}: commit: 阶段C2.9：修正C1参数迁移后的S5回归口径
+cf31ad9 HEAD@{2026-10-08T21:37:37+08:00}: commit: 阶段C2.8：优化动态歌词行提交时序
+3709aec HEAD@{2026-10-08T21:32:23+08:00}: commit: 阶段C2.7：接入缓存歌词动态行字形显示
+a24b2ad HEAD@{2026-10-08T21:27:20+08:00}: commit: 阶段C2.6：接入UIRES后台仲裁与歌词缓存时间定位
+0b6b654 HEAD@{2026-10-08T21:16:52+08:00}: commit: feat: add UIRES static slot loader
+4ee32fb HEAD@{2026-10-08T21:06:08+08:00}: commit: feat: discover UIRES and add low-priority sector client
+55300c1 HEAD@{2026-10-08T21:02:08+08:00}: commit: feat: add C2 UIRES contract and lyric timeline core
+7a288b3 HEAD@{2026-10-08T20:57:16+08:00}: commit: EC2 三态参数控制，唯一参数 CSR，EC2 计数差快速旋转重放
+44755e1 HEAD@{2026-10-08T20:47:59+08:00}: commit (amend): feat(c1): add parameter CSR and EC2 control core
+d10f605 HEAD@{2026-10-08T20:46:19+08:00}: commit: feat(c1): add parameter CSR and EC2 control core
+cb12d8d HEAD@{2026-10-08T20:39:29+08:00}: reset: moving to cb12d8da4beed54011734e003a693e9fd15ab546
+2faf8f7 HEAD@{2026-10-08T18:39:14+08:00}: commit: 开始进行优化
+428b777 HEAD@{2026-10-08T16:22:36+08:00}: checkout: moving from codex/r0-closeout-20261008 to main
+428b777 HEAD@{2026-10-08T16:11:40+08:00}: checkout: moving from main to codex/r0-closeout-20261008
+428b777 HEAD@{2026-10-08T15:01:34+08:00}: commit: refactor: reduce fat32 volume scanner boot parsing cost
+48ea98a HEAD@{2026-10-08T14:42:36+08:00}: commit: fix: make build manifest compatible with Windows PowerShell 5.1
+8f80653 HEAD@{2026-10-08T14:04:57+08:00}: commit: build: enforce reproducible fpga signoff metrics
+1e96f31 HEAD@{2026-10-08T13:47:36+08:00}: commit: build: trim redundant project source entries for r0
+bd5c7c1 HEAD@{2026-10-08T13:46:39+08:00}: merge opt/slice-lut-20261007: Fast-forward
+533f605 HEAD@{2026-10-08T13:44:02+08:00}: checkout: moving from opt/slice-lut-20261007 to main
+bd5c7c1 HEAD@{2026-10-08T13:43:58+08:00}: checkout: moving from main to opt/slice-lut-20261007
+533f605 HEAD@{2026-10-08T13:43:45+08:00}: checkout: moving from opt/slice-lut-20261007 to main
+bd5c7c1 HEAD@{2026-10-08T13:35:37+08:00}: commit: 调参，歌曲，ui，拓展开发待人工审查验收
+55a1cd2 HEAD@{2026-10-08T09:16:26+08:00}: commit: perf(u2): 压缩五行歌词行缓存并恢复物理布放余量
+a48af13 HEAD@{2026-10-08T07:57:28+08:00}: commit: fix(u2): 修正歌词同步行表时序与滚动提交节拍
+92898e5 HEAD@{2026-10-08T07:38:16+08:00}: commit: feat(u2): 实现五行歌词窗口与滚动模式基础
+5948700 HEAD@{2026-10-08T07:04:53+08:00}: commit: feat(u1): 接入静态歌名歌手与播放进度图层
+b3fb0e7 HEAD@{2026-10-08T06:56:33+08:00}: commit: wip(u1): 建立静态播放图层坐标与进度计算基础
+871e967 HEAD@{2026-10-08T06:51:47+08:00}: commit: wip(c4): 暂存组合取像与显示状态提交模块草稿
+96affdb HEAD@{2026-10-08T06:43:40+08:00}: commit: fix(c3): 完善背景装载资源减负与完整物理构建验证
+a6ffc03 HEAD@{2026-10-08T06:14:53+08:00}: commit: fix(c3): 完善切曲安全收尾并补齐背景装载资源减负
+7f3f575 HEAD@{2026-10-08T05:18:30+08:00}: commit: fix(c3): 修正背景首图门控、暂停保持与双缓冲提交确认
+2a8c416 HEAD@{2026-10-08T04:56:25+08:00}: commit: refactor(c3): 优化背景描述符装载并校正CRC收尾时序
+f9a6634 HEAD@{2026-10-08T04:41:29+08:00}: commit: wip(c3): 背景装载描述符现场读取与 MSlice 减负中间态
+d4ed493 HEAD@{2026-10-08T03:55:15+08:00}: commit: wip(c3): 接入播放背景装载写端口与顶层双缓冲骨架
+e491f14 HEAD@{2026-10-08T03:47:45+08:00}: commit: wip(c3): 播放背景装载、双缓冲与轮播链路骨架
+8c6798d HEAD@{2026-10-08T03:32:42+08:00}: commit: feat(c2): 打通 UIRES/VLRC 歌词数据链路并切分关键路径时序
+cc57a03 HEAD@{2026-10-08T00:54:33+08:00}: commit: refactor(c2): 扩展歌词缓存为255字形8位槽并保持VLRC兼容
+390c0d8 HEAD@{2026-10-08T00:49:46+08:00}: commit: feat(c2): 接入UIRES侧车发现与最低优先级后台扇区通路
+4c10087 HEAD@{2026-10-08T00:44:20+08:00}: commit: feat(c2): 冻结UIRES资源格式并完成镜像连续性与索引绑定校验
+6c261c3 HEAD@{2026-10-08T00:38:30+08:00}: commit: feat(c2): 交付多曲歌词加载与时间定位数据核心并补齐回归
+1063b20 HEAD@{2026-10-08T00:33:46+08:00}: commit: fix(c1): 按 X2 之后核心链路方案收口参数与 EC2 控制核心
+b1f3082 HEAD@{2026-10-07T23:57:00+08:00}: commit: wip(c2): preserve lyric index plumbing before UIRES redesign
+2183a78 HEAD@{2026-10-07T23:53:13+08:00}: commit: wip(c2): lyric asset RTL plumbing checkpoint
+6396b3b HEAD@{2026-10-07T23:44:22+08:00}: commit: feat(c2): lyric asset generator + packer validation
+125db81 HEAD@{2026-10-07T23:36:48+08:00}: commit: feat(c2): define multi-song lyric asset format
+49e9e92 HEAD@{2026-10-07T23:32:46+08:00}: commit: feat(c1): parameter CSR + EC2 knob control core (VOL/BRI/CON, snapshot CDC, WS brightness)
+cb64ee8 HEAD@{2026-10-07T22:52:08+08:00}: commit: chore: checkpoint before C1 param/EC2 core (docs, .al refresh, progress_bar draft)
+cb12d8d HEAD@{2026-10-07T20:54:36+08:00}: reset: moving to cb12d8da4beed54011734e003a693e9fd15ab546
+cb12d8d HEAD@{2026-10-07T20:08:57+08:00}: commit: fix(fpga): remove diagnostic display and implement VU charge effects
+4250262 HEAD@{2026-10-07T19:53:13+08:00}: commit: feat(fpga): add rainbow audio flow and exact progress pulse display
+a4362f9 HEAD@{2026-10-07T19:22:53+08:00}: commit: perf(fpga): reduce IR and WS2812 resources with verified O8 release
+6ffce23 HEAD@{2026-10-07T18:42:04+08:00}: commit: 优化 Slice/LUT 并通过时序、位流和 SRAM 下载验证
+533f605 HEAD@{2026-10-07T18:05:46+08:00}: checkout: moving from main to opt/slice-lut-20261007
+533f605 HEAD@{2026-10-07T17:59:44+08:00}: commit: 优化数码管，WS2812b,seek跳转，EC1播控，修复.al
+66da60f HEAD@{2026-10-07T15:49:29+08:00}: commit: X2：三级流水 Seek 控制器并显式修复 hold
+9848757 HEAD@{2026-10-07T15:12:38+08:00}: commit: X2 r11-r12：寄存器段码与 Seek 事件流水，消除 SD 域最后 -0.023ns 违例
+def35c4 HEAD@{2026-10-07T14:57:16+08:00}: commit: X2 r10：寄存媒体就绪信号切断 SD 调度长路径
+fe44791 HEAD@{2026-10-07T14:52:45+08:00}: commit: X2 r8-r9：降低 SD 探测与按键仲裁组合深度
+1381d41 HEAD@{2026-10-07T14:40:44+08:00}: commit: X2 r5-r7：降低媒体挂载组合路径并提交全量回归
+542678e HEAD@{2026-10-07T14:15:24+08:00}: commit: X2 r4：降低 Seek/定位路径组合深度并恢复全量回归
+1d80349 HEAD@{2026-10-07T13:42:30+08:00}: commit: X2：播放结束策略、重播与 Seek 控制器
+e9f2faa HEAD@{2026-10-07T12:55:27+08:00}: commit: X1：状态反馈执行器（LED 业务化 / WS2812 律动与进度 / 数码管业务 mux）
+ece989d HEAD@{2026-10-07T11:43:49+08:00}: commit: X0R：基线补证、IO 审计和零行为减负
+a357339 HEAD@{2026-10-06T22:20:50+08:00}: commit: S7-03b 交互修复：KEY07 主界面/播放态直达缩略图选曲，KEY11 回主界面
+29a4593 HEAD@{2026-10-06T21:47:06+08:00}: reset: moving to 29a45933f6603f76ff16dd6e2aa1370d017b7e06
+5c4daba HEAD@{2026-10-06T21:38:37+08:00}: reset: moving to 5c4dabaaaed9e282ab5ab3f278949e68318eeebb
+5c4daba HEAD@{2026-10-06T21:38:05+08:00}: reset: moving to 5c4dabaaaed9e282ab5ab3f278949e68318eeebb
+5c4daba HEAD@{2026-10-06T20:54:31+08:00}: commit: S7-04: EC2右旋钮菜单、统一软参数与静音; 修复KEY7播放态直达缩略图
+29a4593 HEAD@{2026-10-06T20:04:56+08:00}: commit: 优化资源，继续后续开发阶段
+1c0a962 HEAD@{2026-10-06T19:51:17+08:00}: commit: S7-03 M5-M6: reject timing failures; retain M4 LUT -477 FF -505 BRAM -6 DSP -1
+ead2ee0 HEAD@{2026-10-06T19:35:55+08:00}: commit: S7-03 M4: save 6 BRAM9K with lossless banked logo; total LUT -477 FF -505 DSP -1
+636db9b HEAD@{2026-10-06T19:15:24+08:00}: commit: S7-03 M12: reduce media LUT by 501 FF by 509 DSP by 1; close timing and verify SRAM boot
+d0b0e39 HEAD@{2026-10-06T18:54:52+08:00}: commit: S7-03 M0: reproduce resource baseline LUT16185 FF10191 BRAM46 DSP16 and automate verification
+ad06ded HEAD@{2026-10-06T18:22:54+08:00}: commit: 优化功能
+0828f4f HEAD@{2026-10-06T16:23:22+08:00}: commit: S7-04 资源优化 R1：切断乘法组合链，时序收敛
+7f99785 HEAD@{2026-10-06T15:38:24+08:00}: commit: S7-03 统一事件、完整红外与 DIP 控制：事件总线 pending 位图、红外白名单/反码/节流、运行时 DIP 消隐/重启确认，并外提 fat32 像素加法收口时序
+6707a1d HEAD@{2026-10-06T14:30:19+08:00}: commit: S7-02 交付说明：媒体故障恢复与错误反馈实现/验证/时序收敛记录
+4642e43 HEAD@{2026-10-06T14:27:44+08:00}: commit: S7-02 媒体故障恢复与错误反馈：收敛时序并瘦身监督器
+b0f2808 HEAD@{2026-10-06T13:32:33+08:00}: commit: S7-02 媒体故障恢复与错误反馈：新增 media_supervisor 挂载/扇区超时监督与 SD 复位代次，adapter 扇区超时释放，集中错误码 CDC 与 OSD 呈现
+57f5933 HEAD@{2026-10-06T13:13:22+08:00}: commit: S7-01 资源时序诊断与边界审计：新增 health_monitor 被动遥测与 STAT/ERR 串口输出
+e8f7d1a HEAD@{2026-10-06T12:05:53+08:00}: commit: 增加mv与黑胶模式
+06ba8e8 HEAD@{2026-10-06T11:00:43+08:00}: commit: S0-S5验收完成，修复已知问题
+a165f9a HEAD@{2026-10-06T01:22:19+08:00}: commit: 黑胶视觉层模块（S6 部分），顶层集成待收敛
+1beb7db HEAD@{2026-10-06T00:41:51+08:00}: commit: 音频播放与歌词渲染（S5），待验收
+7f8a2fc HEAD@{2026-10-06T00:25:28+08:00}: commit: SD卡曲目索引体系（S4），待验收
+5b34188 HEAD@{2026-10-05T23:19:34+08:00}: commit: 主界面选歌，待验收
+68d9b97 HEAD@{2026-10-05T22:35:38+08:00}: commit: 开机 logo 待验证
+e3714fa HEAD@{2026-10-05T21:11:01+08:00}: commit: 增加交互音效反馈
+76ba2a7 HEAD@{2026-10-05T20:44:45+08:00}: commit: 接入J2拓展板，串口验证
+04fb6d4 HEAD@{2026-10-05T19:50:58+08:00}: commit: 提供开发资料，主链路开发方案
+7c338a7 HEAD@{2026-10-05T18:42:13+08:00}: commit: 音频资源优化
+530fccc HEAD@{2026-10-05T18:32:53+08:00}: commit: 优化资源
+c4bfcd3 HEAD@{2026-10-05T17:09:08+08:00}: commit: 修复缩略图 bank 映射与 TD 源文件登记
+eacc5c9 HEAD@{2026-10-05T14:10:00+08:00}: commit: 缩略图交互选择功能
+705d8b9 HEAD@{2026-10-05T13:57:02+08:00}: commit: 亮度对比度调节功能
+868f622 HEAD@{2026-10-05T13:23:05+08:00}: commit: 图片缩放与略缩图功能
+19f8035 HEAD@{2026-10-05T12:01:33+08:00}: commit: 优化WAV 缓冲，减少LUT资源
+279fec4 HEAD@{2026-10-05T11:49:00+08:00}: commit: perf: close lecture 12 timing and release BRAM-optimized firmware
+9e9aee8 HEAD@{2026-10-05T11:32:44+08:00}: commit: perf: map full WAV buffer to BRAM with cycle-equivalent outputs
+e45b1d5 HEAD@{2026-10-05T11:19:06+08:00}: commit: docs: preserve lecture 12 resource optimization baseline and plan
+78dbb17 HEAD@{2026-10-05T10:36:52+08:00}: commit: 修复SDRAM掉电导致图片出现彩点的问题
+e988191 HEAD@{2026-10-04T20:51:53+08:00}: reset: moving to e988191060ec38b749836bcc8766a26944e4c331
+e988191 HEAD@{2026-10-04T20:16:22+08:00}: commit: 音频波形可视化
+83fdd76 HEAD@{2026-10-04T18:09:59+08:00}: commit: 修复工程源文件列表：补齐第十讲显示模块与第十一讲WAV模块
+528b183 HEAD@{2026-10-04T18:05:15+08:00}: reset: moving to 528b18350e4d491675b876fc0cba2ecb94ff2634
+528b183 HEAD@{2026-10-04T18:05:15+08:00}: 
+d6b6f02 HEAD@{2026-10-04T18:05:15+08:00}: commit (amend): WAV音频播放
+c4a494f HEAD@{2026-10-04T16:56:18+08:00}: Branch: renamed refs/heads/master to refs/heads/main
+c4a494f HEAD@{2026-10-04T16:52:04+08:00}: commit: 图片转场特效
+1004043 HEAD@{2026-10-04T16:39:34+08:00}: commit: OSD字幕叠加
+5194de0 HEAD@{2026-10-04T16:14:06+08:00}: commit: 四bank帧缓存架构
+becf86c HEAD@{2026-10-04T15:47:37+08:00}: commit: FAT32文件系统升级
+7d1d3f7 HEAD@{2026-10-04T11:54:03+08:00}: commit: 第六讲：Flash固化与上电自启（复位同步/PLL锁定/SDRAM就绪/约束）
+ba7771d HEAD@{2026-10-04T11:42:34+08:00}: commit: 修复上电黑屏与按键失效：SD超时改为按扇区计时，加固坏图快跳越界
+a4fb241 HEAD@{2026-10-04T11:34:21+08:00}: commit: 第五讲：系统稳定性增强（BMP严格校验/错误恢复/超时/像素完整性）并修复sd_card_clk时序
+6dfe4b0 HEAD@{2026-10-04T11:15:11+08:00}: commit: 按键或轮播逻辑恢复，修复PLL链路
+4927dc0 HEAD@{2026-10-04T10:59:42+08:00}: commit: HDMI音频输出基础
+51dbe1a HEAD@{2026-10-04T10:42:56+08:00}: reset: moving to 51dbe1aef9bbba5bd0aaf19e67c18e14a0a7d293
+51dbe1a HEAD@{2026-10-04T10:13:53+08:00}: reset: moving to 51dbe1aef9bbba5bd0aaf19e67c18e14a0a7d293
+51dbe1a HEAD@{2026-10-03T21:48:03+08:00}: reset: moving to 51dbe1aef9bbba5bd0aaf19e67c18e14a0a7d293
+ebd4b7e HEAD@{2026-10-03T21:09:30+08:00}: commit: docs: plan HDMI audio lecture 4 migration
+51dbe1a HEAD@{2026-10-03T20:57:27+08:00}: reset: moving to 51dbe1aef9bbba5bd0aaf19e67c18e14a0a7d293
+51dbe1a HEAD@{2026-10-03T20:57:21+08:00}: reset: moving to 51dbe1aef9bbba5bd0aaf19e67c18e14a0a7d293
+51dbe1a HEAD@{2026-10-03T20:34:08+08:00}: commit: 按键切换与自动轮播
+6ffec91 HEAD@{2026-10-03T20:23:20+08:00}: reset: moving to 6ffec9171a6b91f295f3b4c3f52df0cba48c2825
+6ffec91 HEAD@{2026-10-03T19:45:53+08:00}: reset: moving to 6ffec9171a6b91f295f3b4c3f52df0cba48c2825
+dc86d4b HEAD@{2026-10-03T19:45:42+08:00}: revert: Revert "增加.gitignore文件"
+6ffec91 HEAD@{2026-10-03T19:27:58+08:00}: commit: 增加.gitignore文件
+9d3d0d9 HEAD@{2026-10-03T19:26:27+08:00}: commit (initial): 初始化工程文件

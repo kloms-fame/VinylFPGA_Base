@@ -1,0 +1,426 @@
+[
+  {
+    "original": "doc/VinylFPGA_S702_S703_验收根因分析与修复方案_20261006.md",
+    "saved": "000_VinylFPGA_S702_S703_验收根因分析与修复方案_20261006.md"
+  },
+  {
+    "original": "doc/stage-S0-summary.md",
+    "saved": "001_stage-S0-summary.md"
+  },
+  {
+    "original": "doc/stage-S4-summary.md",
+    "saved": "002_stage-S4-summary.md"
+  },
+  {
+    "original": "doc/开发资料/S7_验收修复实施记录_20261006.md",
+    "saved": "003_S7_验收修复实施记录_20261006.md"
+  },
+  {
+    "original": "doc/开发资料/VinylFPGA_S0-S5上板验收记录与代码级分析_20261006.md",
+    "saved": "004_VinylFPGA_S0-S5上板验收记录与代码级分析_20261006.md"
+  },
+  {
+    "original": "doc/开发资料/VinylFPGA_S7-01-03上板验收问题根因分析与分阶段解决方案_20261006.md",
+    "saved": "005_VinylFPGA_S7-01-03上板验收问题根因分析与分阶段解决方案_20261006.md"
+  },
+  {
+    "original": "doc/开发资料/VinylFPGA_S7-04_资源占用分析与优化交付_第一轮_20261006.md",
+    "saved": "006_VinylFPGA_S7-04_资源占用分析与优化交付_第一轮_20261006.md"
+  },
+  {
+    "original": "doc/开发资料/VinylFPGA_S7-04_资源占用分析与优化方案_第二轮_20261006.md",
+    "saved": "007_VinylFPGA_S7-04_资源占用分析与优化方案_第二轮_20261006.md"
+  },
+  {
+    "original": "doc/开发资料/VinylFPGA_S7优化迭代与功能拓展_分阶段开发方案_20261006.md",
+    "saved": "008_VinylFPGA_S7优化迭代与功能拓展_分阶段开发方案_20261006.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/O8继续优化验收附件_20261007/O12345_r4_20261007/final.area",
+    "saved": "009_final.area"
+  },
+  {
+    "original": "doc/开发资料/优化项目/O8继续优化验收附件_20261007/O12345_r4_20261007/final.qor",
+    "saved": "010_final.qor"
+  },
+  {
+    "original": "doc/开发资料/优化项目/O8继续优化验收附件_20261007/O12345_r4_20261007/inputs.sha256.json",
+    "saved": "011_inputs.sha256.json"
+  },
+  {
+    "original": "doc/开发资料/优化项目/O8继续优化验收附件_20261007/O8_r2_20261007/final.area",
+    "saved": "012_final.area"
+  },
+  {
+    "original": "doc/开发资料/优化项目/O8继续优化验收附件_20261007/O8_r2_20261007/final.qor",
+    "saved": "013_final.qor"
+  },
+  {
+    "original": "doc/开发资料/优化项目/O8继续优化验收附件_20261007/O8_r2_20261007/inputs.sha256.json",
+    "saved": "014_inputs.sha256.json"
+  },
+  {
+    "original": "doc/开发资料/优化项目/O8继续优化验收附件_20261007/comparison.json",
+    "saved": "015_comparison.json"
+  },
+  {
+    "original": "doc/开发资料/优化项目/O8继续优化验收附件_20261007/module_mcp_comparison.json",
+    "saved": "016_module_mcp_comparison.json"
+  },
+  {
+    "original": "doc/开发资料/优化项目/SliceLUT优化验收附件_20261007/O0_533f605_20261007/final.area",
+    "saved": "017_final.area"
+  },
+  {
+    "original": "doc/开发资料/优化项目/SliceLUT优化验收附件_20261007/O0_533f605_20261007/final.qor",
+    "saved": "018_final.qor"
+  },
+  {
+    "original": "doc/开发资料/优化项目/SliceLUT优化验收附件_20261007/O0_533f605_20261007/inputs.sha256.json",
+    "saved": "019_inputs.sha256.json"
+  },
+  {
+    "original": "doc/开发资料/优化项目/SliceLUT优化验收附件_20261007/O12345_r2_20261007/final.area",
+    "saved": "020_final.area"
+  },
+  {
+    "original": "doc/开发资料/优化项目/SliceLUT优化验收附件_20261007/O12345_r2_20261007/final.qor",
+    "saved": "021_final.qor"
+  },
+  {
+    "original": "doc/开发资料/优化项目/SliceLUT优化验收附件_20261007/O12345_r2_20261007/inputs.sha256.json",
+    "saved": "022_inputs.sha256.json"
+  },
+  {
+    "original": "doc/开发资料/优化项目/SliceLUT优化验收附件_20261007/O12345_r4_20261007/final.area",
+    "saved": "023_final.area"
+  },
+  {
+    "original": "doc/开发资料/优化项目/SliceLUT优化验收附件_20261007/O12345_r4_20261007/final.qor",
+    "saved": "024_final.qor"
+  },
+  {
+    "original": "doc/开发资料/优化项目/SliceLUT优化验收附件_20261007/O12345_r4_20261007/inputs.sha256.json",
+    "saved": "025_inputs.sha256.json"
+  },
+  {
+    "original": "doc/开发资料/优化项目/SliceLUT优化验收附件_20261007/comparison.json",
+    "saved": "026_comparison.json"
+  },
+  {
+    "original": "doc/开发资料/优化项目/VinylFPGA_O8保功能继续优化与验收报告_20261007.md",
+    "saved": "027_VinylFPGA_O8保功能继续优化与验收报告_20261007.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/VinylFPGA_SliceLUT优化执行与验收报告_20261007.md",
+    "saved": "028_VinylFPGA_SliceLUT优化执行与验收报告_20261007.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/VinylFPGA_Slice与LUT优先_资源盘点与最终优化方案_20261007.md",
+    "saved": "029_VinylFPGA_Slice与LUT优先_资源盘点与最终优化方案_20261007.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/VinylFPGA_src_全量模块详解_20261007.md",
+    "saved": "030_VinylFPGA_src_全量模块详解_20261007.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/VinylFPGA_固定时间显示与VU充能灯效_20261007.md",
+    "saved": "031_VinylFPGA_固定时间显示与VU充能灯效_20261007.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/VinylFPGA_完美优化方案_SliceLUT优先_最终执行清单_20261007.md",
+    "saved": "032_VinylFPGA_完美优化方案_SliceLUT优先_最终执行清单_20261007.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/VinylFPGA_数码管与彩色右移灯效修改_20261007.md",
+    "saved": "033_VinylFPGA_数码管与彩色右移灯效修改_20261007.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/VinylFPGA_最终优化执行方案_Slice与LUT优先_20261007.md",
+    "saved": "034_VinylFPGA_最终优化执行方案_Slice与LUT优先_20261007.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/VinylFPGA_深度资源审计与优化执行方案_复核修订版_20261007.md",
+    "saved": "035_VinylFPGA_深度资源审计与优化执行方案_复核修订版_20261007.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/VinylFPGA_资源占用盘点与优化分析_20261007.md",
+    "saved": "036_VinylFPGA_资源占用盘点与优化分析_20261007.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/优化方案/S703_优化实测资源_20261006.md",
+    "saved": "037_S703_优化实测资源_20261006.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/优化方案/S703_资源优化执行记录_20261006.md",
+    "saved": "038_S703_资源优化执行记录_20261006.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/优化方案/VinylFPGA_S7-03_资源占用分析与优化方案_20261006_权威快照最终版.md",
+    "saved": "039_VinylFPGA_S7-03_资源占用分析与优化方案_20261006_权威快照最终版.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/优化方案/VinylFPGA_S7-03_资源诊断与优化方案_20261006.md",
+    "saved": "040_VinylFPGA_S7-03_资源诊断与优化方案_20261006.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/优化方案/VinylFPGA_S7-04第二轮_资源瓶颈定位与优化方案_20261006.md",
+    "saved": "041_VinylFPGA_S7-04第二轮_资源瓶颈定位与优化方案_20261006.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/优化方案/VinylFPGA_资源占用深度分析与优化方案_20261006.md",
+    "saved": "042_VinylFPGA_资源占用深度分析与优化方案_20261006.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/最终优化方案核验附件_20261007/baseline_final.area",
+    "saved": "043_baseline_final.area"
+  },
+  {
+    "original": "doc/开发资料/优化项目/最终优化方案核验附件_20261007/baseline_final.qor",
+    "saved": "044_baseline_final.qor"
+  },
+  {
+    "original": "doc/开发资料/优化项目/最终优化方案核验附件_20261007/全量RTL逐项清单.md",
+    "saved": "045_全量RTL逐项清单.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/最终优化方案核验附件_20261007/完整综合实例树.md",
+    "saved": "046_完整综合实例树.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/最终优化方案核验附件_20261007/审查与交付边界.md",
+    "saved": "047_审查与交付边界.md"
+  },
+  {
+    "original": "doc/开发资料/优化项目/第1课_从官方例程到完赛工程_架构认知与FPGA思维框架.md",
+    "saved": "048_第1课_从官方例程到完赛工程_架构认知与FPGA思维框架.md"
+  },
+  {
+    "original": "doc/开发资料/拓展功能开发/VinylFPGA_X2后当前阶段收尾报告_20261008.md",
+    "saved": "049_VinylFPGA_X2后当前阶段收尾报告_20261008.md"
+  },
+  {
+    "original": "doc/开发资料/拓展功能开发/VinylFPGA_最终后续开发方案_X2之后_核心链路优先_20261007.md",
+    "saved": "050_VinylFPGA_最终后续开发方案_X2之后_核心链路优先_20261007.md"
+  },
+  {
+    "original": "doc/开发资料/拓展功能开发/X0R_20261007_evidence/baseline_archive/final.area",
+    "saved": "051_final.area"
+  },
+  {
+    "original": "doc/开发资料/拓展功能开发/X0R_20261007_evidence/baseline_archive/final.qor",
+    "saved": "052_final.qor"
+  },
+  {
+    "original": "doc/开发资料/拓展功能开发/X0R_20261007_evidence/baseline_archive/inputs.sha256.json",
+    "saved": "053_inputs.sha256.json"
+  },
+  {
+    "original": "doc/开发资料/拓展功能开发/X0R_20261007_evidence/baseline_archive/route.qor",
+    "saved": "054_route.qor"
+  },
+  {
+    "original": "doc/第十三至十五讲_上板人工验收教程.md",
+    "saved": "055_第十三至十五讲_上板人工验收教程.md"
+  },
+  {
+    "original": "doc/资源/sd卡/测试验收.md",
+    "saved": "056_测试验收.md"
+  },
+  {
+    "original": "prj/acceptance_20261008/acceptance_summary.md",
+    "saved": "057_acceptance_summary.md"
+  },
+  {
+    "original": "prj/lecture12_waveform_reports/route.qor",
+    "saved": "058_route.qor"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/baseline/inputs.sha256.json",
+    "saved": "059_inputs.sha256.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/baseline/metrics.json",
+    "saved": "060_metrics.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/baseline/route.qor",
+    "saved": "061_route.qor"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/comparison.json",
+    "saved": "062_comparison.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p01_menu/inputs.sha256.json",
+    "saved": "063_inputs.sha256.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p01_menu/metrics.json",
+    "saved": "064_metrics.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p01_menu/route.qor",
+    "saved": "065_route.qor"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p02_keys_checked/inputs.sha256.json",
+    "saved": "066_inputs.sha256.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p02_keys_checked/metrics.json",
+    "saved": "067_metrics.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p02_keys_checked/route.qor",
+    "saved": "068_route.qor"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p03_header/inputs.sha256.json",
+    "saved": "069_inputs.sha256.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p03_header/metrics.json",
+    "saved": "070_metrics.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p03_header/route.qor",
+    "saved": "071_route.qor"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p03_s3/final.area",
+    "saved": "072_final.area"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p03_s3/final.qor",
+    "saved": "073_final.qor"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p03_s3/inputs.sha256.json",
+    "saved": "074_inputs.sha256.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p03_s3/metrics.json",
+    "saved": "075_metrics.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p03_s3/route.qor",
+    "saved": "076_route.qor"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p03_s5/final.area",
+    "saved": "077_final.area"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p03_s5/final.qor",
+    "saved": "078_final.qor"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p03_s5/inputs.sha256.json",
+    "saved": "079_inputs.sha256.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p03_s5/metrics.json",
+    "saved": "080_metrics.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p03_s5/route.qor",
+    "saved": "081_route.qor"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p04_area/final.area",
+    "saved": "082_final.area"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p04_area/final.qor",
+    "saved": "083_final.qor"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p04_area/inputs.sha256.json",
+    "saved": "084_inputs.sha256.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p04_area/metrics.json",
+    "saved": "085_metrics.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p04_area/route.qor",
+    "saved": "086_route.qor"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p05_pcm/final.area",
+    "saved": "087_final.area"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p05_pcm/final.qor",
+    "saved": "088_final.qor"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p05_pcm/inputs.sha256.json",
+    "saved": "089_inputs.sha256.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p05_pcm/metrics.json",
+    "saved": "090_metrics.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p05_pcm/route.qor",
+    "saved": "091_route.qor"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p05_s5/final.area",
+    "saved": "092_final.area"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p05_s5/final.qor",
+    "saved": "093_final.qor"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p05_s5/inputs.sha256.json",
+    "saved": "094_inputs.sha256.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p05_s5/metrics.json",
+    "saved": "095_metrics.json"
+  },
+  {
+    "original": "prj/resource_history/20261005_verified/p05_s5/route.qor",
+    "saved": "096_route.qor"
+  },
+  {
+    "original": "prj/resource_opt_20261005/baseline/route.qor",
+    "saved": "097_route.qor"
+  },
+  {
+    "original": "prj/resource_opt_20261005/p0b_route.qor",
+    "saved": "098_p0b_route.qor"
+  },
+  {
+    "original": "prj/resource_opt_20261005/release/final.area",
+    "saved": "099_final.area"
+  },
+  {
+    "original": "prj/resource_opt_20261005/release/final.qor",
+    "saved": "100_final.qor"
+  },
+  {
+    "original": "prj/resource_opt_verified_20261005/X1_r2_20261007/final.area",
+    "saved": "101_final.area"
+  },
+  {
+    "original": "prj/resource_opt_verified_20261005/X1_r2_20261007/final.qor",
+    "saved": "102_final.qor"
+  },
+  {
+    "original": "prj/resource_opt_verified_20261005/X1_r2_20261007/inputs.sha256.json",
+    "saved": "103_inputs.sha256.json"
+  },
+  {
+    "original": "prj/resource_opt_verified_20261005/X1_r2_20261007/route.qor",
+    "saved": "104_route.qor"
+  },
+  {
+    "original": "prj/route.qor",
+    "saved": "105_route.qor"
+  }
+]

@@ -1,0 +1,613 @@
+[
+  {
+    "path": "doc/资源/sd卡/card.img",
+    "bytes": 27700736,
+    "sha256": "a7103f4072a90b59d69555354a6c7a0e686c8ece84d71cc5d4289608abcaadfc",
+    "root": [
+      {
+        "name": "PIC1.BMP",
+        "size": 921654,
+        "first_cluster": 3
+      },
+      {
+        "name": "PIC2.BMP",
+        "size": 921654,
+        "first_cluster": 1804
+      },
+      {
+        "name": "PIC3.BMP",
+        "size": 921654,
+        "first_cluster": 3605
+      },
+      {
+        "name": "PIC4.BMP",
+        "size": 921654,
+        "first_cluster": 5406
+      },
+      {
+        "name": "AUDIO.PCM",
+        "size": 23560704,
+        "first_cluster": 7207
+      },
+      {
+        "name": "INDEX.BIN",
+        "size": 512,
+        "first_cluster": 53224
+      }
+    ],
+    "index": {
+      "version": 1,
+      "entry_size": 64,
+      "count": 4,
+      "max_songs": 4,
+      "entries_crc32": 3490136181,
+      "songs": [
+        {
+          "flags": 3,
+          "cover_cluster": 3,
+          "cover_bytes": 921654,
+          "cover_crc32": 1501277422,
+          "audio_cluster": 7207,
+          "audio_bytes": 23560704,
+          "audio_crc32": 2584348186,
+          "audio_lba": 8069,
+          "title": "Track 1",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        },
+        {
+          "flags": 1,
+          "cover_cluster": 1804,
+          "cover_bytes": 921654,
+          "cover_crc32": 4139441714,
+          "audio_cluster": 0,
+          "audio_bytes": 0,
+          "audio_crc32": 0,
+          "audio_lba": 0,
+          "title": "Track 2",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        },
+        {
+          "flags": 1,
+          "cover_cluster": 3605,
+          "cover_bytes": 921654,
+          "cover_crc32": 1009442038,
+          "audio_cluster": 0,
+          "audio_bytes": 0,
+          "audio_crc32": 0,
+          "audio_lba": 0,
+          "title": "Track 3",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        },
+        {
+          "flags": 1,
+          "cover_cluster": 5406,
+          "cover_bytes": 921654,
+          "cover_crc32": 1342983010,
+          "audio_cluster": 0,
+          "audio_bytes": 0,
+          "audio_crc32": 0,
+          "audio_lba": 0,
+          "title": "Track 4",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        }
+      ]
+    }
+  },
+  {
+    "path": "doc/资源/sd卡/card_A.img",
+    "bytes": 27700736,
+    "sha256": "a7103f4072a90b59d69555354a6c7a0e686c8ece84d71cc5d4289608abcaadfc",
+    "root": [
+      {
+        "name": "PIC1.BMP",
+        "size": 921654,
+        "first_cluster": 3
+      },
+      {
+        "name": "PIC2.BMP",
+        "size": 921654,
+        "first_cluster": 1804
+      },
+      {
+        "name": "PIC3.BMP",
+        "size": 921654,
+        "first_cluster": 3605
+      },
+      {
+        "name": "PIC4.BMP",
+        "size": 921654,
+        "first_cluster": 5406
+      },
+      {
+        "name": "AUDIO.PCM",
+        "size": 23560704,
+        "first_cluster": 7207
+      },
+      {
+        "name": "INDEX.BIN",
+        "size": 512,
+        "first_cluster": 53224
+      }
+    ],
+    "index": {
+      "version": 1,
+      "entry_size": 64,
+      "count": 4,
+      "max_songs": 4,
+      "entries_crc32": 3490136181,
+      "songs": [
+        {
+          "flags": 3,
+          "cover_cluster": 3,
+          "cover_bytes": 921654,
+          "cover_crc32": 1501277422,
+          "audio_cluster": 7207,
+          "audio_bytes": 23560704,
+          "audio_crc32": 2584348186,
+          "audio_lba": 8069,
+          "title": "Track 1",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        },
+        {
+          "flags": 1,
+          "cover_cluster": 1804,
+          "cover_bytes": 921654,
+          "cover_crc32": 4139441714,
+          "audio_cluster": 0,
+          "audio_bytes": 0,
+          "audio_crc32": 0,
+          "audio_lba": 0,
+          "title": "Track 2",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        },
+        {
+          "flags": 1,
+          "cover_cluster": 3605,
+          "cover_bytes": 921654,
+          "cover_crc32": 1009442038,
+          "audio_cluster": 0,
+          "audio_bytes": 0,
+          "audio_crc32": 0,
+          "audio_lba": 0,
+          "title": "Track 3",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        },
+        {
+          "flags": 1,
+          "cover_cluster": 5406,
+          "cover_bytes": 921654,
+          "cover_crc32": 1342983010,
+          "audio_cluster": 0,
+          "audio_bytes": 0,
+          "audio_crc32": 0,
+          "audio_lba": 0,
+          "title": "Track 4",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        }
+      ]
+    }
+  },
+  {
+    "path": "doc/资源/sd卡/card_A_broken.img",
+    "bytes": 27700736,
+    "sha256": "b0af54a893503e84877793c9c4a238ad4fbebc1fcf150cd392d644c5499e4da4",
+    "root": [
+      {
+        "name": "PIC1.BMP",
+        "size": 921654,
+        "first_cluster": 3
+      },
+      {
+        "name": "PIC2.BMP",
+        "size": 921654,
+        "first_cluster": 1804
+      },
+      {
+        "name": "PIC3.BMP",
+        "size": 921654,
+        "first_cluster": 3605
+      },
+      {
+        "name": "PIC4.BMP",
+        "size": 921654,
+        "first_cluster": 5406
+      },
+      {
+        "name": "AUDIO.PCM",
+        "size": 23560704,
+        "first_cluster": 7207
+      },
+      {
+        "name": "INDEX.BIN",
+        "size": 512,
+        "first_cluster": 53224
+      }
+    ],
+    "readback_result": "entries_crc32 不匹配（文件 0xD0074075 / 实算 0xA4655CE1）"
+  },
+  {
+    "path": "doc/资源/sd卡/card_B_broken.img",
+    "bytes": 27700736,
+    "sha256": "8154ab8bacdd90cb2fce809497121940ae1fbfbf6727a3a0268cd30680abfcba",
+    "root": [
+      {
+        "name": "SONG1.BMP",
+        "size": 921654,
+        "first_cluster": 3
+      },
+      {
+        "name": "SONG2.BMP",
+        "size": 921654,
+        "first_cluster": 1804
+      },
+      {
+        "name": "SONG3.BMP",
+        "size": 921654,
+        "first_cluster": 3605
+      },
+      {
+        "name": "SONG4.BMP",
+        "size": 921654,
+        "first_cluster": 5406
+      },
+      {
+        "name": "AUDIO.PCM",
+        "size": 23560704,
+        "first_cluster": 7207
+      },
+      {
+        "name": "INDEX.BIN",
+        "size": 512,
+        "first_cluster": 53224
+      }
+    ],
+    "readback_result": "entries_crc32 不匹配（文件 0xD0074075 / 实算 0xA4655CE1）"
+  },
+  {
+    "path": "doc/资源/sd卡/card_S5.img",
+    "bytes": 27700736,
+    "sha256": "3683e44b5eebc2a9625fe60f9b1e26ad2dd54d7aac4a645531c6e4be60a8b8ee",
+    "root": [
+      {
+        "name": "PIC1.BMP",
+        "size": 921654,
+        "first_cluster": 3
+      },
+      {
+        "name": "PIC2.BMP",
+        "size": 921654,
+        "first_cluster": 1804
+      },
+      {
+        "name": "PIC3.BMP",
+        "size": 921654,
+        "first_cluster": 3605
+      },
+      {
+        "name": "PIC4.BMP",
+        "size": 921654,
+        "first_cluster": 5406
+      },
+      {
+        "name": "AUDIO.PCM",
+        "size": 23560704,
+        "first_cluster": 7207
+      },
+      {
+        "name": "INDEX.BIN",
+        "size": 512,
+        "first_cluster": 53224
+      }
+    ],
+    "index": {
+      "version": 1,
+      "entry_size": 64,
+      "count": 4,
+      "max_songs": 4,
+      "entries_crc32": 1973000811,
+      "songs": [
+        {
+          "flags": 3,
+          "cover_cluster": 3,
+          "cover_bytes": 921654,
+          "cover_crc32": 1501277422,
+          "audio_cluster": 7207,
+          "audio_bytes": 23560704,
+          "audio_crc32": 2584348186,
+          "audio_lba": 8069,
+          "title": "Track 1",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        },
+        {
+          "flags": 3,
+          "cover_cluster": 1804,
+          "cover_bytes": 921654,
+          "cover_crc32": 4139441714,
+          "audio_cluster": 7207,
+          "audio_bytes": 23560704,
+          "audio_crc32": 2584348186,
+          "audio_lba": 8069,
+          "title": "Track 2",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        },
+        {
+          "flags": 3,
+          "cover_cluster": 3605,
+          "cover_bytes": 921654,
+          "cover_crc32": 1009442038,
+          "audio_cluster": 7207,
+          "audio_bytes": 23560704,
+          "audio_crc32": 2584348186,
+          "audio_lba": 8069,
+          "title": "Track 3",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        },
+        {
+          "flags": 3,
+          "cover_cluster": 5406,
+          "cover_bytes": 921654,
+          "cover_crc32": 1342983010,
+          "audio_cluster": 7207,
+          "audio_bytes": 23560704,
+          "audio_crc32": 2584348186,
+          "audio_lba": 8069,
+          "title": "Track 4",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        }
+      ]
+    }
+  },
+  {
+    "path": "doc/资源/sd卡/card_S6.img",
+    "bytes": 74509824,
+    "sha256": "a8be9d182a9b206a39f8baffe5277fe93fd1308221ffed14d7c0af70611b42ef",
+    "root": [
+      {
+        "name": "PIC1.BMP",
+        "size": 921654,
+        "first_cluster": 3
+      },
+      {
+        "name": "PIC2.BMP",
+        "size": 921654,
+        "first_cluster": 1804
+      },
+      {
+        "name": "PIC3.BMP",
+        "size": 921654,
+        "first_cluster": 3605
+      },
+      {
+        "name": "PIC4.BMP",
+        "size": 921654,
+        "first_cluster": 5406
+      },
+      {
+        "name": "AUDIO.PCM",
+        "size": 23560704,
+        "first_cluster": 7207
+      },
+      {
+        "name": "TRACK1.MV",
+        "size": 46080000,
+        "first_cluster": 53224
+      },
+      {
+        "name": "INDEX.BIN",
+        "size": 512,
+        "first_cluster": 143224
+      }
+    ],
+    "index": {
+      "version": 2,
+      "entry_size": 64,
+      "count": 4,
+      "max_songs": 4,
+      "entries_crc32": 1256712557,
+      "songs": [
+        {
+          "flags": 11,
+          "cover_cluster": 3,
+          "cover_bytes": 921654,
+          "cover_crc32": 1501277422,
+          "audio_cluster": 7207,
+          "audio_bytes": 23560704,
+          "audio_crc32": 2584348186,
+          "audio_lba": 9477,
+          "title": "Rick Astley",
+          "mv_lba": 55494,
+          "mv_frames": 300,
+          "mv_fps": 10,
+          "mv_codec": 1
+        },
+        {
+          "flags": 3,
+          "cover_cluster": 1804,
+          "cover_bytes": 921654,
+          "cover_crc32": 4139441714,
+          "audio_cluster": 7207,
+          "audio_bytes": 23560704,
+          "audio_crc32": 2584348186,
+          "audio_lba": 9477,
+          "title": "Track 2",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        },
+        {
+          "flags": 3,
+          "cover_cluster": 3605,
+          "cover_bytes": 921654,
+          "cover_crc32": 1009442038,
+          "audio_cluster": 7207,
+          "audio_bytes": 23560704,
+          "audio_crc32": 2584348186,
+          "audio_lba": 9477,
+          "title": "Track 3",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        },
+        {
+          "flags": 3,
+          "cover_cluster": 5406,
+          "cover_bytes": 921654,
+          "cover_crc32": 1342983010,
+          "audio_cluster": 7207,
+          "audio_bytes": 23560704,
+          "audio_crc32": 2584348186,
+          "audio_lba": 9477,
+          "title": "Track 4",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        }
+      ]
+    }
+  },
+  {
+    "path": "doc/资源/sd卡/card_SONG.img",
+    "bytes": 27700736,
+    "sha256": "4d136e0c0eb4f5d6e2c41690c0b10761cd84efee31a98c9c2ea26bc70782630a",
+    "root": [
+      {
+        "name": "SONG1.BMP",
+        "size": 921654,
+        "first_cluster": 3
+      },
+      {
+        "name": "SONG2.BMP",
+        "size": 921654,
+        "first_cluster": 1804
+      },
+      {
+        "name": "SONG3.BMP",
+        "size": 921654,
+        "first_cluster": 3605
+      },
+      {
+        "name": "SONG4.BMP",
+        "size": 921654,
+        "first_cluster": 5406
+      },
+      {
+        "name": "AUDIO.PCM",
+        "size": 23560704,
+        "first_cluster": 7207
+      },
+      {
+        "name": "INDEX.BIN",
+        "size": 512,
+        "first_cluster": 53224
+      }
+    ],
+    "index": {
+      "version": 1,
+      "entry_size": 64,
+      "count": 4,
+      "max_songs": 4,
+      "entries_crc32": 3490136181,
+      "songs": [
+        {
+          "flags": 3,
+          "cover_cluster": 3,
+          "cover_bytes": 921654,
+          "cover_crc32": 1501277422,
+          "audio_cluster": 7207,
+          "audio_bytes": 23560704,
+          "audio_crc32": 2584348186,
+          "audio_lba": 8069,
+          "title": "Track 1",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        },
+        {
+          "flags": 1,
+          "cover_cluster": 1804,
+          "cover_bytes": 921654,
+          "cover_crc32": 4139441714,
+          "audio_cluster": 0,
+          "audio_bytes": 0,
+          "audio_crc32": 0,
+          "audio_lba": 0,
+          "title": "Track 2",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        },
+        {
+          "flags": 1,
+          "cover_cluster": 3605,
+          "cover_bytes": 921654,
+          "cover_crc32": 1009442038,
+          "audio_cluster": 0,
+          "audio_bytes": 0,
+          "audio_crc32": 0,
+          "audio_lba": 0,
+          "title": "Track 3",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        },
+        {
+          "flags": 1,
+          "cover_cluster": 5406,
+          "cover_bytes": 921654,
+          "cover_crc32": 1342983010,
+          "audio_cluster": 0,
+          "audio_bytes": 0,
+          "audio_crc32": 0,
+          "audio_lba": 0,
+          "title": "Track 4",
+          "mv_lba": 0,
+          "mv_frames": 0,
+          "mv_fps": 0,
+          "mv_codec": 0
+        }
+      ]
+    }
+  }
+]

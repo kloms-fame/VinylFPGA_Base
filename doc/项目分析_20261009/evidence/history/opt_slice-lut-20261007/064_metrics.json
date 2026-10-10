@@ -1,0 +1,11 @@
+{
+  "round": "p01_menu",
+  "lut": 8709,
+  "ff": 5953,
+  "bram9k": 30,
+  "bram32k": 0,
+  "dsp": 11,
+  "slices": 5209,
+  "setup_ps": -415,
+  "hold_ps": 11
+}

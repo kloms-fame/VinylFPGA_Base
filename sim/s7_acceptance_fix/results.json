@@ -45,5 +45,8 @@
   "tb_lrc_osd_equiv": true,
   "tb_x1x2_display": true,
   "tb_opt_metadata": true,
+  "tb_x1x2_lights": true,
+  "tb_ws2812_progress": true,
+  "tb_visual_feedback_top": true,
   "tb_s7_wav_wrap": true
 }

@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "build_dir": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\r0_gate_20261008",
+  "stage": "gate",
+  "input_commit": null,
+  "dirty_hash": null,
+  "strategy": null,
+  "seed": null,
+  "lut": {
+    "used": 17259,
+    "total": 19600
+  },
+  "reg": {
+    "used": 11820,
+    "total": 19600
+  },
+  "bram": {
+    "used": 58,
+    "total": 64
+  },
+  "dsp": {
+    "used": 17,
+    "total": 29
+  },
+  "slice": {
+    "used": 1771,
+    "total": 9800,
+    "percent": 18.07
+  },
+  "setup": {
+    "wns_ns": -1.225,
+    "tns_ns": -125.773,
+    "endpoints": 316
+  },
+  "hold": {
+    "wns_ns": 0.471,
+    "tns_ns": 0.0,
+    "endpoints": 0
+  },
+  "overflow": null,
+  "timing_structure": {
+    "no_clock": null,
+    "invalid_constraint": null,
+    "combinational_loops": null
+  },
+  "bit": null,
+  "bit_sha256": null,
+  "bit_stale": false,
+  "signed_off": false,
+  "manifest_valid": false,
+  "stale": true,
+  "reports": {
+    "qor": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\r0_gate_20261008\\gate_latest.qor",
+    "area": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\r0_gate_20261008\\gate_latest.area",
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\r0_gate_20261008\\gate_export.log"
+  }
+}

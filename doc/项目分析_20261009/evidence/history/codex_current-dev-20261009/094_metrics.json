@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "build_dir": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\r0_signoff\\closeout_gate",
+  "stage": "gate",
+  "input_commit": "428b77715a32390a7ac3a2e8587db0d802004084",
+  "dirty_hash": "a7d727ed237892b34ec04a4d2169fb4f278ccfc4e42eeb8d8f552ff5e0417e38",
+  "strategy": "area_prior",
+  "seed": null,
+  "lut": {
+    "used": 17110,
+    "total": 19600
+  },
+  "reg": {
+    "used": 11986,
+    "total": 19600
+  },
+  "bram": {
+    "used": 58,
+    "total": 64
+  },
+  "dsp": {
+    "used": 17,
+    "total": 29
+  },
+  "slice": {
+    "used": 1771,
+    "total": 9800,
+    "percent": 18.07
+  },
+  "setup": {
+    "wns_ns": -1.229,
+    "tns_ns": -5.616,
+    "endpoints": 28
+  },
+  "hold": {
+    "wns_ns": 0.471,
+    "tns_ns": 0.0,
+    "endpoints": 0
+  },
+  "overflow": null,
+  "timing_structure": {
+    "no_clock": null,
+    "invalid_constraint": null,
+    "combinational_loops": null
+  },
+  "bit": null,
+  "bit_sha256": null,
+  "bit_stale": false,
+  "signed_off": false,
+  "manifest_valid": true,
+  "stale": false,
+  "reports": {
+    "qor": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\r0_signoff\\closeout_gate\\gate_latest.qor",
+    "area": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\r0_signoff\\closeout_gate\\gate_latest.area",
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\r0_signoff\\closeout_gate\\gate_export.log"
+  }
+}

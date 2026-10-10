@@ -1,0 +1,82 @@
+{
+  "head": "afd8bfbb68f927dc2dbfa70df946a7481fb46bee",
+  "source_constraints_unchanged": true,
+  "regression": {
+    "tb_s7_ir_encoder": true,
+    "tb_browse_fsm": true,
+    "tb_s3_browse_integration": true,
+    "tb_video_fade_transition": true,
+    "tb_boot_window": true,
+    "tb_s7_media_lifecycle": true,
+    "tb_s7_wav_restart": true,
+    "tb_s7_encoder": true,
+    "tb_health_monitor": true,
+    "tb_media_supervisor": true,
+    "tb_s7_recovery_clear": true,
+    "tb_s7_browse_semantics": true,
+    "tb_s7_play_policy": true,
+    "tb_s7_switch": true,
+    "tb_s7_probe_mux": true,
+    "tb_s7_probe": true,
+    "tb_s7_session": true,
+    "tb_s7_top": true,
+    "tb_wav_stream_player": true,
+    "tb_wav_stream_player_flow": true,
+    "tb_wav_underrun": true,
+    "tb_mv_sector_mux": true,
+    "tb_mv_stream_player": true,
+    "tb_mv_frame_scheduler": true,
+    "tb_mv_audio_shared": true,
+    "tb_s6_video_layer": true,
+    "tb_sd_sector_adapter_timeout": true,
+    "tb_sd_card_bmp_fourbank": true,
+    "tb_fat32_index_loader": true,
+    "tb_fat32_file_streamer": true,
+    "tb_fat32_volume_scanner": true,
+    "tb_thumbnail_view_reader": true,
+    "tb_sdram_rd_arbiter": true,
+    "tb_s5_play": true,
+    "tb_expansion_s1": true,
+    "tb_io_startup_dip": true,
+    "tb_x2_seek": true,
+    "tb_x2_seek_wav": true,
+    "tb_opt_no_uart": true,
+    "tb_opt_osd_bypass": true,
+    "tb_debounce_bank": true,
+    "tb_debounce_monitors": true,
+    "tb_lrc_font_sync": true,
+    "tb_lrc_osd_equiv": true,
+    "tb_x1x2_display": true,
+    "tb_opt_metadata": true,
+    "tb_x1x2_lights": true,
+    "tb_ws2812_progress": true,
+    "tb_visual_feedback_top": true,
+    "tb_s7_wav_wrap": true
+  },
+  "native_log_complete": true,
+  "native_db_manifest": [
+    {
+      "path": "C:/Users/Renni/.codex/visualizations/2026/10/09/01a12039-9e5a-7aa2-9166-f308f4a6547a/baseline/prj/resource_opt_verified_20261005/audit_area_seed5_v2/gate.db",
+      "bytes": 7233044,
+      "sha256": "2a7a4974f31362ab2f4ea373b897d2984a6975bd6cf62b30b306c6bd20069b93"
+    },
+    {
+      "path": "C:/Users/Renni/.codex/visualizations/2026/10/09/01a12039-9e5a-7aa2-9166-f308f4a6547a/baseline/prj/resource_opt_verified_20261005/audit_area_seed5_v2/place.db",
+      "bytes": 9110570,
+      "sha256": "6a0d6a26bbf634cd1817b18a14b1824901f64a7be44da4968104ff39d171be83"
+    },
+    {
+      "path": "C:/Users/Renni/.codex/visualizations/2026/10/09/01a12039-9e5a-7aa2-9166-f308f4a6547a/baseline/prj/resource_opt_verified_20261005/audit_area_seed5_v2/routed.db",
+      "bytes": 11409814,
+      "sha256": "b46cb0d438eb0716ea884323691c8ae5106dc721a088ce41caace4cec230d0b3"
+    },
+    {
+      "path": "C:/Users/Renni/.codex/visualizations/2026/10/09/01a12039-9e5a-7aa2-9166-f308f4a6547a/baseline/prj/resource_opt_verified_20261005/audit_area_seed5_v2/rtl.db",
+      "bytes": 7213160,
+      "sha256": "3e8b1bfa710f19a31d800131e958678ce9ad08ecef4d65ca2912b9e2f19d2885"
+    }
+  ],
+  "source_file_count": 249,
+  "original_doc_file_count": 484,
+  "text_scan_count": 418
+}

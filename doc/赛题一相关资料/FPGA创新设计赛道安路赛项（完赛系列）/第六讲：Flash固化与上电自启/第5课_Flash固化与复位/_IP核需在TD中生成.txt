@@ -1,0 +1,21 @@
+第5课 IP 核说明
+========================================
+
+sys_pll_promax_40.v（本课文件夹内，与完赛工程一致）是安路 TD 生成的单PLL
+包装文件，直接加入工程即可综合，不需要重新生成。
+
+实际时钟配置（FIN=50MHz，REFCLK_DIV=2，FBCLK_DIV=5，VCO=1000MHz）：
+  clk0_out = 125MHz  （pixel_clk_5x，TMDS串行5倍频；反馈时钟）
+  clk1_out = 40MHz   （mem_clk，SDRAM控制器时钟）
+  clk2_out = 40MHz，相位172.8°（mem_clk_shift，SDRAM采样移相时钟）
+  clk3_out = 25MHz   （pixel_clk，640×480@60像素时钟）
+  clk4_out = 125MHz  （pixel_clk_5x）
+
+若要在TD中重建该PLL：新建PLL IP，输入50MHz，5路输出按上面的分频比
+（C0:÷8、C1:÷25、C2:÷25、C3:÷40、C4:÷8，VCO=1000MHz），C2相移172.8°。
+
+注意：完赛工程最终顶层只用这一个PLL（官方例程的 sys_pll/video_pll/
+PLL_HDMI_AUDIO 三PLL架构在第1课；最终工程视频时钟也由 sys_pll 分出，
+因为该板 video PLL 位置不可靠）。本课的 media_player_promax_top.sdc 是
+完赛工程最终时序约束（参照用），与第5课讲义里"官方例程加rename_clock"
+的做法不同：最终sdc用 create_generated_clock 直接在PLL输出引脚上建时钟。

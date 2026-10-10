@@ -1,0 +1,22 @@
+[
+  {
+    "path": "C:/Users/Renni/.codex/visualizations/2026/10/09/01a12039-9e5a-7aa2-9166-f308f4a6547a/baseline/prj/resource_opt_verified_20261005/audit_area_seed5_v2/gate.db",
+    "bytes": 7233044,
+    "sha256": "2a7a4974f31362ab2f4ea373b897d2984a6975bd6cf62b30b306c6bd20069b93"
+  },
+  {
+    "path": "C:/Users/Renni/.codex/visualizations/2026/10/09/01a12039-9e5a-7aa2-9166-f308f4a6547a/baseline/prj/resource_opt_verified_20261005/audit_area_seed5_v2/place.db",
+    "bytes": 9110570,
+    "sha256": "6a0d6a26bbf634cd1817b18a14b1824901f64a7be44da4968104ff39d171be83"
+  },
+  {
+    "path": "C:/Users/Renni/.codex/visualizations/2026/10/09/01a12039-9e5a-7aa2-9166-f308f4a6547a/baseline/prj/resource_opt_verified_20261005/audit_area_seed5_v2/routed.db",
+    "bytes": 11409814,
+    "sha256": "b46cb0d438eb0716ea884323691c8ae5106dc721a088ce41caace4cec230d0b3"
+  },
+  {
+    "path": "C:/Users/Renni/.codex/visualizations/2026/10/09/01a12039-9e5a-7aa2-9166-f308f4a6547a/baseline/prj/resource_opt_verified_20261005/audit_area_seed5_v2/rtl.db",
+    "bytes": 7213160,
+    "sha256": "3e8b1bfa710f19a31d800131e958678ce9ad08ecef4d65ca2912b9e2f19d2885"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "round": "O12345_r4_20261007",
+    "lut": 14550,
+    "reg": 9514,
+    "bram": 42,
+    "dsp": 15,
+    "slice": 7846,
+    "Setup WNS": 158,
+    "Setup TNS": 0,
+    "Hold WNS": 30,
+    "Hold TNS": 0,
+    "Num of violated S-EP": 0,
+    "Num of violated H-EP": 0,
+    "matches_current_inputs": false
+  },
+  {
+    "round": "O8_r2_20261007",
+    "lut": 14254,
+    "reg": 9366,
+    "bram": 42,
+    "dsp": 15,
+    "slice": 7735,
+    "Setup WNS": 132,
+    "Setup TNS": 0,
+    "Hold WNS": 27,
+    "Hold TNS": 0,
+    "Num of violated S-EP": 0,
+    "Num of violated H-EP": 0,
+    "matches_current_inputs": true
+  }
+]
