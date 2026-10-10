@@ -1,0 +1,12 @@
+`ifndef VINYL_PLAYBACK_LAYOUT_VH
+`define VINYL_PLAYBACK_LAYOUT_VH
+`define PLAYBACK_EC2_OSD_X0       10'd360
+`define PLAYBACK_EC2_OSD_X1       10'd624
+`define PLAYBACK_EC2_OSD_Y0       10'd16
+`define PLAYBACK_EC2_OSD_Y1       10'd112
+`define PLAYBACK_EC2_TEXT_X       10'd376
+`define PLAYBACK_EC2_STATUS_X     10'd568
+`define PLAYBACK_EC2_TITLE_Y      10'd30
+`define PLAYBACK_EC2_VALUE_Y      10'd53
+`define PLAYBACK_EC2_BAR_Y        10'd88
+`endif

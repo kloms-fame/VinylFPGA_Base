@@ -56,6 +56,9 @@
 `include "display/lrc_lines_rom.v"
 `include "display/lrc_font_rom.v"
 `include "display/lrc_osd.v"
+`include "display/brightness_contrast_steps.v"
+`include "display/ascii_font_rom.v"
+`include "display/ec2_param_osd.v"
 `include "video/mv_sector_mux.v"
 `include "video/mv_stream_player.v"
 `include "video/mv_frame_scheduler.v"
@@ -217,12 +220,22 @@ wire [4:0]  wipe_ramp;
 wire [1:0]  transition_kind;
 wire        frame_start;
 
-// Default image parameters; preserve the registered pixel stage.
+// Transition alpha stays at full-scale brightness; image BRI/CON are applied
+// in the following registered, frame-snapshotted pixel stage.
 wire [7:0] brightness_frame = 8'd255;
-wire [7:0] contrast_frame = 8'd128;
 wire [23:0] adjusted_rgb;
 wire        adjusted_de;
 reg  [9:0]  adjusted_pixel_x;
+wire        ec2_panel_vs;
+wire        ec2_panel_de;
+wire [9:0]  ec2_panel_x;
+wire [23:0] ec2_panel_rgb;
+reg  [7:0]  volume_frame;
+reg  [11:0] volume_bcd_frame;
+reg  [2:0]  brightness_level_frame;
+reg  [2:0]  contrast_level_frame;
+reg  [1:0]  ec2_state_frame;
+reg  [1:0]  ec2_selected_frame;
 
 wire [3:0]  state_code;
 wire [6:0]  seg_data_0;
@@ -363,6 +376,7 @@ wire media_mount_ok = media_status_sd[23] && media_preloaded_sd &&
 wire play_media_lost = !media_sd_rst_n || media_err_code!=0;
 reg media_mount_ok_sd;
 reg play_media_lost_sd;
+wire ec2_control_enable;
 always @(posedge sd_card_clk or negedge sd_media_rst_n) begin
     if (!sd_media_rst_n) begin
         media_mount_ok_sd <= 1'b0;
@@ -431,28 +445,36 @@ wire [31:0] seek_frame_rem_next = seek_frame_rem - 32'd4800;
 wire [19:0] seek_frame_calc = seek_frame_calc_reg;
 wire [15:0] seek_frame_vid  = (seek_frame_calc > 20'h0FFFF) ? 16'hFFFF :
                               seek_frame_calc[15:0];
-// 播放状态位 -> video 域（两级同步）；音量通过 bundled-data CDC。
+// 播放状态位 -> video 域（两级同步）；VOL/BRI/CON 与面板状态共享一组原子CDC。
 reg         play_active_v1, play_active_v2;
 reg         paused_v1, paused_v2;
 wire [7:0] play_volume_video;
 wire [7:0] play_volume_csr;
-wire       play_volume_update_csr;
+wire [2:0] brightness_level_csr;
+wire [2:0] contrast_level_csr;
+wire       param_update_csr;
+wire [17:0] params_bundle_csr;
+wire [17:0] params_bundle_video;
 wire       ui_tick_1ms;
-wire       ec2_control_enable;
 wire       ec2_step_valid;
 wire       ec2_step_up;
 wire       ec2_step_ready;
 wire       ec2_press_event;
-wire       ec2_volume_req_valid;
-wire       ec2_volume_req_up;
-wire       ec2_volume_req_ready;
+wire       ec2_param_req_valid;
+wire [1:0] ec2_param_req_id;
+wire       ec2_param_req_up;
+wire       ec2_param_req_ready;
+wire [1:0] ec2_selected_param;
+wire [1:0] ec2_ui_state;
+wire       ec2_ui_update;
 wire       volume_bridge_src_ready;
 wire       volume_bridge_src_overflow;
 wire       volume_bridge_dst_valid;
 wire       volume_bridge_dst_up;
 wire       volume_bridge_dst_ready;
-wire       volume_csr_wr_valid;
-wire       volume_csr_wr_up;
+wire       param_csr_wr_valid;
+wire [1:0] param_csr_wr_id;
+wire       param_csr_wr_up;
 wire       volume_bridge_async_rst_n;
 wire       volume_bridge_src_rst_n;
 wire       volume_bridge_dst_rst_n;
@@ -680,8 +702,8 @@ assign sd_media_rst_n = sdcard_rst_n & media_sd_rst_n;
 cdc_bundle_latest #(.WIDTH(64)) u_mv_metadata_cdc(
     .src_clk(sd_card_clk),.src_rst_n(sd_media_rst_n),.src_data(mv_metadata_sd),.src_update(mv_metadata_update_sd),
     .dst_clk(video_clk),.dst_rst_n(media_video_rst_n),.dst_data(mv_metadata_video));
-// One volume CSR lives in the 50 MHz UI domain. PLAY-domain intents return
-// through a reset-coupled asynchronous FIFO; EC2 writes the same CSR directly.
+// One parameter CSR lives in the 50 MHz UI domain. PLAY-domain volume intents
+// return through the existing FIFO; FIFO traffic wins over a simultaneous EC2 write.
 assign volume_bridge_async_rst_n = exp_rst_n;
 reset_sync u_volume_bridge_src_reset(
     .clk(sd_card_clk), .ext_rst_n(volume_bridge_async_rst_n),
@@ -699,22 +721,61 @@ volume_intent_bridge u_volume_intent_bridge(
     .dst_ready(volume_bridge_dst_ready));
 
 assign volume_bridge_dst_ready = volume_bridge_dst_valid;
-assign ec2_volume_req_ready = !volume_bridge_dst_valid;
-assign volume_csr_wr_valid = volume_bridge_dst_valid || ec2_volume_req_valid;
-assign volume_csr_wr_up = volume_bridge_dst_valid ? volume_bridge_dst_up
-                                                  : ec2_volume_req_up;
+assign ec2_param_req_ready = !volume_bridge_dst_valid;
+assign param_csr_wr_valid = volume_bridge_dst_valid || ec2_param_req_valid;
+assign param_csr_wr_id = volume_bridge_dst_valid ? 2'd0 : ec2_param_req_id;
+assign param_csr_wr_up = volume_bridge_dst_valid ? volume_bridge_dst_up
+                                                 : ec2_param_req_up;
 
 ui_param_csr u_ui_param_csr(
     .clk(clk), .rst_n(exp_rst_n),
-    .wr_valid(volume_csr_wr_valid), .wr_up(volume_csr_wr_up),
-    .volume(play_volume_csr), .volume_update(play_volume_update_csr));
+    .wr_valid(param_csr_wr_valid), .wr_id(param_csr_wr_id), .wr_up(param_csr_wr_up),
+    .volume(play_volume_csr), .brightness_level(brightness_level_csr),
+    .contrast_level(contrast_level_csr), .param_update(param_update_csr));
 
-// The bundled snapshot keeps the whole CSR value stable across the pixel/audio
-// domain and republishes it after a destination-only media reset.
-cdc_bundle_latest #(.WIDTH(8)) u_play_volume_cdc(
-    .src_clk(clk), .src_rst_n(exp_rst_n), .src_data(play_volume_csr),
-    .src_update(play_volume_update_csr), .dst_clk(video_clk),
-    .dst_rst_n(media_video_rst_n), .dst_data(play_volume_video));
+// Atomic source bundle layout: {ui_state, selection, CON, BRI, VOL}.
+assign params_bundle_csr = {ec2_ui_state, ec2_selected_param, contrast_level_csr,
+                            brightness_level_csr, play_volume_csr};
+assign play_volume_video = params_bundle_video[7:0];
+cdc_bundle_latest #(.WIDTH(18)) u_ui_params_cdc(
+    .src_clk(clk), .src_rst_n(exp_rst_n), .src_data(params_bundle_csr),
+    .src_update(param_update_csr | ec2_ui_update), .dst_clk(video_clk),
+    .dst_rst_n(media_video_rst_n), .dst_data(params_bundle_video));
+
+function [11:0] volume_to_bcd;
+    input [7:0] value;
+    reg [11:0] bcd;
+    integer bit_idx;
+    begin
+        bcd = 12'd0;
+        for (bit_idx = 7; bit_idx >= 0; bit_idx = bit_idx - 1) begin
+            if (bcd[3:0] >= 4'd5)   bcd[3:0]   = bcd[3:0]   + 4'd3;
+            if (bcd[7:4] >= 4'd5)   bcd[7:4]   = bcd[7:4]   + 4'd3;
+            if (bcd[11:8] >= 4'd5)  bcd[11:8]  = bcd[11:8]  + 4'd3;
+            bcd = {bcd[10:0], value[bit_idx]};
+        end
+        volume_to_bcd = bcd;
+    end
+endfunction
+
+// Pixel parameters and overlay controls change together only at frame_start.
+always @(posedge video_clk or negedge media_video_rst_n) begin
+    if (!media_video_rst_n) begin
+        volume_frame          <= 8'd200;
+        volume_bcd_frame      <= 12'h200;
+        brightness_level_frame<= 3'd3;
+        contrast_level_frame  <= 3'd2;
+        ec2_state_frame       <= 2'd0;
+        ec2_selected_frame    <= 2'd0;
+    end else if (frame_start) begin
+        volume_frame           <= params_bundle_video[7:0];
+        volume_bcd_frame       <= volume_to_bcd(params_bundle_video[7:0]);
+        brightness_level_frame <= params_bundle_video[10:8];
+        contrast_level_frame   <= params_bundle_video[13:11];
+        ec2_state_frame        <= params_bundle_video[15:14];
+        ec2_selected_frame     <= params_bundle_video[17:16];
+    end
+end
 reset_sync u_media_video_reset(.clk(video_clk),
  .ext_rst_n(video_rst_n & media_sd_rst_n),.rst_n_sync(media_video_rst_n));
 always @(posedge video_clk or negedge media_video_rst_n) begin
@@ -1568,18 +1629,16 @@ video_transition_apply #(
     .rgb_out     (transition_rgb)
 );
 
-// 第十四讲教程 3.2.2：对比度采用参考答案的 signed 乘法、算术右移和
-// 饱和截断。亮度已按教程 2.1 折进转场上式，因此这里固定为满亮度，
-// 单独模块自身的亮度通路仍保留，便于按教程做独立仿真和扩展。
-brightness_contrast_adjust u_brightness_contrast_adjust (
-    .clk        (video_clk),
-    .rst_n      (video_rst_n),
-    .in_de      (de),
-    .rgb_in     (transition_rgb),
-    .brightness (8'd255),
-    .contrast   (contrast_frame),
-    .out_de     (adjusted_de),
-    .rgb_out    (adjusted_rgb)
+// D4/D5: integer shift-add levels, one pixel register, saturating channels.
+brightness_contrast_steps u_brightness_contrast_steps (
+    .clk              (video_clk),
+    .rst_n            (video_rst_n),
+    .in_de            (de),
+    .rgb_in           (transition_rgb),
+    .brightness_level (brightness_level_frame),
+    .contrast_level   (contrast_level_frame),
+    .out_de           (adjusted_de),
+    .rgb_out          (adjusted_rgb)
 );
 
 // 对比度模块内部有一拍流水线，像素 x 坐标同步后移一拍，保证 OSD/波形
@@ -2192,9 +2251,9 @@ boot_layer #(
 ) u_boot_layer (
     .clk               (video_clk),
     .rst_n             (video_rst_n),
-    .vs                (vs),
-    .de                (adjusted_de),
-    .pixel_x           (adjusted_pixel_x),
+    .vs                (ec2_panel_vs),
+    .de                (ec2_panel_de),
+    .pixel_x           (ec2_panel_x),
     .skip_toggle       (boot_skip_toggle_clk),
     .first_image_ready (display_valid_sync2),
     .boot_active       (boot_active),
@@ -2271,6 +2330,28 @@ lrc_osd u_lrc_osd (
     .hit      (lrc_hit)
 );
 
+// D6: one frame-coherent overlay snapshot, above user media layers and below
+// Boot/blank priority. Its synchronous ASCII ROM adds one aligned RGB/DE/VS beat.
+ec2_param_osd u_ec2_param_osd (
+    .clk              (video_clk),
+    .rst_n            (video_rst_n),
+    .vs               (vs),
+    .de               (adjusted_de),
+    .pixel_x          (adjusted_pixel_x),
+    .rgb_in           (lrc_rgb),
+    .visible          ((ec2_state_frame != 2'd0) && !pat_mode),
+    .ui_state         (ec2_state_frame),
+    .selected_param   (ec2_selected_frame),
+    .volume           (volume_frame),
+    .volume_bcd       (volume_bcd_frame),
+    .brightness_level (brightness_level_frame),
+    .contrast_level   (contrast_level_frame),
+    .out_vs           (ec2_panel_vs),
+    .out_de           (ec2_panel_de),
+    .out_pixel_x      (ec2_panel_x),
+    .out_rgb          (ec2_panel_rgb)
+);
+
 // S7-03：消隐（clk 域 blank_active）跨到 video_clk 域，末级像素替换为纯黑。
 // 消隐只改像素，不动 HS/VS/DE 与 HDMI 音频数据岛，HDMI/音频锁定与节拍不变。
 reg blank_v1, blank_v2;
@@ -2286,13 +2367,13 @@ end
 wire blank_active_vid = blank_v2;
 
 assign final_rgb = blank_active_vid ? 24'h000000 :
-                   (s2_boot_on && boot_active) ? boot_rgb : lrc_rgb;
+                   (s2_boot_on && boot_active) ? boot_rgb : ec2_panel_rgb;
 
 video_rgb_to_axis_640x480 u_video_rgb_to_axis_640x480(
     .I_clk         (video_clk),
     .I_rst         (~video_rst_n),
-    .I_vs          (vs),
-    .I_de          (pat_mode ? de : adjusted_de),
+    .I_vs          (ec2_panel_vs),
+    .I_de          (ec2_panel_de),
     .I_rgb         (final_rgb),
     .O_video_user  (axis_s_user),
     .O_video_valid (axis_s_valid),
@@ -2500,8 +2581,10 @@ ec2_param_controller u_ec2_param_controller(
     .step_up(ec2_step_up), .step_ready(ec2_step_ready),
     .press_event(ec2_press_event),
     .external_volume_event(volume_bridge_dst_valid),
-    .vol_req_valid(ec2_volume_req_valid), .vol_req_up(ec2_volume_req_up),
-    .vol_req_ready(ec2_volume_req_ready), .ui_state());
+    .param_req_valid(ec2_param_req_valid), .param_req_id(ec2_param_req_id),
+    .param_req_up(ec2_param_req_up), .param_req_ready(ec2_param_req_ready),
+    .selected_param(ec2_selected_param), .ui_state(ec2_ui_state),
+    .ui_update(ec2_ui_update));
 
 // ==========================================================================
 // S2：Boot 状态跨域握手
