@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -121,15 +122,17 @@ def render_glyph(ch, is_ascii: bool) -> list:
     return rows
 
 
-def emit_font_rom(chars: list, glyphs: list) -> str:
+def emit_font_rom(chars: list, glyphs: list,
+                  module_name: str = "lrc_font_rom",
+                  guard_name: str = "EXP_LRC_FONT_ROM_V") -> str:
     total = len(chars) * GLYPH_H
     addr_w = max(1, (total - 1).bit_length())
     depth = 1 << addr_w
     lines = [
         "// 由 tools/gen_lrc_assets.py 自动生成，请勿手改。",
-        "`ifndef EXP_LRC_FONT_ROM_V",
-        "`define EXP_LRC_FONT_ROM_V",
-        "module lrc_font_rom (",
+        f"`ifndef {guard_name}",
+        f"`define {guard_name}",
+        f"module {module_name} (",
         "    input  wire clk,",
         f"    input  wire [{addr_w - 1}:0] addr,",
         "    output reg  [15:0] dout = 16'h0000",
@@ -146,6 +149,235 @@ def emit_font_rom(chars: list, glyphs: list) -> str:
     lines += ["    end", "    always @(posedge clk) begin",
               "        dout <= row_mem[addr];", "    end", "endmodule", "`endif", ""]
     return "\n".join(lines)
+
+
+def parse_lrc_multisong(path: Path) -> list:
+    """Parse a D9 LRC file with the frozen 128-line/16-glyph limits.
+
+    Duplicate timestamps deliberately use the last source row. This prevents
+    an earlier row with the same time from becoming permanently invisible.
+    """
+    tag = re.compile(r"\[(\d+):(\d{1,2})(?:\.(\d{1,3}))?\]")
+    by_time = {}
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        raw = raw.strip()
+        if not raw:
+            continue
+        stamps = list(tag.finditer(raw))
+        if not stamps:
+            continue
+        text = tag.sub("", raw).strip()
+        if not text:
+            continue
+        for match in stamps:
+            minutes = int(match.group(1))
+            seconds = int(match.group(2))
+            if seconds >= 60:
+                raise LrcError(f"秒字段必须小于 60: {raw!r}")
+            fraction = (match.group(3) or "").ljust(3, "0")
+            time_ms = (minutes * 60 + seconds) * 1000 + int(fraction or "0")
+            if time_ms > 0xFFFFFFFF:
+                raise LrcError(f"时间超出 u32 毫秒范围: {raw!r}")
+            by_time[time_ms] = text
+
+    lines = sorted(by_time.items())
+    if len(lines) > 128:
+        raise LrcError(f"{path} 有 {len(lines)} 行，超过每曲 128 行上限")
+    for time_ms, text in lines:
+        if len(text) > 16:
+            raise LrcError(f"时间 {time_ms} ms 的行有 {len(text)} 字，超过 16 字上限: {text!r}")
+    return lines
+
+
+def pack_glyph_vector(text: str, char_index: dict) -> int:
+    packed = 0
+    for index, char in enumerate(text):
+        packed |= char_index[char] << (index * 8)
+    return packed
+
+
+def emit_song_text_rom(tracks: list, chars: list) -> str:
+    char_index = {char: index for index, char in enumerate(chars)}
+    flattened = []
+    offsets = []
+    for track in tracks:
+        offsets.append(len(flattened))
+        for time_ms, text in track["lines"]:
+            flattened.append((time_ms, len(text), pack_glyph_vector(text, char_index)))
+
+    depth = max(1, len(flattened))
+    addr_width = max(1, (depth - 1).bit_length())
+    records = [0] * depth
+    for index, (time_ms, length, glyphs) in enumerate(flattened):
+        records[index] = (time_ms << 133) | (length << 128) | glyphs
+
+    out = [
+        "// 由 tools/gen_lrc_assets.py --songs-manifest 自动生成，请勿手改。",
+        "`ifndef EXP_SONG_TEXT_ROM_V",
+        "`define EXP_SONG_TEXT_ROM_V",
+        "module song_text_rom (",
+        "    input  wire        clk,",
+        "    input  wire [1:0]  song_id,",
+        "    input  wire [6:0]  line_index,",
+        "    output reg  [7:0]  line_count,",
+        "    output reg         line_valid,",
+        "    output reg  [31:0] line_time_ms,",
+        "    output reg  [4:0]  line_length,",
+        "    output reg  [127:0] line_glyphs,",
+        "    output reg         song_text_valid,",
+        "    output reg  [4:0]  title_length,",
+        "    output reg  [4:0]  artist_length,",
+        "    output reg  [127:0] title_glyphs,",
+        "    output reg  [127:0] artist_glyphs,",
+        "    output wire [127:0] no_lyrics_glyphs,",
+        "    input  wire [7:0]  ui_ascii_code,",
+        "    output reg  [7:0]  ui_glyph",
+        ");",
+        f"    localparam integer SONG_LINE_ADDR_W = {addr_width};",
+        f"    reg [164:0] line_mem [0:{depth - 1}];",
+        "    initial begin",
+    ]
+    for index, record in enumerate(records):
+        out.append(f"        line_mem[{index}] = 165'h{record:042X};")
+    out += [
+        "    end",
+        "    reg [SONG_LINE_ADDR_W-1:0] line_base;",
+        "    wire [SONG_LINE_ADDR_W-1:0] line_addr = line_base + line_index;",
+        f"    assign no_lyrics_glyphs = 128'h{pack_glyph_vector('NO LYRICS', char_index):032X};",
+        "    always @* begin",
+        "        line_count = 8'd0;",
+        "        line_base = {SONG_LINE_ADDR_W{1'b0}};",
+        "        song_text_valid = 1'b0;",
+        "        title_length = 5'd0;",
+        "        artist_length = 5'd0;",
+        "        title_glyphs = 128'd0;",
+        "        artist_glyphs = 128'd0;",
+        "        case (song_id)",
+    ]
+    for song_id, track in enumerate(tracks):
+        title = track["title"]
+        artist = track["artist"]
+        title_bus = pack_glyph_vector(title, char_index)
+        artist_bus = pack_glyph_vector(artist, char_index)
+        count = len(track["lines"])
+        out += [
+            f"            2'd{song_id}: begin",
+            f"                line_count = 8'd{count};",
+            f"                line_base = {addr_width}'d{offsets[song_id]};",
+            f"                title_length = 5'd{len(title)};",
+            f"                artist_length = 5'd{len(artist)};",
+            f"                title_glyphs = 128'h{title_bus:032X};",
+            f"                artist_glyphs = 128'h{artist_bus:032X};",
+            f"                song_text_valid = 1'b{int(bool(title or artist or count))};",
+            "            end",
+        ]
+    out += [
+        "            default: ;",
+        "        endcase",
+        "    end",
+        "    always @(posedge clk) begin",
+        "        if ((line_index < line_count) && (line_addr < " +
+        f"{addr_width}'d{depth}" + ")) begin",
+        "            line_time_ms <= line_mem[line_addr][164:133];",
+        "            line_length <= line_mem[line_addr][132:128];",
+        "            line_glyphs <= line_mem[line_addr][127:0];",
+        "            line_valid <= 1'b1;",
+        "        end else begin",
+            "            line_time_ms <= 32'hFFFFFFFF;",
+            "            line_length <= 5'd0;",
+            "            line_glyphs <= 128'd0;",
+        "            line_valid <= 1'b0;",
+        "        end",
+        "    end",
+        "    always @* begin",
+        "        ui_glyph = 8'd0;",
+        "        case (ui_ascii_code)",
+    ]
+    for char in chars:
+        if len(char) == 1 and ord(char) < 128:
+            out.append(f"            8'd{ord(char)}: ui_glyph = 8'd{char_index[char]};")
+    out += [
+        "            default: ui_glyph = 8'd0;",
+        "        endcase",
+        "    end",
+        "endmodule",
+        "`endif",
+        "",
+    ]
+    return "\n".join(out)
+
+
+def generate_song_text_assets(manifest_path: Path, out_dir: Path) -> dict:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    raw_tracks = manifest.get("tracks")
+    if not isinstance(raw_tracks, list) or len(raw_tracks) != 4:
+        raise LrcError("songs manifest 必须显式提供 song_id 0..3 共四项")
+
+    by_id = {}
+    for item in raw_tracks:
+        if not isinstance(item, dict):
+            raise LrcError("tracks 中每项必须是对象")
+        song_id = item.get("song_id")
+        if not isinstance(song_id, int) or song_id < 0 or song_id > 3 or song_id in by_id:
+            raise LrcError(f"song_id 必须是唯一的 0..3: {song_id!r}")
+        title = item.get("title", "")
+        artist = item.get("artist", "")
+        if not isinstance(title, str) or not isinstance(artist, str):
+            raise LrcError(f"song_id {song_id} 的 title/artist 必须是 UTF-8 字符串")
+        if len(title) > 16 or len(artist) > 16:
+            raise LrcError(f"song_id {song_id} 的 title/artist 均最多 16 个字形")
+        lrc_value = item.get("lrc")
+        if lrc_value is None or lrc_value == "":
+            lines = []
+        elif isinstance(lrc_value, str):
+            lrc_path = (manifest_path.parent / lrc_value).resolve()
+            if not lrc_path.is_file():
+                raise LrcError(f"song_id {song_id} 的 LRC 文件不存在: {lrc_path}")
+            lines = parse_lrc_multisong(lrc_path)
+        else:
+            raise LrcError(f"song_id {song_id} 的 lrc 必须是相对路径或 null")
+        by_id[song_id] = {"title": title, "artist": artist, "lines": lines}
+    if set(by_id) != {0, 1, 2, 3}:
+        raise LrcError("songs manifest 必须且只能包含 song_id 0..3")
+
+    tracks = [by_id[index] for index in range(4)]
+    chars = {" ", "-", ":", "/"}
+    chars.update("TRACK 0123456789ARTISTNO LYRICS")
+    for track in tracks:
+        chars.update(track["title"])
+        chars.update(track["artist"])
+        for _, text in track["lines"]:
+            chars.update(text)
+    chars = sorted(chars)
+    if len(chars) > 256:
+        raise LrcError(f"去重字形 {len(chars)} 超过 8 bit glyph_id 可表示的 256")
+    glyphs = [render_glyph(char, ord(char) < 128) for char in chars]
+
+    display_dir = out_dir / "src/display"
+    include_dir = out_dir / "src/include"
+    display_dir.mkdir(parents=True, exist_ok=True)
+    include_dir.mkdir(parents=True, exist_ok=True)
+    font_addr_width = max(1, (len(chars) * GLYPH_H - 1).bit_length())
+    font_depth = 1 << font_addr_width
+    files = {
+        "src/display/song_text_rom.v": emit_song_text_rom(tracks, chars),
+        "src/display/song_font_rom.v": emit_font_rom(
+            chars, glyphs, "song_font_rom", "EXP_SONG_FONT_ROM_V"),
+        "src/include/song_text_geom.vh": "\n".join([
+            "// 由 tools/gen_lrc_assets.py --songs-manifest 自动生成，请勿手改。",
+            f"localparam integer SONG_TEXT_LINE_TOTAL = {sum(len(t['lines']) for t in tracks)};",
+            f"localparam integer SONG_TEXT_GLYPH_COUNT = {len(chars)};",
+            f"localparam integer SONG_FONT_ADDR_W = {font_addr_width};",
+            f"localparam integer SONG_FONT_DEPTH = {font_depth};",
+            "localparam integer SONG_TEXT_MAX_LINES = 128;",
+            "localparam integer SONG_TEXT_MAX_CHARS = 16;",
+            "",
+        ]),
+    }
+    for relative, content in files.items():
+        (out_dir / relative).write_text(content, encoding="utf-8", newline="\n")
+    return {"tracks": tracks, "chars": chars, "font_addr_width": font_addr_width,
+            "font_depth": font_depth}
 
 
 def emit_lines_rom(lines_data: list) -> str:
@@ -198,14 +430,34 @@ def emit_geom(chars: list, lines_data: list) -> str:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="VinylFPGA S5 歌词资源生成器")
-    ap.add_argument("--lrc", required=True)
+    source = ap.add_mutually_exclusive_group(required=True)
+    source.add_argument("--lrc", help="旧版单曲 LRC 输入，保持原资产生成行为")
+    source.add_argument("--songs-manifest", help="D9 四曲 UTF-8 资料清单")
     ap.add_argument("--verify", action="store_true", help="额外输出还原预览 PNG")
     ap.add_argument("--out-dir", default=str(ROOT))
     args = ap.parse_args(argv)
 
-    lrc_path = Path(args.lrc)
     out = Path(args.out_dir)
     try:
+        if args.songs_manifest:
+            if args.verify:
+                raise LrcError("--verify 预览仅支持旧版单曲 --lrc 模式")
+            manifest_path = Path(args.songs_manifest)
+            result = generate_song_text_assets(manifest_path, out)
+            line_count = sum(len(track["lines"]) for track in result["tracks"])
+            line_depth = max(1, line_count)
+            print("SONGS_OK 曲目 4，歌词行数 "
+                  f"{line_count}，去重字形 {len(result['chars'])}")
+            print("SONGS_ROM_BITS "
+                  f"font={result['font_depth'] * GLYPH_W}, "
+                  f"lines={line_depth * 165}, "
+                  f"metadata={4 * 2 * 16 * 8}")
+            for song_id, track in enumerate(result["tracks"]):
+                print(f"  song_id={song_id} title={track['title']!r} "
+                      f"artist={track['artist']!r} lines={len(track['lines'])}")
+            return 0
+
+        lrc_path = Path(args.lrc)
         lines = parse_lrc(lrc_path)
         chars = build_charset(lines)
         glyphs = [render_glyph(ch, ord(ch) < 128) for ch in chars]

@@ -1,0 +1,10 @@
+{
+  "schema": "vinylfpga-song-text-v1",
+  "source_note": "当前资料未包含可确认的四曲标题、歌手和歌词。所有文字字段留空，不绑定 demo.lrc 演示说明文本。",
+  "tracks": [
+    { "song_id": 0, "title": "", "artist": "", "lrc": null },
+    { "song_id": 1, "title": "", "artist": "", "lrc": null },
+    { "song_id": 2, "title": "", "artist": "", "lrc": null },
+    { "song_id": 3, "title": "", "artist": "", "lrc": null }
+  ]
+}

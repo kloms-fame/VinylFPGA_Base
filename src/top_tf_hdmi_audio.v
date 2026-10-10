@@ -55,7 +55,10 @@
 `include "SD/song_index_db.v"
 `include "display/lrc_lines_rom.v"
 `include "display/lrc_font_rom.v"
+`include "display/song_text_rom.v"
+`include "display/song_font_rom.v"
 `include "display/lrc_osd.v"
+`include "display/lrc_multisong_osd.v"
 `include "display/brightness_contrast_steps.v"
 `include "display/ascii_font_rom.v"
 `include "display/ec2_param_osd.v"
@@ -489,6 +492,7 @@ reg         play_track_tgl_v1, play_track_tgl_v2, play_track_tgl_v3;
 wire        play_track_restart_vid = play_track_tgl_v2 ^ play_track_tgl_v3;
 wire        play_running_vid = play_active_v2 & ~paused_v2;
 wire [31:0] lyric_time_ms;
+wire [31:0] lyric_sample_count;
 
 // ==========================================================================
 // X1：状态反馈执行器信号
@@ -517,6 +521,10 @@ wire [1:0] display_song_sd = play_active_sd ? play_sel_song_sd :
 // extra metadata cycle settles before either WAV or MV consumes the result.
 reg [1:0] metadata_song_sd;
 reg [1:0] metadata_song_update_d;
+wire [2:0] song_metadata_src = {play_track_tgl_sd, metadata_song_sd};
+reg  [2:0] song_metadata_src_d;
+wire       song_metadata_update_sd = (song_metadata_src != song_metadata_src_d);
+wire [2:0] song_metadata_video;
 reg media_scan_done_update_d, media_preloaded_update_d;
 wire mv_metadata_update_sd =
     (metadata_song_sd != metadata_song_update_d) ||
@@ -707,6 +715,19 @@ assign sd_media_rst_n = sdcard_rst_n & media_sd_rst_n;
 cdc_bundle_latest #(.WIDTH(64)) u_mv_metadata_cdc(
     .src_clk(sd_card_clk),.src_rst_n(sd_media_rst_n),.src_data(mv_metadata_sd),.src_update(mv_metadata_update_sd),
     .dst_clk(video_clk),.dst_rst_n(media_video_rst_n),.dst_data(mv_metadata_video));
+
+// D9: atomically transfer the selected song and playback generation. The
+// video domain samples the bundle at frame start alongside its local audio time.
+always @(posedge sd_card_clk or negedge sd_media_rst_n) begin
+    if (!sd_media_rst_n)
+        song_metadata_src_d <= 3'd0;
+    else
+        song_metadata_src_d <= song_metadata_src;
+end
+cdc_bundle_latest #(.WIDTH(3)) u_song_metadata_cdc(
+    .src_clk(sd_card_clk),.src_rst_n(sd_media_rst_n),.src_data(song_metadata_src),
+    .src_update(song_metadata_update_sd),.dst_clk(video_clk),
+    .dst_rst_n(media_video_rst_n),.dst_data(song_metadata_video));
 // One parameter CSR lives in the 50 MHz UI domain. PLAY-domain volume intents
 // return through the existing FIFO; FIFO traffic wins over a simultaneous EC2 write.
 assign volume_bridge_async_rst_n = exp_rst_n;
@@ -2336,7 +2357,36 @@ s6_video_layer #(.ENABLE(S6_VIDEO_ENABLE)) u_s6_video_layer(
 // ===================== S5：单行歌词叠加（末级，开机 Logo 之下）================
 wire [23:0] lrc_rgb;
 wire        lrc_hit;
-lrc_osd u_lrc_osd (
+wire [1:0] song_id_frame;
+wire       song_generation_frame;
+wire [6:0] song_line_rom_index;
+wire [7:0] song_line_count_rom;
+wire       song_line_rom_valid;
+wire [31:0] song_line_rom_time_ms;
+wire [4:0] song_line_rom_length;
+wire [127:0] song_line_rom_glyphs;
+wire [127:0] song_no_lyrics_glyphs;
+wire [7:0] song_ui_glyph;
+wire [4:0] song_title_length;
+wire [4:0] song_artist_length;
+wire [127:0] song_title_glyphs;
+wire [127:0] song_artist_glyphs;
+wire song_text_valid;
+wire [7:0] song_line_count_frame;
+wire current_lyric_valid;
+wire [6:0] current_lyric_index;
+wire [4:0] current_lyric_length;
+wire [127:0] current_lyric_glyphs;
+song_text_rom u_song_text_rom (
+    .clk(video_clk),.song_id(song_id_frame),.line_index(song_line_rom_index),
+    .line_count(song_line_count_rom),.line_valid(song_line_rom_valid),
+    .line_time_ms(song_line_rom_time_ms),.line_length(song_line_rom_length),
+    .line_glyphs(song_line_rom_glyphs),.song_text_valid(song_text_valid),
+    .title_length(song_title_length),.artist_length(song_artist_length),
+    .title_glyphs(song_title_glyphs),.artist_glyphs(song_artist_glyphs),
+    .no_lyrics_glyphs(song_no_lyrics_glyphs),.ui_ascii_code(8'd0),.ui_glyph(song_ui_glyph)
+);
+lrc_multisong_osd u_lrc_osd (
     .clk      (video_clk),
     .rst_n    (video_rst_n),
     .vs       (vs),
@@ -2344,6 +2394,22 @@ lrc_osd u_lrc_osd (
     .pixel_x  (adjusted_pixel_x),
     .enable   (S5_PLAY_ENABLE && play_active_v2 && !pat_mode),
     .time_ms  (lyric_time_ms),
+    .song_id_async(song_metadata_video[1:0]),
+    .generation_async(song_metadata_video[2]),
+    .rom_line_count(song_line_count_rom),
+    .rom_line_valid(song_line_rom_valid),
+    .rom_line_time_ms(song_line_rom_time_ms),
+    .rom_line_length(song_line_rom_length),
+    .rom_line_glyphs(song_line_rom_glyphs),
+    .no_lyrics_glyphs(song_no_lyrics_glyphs),
+    .song_id_frame(song_id_frame),
+    .generation_frame(song_generation_frame),
+    .rom_line_index(song_line_rom_index),
+    .song_line_count_frame(song_line_count_frame),
+    .current_lyric_valid(current_lyric_valid),
+    .current_lyric_index(current_lyric_index),
+    .current_lyric_length(current_lyric_length),
+    .current_lyric_glyphs(current_lyric_glyphs),
     .rgb_in   (s6_rgb),
     .rgb_out  (lrc_rgb),
     .hit      (lrc_hit)
@@ -2662,7 +2728,7 @@ timebase_48k u_timebase_48k (
     .restart      (play_track_restart_vid),
     .load         (play_track_restart_vid),
     .load_sample  (play_seek_target_v2),
-    .sample_count (),
+    .sample_count (lyric_sample_count),
     .cur_time_ms  (lyric_time_ms),
     .sub_sample   ()
 );
