@@ -70,7 +70,8 @@ module expansion_integration #(
     input  wire        mv_mode_active,
     input  wire        ws_mode_tgl,        // X1B：KEY10 模式循环翻转电平
     output wire [3:0]  board_sw_level,     // X1C：母板 SW1-4 消抖后电平（上拨=1）
-    output wire        disp_mode_tgl       // X1C：母板 KEY3(B1) 每按一次翻转
+    output wire        disp_mode_tgl,      // X1C：母板 KEY3(B1) 每按一次翻转
+    output wire        dip2_slideshow_enable // D1：J2 DIP2 消抖电平（上拨=1）
 );
 
     // 事件编码常量（与 ui_event_bus 共用，module 作用域）
@@ -83,6 +84,7 @@ module expansion_integration #(
     wire [5:0]  dip_level;
     wire [5:0]  dip_change_pulse;
     wire [2:0]  dip_change_index;
+    assign dip2_slideshow_enable = dip_level[1];
 
     wire        enc1_step_pulse;
     wire        enc1_direction;

@@ -44,6 +44,7 @@
 `include "audio/stream_session.v"
 `include "audio/seek_controller.v"
 `include "io/cover_navigation.v"
+`include "io/slideshow_controller.v"
 `include "SD/media_probe.v"
 // Keep S4/S5 dependencies visible even if the GUI project list is stale.
 `include "SD/song_index_db.v"
@@ -317,6 +318,10 @@ wire        blank_active;   // 消隐激活（DIP4 自动 + 遥控息屏手动�
 wire        led_enable;     // DIP3 LED 总使能（S7-05 接入执行器）
 wire        ws_enable;      // DIP6 WS 总使能（S7-05 接入执行器）
 wire        restart_req;    // 重启确认后一拍脉冲（软复位请求）
+wire        dip2_slideshow_enable_clk;
+wire        dip2_slideshow_enable_sd;
+wire        slideshow_auto_next_sd;
+wire        slideshow_enable_sd;
 wire        brw_ev_prev_tgl;
 wire        brw_ev_next_tgl;
 wire        brw_ev_confirm_tgl;
@@ -1200,10 +1205,24 @@ assign frame_start_sd = frame_start_tgl_sd[2] ^ frame_start_tgl_sd[1];
 
 // Accumulate desired bank while a previous transition is in flight.
 wire key_prev_request_sd = brw_fs_prev | play_fs_prev_sd;
-cover_navigation u_cover_navigation(
+sync_2ff u_slideshow_dip2_sync (
+ .clk(sd_card_clk),.rst_n(sdcard_rst_n),
+ .async_in(dip2_slideshow_enable_clk),.sync_out(dip2_slideshow_enable_sd));
+assign slideshow_enable_sd = dip2_slideshow_enable_sd && media_mount_ok_sd &&
+                             display_valid && !thumb_mode_sd && !play_active_sd &&
+                             (song_total_sd > 3'd1);
+slideshow_controller #(
+ .CLK_FREQ_HZ(100_000_000),.PERIOD_MS(5000)
+) u_slideshow_controller (
+ .clk(sd_card_clk),.rst_n(sd_media_rst_n),.enable(slideshow_enable_sd),
+ .busy(cover_busy),
+ .manual_action(brw_fs_next || brw_fs_prev),
+ .auto_next(slideshow_auto_next_sd));
+
+ cover_navigation u_cover_navigation(
  .clk(sd_card_clk),.rst_n(sd_media_rst_n),.ready(media_mount_ok_sd),
  .count(song_total_sd),.displayed(disp_buf_idx),
- .next_step(brw_fs_next),.prev_step(brw_fs_prev),
+ .next_step(brw_fs_next),.prev_step(brw_fs_prev),.auto_next(slideshow_auto_next_sd),
  .choose(thumb_confirm_event_sd || play_track_step_sd),
  .chosen(thumb_confirm_event_sd ? thumb_focus_index_sd : play_sel_song_sd),
  .chosen_direction(thumb_confirm_event_sd ? (thumb_focus_index_sd>=disp_buf_idx) : play_track_dir_sd),
@@ -2325,7 +2344,8 @@ expansion_integration #(
     .mv_mode_active   (mv_read_active),
     .ws_mode_tgl      (ws_mode_tgl),
     .board_sw_level   (board_sw_level_clk),
-    .disp_mode_tgl    (disp_mode_tgl_clk)
+    .disp_mode_tgl    (disp_mode_tgl_clk),
+    .dip2_slideshow_enable(dip2_slideshow_enable_clk)
 );
 
 // ==========================================================================

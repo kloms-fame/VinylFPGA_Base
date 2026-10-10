@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-10",
+  "tool": "SynthPilot MCP / Tang Dynasty 6.2.168116",
+  "device": "EG4S20BG256",
+  "top": "top",
+  "build_stage": "opt_gate",
+  "build_result": "PASS",
+  "build_elapsed_ms": 71198,
+  "bitgen_run": false,
+  "resources": {
+    "lut_used": 14199,
+    "lut_total": 19600,
+    "lut_percent": 72.44,
+    "registers": 9377,
+    "register_percent": 47.84,
+    "bram9k": 42,
+    "bram9k_total": 64,
+    "bram9k_percent": 65.62,
+    "dsp": 13,
+    "dsp_total": 29,
+    "dsp_percent": 44.83,
+    "pll": 2,
+    "pll_total": 4
+  },
+  "pre_route_timing": {
+    "sta_coverage_percent": 99.96,
+    "SWNS_ns": -0.316,
+    "STNS_ns": -6.693,
+    "HWNS_ns": 0.0,
+    "HTNS_ns": 0.0,
+    "violating_endpoints": 37,
+    "worst_path_start": "sd_card_bmp_m0/fat32_media_loader_m0/audio_active_reg",
+    "worst_path_end": "sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/fs_error_reg[0]",
+    "worst_path_in_d1_controller": false,
+    "worst_100_violation_paths_contain_d1_controller": false,
+    "note": "最差路径在既有 FAT32 音量扫描器，不在轮播控制器；这是 opt_gate 预布线报告，不代表布局布线时序签核。"
+  },
+  "constraint_check": {
+    "no_clock_objects": 0,
+    "invalid_constraints": 0,
+    "combinational_loops": 0,
+    "pll_local_feedback_warnings": 2,
+    "inputs_without_delay": 33,
+    "outputs_without_delay": 38,
+    "abnormal_input_delay_constraints": 32
+  },
+  "simulation": {
+    "tb_slideshow_controller": "PASS",
+    "tb_slideshow_top": "PASS"
+  }
+}

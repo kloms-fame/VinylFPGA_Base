@@ -1,0 +1,33 @@
+{
+  "project": "prj/VinylFPGA.al",
+  "branch": "main",
+  "head_before_commit": "9ffa2107a93214afc8789396faa8e63ee02f76bc",
+  "synthpilot_project_snapshot": "prj/resource_opt_verified_20261005/d1_slideshow_20261010_r4/VinylFPGA.al",
+  "constraints": {
+    "adc": "prj/resource_opt_verified_20261005/d1_slideshow_20261010_r4/constraints/pin.adc",
+    "adc_sha256": "80d55e1a62bafbf36a47a08f5b08edb8945e64686072ad7c3ab6b37755ca795b",
+    "sdc": "prj/resource_opt_verified_20261005/d1_slideshow_20261010_r4/constraints/timing.sdc",
+    "sdc_sha256": "667a2a436a9ca11004f86d3c29aaa9005d53fe94f41593e60ead656af5d939b8"
+  },
+  "project_inputs": 64,
+  "project_file_sha256": "e631cbc145189b3d30abd0c5a69da62f2b3e0219f8ae665423bd67c792f913c6",
+  "key_source_sha256": {
+    "src/top_tf_hdmi_audio.v": "60a8d00e057eff30ef8e82df378f15eca11df644a8afd1414474e28fb25e88e2",
+    "src/io/slideshow_controller.v": "35b3868a77953ffe36cf9571a9053ad3406c0c1338ad7bb337fc875366757648",
+    "src/io/cover_navigation.v": "4bafb5868056ea827a2c9b9a915460d53a1e1c9565c798ed2e0f50761eb4aeed",
+    "src/io/expansion_integration.v": "8fdb1c856ae8d5a8213ec9ecec7abad27d61534afb35391b5b3308fa00cfaed9"
+  },
+  "build": {
+    "device_db": "eagle_s20.db",
+    "package": "EG4S20BG256",
+    "top": "top",
+    "end_step": "opt_gate",
+    "result": "PASS",
+    "bitgen": "NOT_RUN"
+  },
+  "reports": [
+    "prj/resource_opt_verified_20261005/d1_slideshow_20261010_r4/gate.qor",
+    "prj/resource_opt_verified_20261005/d1_slideshow_20261010_r4/top_gate.timingsummary",
+    "prj/resource_opt_verified_20261005/d1_slideshow_20261010_r4/top_gate.check_timing"
+  ]
+}

@@ -5,7 +5,7 @@
 module cover_navigation (
  input wire clk,rst_n,ready,
  input wire [2:0] count, input wire [1:0] displayed,
- input wire next_step,prev_step,choose,
+ input wire next_step,prev_step,auto_next,choose,
  input wire [1:0] chosen, input wire chosen_direction,
  input wire transition_busy,transition_commit,select_ack,
  output reg transition_start,output reg direction,
@@ -33,6 +33,7 @@ module cover_navigation (
     if(choose) begin desired<=chosen; desired_dir<=chosen_direction; end
     else if(next_step) begin desired<=next_index; desired_dir<=1; end
     else if(prev_step) begin desired<=prev_index; desired_dir<=0; end
+    else if(auto_next) begin desired<=next_index; desired_dir<=1; end
     if(!active && !transition_busy && desired!=displayed && !external_change) begin
      select_index<=desired; transition_start<=1; active<=1; committed<=0;
      direction<=desired_dir;
