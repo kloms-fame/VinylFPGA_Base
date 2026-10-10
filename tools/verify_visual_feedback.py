@@ -11,7 +11,7 @@ cases = [
     ('tb_x1x2_display', False, False),
     ('tb_x1x2_lights', False, False),
     ('tb_x1x2_lights', False, True),
-    ('tb_ws2812_progress', False, False),
+    ('tb_ws_vu_only', False, False),
     ('tb_visual_feedback_top', True, False),
     ('tb_opt_metadata', True, False),
 ]

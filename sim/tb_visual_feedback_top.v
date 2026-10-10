@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-// Exercise the actual top-level UI/metadata selection and progress connections.
+// Exercise top-level display time/song selection after removing the WS progress side path.
 // Vendor clocks and media records are fixtures; the display and CDC are real RTL.
 module tb_visual_feedback_top;
  reg clk=0,rst=0,playing=0,grid=0,valid=1;
@@ -19,12 +19,11 @@ module tb_visual_feedback_top;
  case(n)0:digit=8'hc0;1:digit=8'hf9;2:digit=8'ha4;3:digit=8'hb0;4:digit=8'h99;
  5:digit=8'h92;6:digit=8'h82;7:digit=8'hf8;8:digit=8'h80;9:digit=8'h90;default:digit=8'hff;endcase
  end endfunction
- task check;input integer seconds,song,fill;reg[63:0]expected;begin
+ task check;input integer seconds,song;reg[63:0]expected;begin
  repeat(600)@(negedge clk);
  expected={digit(seconds/600),digit((seconds/60)%10),8'hbf,digit((seconds%60)/10),digit(seconds%10),8'hff,8'hc0,digit(song+1)};
  if({dut.seg_biz_0,dut.seg_biz_1,dut.seg_biz_2,dut.seg_biz_3,dut.seg_biz_4,dut.seg_biz_5,dut.seg_biz_6,dut.seg_biz_7}!==expected)
   $fatal(1,"FAIL top MM-SS blank NN seconds=%0d song=%0d",seconds,song);
- if(dut.ws_progress_clk!==fill[3:0])$fatal(1,"FAIL top progress expected=%0d got=%0d",fill,dut.ws_progress_clk);
  end endtask
  initial begin
  force dut.sd_card_clk=clk;force dut.ext_mem_clk=clk;force dut.video_clk=clk;
@@ -36,16 +35,16 @@ module tb_visual_feedback_top;
  force dut.board_sw_level_clk=4'b0101; // SW3 on must no longer select E00F0
  force dut.media_err_code=8'h34;force dut.fault_flags_clk=4'hf;
  repeat(4)@(negedge clk);rst=1;
- check(125,0,0);bank=1;check(62,1,0);
- grid=1;focus=2;check(5999,2,0);focus=3;check(240,3,0);
- selected=3;playing=1;position=0;check(0,3,0);
- position=60*48000;check(60,3,2);focus=0;bank=1;check(60,3,2); // pause retains position
- position=180*48000;check(180,3,6); // seek forward
- position=30*48000;check(30,3,1); // backward
- position=0;check(0,3,0);position=240*48000;check(240,3,8);
- playing=0;grid=0;bank=1;check(62,1,0);
- valid=0;check(0,1,0);valid=1;check(62,1,0);
- $display("PASS top browse duration, track number, playback/pause/seek/replay/EOF and exact progress");$finish;
+ check(125,0);bank=1;check(62,1);
+ grid=1;focus=2;check(5999,2);focus=3;check(240,3);
+ selected=3;playing=1;position=0;check(0,3);
+ position=60*48000;check(60,3);focus=0;bank=1;check(60,3); // pause retains position
+ position=180*48000;check(180,3); // seek forward
+ position=30*48000;check(30,3); // backward
+ position=0;check(0,3);position=240*48000;check(240,3);
+ playing=0;grid=0;bank=1;check(62,1);
+ valid=0;check(0,1);valid=1;check(62,1);
+ $display("PASS top browse duration, track number, playback/pause/seek/replay/EOF; no WS progress side path");$finish;
  end
  initial begin #200000;$fatal(1,"FAIL top visual watchdog");end
 endmodule

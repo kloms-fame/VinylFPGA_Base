@@ -19,7 +19,7 @@ module tb_opt_no_uart;
  .ui_ev_valid(skip),.board_buzzer_n(buzzer),.exp_ext_o(ext),.exp_led_n(led),
  .underrun_pulse(ur),.wav_buffer_low(low),.wav_stream_active(active),.mv_failed(vf),
  .osd_err_valid(err_valid),.osd_err_code(err),.fault_flags(flags),
- .pcm_level(8'd0),.mv_mode_active(1'b0),.ws_progress(4'd0),.ws_mode_tgl(1'b0));
+ .pcm_level(8'd0),.mv_mode_active(1'b0),.ws_mode_tgl(1'b0));
  always @(negedge clk) begin
   if(uart!==1'b1) $fatal(1,"FAIL UART must stay idle including reset");
   if(rst && valid && code==1) cmds=cmds+1;

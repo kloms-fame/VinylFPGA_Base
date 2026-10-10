@@ -37,7 +37,7 @@ rename_clock -name {video_clk}   -source [get_ports {clk}] -master_clock {clk} [
 rename_clock -name {hdmi_5x_clk} -source [get_ports {clk}] -master_clock {clk} [get_pins {video_pll_m0/pll_inst.clkc[1]}]
 
 # ------------------------------------------------------------
-# 4. 从原 timing(2).sdc 迁移过来的 HDMI 像素/串行时钟约束
+# 4. HDMI 像素/串行时钟关系
 #
 #    原文件是：
 #      create_clock -name pixel_clk  ... [get_nets {S_pixel_clk}]
@@ -47,12 +47,9 @@ rename_clock -name {hdmi_5x_clk} -source [get_ports {clk}] -master_clock {clk} [
 #    在整合工程里，这两个时钟已经由 video_pll 产生，并通过 derive_clocks 建出来了，
 #    所以这里只保留“组关系”，不再重复 create_clock。
 #
-#    这里沿用原作者的写法，把 video_clk 和 hdmi_5x_clk 设成 exclusive。
-#    如果后面 Timing Analyzer 明确显示两者之间需要做同步时序分析，再把这一条去掉。
+#    两者由同一个 video_pll 同时产生，并同时进入 HDMI TX core，不是
+#    mutually-exclusive clocks；让 TD 分析两者间的同步路径。
 # ------------------------------------------------------------
-set_clock_groups -exclusive \
-    -group [get_clocks {video_clk}] \
-    -group [get_clocks {hdmi_5x_clk}]
 
 # ------------------------------------------------------------
 # 5. 第3课起 pcm_media_tone / ACR / 音频数据全部运行在 video_clk，
@@ -62,8 +59,8 @@ set_clock_groups -exclusive \
 #
 #    理由：clk(50MHz 输入) 与 sys_pll/video_pll 输出的 sd_card_clk、ext_mem_clk、
 #    video_clk、hdmi_5x_clk 分属不同时钟树，器件内 PLL 插入延迟不一致，跨域
-#    相位关系并非固定；工程内所有跨域都已用 2FF 同步器 / gray-code 异步 FIFO /
-#    toggle 握手显式隔离，没有不经同步器的直接组合跨域路径。
+#    相位关系并非固定；工程内跨域使用 2FF 同步器、gray-code 异步 FIFO 或
+#    bundled-data/toggle 握手。video_clk 与 hdmi_5x_clk 同源且保留同步分析。
 #
 #    S7-01 基线 Hold WNS 仅 +0.003ns，本就处于临界；S7-02 在 sd_card_clk 域新增
 #    media_supervisor 后，sd_card_clk 时钟树扇出/偏斜增大，使既有的
@@ -78,12 +75,15 @@ set_clock_groups -asynchronous \
     -group [get_clocks {clk}] \
     -group [get_clocks {sd_card_clk}] \
     -group [get_clocks {ext_mem_clk}] \
-    -group [get_clocks {video_clk}] \
-    -group [get_clocks {hdmi_5x_clk}]
+    -group [get_clocks {video_clk hdmi_5x_clk}]
 
 # ------------------------------------------------------------
-# 7. 其余 Input/Output delay 先保持空白
-#    你当前两个原始 sdc 也都没有写这部分。
+# 7. I/O timing model gaps
+#    SD MISO and forwarded HDMI clock/data require card/display setup/hold and
+#    board trace data before numeric input/output delays can be added. These
+#    interface/board values are absent from this project snapshot; do not
+#    invent zero or nominal delays. Mechanical UI inputs are asynchronous and
+#    synchronized in RTL, not synchronous source-clock interfaces.
 # ------------------------------------------------------------
 
 # ------------------------------------------------------------

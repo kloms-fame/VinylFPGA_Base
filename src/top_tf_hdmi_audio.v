@@ -24,7 +24,6 @@
 `include "io/led_business_driver.v"
 `include "io/ws2812_driver.v"
 `include "io/ws2812_effects.v"
-`include "io/ws2812_progress.v"
 `include "audio/pcm_tap.v"
 `include "display/seg_business_mux.v"
 `include "io/browse_fsm.v"
@@ -145,6 +144,7 @@ parameter S6_VIDEO_ENABLE = 1'b1;
 // SDRAM word addresses: covers [0,1228800), MV [1228800,1459200).
 localparam [20:0] MV_ADDR0=21'd1228800, MV_ADDR1=21'd1305600, MV_ADDR2=21'd1382400;
 wire [63:0] mv_metadata_sd;
+wire [63:0] mv_metadata_video;
 wire media_preloaded_sd, media_preloaded_vid;
 wire mv_visual_tgl, mv_req_tgl, mv_done_tgl, mv_failed;
 wire [31:0] mv_request_lba;
@@ -222,6 +222,7 @@ wire [3:0]  state_code;
 wire [6:0]  seg_data_0;
 
 wire        video_read_req;
+wire        video_read_req_ack_mem;
 wire        video_read_req_ack;
 wire        video_read_en;
 wire [31:0] video_read_data;
@@ -377,6 +378,7 @@ wire        play_active_sd;
 wire        paused_sd;
 wire [1:0]  play_sel_song_sd;
 wire [7:0]  play_volume_sd;
+wire        play_volume_update_sd;
 wire        play_track_step_sd;
 wire        play_track_dir_sd;
 wire [2:0]  song_total_sd;
@@ -397,10 +399,10 @@ wire [31:0] seek_frame_rem_next = seek_frame_rem - 32'd4800;
 wire [19:0] seek_frame_calc = seek_frame_calc_reg;
 wire [15:0] seek_frame_vid  = (seek_frame_calc > 20'h0FFFF) ? 16'hFFFF :
                               seek_frame_calc[15:0];
-// 播放态慢变信号 -> video 域（两级同步）
+// 播放状态位 -> video 域（两级同步）；音量通过 bundled-data CDC。
 reg         play_active_v1, play_active_v2;
 reg         paused_v1, paused_v2;
-reg  [7:0]  play_volume_v1, play_volume_v2;
+wire [7:0] play_volume_video;
 // 切曲 -> video 域时基复位（电平翻转 + 边沿检测）
 wire        play_track_tgl_sd;
 reg         play_track_tgl_v1, play_track_tgl_v2, play_track_tgl_v3;
@@ -411,8 +413,7 @@ wire [31:0] lyric_time_ms;
 // ==========================================================================
 // X1：状态反馈执行器信号
 //   X1A：LED1~4 全部在 expansion_integration（clk 域）内部接线；
-//   X1B：PCM 包络在视频域产生，精确进度在 SD 域产生，分别跨到 clk 域；
-//        KEY10 模式循环由 ui_event_bridge（clk 域）给出翻转电平；
+//   X1B：PCM 包络在视频域产生并跨到 clk 域；KEY10 在 ui_event_bridge 翻转；
 //   X1C：数码管业务 mux 与 seg_scan 同在 sd_card_clk 域；SW1 使能经 2FF 同步。
 //        数码管固定显示 MM-SS 空白 NN，SW3 不再切换诊断页。
 // ==========================================================================
@@ -420,8 +421,7 @@ wire [7:0]  x1b_level_vid;          // pcm_tap 包络
 wire        x1b_upd_tgl_vid;        // 包络更新翻转（数据已稳定后才翻转）
 reg         x1b_upd_tgl_s1, x1b_upd_tgl_s2, x1b_upd_tgl_seen;
 reg  [7:0]  pcm_level_clk;          // 包络 clk 域快照
-wire [3:0]  ws_progress_clk;        // 精确进度，独立握手跨域
-wire        ws_mode_tgl;            // KEY10 模式循环（clk 域）
+wire        ws_mode_tgl;            // KEY10 全灭/VU 切换（clk 域）
 wire [3:0]  board_sw_level_clk;     // 母板 SW1-4 消抖后电平（clk 域）
 wire        disp_mode_tgl_clk;      // 母板 KEY3(B1) 翻转电平（clk 域）
 
@@ -436,6 +436,12 @@ wire [1:0] display_song_sd = play_active_sd ? play_sel_song_sd :
 // stream_session waits 32 idle cycles before starting a generation, so the
 // extra metadata cycle settles before either WAV or MV consumes the result.
 reg [1:0] metadata_song_sd;
+reg [1:0] metadata_song_update_d;
+reg media_scan_done_update_d, media_preloaded_update_d;
+wire mv_metadata_update_sd =
+    (metadata_song_sd != metadata_song_update_d) ||
+    (media_status_sd[23] && !media_scan_done_update_d) ||
+    (media_preloaded_sd && !media_preloaded_update_d);
 wire        frw_app_rd_en;          // frame_read_write -> 仲裁器
 wire [ADDR_BITS-1:0] frw_app_rd_addr;
 wire        frw_rd_valid;           // 仲裁器 -> frame_read_write 的 Sdr_rd_en
@@ -578,6 +584,17 @@ always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
     if (!sdcard_rst_n) metadata_song_sd <= 2'd0;
     else metadata_song_sd <= display_song_sd;
 end
+always @(posedge sd_card_clk or negedge sd_media_rst_n) begin
+    if (!sd_media_rst_n) begin
+        metadata_song_update_d <= 2'd0;
+        media_scan_done_update_d <= 1'b0;
+        media_preloaded_update_d <= 1'b0;
+    end else begin
+        metadata_song_update_d <= metadata_song_sd;
+        media_scan_done_update_d <= media_status_sd[23];
+        media_preloaded_update_d <= media_preloaded_sd;
+    end
+end
 
 // S7-03：重启确认软复位（clk 域）。restart_req 触发拉低 soft_rst_n 一段时间，
 // 经 ext_rst_n 异步断言、各域 reset_sync 同步释放；计数器用外部 rst_n 复位，
@@ -605,6 +622,16 @@ end
 assign ext_rst_n = rst_n & sys_pll_lock & video_pll_lock & soft_rst_n;
 // S7-02：媒体监督器复位与域复位合并，仅复位 SD 媒体子系统（sd_card_bmp/sd_card_top）。
 assign sd_media_rst_n = sdcard_rst_n & media_sd_rst_n;
+// SD->video metadata is a bundled payload: hold the selected 64-bit record in
+// the source domain until the pixel domain captures and acknowledges it.
+cdc_bundle_latest #(.WIDTH(64)) u_mv_metadata_cdc(
+    .src_clk(sd_card_clk),.src_rst_n(sd_media_rst_n),.src_data(mv_metadata_sd),.src_update(mv_metadata_update_sd),
+    .dst_clk(video_clk),.dst_rst_n(media_video_rst_n),.dst_data(mv_metadata_video));
+// Volume changes are user-event paced, but use the same bundle contract so a
+// multi-bit step cannot be sampled as a mixed value at an audio sample edge.
+cdc_bundle_latest #(.WIDTH(8)) u_play_volume_cdc(
+    .src_clk(sd_card_clk),.src_rst_n(sd_media_rst_n),.src_data(play_volume_sd),.src_update(play_volume_update_sd),
+    .dst_clk(video_clk),.dst_rst_n(media_video_rst_n),.dst_data(play_volume_video));
 reset_sync u_media_video_reset(.clk(video_clk),
  .ext_rst_n(video_rst_n & media_sd_rst_n),.rst_n_sync(media_video_rst_n));
 always @(posedge video_clk or negedge media_video_rst_n) begin
@@ -973,6 +1000,7 @@ play_ctrl u_play_ctrl (
     .paused        (paused_sd),
     .sel_song      (play_sel_song_sd),
     .volume        (play_volume_sd),
+    .volume_update (play_volume_update_sd),
     .track_step    (play_track_step_sd),
     .track_dir     (play_track_dir_sd),
     .seek_restart_in (play_seek_restart_sd),
@@ -1325,6 +1353,12 @@ assign video_read_req_eff = (`DIAG_LOCAL_PATTERN) ? 1'b0
 // S_CHECK_FIFO（App_rd_en 拉低），读口得以安全换手。
 // 回到全屏后等一次新的读请求握手（read_req_ack）再放行，保证从整帧起点
 // 重新开始读，避免半帧错位。全屏稳态下 frw_resume 恒为 1，等价直通。
+// frame_fifo_read produces ACK in ext_mem_clk; synchronize its level before
+// either video-domain consumer observes it. The source request is held until
+// this acknowledgment is returned.
+sync_2ff u_video_read_ack_sync(
+    .clk(video_clk),.rst_n(video_rst_n),.async_in(video_read_req_ack_mem),
+    .sync_out(video_read_req_ack));
 always @(posedge video_clk or negedge video_rst_n) begin
     if (!video_rst_n)
         frw_resume <= 1'b1;
@@ -1495,7 +1529,7 @@ frame_read_write #(
 
     .read_clk          (video_clk),
     .read_req          (video_read_req_eff),
-    .read_req_ack      (video_read_req_ack),
+    .read_req_ack      (video_read_req_ack_mem),
     .read_finish       (),
     .read_addr_0       (mv_read_active ? MV_ADDR0 : BUF0_ADDR),
     .read_addr_1       (mv_read_active ? MV_ADDR1 : BUF1_ADDR),
@@ -1819,7 +1853,7 @@ wire audio_silent = boot_active || (S5_PLAY_ENABLE &&
 // 16点正弦 LUT 峰值约 12000，200/255 缩放后仍保留足够余量，避免削波爆音。
 // S5：音量改由播放态控制（KEY04/05，带饱和钳位）；暂停时压到 0 静音。
 wire [7:0] audio_volume_eff = audio_silent ? 8'd0 :
-                              (S5_PLAY_ENABLE ? play_volume_v2 : 8'd200);
+                              (S5_PLAY_ENABLE ? play_volume_video : 8'd200);
 assign audio_volume = audio_volume_eff;
 
 // S5：暂停时冻结播放器采样节拍（音频位置与歌词时基同时停住），
@@ -1983,9 +2017,9 @@ hdmi_pcm_source_bridge u_hdmi_pcm_source_bridge (
 );
 
 // ==========================================================================
-// X1B：PCM 包络只读旁路（视频域）+ 精确进度（SD 域），均不反压音频
+// X1B：PCM 包络只读旁路（视频域），不反压音频
 //   包络直接挂在最终混音（hdmi 音源）上，音量/静音/转场淡入淡出都会体现，
-//   因此不需要额外的 mute 端口；进度通过串行减法精确计算 8 等分。
+//   因此不需要额外的 mute 端口。
 // ==========================================================================
 // Faster visual envelope: roughly 85 ms full-scale release at 48 kHz.
 pcm_tap #(.DECAY_DIV(64), .DECAY_STEP(4)) u_pcm_tap (
@@ -1998,16 +2032,7 @@ pcm_tap #(.DECAY_DIV(64), .DECAY_STEP(4)) u_pcm_tap (
     .upd_tgl      (x1b_upd_tgl_vid)
 );
 
-// Progress follows the same SD-domain timeline as the numeric display.
-// It remains responsive to Seek/replay while paused, independent of PCM events.
-ws2812_progress u_ws2812_progress (
-    .src_clk(sd_card_clk), .src_rst_n(sdcard_rst_n),
-    .position(play_active_sd ? seek_cur_sample_sd : 32'd0),
-    .total(audio_file_valid ? play_total_samples : 32'd0),
-    .dst_clk(clk), .dst_rst_n(exp_rst_n), .progress(ws_progress_clk)
-);
-
-// 包络更新跨到 clk 域（板级 50 MHz）；进度使用上面的独立握手。
+// 包络更新跨到 clk 域（板级 50 MHz）。
 // 包络翻转由 pcm_tap 保证发生在数据稳定之后，50 MHz 域同步采到的一定是完整值。
 always @(posedge clk or negedge exp_rst_n) begin
     if (!exp_rst_n) begin
@@ -2105,7 +2130,7 @@ s6_video_layer #(.ENABLE(S6_VIDEO_ENABLE)) u_s6_video_layer(
  .clk(video_clk),.rst_n(media_video_rst_n),.frame_start(frame_start),
  .play_active(S5_PLAY_ENABLE && play_active_v2),.paused(paused_v2),
  .restart(play_track_restart_vid),.diagnostic(pat_mode),
- .transport_ready(stream_enable_vid[1] && !seek_frame_busy),.covers_ready(media_preloaded_vid),.metadata_async(mv_metadata_sd),.time_ms(lyric_time_ms),
+ .transport_ready(stream_enable_vid[1] && !seek_frame_busy),.covers_ready(media_preloaded_vid),.metadata_async(mv_metadata_video),.time_ms(lyric_time_ms),
  .seek_frame(seek_frame_vid),
  .visual_toggle(mv_visual_tgl),.raw_read_en(video_read_en),.out_de(de),.out_x(osd_pixel_x),
  .adjusted_de(adjusted_de),.adjusted_x(adjusted_pixel_x),.rgb_in(wave_rgb_eff),.rgb_out(s6_rgb),
@@ -2298,7 +2323,6 @@ expansion_integration #(
     // X1：状态反馈执行器接线
     .pcm_level        (pcm_level_clk),
     .mv_mode_active   (mv_read_active),
-    .ws_progress      (ws_progress_clk),
     .ws_mode_tgl      (ws_mode_tgl),
     .board_sw_level   (board_sw_level_clk),
     .disp_mode_tgl    (disp_mode_tgl_clk)
@@ -2356,7 +2380,8 @@ end
 
 // ==========================================================================
 // S5：播放态跨越 sd_card_clk -> video_clk
-//   play_active/paused/volume 都是慢变电平，直接两级同步；
+//   play_active/paused 是慢变单比特电平，使用两级同步；volume 是多位值，
+//   由 u_play_volume_cdc 以 bundled-data 握手保持原子性；
 //   track_step 是单拍事件，用"电平翻转 + 目标域边沿检测"搬过去做时基复位。
 // ==========================================================================
 always @(posedge video_clk or negedge video_rst_n) begin
@@ -2365,8 +2390,6 @@ always @(posedge video_clk or negedge video_rst_n) begin
         play_active_v2    <= 1'b0;
         paused_v1         <= 1'b0;
         paused_v2         <= 1'b0;
-        play_volume_v1    <= 8'd0;
-        play_volume_v2    <= 8'd0;
         play_track_tgl_v1 <= 1'b0;
         play_track_tgl_v2 <= 1'b0;
         play_track_tgl_v3 <= 1'b0;
@@ -2375,8 +2398,6 @@ always @(posedge video_clk or negedge video_rst_n) begin
         play_active_v2    <= play_active_v1;
         paused_v1         <= paused_sd;
         paused_v2         <= paused_v1;
-        play_volume_v1    <= play_volume_sd;
-        play_volume_v2    <= play_volume_v1;
         play_track_tgl_v1 <= play_track_tgl_sd;
         play_track_tgl_v2 <= play_track_tgl_v1;
         play_track_tgl_v3 <= play_track_tgl_v2;

@@ -44,6 +44,7 @@ module play_ctrl #(
     output reg        paused,
     output reg [1:0]  sel_song,
     output reg [7:0]  volume,
+    output reg        volume_update, // one source-clock pulse after volume changes
     output reg        track_step,     // 1 拍：请求换封面（顶层层转成 fs_next/prev）
     output reg        track_dir       // 1=下一首 0=上一首
 );
@@ -97,6 +98,8 @@ module play_ctrl #(
 
     wire [8:0] vol_up_sum = {1'b0, volume} + {1'b0, VOL_STEP};
     wire [8:0] vol_dn_sub = {1'b0, volume} - {1'b0, VOL_STEP};
+    wire [7:0] vol_up_next = (vol_up_sum > {1'b0, VOL_MAX}) ? VOL_MAX : vol_up_sum[7:0];
+    wire [7:0] vol_dn_next = ({1'b0, volume} < ({1'b0, VOL_MIN}+{1'b0,VOL_STEP})) ? VOL_MIN : vol_dn_sub[7:0];
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -104,6 +107,7 @@ module play_ctrl #(
             paused      <= 1'b0;
             sel_song    <= 2'd0;
             volume      <= VOL_DEFAULT;
+            volume_update <= 1'b0;
             track_step  <= 1'b0;
             track_dir   <= 1'b1;
             end_mode <= 2'd0;
@@ -113,6 +117,7 @@ module play_ctrl #(
             ended <= 1'b0;
         end else begin
             track_step <= 1'b0;
+            volume_update <= 1'b0;
             restart_request_int <= 1'b0;
             seek_clear <= 1'b0;
             if (mode_event) end_mode <= (end_mode == 2'd2) ? 2'd0 : end_mode + 1'b1;
@@ -163,10 +168,17 @@ module play_ctrl #(
                         end
                     end
                 end
-                if (p_up)
-                    volume <= (vol_up_sum > {1'b0, VOL_MAX}) ? VOL_MAX : vol_up_sum[7:0];
-                else if (p_dn)
-                    volume <= ({1'b0, volume} < ({1'b0, VOL_MIN}+{1'b0,VOL_STEP})) ? VOL_MIN : vol_dn_sub[7:0];
+                if (p_up) begin
+                    if (vol_up_next != volume) begin
+                        volume <= vol_up_next;
+                        volume_update <= 1'b1;
+                    end
+                end else if (p_dn) begin
+                    if (vol_dn_next != volume) begin
+                        volume <= vol_dn_next;
+                        volume_update <= 1'b1;
+                    end
+                end
             end
         end
     end

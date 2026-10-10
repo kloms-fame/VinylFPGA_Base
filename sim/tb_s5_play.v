@@ -58,6 +58,9 @@ module tb_s5_play;
     wire       pc_active, pc_paused, pc_step, pc_dir;
     wire [1:0] pc_sel;
     wire [7:0] pc_vol;
+    wire pc_vol_update;
+    reg [7:0] pc_vol_q = 0;
+    integer pc_vol_update_count = 0;
 
     play_ctrl u_pc (.stop_request(1'b0),.media_lost(1'b0),.stream_end(1'b0),.end_mode_tgl(1'b0),
         .clk(clk), .rst_n(rst_n),
@@ -65,12 +68,25 @@ module tb_s5_play;
         .enc_cw_tgl(pc_enc_cw), .enc_ccw_tgl(pc_enc_ccw), .confirm_tgl(pc_confirm),
         .key_up_tgl(pc_up), .key_down_tgl(pc_dn), .stop_tgl(pc_stop),
         .play_active(pc_active), .paused(pc_paused), .sel_song(pc_sel),
-        .volume(pc_vol), .track_step(pc_step), .track_dir(pc_dir),
+        .volume(pc_vol), .volume_update(pc_vol_update), .track_step(pc_step), .track_dir(pc_dir),
         .seek_restart_in(1'b0), .seek_clear()
     );
 
     integer step_count = 0;
     always @(posedge clk) if (rst_n && pc_step) step_count = step_count + 1;
+    always @(posedge clk) begin
+        if (!rst_n) begin
+            pc_vol_q <= pc_vol;
+            pc_vol_update_count <= 0;
+        end else begin
+            if (pc_vol_update) begin
+                if (pc_vol === pc_vol_q)
+                    $fatal(1, "FAIL volume_update asserted without a volume change");
+                pc_vol_update_count <= pc_vol_update_count + 1;
+            end
+            pc_vol_q <= pc_vol;
+        end
+    end
 
     // 1=cw 2=ccw 3=confirm 4=up 5=down 6=stop
     task toggle;
@@ -185,6 +201,7 @@ module tb_s5_play;
         check(pc_vol == 8'd32, "音量下界钳位到 VOL_MIN=32");
         for (i = 0; i < 20; i = i + 1) toggle(4);
         check(pc_vol == 8'd255, "音量上界钳位到 VOL_MAX=255");
+        check(pc_vol_update_count == 27, "volume_update 单拍覆盖每次实际变化且不重复饱和事件");
 
         toggle(6);
         check(pc_active === 1'b0, "KEY07 退出播放态");

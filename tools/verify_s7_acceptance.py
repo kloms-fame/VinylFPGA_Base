@@ -9,7 +9,7 @@ PRODUCTION_TESTS = (
     'tb_mv_audio_shared','tb_s6_video_layer','tb_sd_sector_adapter_timeout','tb_sd_card_bmp_fourbank',
     'tb_fat32_index_loader','tb_fat32_file_streamer','tb_fat32_volume_scanner',
     'tb_thumbnail_view_reader','tb_sdram_rd_arbiter','tb_s5_play','tb_expansion_s1','tb_io_startup_dip',
-    'tb_x2_seek','tb_x2_seek_wav','tb_opt_no_uart','tb_opt_osd_bypass','tb_debounce_bank','tb_debounce_monitors','tb_lrc_font_sync','tb_lrc_osd_equiv','tb_x1x2_display','tb_opt_metadata','tb_x1x2_lights','tb_ws2812_progress','tb_visual_feedback_top')
+    'tb_x2_seek','tb_x2_seek_wav','tb_opt_no_uart','tb_opt_osd_bypass','tb_debounce_bank','tb_debounce_monitors','tb_lrc_font_sync','tb_lrc_osd_equiv','tb_x1x2_display','tb_opt_metadata','tb_cdc_bundle_latest','tb_frame_read_ack_cdc','tb_ui_encoder_gap','tb_x1x2_lights','tb_ws_vu_only','tb_visual_feedback_top')
 TOP_LEVEL_TESTS = frozenset(('tb_s7_top','tb_opt_osd_bypass','tb_opt_metadata','tb_visual_feedback_top'))
 
 def is_archived_accepted(output):

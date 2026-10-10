@@ -68,7 +68,6 @@ module expansion_integration #(
     // ===================== X1：状态反馈执行器接线（clk 域）=====================
     input  wire [7:0]  pcm_level,          // X1B：PCM 包络（顶层已从视频域跨来）
     input  wire        mv_mode_active,
-    input  wire [3:0]  ws_progress,        // X1B：进度点亮颗数 0..8
     input  wire        ws_mode_tgl,        // X1B：KEY10 模式循环翻转电平
     output wire [3:0]  board_sw_level,     // X1C：母板 SW1-4 消抖后电平（上拨=1）
     output wire        disp_mode_tgl       // X1C：母板 KEY3(B1) 每按一次翻转
@@ -408,7 +407,7 @@ module expansion_integration #(
     );
 
     // ===================== X1B：WS2812 灯效执行器 =====================
-    // level/progress 由顶层从视频域以"数据 + 翻转"方式跨来（只读旁路，不反压音频）。
+    // PCM level 由顶层从视频域以"数据 + 翻转"方式跨来（只读旁路，不反压音频）。
     // KEY10 在本域翻转模式；DIP6 关闭时先补发整帧黑色再停刷新。
     ws2812_effects #(
         .PIXEL_COUNT  (8),
@@ -420,7 +419,6 @@ module expansion_integration #(
         .enable    (ws_enable),
         .mode_tgl  (ws_mode_tgl),
         .level     (pcm_level),
-        .progress  (ws_progress),
         .mute      (1'b0),          // X5 前恒 0
         .ws_data   (exp_ws2812_data)
     );
