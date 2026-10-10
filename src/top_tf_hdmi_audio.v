@@ -321,6 +321,11 @@ wire        restart_req;    // 重启确认后一拍脉冲（软复位请求）
 wire        dip2_slideshow_enable_clk;
 wire        dip2_slideshow_enable_sd;
 wire        slideshow_auto_next_sd;
+wire        slideshow_auto_switch_ack_sd;
+reg         slideshow_beep_toggle_sd;
+wire        slideshow_beep_toggle_clk;
+reg         slideshow_beep_toggle_clk_d;
+wire        slideshow_beep_event_clk = slideshow_beep_toggle_clk ^ slideshow_beep_toggle_clk_d;
 wire        slideshow_enable_sd;
 wire        brw_ev_prev_tgl;
 wire        brw_ev_next_tgl;
@@ -1212,7 +1217,7 @@ assign slideshow_enable_sd = dip2_slideshow_enable_sd && media_mount_ok_sd &&
                              display_valid && !thumb_mode_sd && !play_active_sd &&
                              (song_total_sd > 3'd1);
 slideshow_controller #(
- .CLK_FREQ_HZ(100_000_000),.PERIOD_MS(5000)
+ .CLK_FREQ_HZ(100_000_000),.PERIOD_MS(3000)
 ) u_slideshow_controller (
  .clk(sd_card_clk),.rst_n(sd_media_rst_n),.enable(slideshow_enable_sd),
  .busy(cover_busy),
@@ -1228,7 +1233,27 @@ slideshow_controller #(
  .chosen_direction(thumb_confirm_event_sd ? (thumb_focus_index_sd>=disp_buf_idx) : play_track_dir_sd),
  .transition_busy(fade_busy),.transition_commit(fade_next_event),.select_ack(sd_select_ack),
  .transition_start(fade_start_event_sd),.direction(cover_direction),
- .select_req(thumb_select_hold_sd),.select_index(thumb_select_index_hold_sd),.busy(cover_busy));
+ .select_req(thumb_select_hold_sd),.select_index(thumb_select_index_hold_sd),.busy(cover_busy),
+ .auto_switch_ack(slideshow_auto_switch_ack_sd));
+
+// Keep the event toggle across media-only resets so a reset transition cannot sound like a switch.
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+    if (!sdcard_rst_n)
+        slideshow_beep_toggle_sd <= 1'b0;
+    else if (slideshow_auto_switch_ack_sd)
+        slideshow_beep_toggle_sd <= ~slideshow_beep_toggle_sd;
+end
+
+sync_2ff u_slideshow_beep_event_sync (
+    .clk(clk), .rst_n(exp_rst_n),
+    .async_in(slideshow_beep_toggle_sd), .sync_out(slideshow_beep_toggle_clk)
+);
+always @(posedge clk or negedge exp_rst_n) begin
+    if (!exp_rst_n)
+        slideshow_beep_toggle_clk_d <= 1'b0;
+    else
+        slideshow_beep_toggle_clk_d <= slideshow_beep_toggle_clk;
+end
 // Retained observation name for existing control benches.
 assign thumb_select_pending_sd = cover_busy;
 
@@ -2331,6 +2356,7 @@ expansion_integration #(
     .mv_failed        (mv_failed_c2),
     .osd_err_valid    (merged_err_valid),
     .osd_err_code     (merged_err_code),
+    .slideshow_beep_event(slideshow_beep_event_clk),
     .ui_event_valid   (ui_event_valid),
     .ui_event_code    (ui_event_code),
     .ui_event_arg     (ui_event_arg),

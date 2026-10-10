@@ -88,6 +88,7 @@ module tb_expansion_s1;
                               .mv_failed        (1'b0),
                               .osd_err_valid    (1'b0),
                               .osd_err_code     (8'd0),
+                              .slideshow_beep_event(1'b0),
         .uart_tx          (uart_tx)
     );
 

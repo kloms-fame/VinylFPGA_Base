@@ -35,13 +35,15 @@ module buzzer_feedback #(
     input  wire       encoder_switch_source,
     input  wire       ir_event,
     input  wire [1:0] ir_action,
+    input  wire       slideshow_event,
     output reg        buzzer_n,
     output reg        busy
 );
     localparam [3:0] EV_NONE = 4'd0, EV_STEP = 4'd1, EV_KEY = 4'd2,
-                     EV_DIP = 4'd3, EV_IR = 4'd4, EV_SWITCH = 4'd5;
+                     EV_DIP = 4'd3, EV_IR = 4'd4, EV_SWITCH = 4'd5,
+                     EV_AUTO = 4'd6;
 
-    reg key_d, dip_d, step_d, switch_d, ir_d;
+    reg key_d, dip_d, step_d, switch_d, ir_d, slideshow_d;
     reg [3:0] current_event;
     reg dip_target_latched, dip_second_phase;
     reg [31:0] half_period_cycles, duration_cycles;
@@ -52,7 +54,9 @@ module buzzer_feedback #(
     wire step_rise   = encoder_step && !step_d;
     wire switch_rise = encoder_switch && !switch_d;
     wire ir_rise     = ir_event && !ir_d;
-    wire [3:0] requested_event = switch_rise ? EV_SWITCH :
+    wire slideshow_rise = slideshow_event && !slideshow_d;
+    wire [3:0] requested_event = slideshow_rise ? EV_AUTO :
+                                  switch_rise ? EV_SWITCH :
                                   ir_rise ? EV_IR :
                                   dip_rise ? EV_DIP :
                                   key_rise ? EV_KEY :
@@ -61,18 +65,19 @@ module buzzer_feedback #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             buzzer_n <= 1'b1; busy <= 1'b0; current_event <= EV_NONE;
-            key_d <= 1'b0; dip_d <= 1'b0; step_d <= 1'b0; switch_d <= 1'b0; ir_d <= 1'b0;
+            key_d <= 1'b0; dip_d <= 1'b0; step_d <= 1'b0; switch_d <= 1'b0;
+            ir_d <= 1'b0; slideshow_d <= 1'b0;
             dip_target_latched <= 1'b0; dip_second_phase <= 1'b0;
             half_period_cycles <= 32'd1; duration_cycles <= 32'd1;
             half_period_count <= 32'd0; duration_count <= 32'd0;
         end else if (!sound_enable) begin
             key_d <= key_press; dip_d <= dip_change; step_d <= encoder_step;
-            switch_d <= encoder_switch; ir_d <= ir_event;
+            switch_d <= encoder_switch; ir_d <= ir_event; slideshow_d <= slideshow_event;
             buzzer_n <= 1'b1; busy <= 1'b0; current_event <= EV_NONE;
             dip_second_phase <= 1'b0; half_period_count <= 32'd0; duration_count <= 32'd0;
         end else if ((requested_event != EV_NONE) && ((!busy) || (requested_event > current_event))) begin
             key_d <= key_press; dip_d <= dip_change; step_d <= encoder_step;
-            switch_d <= encoder_switch; ir_d <= ir_event;
+            switch_d <= encoder_switch; ir_d <= ir_event; slideshow_d <= slideshow_event;
             buzzer_n <= 1'b0; busy <= 1'b1; current_event <= requested_event;
             dip_target_latched <= dip_target; dip_second_phase <= 1'b0;
             half_period_count <= 32'd0; duration_count <= 32'd0;
@@ -80,6 +85,10 @@ module buzzer_feedback #(
                 EV_SWITCH: begin
                     half_period_cycles <= encoder_switch_source ? EC2_SWITCH_HALF_PERIOD_CYCLES : EC1_SWITCH_HALF_PERIOD_CYCLES;
                     duration_cycles <= ENCODER_SWITCH_DURATION_CYCLES;
+                end
+                EV_AUTO: begin
+                    half_period_cycles <= 6_250; // 50 MHz / (2 * 4 kHz)
+                    duration_cycles <= 600_000; // 12 ms at 50 MHz
                 end
                 EV_IR: begin
                     case (ir_action)
@@ -108,7 +117,7 @@ module buzzer_feedback #(
             endcase
         end else if (busy) begin
             key_d <= key_press; dip_d <= dip_change; step_d <= encoder_step;
-            switch_d <= encoder_switch; ir_d <= ir_event;
+            switch_d <= encoder_switch; ir_d <= ir_event; slideshow_d <= slideshow_event;
             if ((duration_cycles <= 1) || (duration_count >= duration_cycles - 1'b1)) begin
                 if ((current_event == EV_DIP) && !dip_second_phase) begin
                     buzzer_n <= 1'b0; dip_second_phase <= 1'b1;
@@ -128,7 +137,8 @@ module buzzer_feedback #(
             end
         end else begin
             key_d <= key_press; dip_d <= dip_change; step_d <= encoder_step;
-            switch_d <= encoder_switch; ir_d <= ir_event; buzzer_n <= 1'b1;
+            switch_d <= encoder_switch; ir_d <= ir_event; slideshow_d <= slideshow_event;
+            buzzer_n <= 1'b1;
         end
     end
 endmodule

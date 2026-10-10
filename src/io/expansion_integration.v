@@ -50,6 +50,7 @@ module expansion_integration #(
     input  wire        mv_failed,          // MV 取帧失败电平
     input  wire        osd_err_valid,      // 错误码变化单拍脉冲
     input  wire [7:0]  osd_err_code,       // 已同步错误码
+    input  wire        slideshow_beep_event, // D1：自动 bank 确认后的单拍事件
 
     // ===================== S3：选曲事件出口（S7-03 起由 ui_command_router 净化后输出）=====================
     // 原为 ui_event_bus 单拍事件流；S7-03 起改为 ui_command_router 的"业务命令流"
@@ -383,6 +384,7 @@ module expansion_integration #(
         .encoder_switch_source (encoder_switch_source_any),
         .ir_event              (ir_event & ~ir_repeat_event & dip_level[4]),
         .ir_action             (2'd0),
+        .slideshow_event       (slideshow_beep_event),
         .buzzer_n              (board_buzzer_n),
         .busy                  ()
     );

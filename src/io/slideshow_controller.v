@@ -1,10 +1,10 @@
 `ifndef EXP_SLIDESHOW_CONTROLLER_V
 `define EXP_SLIDESHOW_CONTROLLER_V
-// Five-second picture rotation scheduler in the 100 MHz SD domain.
+// Picture rotation scheduler in the 100 MHz SD domain.
 // It only requests a step; cover_navigation owns selection and transition I/O.
 module slideshow_controller #(
     parameter integer CLK_FREQ_HZ = 100_000_000,
-    parameter integer PERIOD_MS = 5000
+    parameter integer PERIOD_MS = 3000
 ) (
     input  wire clk,
     input  wire rst_n,

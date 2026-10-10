@@ -49,7 +49,7 @@ module tb_slideshow_top;
         .transition_busy(transition_busy), .transition_commit(transition_commit),
         .select_ack(select_ack), .transition_start(nav_start),
         .direction(nav_direction), .select_req(select_req),
-        .select_index(select_index), .busy(nav_busy)
+        .select_index(select_index), .busy(nav_busy), .auto_switch_ack()
     );
 
     // Model the existing transition + select acknowledgement contract.

@@ -29,7 +29,7 @@ module tb_s7_switch;
  cover_navigation nav(.clk(clk),.rst_n(rst),.ready(ready),.count(3'd4),.displayed(displayed),
  .next_step(nxt),.prev_step(prev),.choose(choose),.chosen(chosen),.chosen_direction(1'b0),.transition_busy(txbusy),
  .transition_commit(commit),.select_ack(ack),.transition_start(txstart),.direction(dir),
- .select_req(select_req),.select_index(select_index),.busy(busy));
+ .select_req(select_req),.select_index(select_index),.busy(busy),.auto_switch_ack());
  video_fade_transition #(.FADE_FRAMES(16)) fx(.ctrl_clk(clk),.ctrl_rst_n(rst),
  .next_event_in(txstart),.direction_in(dir),.effect_mode(mode),.next_event_out(commit),.fade_busy(txbusy),
  .pix_clk(pix),.pix_rst_n(rst),.player_active(1'b1),.frame_start(frame),.index_commit(index_commit),

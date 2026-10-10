@@ -65,6 +65,7 @@ module tb_s3_browse_integration;
         .exp_enc2_b      (exp_enc2_b),
         .exp_enc2_sw_n   (exp_enc2_sw_n),
         .exp_ir_rx       (exp_ir_rx),
+        .slideshow_beep_event (1'b0),
 
 
         .key3            (key3),
