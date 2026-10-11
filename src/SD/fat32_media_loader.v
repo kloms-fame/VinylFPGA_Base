@@ -221,7 +221,6 @@ module fat32_media_loader #(
     // Only counts the 54-byte BMP header: the state exits at byte 53.
     // File offsets and dynamic image dimensions retain their full width.
     reg [5:0]  header_byte_cnt;
-    reg [31:0] pixel_byte_cnt;
     reg [31:0] pixel_count;
     reg [2:0]  rgb_byte_cnt;
 
@@ -707,7 +706,6 @@ module fat32_media_loader #(
             bit_count <= 16'd0;
             compression <= 32'd0;
             header_byte_cnt <= 6'd0;
-            pixel_byte_cnt <= 32'd0;
             pixel_count <= 32'd0;
             rgb_byte_cnt <= 3'd0;
             expected_pixel_count_q <= 32'd0;
@@ -748,7 +746,6 @@ module fat32_media_loader #(
                     write_req <= 1'b1;
                     load_state <= LD_WAIT_WRITE;
                     header_byte_cnt <= 6'd0;
-                    pixel_byte_cnt <= 32'd0;
                     pixel_count <= 32'd0;
                     rgb_byte_cnt <= 3'd0;
                     // S7-04：几何常量在加载请求被接受时就一次算定。
@@ -809,7 +806,6 @@ module fat32_media_loader #(
 
                 if (header_byte_cnt == 6'd53) begin
                     if (header_valid) begin
-                        pixel_byte_cnt <= data_offset;
                         rgb_byte_cnt <= 3'd0;
                         load_state <= LD_DATA;
                     end else begin
@@ -824,11 +820,13 @@ module fat32_media_loader #(
 
             // 4. 跳过 BMP 数据偏移，然后 BGR -> RGB。
             if (streamer_valid && (load_state == LD_DATA)) begin
-                // 进入 LD_DATA 时 pixel_byte_cnt 已载入 data_offset，因此
-                // “跳过头部”分支在该状态下不再可达；header_valid 又已保证
-                // file_len >= pixel_end，故逐字节仅需判断 pixel_end 上界。
-                // 这保留原行为，同时从 100 MHz 域移除两段冗余 32 位比较。
-                if (pixel_byte_cnt < pixel_end) begin
+                // 字节消费上界改用 pixel_count 守卫：pixel_count 在本状态
+                // 外保持清零、进入前已复位，且只在本分支内每 3 字节加一，
+                // 故“已消费字节数 N”与 pixel_count 恒有 N=3*pixel_count+r。
+                // 于是 pixel_count < expected_pixel_count 与原
+                // pixel_byte_cnt < pixel_end 逐拍等价（N<3P 当且仅当
+                // floor(N/3)<P），同时去掉一个 32 位字节计数器及其自增。
+                if (pixel_count < expected_pixel_count) begin
                     case (rgb_byte_cnt)
                         3'd0: begin
                             bmp_data[7:0] <= streamer_byte;
@@ -846,7 +844,6 @@ module fat32_media_loader #(
                         end
                         default: rgb_byte_cnt <= 3'd0;
                     endcase
-                    pixel_byte_cnt <= pixel_byte_cnt + 32'd1;
                 end
             end
 
