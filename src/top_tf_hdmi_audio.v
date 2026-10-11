@@ -153,7 +153,7 @@ parameter integer BOOT_TIMEOUT_MS = 8000;
 parameter S3_J2_BROWSE_ENABLE = 1'b1;
 
 // ===================== S5：音频播放与歌词渲染 =====================
-// S5_PLAY_ENABLE=1：缩略图确认曲目后进入播放态，音频/歌词只在该状态推进；
+// S5_PLAY_ENABLE=1：确认中央封面后进入播放态，音频/歌词只在该状态推进；
 //                   EC1 按压暂停/恢复、播放中 EC1 旋转 Seek、KEY04/05 音量。
 // =0：整层旁路，音频回到 S0~S4 的"扫描完成即播放"行为（回滚开关）。
 parameter S5_PLAY_ENABLE = 1'b1;
@@ -169,8 +169,6 @@ wire [1:0] mv_request_bank, mv_write_bank, mv_read_bank;
 wire mv_writer_active,mv_write_req,mv_pixel_valid;
 wire mv_writer_mem;
 wire frw_write_busy;
-reg [5:0] mv_thumb_drain;
-wire mv_thumb_read_busy;
 wire [31:0] mv_pixel_data;
 wire mv_sec_req,mv_sec_busy,mv_sec_valid,mv_sec_done;
 wire [31:0] mv_sec_lba;
@@ -276,55 +274,14 @@ wire [ADDR_BITS-1:0] App_wr_addr;
 wire [MEM_DATA_BITS-1:0] App_wr_din;
 wire [3:0] App_wr_dm;
 
-// ===================== 第十三/十五讲：图片缩略图与交互选择 =====================
-// 第十五讲在第十三讲取像链路上增加 thumbnail_controller。控制器位于
-// sd_card_clk 域，只负责 view_mode/focus_index/active_index/transition_req；
-// 视频域仍在 frame_start 整帧提交，避免像素链路半帧换图。
-
-wire        thumb_mode_sd;          // thumbnail_controller 输出（sd 域）
-wire [1:0]  thumb_focus_index_sd;
-wire [1:0]  thumb_active_index_sd;
-wire        thumb_transition_req_sd;
-wire        thumb_confirm_event_sd;
-
-wire        key_next_request_sd;    // 全屏模式 KEY1 短按：下一张
 wire        fade_start_event_sd;    // 送 video_fade_transition 的淡出请求
 
-wire        thumb_select_pending_sd;
-wire        thumb_select_hold_sd;
-wire [1:0]  thumb_select_index_hold_sd;
-wire        thumb_select_req_sd;
-wire [1:0]  thumb_select_index_sd;
+wire        cover_select_req_sd;
+wire [1:0]  cover_select_index_sd;
 wire        sd_select_ack;
 
-reg         frame_start_toggle_vid;
-reg  [2:0]  frame_start_tgl_sd;
-wire        frame_start_sd;
-
-reg         view_mode_sd_sync1;
-reg         view_mode_sd_sync2;
-reg         view_mode_frame;
-wire        thumb_view;
-
-reg  [1:0]  thumb_focus_sync1;
-reg  [1:0]  thumb_focus_sync2;
-reg  [1:0]  thumb_focus_frame;
-
 wire [3:0]  image_ready_sd;         // sd_card_clk 域：四个 bank 就绪标记
-reg  [3:0]  image_ready_sync1;
-reg  [3:0]  image_ready_sync2;      // video 域：缩略图 image_complete
-
-wire        thumb_active;           // 当前像素属于缩略图区域
-wire [23:0] thumb_rgb;              // 缩略图像素（含焦点边框色）
-wire        thumb_focus_border;
-wire        thumb_line_mismatch;    // 行首一致性校验失败（可上 ILA 观察）
-wire [23:0] view_rgb;               // 叠加缩略图之后的像素源
-
-wire        thumb_rd_req;
-wire [ADDR_BITS-1:0] thumb_rd_addr;
-wire        thumb_rd_valid;
-wire [31:0] thumb_rd_dout;
-wire        thumb_mem_enable;       // mem 域：缩略图取像允许发请求
+wire [23:0] view_rgb;               // 播放 MV 遮罩后的像素源
 
 // ===================== S2：开机 Logo/启动画面 =====================
 // 事件握手：ui_ev_valid（clk 域单拍）-> 翻转电平 -> video 域同步/边沿检测。
@@ -364,7 +321,7 @@ wire        brw_ev_next_tgl;
 wire        brw_ev_confirm_tgl;
 wire        brw_ev_mode_tgl;
 wire brw_ev_home_tgl,brw_ev_effect_tgl,brw_ev_end_mode_tgl;
-wire brw_play_start,brw_play_stop,brw_go_home;
+wire brw_play_start,brw_play_stop;
 wire [1:0] play_end_mode;
 wire play_restart_request,cover_busy,cover_direction;
 wire wav_reader_idle,wav_sample_consumed;
@@ -413,10 +370,6 @@ assign ec2_control_enable = media_ready_clk_sync[1] &&
 // sd 域：browse_fsm 还原/路由出的控制脉冲。
 wire        brw_fs_next;        // 全屏：下一张
 wire        brw_fs_prev;        // 全屏：上一张
-wire        brw_thumb_right;    // 缩略图：焦点 +1
-wire        brw_thumb_left;     // 缩略图：焦点 -1
-wire        brw_thumb_confirm;  // 缩略图：确认
-wire        brw_thumb_mode;     // 进入/退出缩略图
 // S5：播放控制额外事件（clk 域 toggle）
 wire        brw_ev_enc_cw_tgl;
 wire        brw_ev_enc_ccw_tgl;
@@ -519,8 +472,7 @@ reg [1:0] sd_sw1_sync;
 wire [3:0] fault_flags_clk;
 
 wire [7:0] seg_biz_0,seg_biz_1,seg_biz_2,seg_biz_3,seg_biz_4,seg_biz_5,seg_biz_6,seg_biz_7;
-wire [1:0] display_song_sd = play_active_sd ? play_sel_song_sd :
-                             (thumb_mode_sd ? thumb_focus_index_sd : disp_buf_idx);
+wire [1:0] display_song_sd = play_active_sd ? play_sel_song_sd : disp_buf_idx;
 // Isolate view/focus selection from the indexed cluster/length arithmetic.
 // stream_session waits 32 idle cycles before starting a generation, so the
 // extra metadata cycle settles before either WAV or MV consumes the result.
@@ -535,13 +487,7 @@ wire mv_metadata_update_sd =
     (metadata_song_sd != metadata_song_update_d) ||
     (media_status_sd[23] && !media_scan_done_update_d) ||
     (media_preloaded_sd && !media_preloaded_update_d);
-wire        frw_app_rd_en;          // frame_read_write -> 仲裁器
-wire [ADDR_BITS-1:0] frw_app_rd_addr;
-wire        frw_rd_valid;           // 仲裁器 -> frame_read_write 的 Sdr_rd_en
-wire        rd_arb_mode_active;     // 1=缩略图取像占用 SDRAM 读口
-wire        rd_arb_mem_idle;        // 1=读口无待切换
-wire        frw_read_en_gated;      // 帧读 FIFO 消费使能（缩略图模式下关断）
-reg         frw_resume;             // 回到全屏后等一次新的帧读握手再放行
+wire        frw_read_en_gated;
 
 wire hs_0;
 wire vs_0;
@@ -1076,8 +1022,8 @@ sd_card_bmp #(
     // 切图统一经过转场控制器与 select_req 握手。
     .next_event        (1'b0),
     .prev_event        (1'b0),
-    .select_req        (thumb_select_req_sd),
-    .select_index      (thumb_select_index_sd),
+    .select_req        (cover_select_req_sd),
+    .select_index      (cover_select_index_sd),
     .select_ack        (sd_select_ack),
     .state_code        (state_code),
     .bmp_width         (16'd640),
@@ -1150,17 +1096,6 @@ media_supervisor #(
     .media_err_toggle(media_err_toggle)
 );
 
-// 第十讲：KEY1外部消抖后送转场控制器，避免被sd_card_bmp内部硬切逻辑抢先响应。
-// 第十三讲：换成“短按/长按判别”版本。
-//   - 短按（松开时）仍输出 next 脉冲，行为等价原来的 KEY1“下一张”；
-//   - 长按 1s 输出 hold 脉冲，用于切换“缩略图 / 全屏”视图，且不会同时触发
-//     下一张。KEY2 的消抖模块仍用原 key_press_debounce，行为完全不变。
-
-
-// 第十五讲：KEY2 短/长按判别只用于缩略图模式（左移/确认）；全屏模式下
-// KEY2 仍原样直通 sd_card_bmp，自动轮播开关和长按上一张保持不变。
-
-
 // S5：可播放曲目数 = 已就绪 bank 数（索引模式下等于索引曲目数）
 assign song_total_sd = {2'b0, image_ready_sd[0]} + {2'b0, image_ready_sd[1]} +
                        {2'b0, image_ready_sd[2]} + {2'b0, image_ready_sd[3]};
@@ -1170,8 +1105,8 @@ play_ctrl u_play_ctrl (
     .clk           (sd_card_clk),
     .rst_n         (sdcard_rst_n),
     .song_total    (song_total_sd),
-    .song_confirm  (thumb_confirm_event_sd || (brw_play_start && media_mount_ok_sd && !cover_busy)),
-    .focus_index   (thumb_confirm_event_sd ? thumb_focus_index_sd : disp_buf_idx),
+    .song_confirm  (brw_play_start && media_mount_ok_sd && !cover_busy),
+    .focus_index   (disp_buf_idx),
     .enc_cw_tgl    (brw_ev_enc_cw_tgl),
     .enc_ccw_tgl   (brw_ev_enc_ccw_tgl),
     .confirm_tgl   (brw_ev_confirm_tgl),
@@ -1314,18 +1249,10 @@ stream_session u_stream_session(
  .enable(stream_enable_sd),.start_toggle(play_track_tgl_sd));
 assign audio_play_enable_gated = S5_PLAY_ENABLE ? stream_enable_sd : audio_play_enable;
 
-// 全屏下一张来自 J2 浏览事件或播放结束策略。
-// browse_fsm 已按 view_mode 拆好：缩略图态走 brw_thumb_right，不会在此重复触发。
-assign key_next_request_sd   = brw_fs_next | play_fs_next_sd;
-// 缩略图确认来自 J2 EC1 按压/KEY02。
-// Reject unavailable/busy selections before either playback or display accepts them.
-assign thumb_confirm_event_sd = brw_thumb_confirm && image_ready_sd[thumb_focus_index_sd] &&
-                                media_mount_ok_sd && !cover_busy && !brw_go_home;
-assign thumb_select_req_sd   = thumb_select_hold_sd;
-assign thumb_select_index_sd = thumb_select_index_hold_sd;
+// 中央大图的下一张来自 J2 浏览事件或播放结束策略。
 
 // S3：选曲事件适配层（sd_card_clk 域）。事件侧(clk 域 toggle)在此同步/边沿还原，
-// 按当前视图路由成主链路可消费的控制脉冲。
+// 方向事件始终浏览中央大图；KEY7/KEY11 在播放态均返回选曲页。
 browse_fsm #(
     .J2_BROWSE_ENABLE (S3_J2_BROWSE_ENABLE)
 ) u_browse_fsm (
@@ -1338,52 +1265,10 @@ browse_fsm #(
     .ev_home_tgl     (brw_ev_home_tgl),
     .play_start      (brw_play_start),
     .play_stop       (brw_play_stop),
-    .go_home         (brw_go_home),
-    .view_mode       (thumb_mode_sd),
     .mode_play       (play_active_sd),
     .fs_next         (brw_fs_next),
-    .fs_prev         (brw_fs_prev),
-    .thumb_right     (brw_thumb_right),
-    .thumb_left      (brw_thumb_left),
-    .thumb_confirm   (brw_thumb_confirm),
-    .thumb_mode      (brw_thumb_mode)
+    .fs_prev         (brw_fs_prev)
 );
-
-// 教程 thumbnail_controller：控制域按键 -> view/focus/active/transition_req。
-// S3 后输入来自 browse_fsm：全屏 EC1/方向键切换、缩略图 EC1 移动焦点、
-// EC1 按压/KEY02 确认、KEY07 进出缩略图。
-thumbnail_controller u_thumbnail_controller (
-    .clk             (sd_card_clk),
-    .rst_n           (sdcard_rst_n),
-    .key_right       (brw_thumb_right),
-    .key_left        (brw_thumb_left),
-    .key_confirm     (thumb_confirm_event_sd),
-    .key_mode        (brw_thumb_mode && media_mount_ok_sd),
-    .go_home         (brw_go_home || play_media_lost_sd),
-    .image_complete  (image_ready_sd),
-    .frame_start     (frame_start_sd),
-    .view_mode       (thumb_mode_sd),
-    .focus_index     (thumb_focus_index_sd),
-    .active_index    (thumb_active_index_sd),
-    .transition_req  (thumb_transition_req_sd)
-);
-
-// video 域 frame_start 单拍 -> sd 域单拍，供 controller 在帧边界提交转场请求。
-always @(posedge video_clk or negedge video_rst_n) begin
-    if (!video_rst_n)
-        frame_start_toggle_vid <= 1'b0;
-    else if (frame_start)
-        frame_start_toggle_vid <= ~frame_start_toggle_vid;
-end
-
-always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
-    if (!sdcard_rst_n)
-        frame_start_tgl_sd <= 3'b000;
-    else
-        frame_start_tgl_sd <= {frame_start_tgl_sd[1:0], frame_start_toggle_vid};
-end
-
-assign frame_start_sd = frame_start_tgl_sd[2] ^ frame_start_tgl_sd[1];
 
 
 // Accumulate desired bank while a previous transition is in flight.
@@ -1392,7 +1277,7 @@ sync_2ff u_slideshow_dip2_sync (
  .clk(sd_card_clk),.rst_n(sdcard_rst_n),
  .async_in(dip2_slideshow_enable_clk),.sync_out(dip2_slideshow_enable_sd));
 assign slideshow_enable_sd = dip2_slideshow_enable_sd && media_mount_ok_sd &&
-                             display_valid && !thumb_mode_sd && !play_active_sd &&
+                             display_valid && !play_active_sd &&
                              (song_total_sd > 3'd1);
 slideshow_controller #(
  .CLK_FREQ_HZ(100_000_000)
@@ -1407,12 +1292,12 @@ slideshow_controller #(
  .clk(sd_card_clk),.rst_n(sd_media_rst_n),.ready(media_mount_ok_sd),
  .count(song_total_sd),.displayed(disp_buf_idx),
  .next_step(brw_fs_next),.prev_step(brw_fs_prev),.auto_next(slideshow_auto_next_sd),
- .choose(thumb_confirm_event_sd || play_track_step_sd),
- .chosen(thumb_confirm_event_sd ? thumb_focus_index_sd : play_sel_song_sd),
- .chosen_direction(thumb_confirm_event_sd ? (thumb_focus_index_sd>=disp_buf_idx) : play_track_dir_sd),
+ .choose(play_track_step_sd),
+ .chosen(play_sel_song_sd),
+ .chosen_direction(play_track_dir_sd),
  .transition_busy(fade_busy),.transition_commit(fade_next_event),.select_ack(sd_select_ack),
  .transition_start(fade_start_event_sd),.direction(cover_direction),
- .select_req(thumb_select_hold_sd),.select_index(thumb_select_index_hold_sd),.busy(cover_busy),
+ .select_req(cover_select_req_sd),.select_index(cover_select_index_sd),.busy(cover_busy),
  .auto_switch_ack(slideshow_auto_switch_ack_sd));
 
 // Keep the event toggle across media-only resets so a reset transition cannot sound like a switch.
@@ -1433,9 +1318,6 @@ always @(posedge clk or negedge exp_rst_n) begin
     else
         slideshow_beep_toggle_clk_d <= slideshow_beep_toggle_clk;
 end
-// Retained observation name for existing control benches.
-assign thumb_select_pending_sd = cover_busy;
-
 video_fade_transition #(
     .FADE_FRAMES (8)
 ) u_video_fade_transition (
@@ -1535,63 +1417,31 @@ seg_scan #(.CLK_FREQ(100_000_000)) seg_scan_m0(
 wire        video_read_req_eff;
 reg  [23:0] local_pattern_rgb;
 
-// ===================== 第十三/十五讲：缩略图/全屏视图切换 =====================
-// controller 的 view_mode/focus_index 位于 sd_card_clk 域；两级同步后只在
-// frame_start 整帧提交，避免半帧切换坐标或焦点边框造成撕裂。
+// 播放页波形可见性在帧边界提交，避免画面叠加状态半帧变化。
 always @(posedge video_clk or negedge video_rst_n) begin
     if (!video_rst_n) begin
-        view_mode_sd_sync1 <= 1'b0;
-        view_mode_sd_sync2 <= 1'b0;
-        view_mode_frame    <= 1'b0;
         waveform_enable_frame <= 1'b0;
-        thumb_focus_sync1  <= 2'd0;
-        thumb_focus_sync2  <= 2'd0;
-        thumb_focus_frame  <= 2'd0;
     end else begin
-        view_mode_sd_sync1 <= thumb_mode_sd;
-        view_mode_sd_sync2 <= view_mode_sd_sync1;
-        thumb_focus_sync1  <= thumb_focus_index_sd;
-        thumb_focus_sync2  <= thumb_focus_sync1;
-
         if (frame_start) begin
-            view_mode_frame   <= view_mode_sd_sync2;
             // Commit visibility with the view, including cached bars/baseline.
             waveform_enable_frame <= audio_play_enable_sync2 &&
-                                     play_active_v2 && !view_mode_sd_sync2;
-            thumb_focus_frame <= thumb_focus_sync2;
+                                     play_active_v2;
         end
     end
 end
 
-// 诊断模式（DIAG_SDRAM_PATTERN）下保持原行为，缩略图视图强制关闭。
-assign thumb_view = view_mode_frame & ~pat_mode;
-
 // 实验B 切断 SDRAM 帧读；诊断D 在自检图案落盘前也不发帧读请求。
-// 第十三讲：缩略图视图下同样不发整帧读请求，把 SDRAM 读口让给按坐标取像。
 assign video_read_req_eff = (`DIAG_LOCAL_PATTERN) ? 1'b0
                           : (pat_read_gate_req ? 1'b0
-                          : (thumb_view ? 1'b0 : s6_frame_read_req));
+                           : s6_frame_read_req);
 
-// 缩略图模式关断帧读 FIFO 的消费使能，使 frame_fifo_read 填满后停在
-// S_CHECK_FIFO（App_rd_en 拉低），读口得以安全换手。
-// 回到全屏后等一次新的读请求握手（read_req_ack）再放行，保证从整帧起点
-// 重新开始读，避免半帧错位。全屏稳态下 frw_resume 恒为 1，等价直通。
-// frame_fifo_read produces ACK in ext_mem_clk; synchronize its level before
-// either video-domain consumer observes it. The source request is held until
-// this acknowledgment is returned.
+// frame_read_write is the sole SDRAM read client; retain its request ACK CDC for
+// the video layer's request handshake.
 sync_2ff u_video_read_ack_sync(
     .clk(video_clk),.rst_n(video_rst_n),.async_in(video_read_req_ack_mem),
     .sync_out(video_read_req_ack));
-always @(posedge video_clk or negedge video_rst_n) begin
-    if (!video_rst_n)
-        frw_resume <= 1'b1;
-    else if (thumb_view)
-        frw_resume <= 1'b0;
-    else if (video_read_req_ack)
-        frw_resume <= 1'b1;
-end
 
-assign frw_read_en_gated = video_read_en & frw_resume & mv_fifo_read_allowed;
+assign frw_read_en_gated = video_read_en & mv_fifo_read_allowed;
 
 // 8~10 段竖彩条：大块纯色区域最容易暴露单像素彩点。
 always @(*) begin
@@ -1640,12 +1490,8 @@ assign vout_data = (`DIAG_LOCAL_PATTERN) ? local_pattern_rgb
                  : (pat_bad ? 24'hff_00_ff
                             : (display_ok ? vout_data_raw : 24'd0));
 
-// 第十三讲：缩略图视图只是个像素级替换层——
-//   - 缩略图区域内显示按坐标取回的源图像素（含焦点边框色）；
-//   - 其余区域输出黑（与教程 thumbnail_layout 的 thumb_de 语义一致）；
-//   - 完全不碰 de/vs 节拍，也不影响 HDMI 音频数据岛调度。
-assign view_rgb = thumb_view ? (thumb_active ? thumb_rgb : 24'd0)
-                             : ((mv_read_active && !mv_window_visible) ? 24'd0 : vout_data);
+// MV 未覆盖的像素显示中央封面；保持像素和 HDMI 时序链不变。
+assign view_rgb = (mv_read_active && !mv_window_visible) ? 24'd0 : vout_data;
 
 // ===================== 第九讲：OSD状态字幕叠加 =====================
 // OSD 紧跟在黑屏屏蔽之后、video_rgb_to_axis 之前，纯组合替换像素，
@@ -1705,13 +1551,13 @@ assign osd_rgb_out = (!display_valid_sync2 && media_err_code_frame != 0) ? 24'h2
 
 frame_read_write #(
     .DYNAMIC_LINEAR   (1),
-    .EXTERNAL_READ_BUSY(S6_VIDEO_ENABLE),
+    .EXTERNAL_READ_BUSY(0),
     .WRITE_V_FLIP     (1),
     .FRAME_WIDTH      (640),
     .FRAME_HEIGHT     (480)
 ) frame_read_write_m0(
     .linear_write      (mv_writer_active),
-    .external_read_busy(mv_thumb_read_busy),
+    .external_read_busy(1'b0),
     .app_write_busy    (frw_write_busy),
     .mem_clk           (ext_mem_clk),
     .rst               (~mem_rst_n),
@@ -1719,11 +1565,10 @@ frame_read_write #(
     .Sdr_init_ref_vld  (Sdr_init_ref_vld),
     .Sdr_busy          (Sdr_busy),
 
-    // 第十三讲：帧读请求先送 sdram_rd_arbiter，再由仲裁器与缩略图取像
-    // 二选一驱动 SDRAM 的唯一只读口。全屏模式下该仲裁器是纯组合直通。
-    .App_rd_en         (frw_app_rd_en),
-    .App_rd_addr       (frw_app_rd_addr),
-    .Sdr_rd_en         (frw_rd_valid),
+    // 中央封面/MV 共用 frame_read_write 顺序读口，直接连接 SDRAM。
+    .App_rd_en         (App_rd_en),
+    .App_rd_addr       (App_rd_addr),
+    .Sdr_rd_en         (Sdr_rd_en),
     .Sdr_rd_dout       (Sdr_rd_dout),
 
     .read_clk          (video_clk),
@@ -1773,100 +1618,6 @@ sdram U3(
     .App_rd_addr       (App_rd_addr),
     .Sdr_rd_en         (Sdr_rd_en),
     .Sdr_rd_dout       (Sdr_rd_dout)
-);
-
-// ===================== 第十三讲：缩略图取像与 SDRAM 读口换手 =====================
-// 一、把 sd_card_bmp 的 bank 就绪标记同步到 video 域，作为 thumbnail_layout
-//     的 image_complete。四位标记每次只置一位，两拍同步即可。
-always @(posedge video_clk or negedge video_rst_n) begin
-    if (!video_rst_n) begin
-        image_ready_sync1 <= 4'd0;
-        image_ready_sync2 <= 4'd0;
-    end else begin
-        image_ready_sync1 <= image_ready_sd;
-        image_ready_sync2 <= image_ready_sync1;
-    end
-end
-
-// 二、读口仲裁器：全屏模式下 app_rd_en/app_rd_addr/frw_rd_valid 都是纯组合
-//     直通，和改动前完全一致；只在缩略图视图下把读口交给取像引擎。
-sdram_rd_arbiter #(
-    .ADDR_WIDTH   (ADDR_BITS),
-    .QUIET_CYCLES (64)
-) u_sdram_rd_arbiter (
-    .clk            (ext_mem_clk),
-    .rst            (~mem_rst_n),
-    .view_mode_req  (thumb_view),
-
-    .frw_rd_en      (frw_app_rd_en),
-    .frw_rd_addr    (frw_app_rd_addr),
-    .frw_rd_valid   (frw_rd_valid),
-
-    .thumb_rd_req   (thumb_rd_req),
-    .thumb_rd_addr  (thumb_rd_addr),
-    .thumb_rd_valid (thumb_rd_valid),
-    .thumb_rd_dout  (thumb_rd_dout),
-
-    .app_rd_en      (App_rd_en),
-    .app_rd_addr    (App_rd_addr),
-    .sdr_rd_en      (Sdr_rd_en),
-    .sdr_rd_dout    (Sdr_rd_dout),
-
-    .mode_active    (rd_arb_mode_active),
-    .mem_idle       (rd_arb_mem_idle)
-);
-
-// 三、缩略图取像引擎：教程 thumbnail_layout 只做坐标映射，这里按第八讲
-//     media_frame_reader 的职责边界补一个“按坐标取一个像素”的读取器。
-//     enable=0（全屏）时其内部 FIFO 持续复位，不占用 SDRAM 读口。
-// 第十二讲 78dbb17 的彩点修复已经证明：SDRAM 读口不能在
-// Sdr_init_ref_vld / Sdr_busy 窗口内新起读操作。缩略图取像是随机单字读，
-// 更容易撞上刷新窗口；这里复用同一套边界，只在仲裁完成且控制器空闲时
-// 才允许从地址 FIFO 发出一笔取像请求。
-wire thumb_ctrl_quiet = ~Sdr_init_ref_vld & ~Sdr_busy & Sdr_init_done;
-assign mv_thumb_read_busy=thumb_rd_req || (mv_thumb_drain!=0);
-// S6: a draining MV write can overlap a return to the existing thumbnail UI.
-// Neither reader nor writer may start a burst while the other owns SDRAM.
-// Include the same 64-cycle return drain margin used by sdram_rd_arbiter.
-always @(posedge ext_mem_clk or negedge mem_rst_n) begin
- if(!mem_rst_n) mv_thumb_drain<=0;
- else if(thumb_rd_req || thumb_rd_valid) mv_thumb_drain<=63;
- else if(mv_thumb_drain!=0) mv_thumb_drain<=mv_thumb_drain-1'b1;
-end
-assign thumb_mem_enable = rd_arb_mem_idle & rd_arb_mode_active & thumb_ctrl_quiet &
-                         ~(S6_VIDEO_ENABLE && frw_write_busy);
-
-thumbnail_view_reader #(
-    .DISPLAY_WIDTH  (640),
-    .DISPLAY_HEIGHT (480),
-    .ADDR_WIDTH     (ADDR_BITS),
-    .BANK_WORDS     (307200),
-    .THUMB_WIDTH    (160),
-    .THUMB_HEIGHT   (120),
-    .BORDER_RGB     (24'hff_ff_00)
-) u_thumbnail_view_reader (
-    .pix_clk        (video_clk),
-    .pix_rst_n      (video_rst_n),
-    .mem_clk        (ext_mem_clk),
-    .mem_rst_n      (mem_rst_n),
-
-    .enable         (thumb_view),
-    .mem_enable     (thumb_mem_enable),
-    .frame_start    (frame_start),
-    .focus_index    (thumb_focus_frame),
-    .image_complete (image_ready_sync2),
-    .pixel_x        (osd_pixel_x),
-    .in_de          (de),
-
-    .thumb_active   (thumb_active),
-    .pixel_rgb      (thumb_rgb),
-    .focus_border   (thumb_focus_border),
-    .line_mismatch  (thumb_line_mismatch),
-
-    .rd_req         (thumb_rd_req),
-    .rd_addr        (thumb_rd_addr),
-    .rd_valid       (thumb_rd_valid),
-    .rd_data        (thumb_rd_dout)
 );
 
 // ===================== 音频：第3课正弦媒体音调 =====================
@@ -2046,7 +1797,7 @@ wire [7:0]  merged_err_code  = media_err_code_clk;
 // Media failures are silent; the legacy generator supplies zero-sample cadence.
 wire media_audio_available = media_status_v2[20] && (|media_status_v2[19:16]);
 wire audio_silent = boot_active || (S5_PLAY_ENABLE &&
-                    (paused_v2 || thumb_view || !play_active_v2 ||
+                    (paused_v2 || !play_active_v2 ||
                      !stream_enable_vid[1] || !wav_stream_active));
 
 // 16点正弦 LUT 峰值约 12000，200/255 缩放后仍保留足够余量，避免削波爆音。

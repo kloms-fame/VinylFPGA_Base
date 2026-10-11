@@ -15,7 +15,7 @@ module play_ctrl (
     input  wire       rst_n,
 
     input  wire [2:0] song_total,     // 可用曲目数（0/1 均按 1 首处理）
-    input  wire       song_confirm,   // 1 拍：主界面/缩略图确认
+    input  wire       song_confirm,   // 1 拍：确认当前中央封面并开始播放
     input  wire [1:0] focus_index,    // 确认时的焦点 = 起始曲目
 
     input  wire       enc_cw_tgl,     // EC1 顺时针（电平翻转）

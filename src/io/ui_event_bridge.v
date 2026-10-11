@@ -16,7 +16,7 @@
 //   prev   : EC1 逆时针（EV_ENC_STEP, enc=1, dir=1） 或 KEY01(左) 或 KEY04(上)
 //   next   : EC1 顺时针（EV_ENC_STEP, enc=1, dir=0） 或 KEY03(右) 或 KEY05(下)
 //   confirm: EC1 按压（EV_ENC_SW,  enc=1, DOWN）     或 KEY02(中)
-//   mode   : KEY07(切歌模式) —— 进入/退出 2x2 缩略图选曲视图
+//   mode   : KEY07(切歌模式) —— 播放态退出到中央大图选曲页
 //
 // 说明：KEY 事件用按下沿（EV_KEY_DOWN），避免按下/释放各触发一次。
 //       EC1 为选曲主控；EC2 暂不参与选曲（预留给后续播放控制）。

@@ -19,9 +19,9 @@ module sd_card_bmp #(
     input                       sdr_init_done,         // SDRAM初始化完成，已同步到本时钟域
     input                       next_event,            // 第十讲：转场模块完成淡出后的下一张请求
     input                       prev_event,            // S3：J2 EC1/方向键的"上一张"单拍请求
-    input                       select_req,            // 第十五讲：快速选图请求（保持到 select_ack）
-    input  [1:0]                select_index,          // 第十五讲：快速选图目标 bank
-    output reg                  select_ack,            // 第十五讲：快速选图请求已接受
+    input                       select_req,            // cover_navigation 目标 bank 请求（保持到 select_ack）
+    input  [1:0]                select_index,          // 目标 bank
+    output reg                  select_ack,            // 目标 bank 请求已接受
     output reg [3:0]            state_code,            // 数码管显示：当前图片编号 1~4
     input  [15:0]               bmp_width,
     input  [15:0]               bmp_height,
@@ -140,8 +140,7 @@ module sd_card_bmp #(
     assign media_preloaded = preload_done && scan_done_eff;
     assign preload_done       = (img_found_count == 3'd0) ||
                                 (preload_idx >= img_found_count);
-    // 第十三讲：把内部 bank 就绪标记只读引出给顶层缩略图视图使用，
-    // 不改变任何原有状态机逻辑。
+    // 把内部 bank 就绪标记只读引出给顶层选曲/播放状态使用。
     assign image_ready_out    = image_ready;
     wire audio_play_request = audio_file_valid && scan_done_eff &&
                               preload_done;
@@ -386,7 +385,7 @@ module sd_card_bmp #(
                         prev_req_pending <= 1'b1;
 
                     // ---- 图片加载/切换仲裁调度逻辑 ----
-                    // 优先级0（第十五讲）：缩略图快速选择。select_req 默认恒为0，
+                    // 优先级0：cover_navigation 指定目标 bank。select_req 默认恒为0，
                     // 以下原有仲裁路径在旧功能下保持原行为。
                     if (scan_done_eff && display_valid && !load_busy &&
                         select_req && !select_ack && (img_found_count != 3'd0)) begin
