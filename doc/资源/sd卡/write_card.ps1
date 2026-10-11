@@ -19,7 +19,9 @@ try {
     Write-Host "  5 = card_S5.img         (good index + PIC1~4, ALL 4 songs share AUDIO.PCM)"
     Write-Host "S6 acceptance:"
     Write-Host "  6 = card_S6.img         (Track1 has MV, Tracks 2/3/4 vinyl-only)"
-    $choice = Read-Host "`nEnter choice (1-6)"
+    Write-Host "D2 test tone:"
+    Write-Host "  7 = card_test_tone.img  (Track1 = 5s 1kHz tone, other covers kept)"
+    $choice = Read-Host "`nEnter choice (1-7)"
 
     $map = @{
         '1' = 'card_A.img'
@@ -28,6 +30,7 @@ try {
         '4' = 'card_B_broken.img'
         '5' = 'card_S5.img'
         '6' = 'card_S6.img'
+        '7' = '..\..\..\prj\resource_opt_verified_20261005\d2_testtone_20261010\card_test_tone.img'
     }
     if (-not $map.ContainsKey($choice)) { throw "invalid choice" }
     $img = Join-Path $PSScriptRoot $map[$choice]

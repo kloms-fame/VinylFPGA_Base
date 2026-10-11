@@ -1,0 +1,10 @@
+{
+  "schema": "vinylfpga-song-text-v1",
+  "source_note": "填充示例：标题/歌手/歌词均为演示内容，请按真实素材修改后，复制覆盖 songs_manifest.json 再生成。",
+  "tracks": [
+    { "song_id": 0, "title": "山湖之间", "artist": "演示歌手 A", "lrc": "tracks/track1.lrc" },
+    { "song_id": 1, "title": "森林漫步", "artist": "演示歌手 B", "lrc": "tracks/track2.lrc" },
+    { "song_id": 2, "title": "玫瑰心语", "artist": "演示歌手 C", "lrc": "tracks/track3.lrc" },
+    { "song_id": 3, "title": "黑胶时光", "artist": "演示歌手 D", "lrc": "tracks/track4.lrc" }
+  ]
+}

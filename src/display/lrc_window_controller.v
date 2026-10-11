@@ -30,10 +30,8 @@ module lrc_window_controller (
     output reg           window_valid,
     output reg           window_ready,
     output reg  [6:0]    window_center_index,
-    output reg  [5:0]    row_valid,
-    output reg  [41:0]   row_indices,
-    output reg  [29:0]   row_lengths,
-    output reg  [767:0]  row_glyphs
+    output wire [29:0]   row_lengths,
+    output wire [767:0]  row_glyphs
 );
     localparam [2:0] ST_IDLE       = 3'd0;
     localparam [2:0] ST_PREP       = 3'd1;
@@ -51,9 +49,17 @@ module lrc_window_controller (
     reg scan_pending_valid;
     reg scan_selected_valid;
     reg [6:0] scan_selected_index;
-    reg [6:0] fill_center_index;
     reg [2:0] fill_slot;
     reg tail_pending;
+    reg [4:0] row_length_0, row_length_1, row_length_2;
+    reg [4:0] row_length_3, row_length_4, row_length_5;
+    reg [127:0] row_glyph_0, row_glyph_1, row_glyph_2;
+    reg [127:0] row_glyph_3, row_glyph_4, row_glyph_5;
+
+    assign row_lengths = {row_length_5, row_length_4, row_length_3,
+                          row_length_2, row_length_1, row_length_0};
+    assign row_glyphs = {row_glyph_5, row_glyph_4, row_glyph_3,
+                         row_glyph_2, row_glyph_1, row_glyph_0};
 
     wire frame_start = vs_q && !vs;
     wire scan_hit = scan_pending_valid && rom_line_valid &&
@@ -67,14 +73,13 @@ module lrc_window_controller (
          (scroll_active && (scan_final_index == scroll_target_index)) ||
          (!scroll_active && scan_is_normal_next));
 
-    wire signed [8:0] fill_index_math =
-        $signed({2'b00, fill_center_index}) + $signed({6'd0, fill_slot}) - 9'sd2;
-    wire fill_index_in_range = (fill_index_math >= 9'sd0) &&
-        (fill_index_math < $signed({1'b0, song_line_count_frame}));
-    wire signed [8:0] tail_index_math =
-        $signed({2'b00, window_center_index}) + 9'sd4;
-    wire tail_index_in_range = (tail_index_math >= 9'sd0) &&
-        (tail_index_math < $signed({1'b0, song_line_count_frame}));
+    wire [7:0] fill_index_base = {1'b0, window_center_index} + {5'd0, fill_slot};
+    wire [7:0] fill_line_limit = {1'b0, song_line_count_frame} + 8'd2;
+    wire [6:0] fill_index_value = fill_index_base[6:0] - 7'd2;
+    wire fill_index_in_range = (fill_index_base >= 8'd2) &&
+                               (fill_index_base < fill_line_limit);
+    wire [7:0] tail_index_value = {1'b0, window_center_index} + 8'd4;
+    wire tail_index_in_range = tail_index_value < {1'b0, song_line_count_frame};
 
     always @* begin
         rom_line_index = 7'd0;
@@ -85,11 +90,11 @@ module lrc_window_controller (
             end
             ST_FILL_ISSUE: begin
                 if (fill_index_in_range)
-                    rom_line_index = fill_index_math[6:0];
+                    rom_line_index = fill_index_value;
             end
             ST_TAIL_ISSUE: begin
                 if (tail_index_in_range)
-                    rom_line_index = tail_index_math[6:0];
+                    rom_line_index = tail_index_value[6:0];
             end
             default: rom_line_index = 7'd0;
         endcase
@@ -113,11 +118,6 @@ module lrc_window_controller (
             window_valid <= 1'b0;
             window_ready <= 1'b0;
             window_center_index <= 7'd0;
-            row_valid <= 6'd0;
-            row_indices <= 42'd0;
-            row_lengths <= 30'd0;
-            row_glyphs <= 768'd0;
-            fill_center_index <= 7'd0;
             fill_slot <= 3'd0;
             tail_pending <= 1'b0;
         end else begin
@@ -140,17 +140,9 @@ module lrc_window_controller (
                     target_valid <= 1'b0;
                     window_valid <= 1'b0;
                     window_ready <= 1'b0;
-                    row_valid <= 6'd0;
                 end
             end else begin
                 if (scroll_commit && window_valid) begin
-                    row_glyphs <= row_glyphs >> 128;
-                    row_lengths <= row_lengths >> 5;
-                    row_indices <= row_indices >> 7;
-                    row_valid <= {1'b0, row_valid[5:1]};
-                    row_glyphs[767:640] <= 128'd0;
-                    row_lengths[29:25] <= 5'd0;
-                    row_indices[41:35] <= 7'd0;
                     window_center_index <= window_center_index + 7'd1;
                     window_ready <= 1'b0;
                     tail_pending <= 1'b1;
@@ -168,7 +160,6 @@ module lrc_window_controller (
                             target_valid <= 1'b0;
                             window_valid <= 1'b0;
                             window_ready <= 1'b0;
-                            row_valid <= 6'd0;
                             state <= ST_IDLE;
                         end else begin
                             state <= ST_SCAN;
@@ -194,7 +185,6 @@ module lrc_window_controller (
                             if (!scan_final_valid) begin
                                 window_valid <= 1'b0;
                                 window_ready <= 1'b0;
-                                row_valid <= 6'd0;
                                 tail_pending <= 1'b0;
                                 state <= ST_IDLE;
                             end else if (scan_holds_window) begin
@@ -204,14 +194,9 @@ module lrc_window_controller (
                                     state <= ST_IDLE;
                                 end
                             end else begin
-                                fill_center_index <= scan_final_index;
                                 window_center_index <= scan_final_index;
                                 window_valid <= 1'b0;
                                 window_ready <= 1'b0;
-                                row_valid <= 6'd0;
-                                row_indices <= 42'd0;
-                                row_lengths <= 30'd0;
-                                row_glyphs <= 768'd0;
                                 fill_slot <= 3'd0;
                                 tail_pending <= 1'b0;
                                 state <= ST_FILL_ISSUE;
@@ -221,10 +206,6 @@ module lrc_window_controller (
 
                     ST_FILL_ISSUE: begin
                         if (!fill_index_in_range) begin
-                            row_valid[fill_slot] <= 1'b0;
-                            row_indices[fill_slot*7 +: 7] <= 7'd0;
-                            row_lengths[fill_slot*5 +: 5] <= 5'd0;
-                            row_glyphs[fill_slot*128 +: 128] <= 128'd0;
                             if (fill_slot == 3'd5) begin
                                 window_valid <= 1'b1;
                                 window_ready <= 1'b1;
@@ -238,10 +219,6 @@ module lrc_window_controller (
                     end
 
                     ST_FILL_WAIT: begin
-                        row_valid[fill_slot] <= rom_line_valid;
-                        row_indices[fill_slot*7 +: 7] <= fill_index_math[6:0];
-                        row_lengths[fill_slot*5 +: 5] <= rom_line_valid ? rom_line_length : 5'd0;
-                        row_glyphs[fill_slot*128 +: 128] <= rom_line_valid ? rom_line_glyphs : 128'd0;
                         if (fill_slot == 3'd5) begin
                             window_valid <= 1'b1;
                             window_ready <= 1'b1;
@@ -254,10 +231,6 @@ module lrc_window_controller (
 
                     ST_TAIL_ISSUE: begin
                         if (!tail_index_in_range) begin
-                            row_valid[5] <= 1'b0;
-                            row_indices[41:35] <= 7'd0;
-                            row_lengths[29:25] <= 5'd0;
-                            row_glyphs[767:640] <= 128'd0;
                             window_ready <= 1'b1;
                             tail_pending <= 1'b0;
                             state <= ST_IDLE;
@@ -267,10 +240,6 @@ module lrc_window_controller (
                     end
 
                     ST_TAIL_WAIT: begin
-                        row_valid[5] <= rom_line_valid;
-                        row_indices[41:35] <= tail_index_math[6:0];
-                        row_lengths[29:25] <= rom_line_valid ? rom_line_length : 5'd0;
-                        row_glyphs[767:640] <= rom_line_valid ? rom_line_glyphs : 128'd0;
                         window_ready <= 1'b1;
                         tail_pending <= 1'b0;
                         state <= ST_IDLE;
@@ -278,6 +247,54 @@ module lrc_window_controller (
 
                     default: state <= ST_IDLE;
                 endcase
+            end
+        end
+    end
+
+    // The row cache is hidden whenever window_valid is low and is completely
+    // overwritten before publication. It therefore does not need reset or a
+    // clear-on-refill pass; only the active slot and scroll-tail writes remain.
+    always @(posedge clk) begin
+        if (rst_n && !frame_start) begin
+            if (scroll_commit && window_valid) begin
+                row_glyph_0 <= row_glyph_1;
+                row_glyph_1 <= row_glyph_2;
+                row_glyph_2 <= row_glyph_3;
+                row_glyph_3 <= row_glyph_4;
+                row_glyph_4 <= row_glyph_5;
+                row_glyph_5 <= 128'd0;
+                row_length_0 <= row_length_1;
+                row_length_1 <= row_length_2;
+                row_length_2 <= row_length_3;
+                row_length_3 <= row_length_4;
+                row_length_4 <= row_length_5;
+                row_length_5 <= 5'd0;
+            end else if ((state == ST_FILL_ISSUE) && !fill_index_in_range) begin
+                case (fill_slot)
+                    3'd0: begin row_length_0 <= 5'd0; row_glyph_0 <= 128'd0; end
+                    3'd1: begin row_length_1 <= 5'd0; row_glyph_1 <= 128'd0; end
+                    3'd2: begin row_length_2 <= 5'd0; row_glyph_2 <= 128'd0; end
+                    3'd3: begin row_length_3 <= 5'd0; row_glyph_3 <= 128'd0; end
+                    3'd4: begin row_length_4 <= 5'd0; row_glyph_4 <= 128'd0; end
+                    3'd5: begin row_length_5 <= 5'd0; row_glyph_5 <= 128'd0; end
+                    default: ;
+                endcase
+            end else if (state == ST_FILL_WAIT) begin
+                case (fill_slot)
+                    3'd0: begin row_length_0 <= rom_line_valid ? rom_line_length : 5'd0; row_glyph_0 <= rom_line_valid ? rom_line_glyphs : 128'd0; end
+                    3'd1: begin row_length_1 <= rom_line_valid ? rom_line_length : 5'd0; row_glyph_1 <= rom_line_valid ? rom_line_glyphs : 128'd0; end
+                    3'd2: begin row_length_2 <= rom_line_valid ? rom_line_length : 5'd0; row_glyph_2 <= rom_line_valid ? rom_line_glyphs : 128'd0; end
+                    3'd3: begin row_length_3 <= rom_line_valid ? rom_line_length : 5'd0; row_glyph_3 <= rom_line_valid ? rom_line_glyphs : 128'd0; end
+                    3'd4: begin row_length_4 <= rom_line_valid ? rom_line_length : 5'd0; row_glyph_4 <= rom_line_valid ? rom_line_glyphs : 128'd0; end
+                    3'd5: begin row_length_5 <= rom_line_valid ? rom_line_length : 5'd0; row_glyph_5 <= rom_line_valid ? rom_line_glyphs : 128'd0; end
+                    default: ;
+                endcase
+            end else if ((state == ST_TAIL_ISSUE) && !tail_index_in_range) begin
+                row_length_5 <= 5'd0;
+                row_glyph_5 <= 128'd0;
+            end else if (state == ST_TAIL_WAIT) begin
+                row_length_5 <= rom_line_valid ? rom_line_length : 5'd0;
+                row_glyph_5 <= rom_line_valid ? rom_line_glyphs : 128'd0;
             end
         end
     end

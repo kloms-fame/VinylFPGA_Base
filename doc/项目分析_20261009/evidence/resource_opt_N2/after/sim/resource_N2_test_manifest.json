@@ -1,0 +1,9 @@
+{
+  "baseline_sha256": "01300c684ab7666169d997fb56fac67f6924df0f274a3c14fc68859d7bf6afb9",
+  "frozen_reference_sha256": "4c0c5defe510aed7993aedfaf6712c46017521ed3d11e5f8195f9c1ade28752e",
+  "seed": "62e2b731",
+  "expected_exhaustive_versions": 65536,
+  "baseline_macro": "N2_BASELINE_TB",
+  "after_default": "actual candidate version_is_v1/version_is_v2 after every NBA",
+  "all_public_outputs": 18
+}

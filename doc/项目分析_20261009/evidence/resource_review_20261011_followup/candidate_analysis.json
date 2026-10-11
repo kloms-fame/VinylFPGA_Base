@@ -1,0 +1,253 @@
+{
+  "directory_predicate_positions": [
+    {
+      "position": 0,
+      "predicates": [
+        "eq_50",
+        "eq_41",
+        "eq_49"
+      ]
+    },
+    {
+      "position": 1,
+      "predicates": [
+        "eq_49",
+        "eq_55",
+        "eq_4E"
+      ]
+    },
+    {
+      "position": 2,
+      "predicates": [
+        "eq_43",
+        "eq_44"
+      ]
+    },
+    {
+      "position": 3,
+      "predicates": [
+        "range_1_4",
+        "eq_49",
+        "eq_45"
+      ]
+    },
+    {
+      "position": 4,
+      "predicates": [
+        "eq_20",
+        "eq_4F",
+        "eq_58"
+      ]
+    },
+    {
+      "position": 5,
+      "predicates": [
+        "eq_20"
+      ]
+    },
+    {
+      "position": 6,
+      "predicates": [
+        "eq_20"
+      ]
+    },
+    {
+      "position": 7,
+      "predicates": [
+        "eq_20"
+      ]
+    },
+    {
+      "position": 8,
+      "predicates": [
+        "eq_42",
+        "eq_50"
+      ]
+    },
+    {
+      "position": 9,
+      "predicates": [
+        "eq_4D",
+        "eq_43",
+        "eq_49"
+      ]
+    },
+    {
+      "position": 10,
+      "predicates": [
+        "eq_50",
+        "eq_4D",
+        "eq_4E"
+      ]
+    }
+  ],
+  "unique_predicate_bits": 25,
+  "pic_digit_bits": 2,
+  "original_name_bits": 88,
+  "nominal_encoded_bits": 27,
+  "scope": "predicate encoding mathematics only; no candidate RTL or candidate synthesis",
+  "historical_regression": {
+    "count": 53,
+    "before_pass": 40,
+    "after_pass": 40,
+    "differences": [],
+    "failed": [
+      "tb_browse_fsm",
+      "tb_s3_browse_integration",
+      "tb_s7_browse_semantics",
+      "tb_s7_play_policy",
+      "tb_s7_top",
+      "tb_thumbnail_view_reader",
+      "tb_sdram_rd_arbiter",
+      "tb_s5_play",
+      "tb_opt_osd_bypass",
+      "tb_opt_metadata",
+      "tb_x1x2_lights",
+      "tb_ws_vu_only",
+      "tb_visual_feedback_top"
+    ]
+  },
+  "historical_failure_details": [
+    {
+      "test": "tb_browse_fsm",
+      "lines": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_browse_fsm.v:37: error: port ``thumb_mode'' is not a port of dut.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_browse_fsm.v:37: error: port ``go_home'' is not a port of dut.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_browse_fsm.v:80: error: port ``view_mode'' is not a port of dut_off.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_browse_fsm.v:80: error: port ``thumb_right'' is not a port of dut_off.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_browse_fsm.v:80: error: port ``thumb_left'' is not a port of dut_off.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_browse_fsm.v:80: error: port ``thumb_confirm'' is not a port of dut_off.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_browse_fsm.v:80: error: port ``thumb_mode'' is not a port of dut_off.",
+        "22 error(s) during elaboration."
+      ]
+    },
+    {
+      "test": "tb_s3_browse_integration",
+      "lines": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s3_browse_integration.v:109: error: port ``thumb_confirm'' is not a port of u_browse.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s3_browse_integration.v:109: error: port ``thumb_mode'' is not a port of u_browse.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s3_browse_integration.v:109: error: port ``view_mode'' is not a port of u_browse.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s3_browse_integration.v:109: error: port ``thumb_right'' is not a port of u_browse.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s3_browse_integration.v:109: error: port ``thumb_left'' is not a port of u_browse.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s3_browse_integration.v:109: error: port ``thumb_confirm'' is not a port of u_browse.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s3_browse_integration.v:109: error: port ``thumb_mode'' is not a port of u_browse.",
+        "10 error(s) during elaboration."
+      ]
+    },
+    {
+      "test": "tb_s7_browse_semantics",
+      "lines": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_browse_semantics.v:20: error: port ``view_mode'' is not a port of dut.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_browse_semantics.v:20: error: port ``thumb_mode'' is not a port of dut.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_browse_semantics.v:20: error: port ``go_home'' is not a port of dut.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_browse_semantics.v:20: error: port ``view_mode'' is not a port of dut.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_browse_semantics.v:20: error: port ``thumb_mode'' is not a port of dut.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_browse_semantics.v:20: error: port ``go_home'' is not a port of dut.",
+        "6 error(s) during elaboration."
+      ]
+    },
+    {
+      "test": "tb_s7_play_policy",
+      "lines": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_play_policy.v:9: error: port ``volume'' is not a port of dut.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_play_policy.v:9: error: port ``volume'' is not a port of dut.",
+        "2 error(s) during elaboration."
+      ]
+    },
+    {
+      "test": "tb_s7_top",
+      "lines": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_top.v:46: error: Unable to elaborate condition expression.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_top.v:49: error: Unable to bind wire/reg/memory `dut.thumb_mode_sd' in `tb_s7_top'",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_top.v:49: error: Unable to elaborate condition expression.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_top.v:51: error: Unable to bind wire/reg/memory `dut.thumb_mode_sd' in `tb_s7_top'",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_top.v:51: error: Unable to elaborate condition expression.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_top.v:82: error: Unable to bind wire/reg/memory `dut.thumb_mode_sd' in `tb_s7_top'",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_top.v:82: error: Unable to elaborate condition expression.",
+        "10 error(s) during elaboration."
+      ]
+    },
+    {
+      "test": "tb_thumbnail_view_reader",
+      "lines": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_thumbnail_view_reader.v:115: error: Unknown module type: thumbnail_view_reader",
+        "2 error(s) during elaboration."
+      ]
+    },
+    {
+      "test": "tb_sdram_rd_arbiter",
+      "lines": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_sdram_rd_arbiter.v:49: error: Unknown module type: sdram_rd_arbiter",
+        "2 error(s) during elaboration."
+      ]
+    },
+    {
+      "test": "tb_s5_play",
+      "lines": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s5_play.v:65: error: port ``volume'' is not a port of u_pc.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s5_play.v:65: error: port ``volume_update'' is not a port of u_pc.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s5_play.v:65: error: port ``volume'' is not a port of u_pc.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s5_play.v:65: error: port ``volume_update'' is not a port of u_pc.",
+        "4 error(s) during elaboration."
+      ]
+    },
+    {
+      "test": "tb_opt_osd_bypass",
+      "lines": [
+        "src/top_tf_hdmi_audio.v:1558: warning: Port 33 (write_addr_0) of module frame_read_write expects 21 bit(s), given 24.",
+        "src/top_tf_hdmi_audio.v:1558: warning: Port 34 (write_addr_1) of module frame_read_write expects 21 bit(s), given 24.",
+        "src/top_tf_hdmi_audio.v:1558: warning: Port 35 (write_addr_2) of module frame_read_write expects 21 bit(s), given 48.",
+        "src/top_tf_hdmi_audio.v:1558: warning: Port 36 (write_addr_3) of module frame_read_write expects 21 bit(s), given 48.",
+        "src/top_tf_hdmi_audio.v:1558: warning: Port 38 (write_len) of module frame_read_write expects 21 bit(s), given 24.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_opt_osd_bypass.v:23: error: Unable to bind wire/reg/memory `dut.contrast_frame' in `tb_opt_osd_bypass'",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_opt_osd_bypass.v:23: error: Unable to elaborate condition expression.",
+        "2 error(s) during elaboration."
+      ]
+    },
+    {
+      "test": "tb_opt_metadata",
+      "lines": [
+        "src/top_tf_hdmi_audio.v:1558: warning: Port 33 (write_addr_0) of module frame_read_write expects 21 bit(s), given 24.",
+        "src/top_tf_hdmi_audio.v:1558: warning: Port 34 (write_addr_1) of module frame_read_write expects 21 bit(s), given 24.",
+        "src/top_tf_hdmi_audio.v:1558: warning: Port 35 (write_addr_2) of module frame_read_write expects 21 bit(s), given 48.",
+        "src/top_tf_hdmi_audio.v:1558: warning: Port 36 (write_addr_3) of module frame_read_write expects 21 bit(s), given 48.",
+        "src/top_tf_hdmi_audio.v:1558: warning: Port 38 (write_len) of module frame_read_write expects 21 bit(s), given 24.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_opt_metadata.v:33: error: Could not find variable ``dut.thumb_mode_sd'' in ``tb_opt_metadata''",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_opt_metadata.v:33: error: Could not find variable ``dut.thumb_focus_index_sd'' in ``tb_opt_metadata''",
+        "2 error(s) during elaboration."
+      ]
+    },
+    {
+      "test": "tb_x1x2_lights",
+      "lines": [
+        "FATAL: D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_x1x2_lights.v:50: FAIL VU frame=33 mode=1 level=32 got=000000000000000000000000000000000000000000000000 want=000000000000000000000000000000000000000000300000"
+      ]
+    },
+    {
+      "test": "tb_ws_vu_only",
+      "lines": [
+        "FATAL: D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_ws_vu_only.v:56: FAIL full-scale VU frame"
+      ]
+    },
+    {
+      "test": "tb_visual_feedback_top",
+      "lines": [
+        "src/top_tf_hdmi_audio.v:1558: warning: Port 33 (write_addr_0) of module frame_read_write expects 21 bit(s), given 24.",
+        "src/top_tf_hdmi_audio.v:1558: warning: Port 34 (write_addr_1) of module frame_read_write expects 21 bit(s), given 24.",
+        "src/top_tf_hdmi_audio.v:1558: warning: Port 35 (write_addr_2) of module frame_read_write expects 21 bit(s), given 48.",
+        "src/top_tf_hdmi_audio.v:1558: warning: Port 36 (write_addr_3) of module frame_read_write expects 21 bit(s), given 48.",
+        "src/top_tf_hdmi_audio.v:1558: warning: Port 38 (write_len) of module frame_read_write expects 21 bit(s), given 24.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_visual_feedback_top.v:33: error: Could not find variable ``dut.thumb_mode_sd'' in ``tb_visual_feedback_top''",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_visual_feedback_top.v:33: error: Could not find variable ``dut.thumb_focus_index_sd'' in ``tb_visual_feedback_top''",
+        "2 error(s) during elaboration."
+      ]
+    }
+  ],
+  "test_source_inventory": [
+    "tb_boot_window.v",
+    "tb_brightness_contrast_adjust.v",
+    "tb_lrc_font_sync.v",
+    "tb_ws2812_progress.v",
+    "tb_x1x2_timebase.v"
+  ]
+}

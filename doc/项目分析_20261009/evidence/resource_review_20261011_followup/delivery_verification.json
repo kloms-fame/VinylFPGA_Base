@@ -1,0 +1,22 @@
+{
+  "input_count": 125,
+  "input_files_changed": [],
+  "artifact_count": 91,
+  "historical_artifact_count": 89,
+  "bad_artifacts": [],
+  "tracked_git_status_unchanged": true,
+  "tracked_dirty_count": 22,
+  "missing_document_links": [],
+  "documents": [
+    {
+      "path": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\项目分析_20261009\\当前进度复核与资源优化续轮分析报告_20261011.md",
+      "sha256": "6F32DCCFC83D98189A938C60DB3DA5AB4D5C990481B5128049EE49478D0B0785",
+      "lines": 345
+    },
+    {
+      "path": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\项目分析_20261009\\资源优化续轮实施方案_待确认_20261011.md",
+      "sha256": "275DA737ABA4E1B874CB00445F7FEF9FFE4E83396177AE4C77B013EB1510DCB8",
+      "lines": 218
+    }
+  ]
+}

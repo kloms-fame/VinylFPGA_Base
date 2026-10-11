@@ -1,0 +1,27 @@
+Location         : C:\Users\Renni\AppData\Local\Temp\vinylfpga_resource_N1_N2_20261011_170501\N2_after\prj
+Running with     : Tang Dynasty v6.2.168116
+                   Copyright (c) 2012-2025 Anlogic Inc.
+Top Model        : top
+Device           : EG4S20BG256
+Speed            : NA
+
+Timing Mode      : final
+Setup            : WNS   123ps  TNS        0ps  NUM_FEPS     0
+Hold             : WNS    27ps  TNS        0ps  NUM_FEPS     0
+
+Flow Statistics  :
+---------------------------------------------------------------------------------------------------
+     command     |  #calls  |  wall time   |  cpu time(s)  |  used memory(mb)  |  peak memory(mb)  
+---------------------------------------------------------------------------------------------------
+      route      |    2     |  2m6s(42%)   |   178(47%)    |       1311        |       1311        
+  optimize_gate  |    1     |  1m14s(24%)  |    74(19%)    |        773        |        773        
+      place      |    2     |  1m0s(20%)   |    88(23%)    |       1311        |       1311        
+  optimize_rtl   |    1     |   33s(11%)   |    32(8%)     |        658        |        732        
+    fix_hold     |    1     |    5s(1%)    |     5(1%)     |       1311        |       1311        
+  import_device  |    1     |    0s(0%)    |     0(0%)     |        99         |        99         
+    read_adc     |    1     |    0s(0%)    |     0(0%)     |        436        |        436        
+    read_sdc     |    2     |    0s(0%)    |     0(0%)     |        773        |        773        
+  write_verilog  |    1     |    0s(0%)    |     0(0%)     |        785        |        785        
+---------------------------------------------------------------------------------------------------
+      total      |    12    |    4m58s     |      377      |       1311        |       1311        
+---------------------------------------------------------------------------------------------------

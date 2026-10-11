@@ -1,0 +1,92 @@
+--- N2_before/src/SD/song_index_db.v
++++ N2_after/src/SD/song_index_db.v
+@@ -73,7 +73,13 @@
+ 
+     // ---- 头部 ----
+     reg        magic_ok;
+-    reg [15:0] hdr_version;
++    // Consumers distinguish only v1/v2; retain both byte predicates so a
++    // nonzero high byte cannot alias a supported version.
++    reg        hdr_version_lo_v1;
++    reg        hdr_version_lo_v2;
++    reg        hdr_version_hi_zero;
++    wire       version_is_v1 = hdr_version_lo_v1 && hdr_version_hi_zero;
++    wire       version_is_v2 = hdr_version_lo_v2 && hdr_version_hi_zero;
+     reg [15:0] hdr_entry_size;
+     reg [15:0] hdr_count;
+     reg [31:0] hdr_crc_exp;
+@@ -136,10 +142,10 @@
+             end
+         end
+     end
+-    assign song_mv0=(valid && hdr_version==2 && e_has_mv[0]) ? e_mv[0] : 64'd0;
+-    assign song_mv1=(valid && hdr_version==2 && e_has_mv[1]) ? e_mv[1] : 64'd0;
+-    assign song_mv2=(valid && hdr_version==2 && e_has_mv[2]) ? e_mv[2] : 64'd0;
+-    assign song_mv3=(valid && hdr_version==2 && e_has_mv[3]) ? e_mv[3] : 64'd0;
++    assign song_mv0=(valid && version_is_v2 && e_has_mv[0]) ? e_mv[0] : 64'd0;
++    assign song_mv1=(valid && version_is_v2 && e_has_mv[1]) ? e_mv[1] : 64'd0;
++    assign song_mv2=(valid && version_is_v2 && e_has_mv[2]) ? e_mv[2] : 64'd0;
++    assign song_mv3=(valid && version_is_v2 && e_has_mv[3]) ? e_mv[3] : 64'd0;
+     // Payload is consumed only after valid, at the unchanged P_FIN edge.
+     // The loader clears index_mode before starting a reload. Invalid payloads
+     // are zero; no second 512-bit output bank is needed. busy/song_flags keep
+@@ -188,7 +194,9 @@
+             chk_ok         <= 1'b0;
+             fin_err        <= SIDX_ERR_NONE;
+             magic_ok       <= 1'b0;
+-            hdr_version    <= 16'd0;
++            hdr_version_lo_v1  <= 1'b0;
++            hdr_version_lo_v2  <= 1'b0;
++            hdr_version_hi_zero<= 1'b1;
+             hdr_entry_size <= 16'd0;
+             hdr_count      <= 16'd0;
+             hdr_crc_exp    <= 32'd0;
+@@ -219,7 +227,9 @@
+                     chk_ok         <= 1'b1;
+                     fin_err        <= SIDX_ERR_NONE;
+                     magic_ok       <= 1'b1;
+-                    hdr_version    <= 16'd0;
++                    hdr_version_lo_v1  <= 1'b0;
++                    hdr_version_lo_v2  <= 1'b0;
++                    hdr_version_hi_zero<= 1'b1;
+                     hdr_entry_size <= 16'd0;
+                     hdr_count      <= 16'd0;
+                     hdr_crc_exp    <= 32'd0;
+@@ -252,8 +262,11 @@
+                             6'd5:  magic_ok <= magic_ok & (in_byte == SIDX_MAGIC_5);
+                             6'd6:  magic_ok <= magic_ok & (in_byte == SIDX_MAGIC_6);
+                             6'd7:  magic_ok <= magic_ok & (in_byte == SIDX_MAGIC_7);
+-                            6'd8:  hdr_version[7:0]    <= in_byte;
+-                            6'd9:  hdr_version[15:8]   <= in_byte;
++                            6'd8: begin
++                                hdr_version_lo_v1 <= (in_byte == SIDX_VERSION[7:0]);
++                                hdr_version_lo_v2 <= (in_byte == 8'd2);
++                            end
++                            6'd9:  hdr_version_hi_zero <= (in_byte == 8'd0);
+                             6'd10: hdr_entry_size[7:0] <= in_byte;
+                             6'd11: hdr_entry_size[15:8]<= in_byte;
+                             6'd12: hdr_count[7:0]      <= in_byte;
+@@ -305,7 +318,7 @@
+                         fin_err <= SIDX_ERR_STREAM;
+                     else if (!magic_ok)
+                         fin_err <= SIDX_ERR_MAGIC;
+-                    else if (hdr_version != SIDX_VERSION && hdr_version != 16'd2)
++                    else if (!version_is_v1 && !version_is_v2)
+                         fin_err <= SIDX_ERR_VERSION;
+                     else if (hdr_entry_size != SIDX_ENTRY_SIZE)
+                         fin_err <= SIDX_ERR_ENTRY_SIZE;
+@@ -346,10 +359,10 @@
+                     valid       <= 1'b1;
+                     err         <= SIDX_ERR_NONE;
+                     song_count  <= hdr_count[2:0];
+-                    song_flags  <= {{(e_has_mv[3] && hdr_version==2), 1'b0, e_has_audio[3], e_has_cover[3]},
+-                                    {(e_has_mv[2] && hdr_version==2), 1'b0, e_has_audio[2], e_has_cover[2]},
+-                                    {(e_has_mv[1] && hdr_version==2), 1'b0, e_has_audio[1], e_has_cover[1]},
+-                                    {(e_has_mv[0] && hdr_version==2), 1'b0, e_has_audio[0], e_has_cover[0]}};
++                    song_flags  <= {{(e_has_mv[3] && version_is_v2), 1'b0, e_has_audio[3], e_has_cover[3]},
++                                    {(e_has_mv[2] && version_is_v2), 1'b0, e_has_audio[2], e_has_cover[2]},
++                                    {(e_has_mv[1] && version_is_v2), 1'b0, e_has_audio[1], e_has_cover[1]},
++                                    {(e_has_mv[0] && version_is_v2), 1'b0, e_has_audio[0], e_has_cover[0]}};
+ 
+                 end
+             end

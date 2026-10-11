@@ -116,8 +116,24 @@ module song_index_db #(
             e_has_mv <= 0;
             for(m=0;m<4;m=m+1) e_mv[m]<=0;
         end else if(phase==P_STREAM && in_valid && in_entries) begin
-            if(entry_off==0) e_has_mv[entry_sel]<=in_byte[3];
-            if(entry_off>=56) e_mv[entry_sel]<={in_byte,e_mv[entry_sel][63:8]};
+            // Decode the entry before selecting the shift register. A dynamic
+            // array write otherwise needs a wide read mux on the old value.
+            if(entry_off==0) begin
+                case(entry_sel)
+                    2'd0: e_has_mv[0] <= in_byte[3];
+                    2'd1: e_has_mv[1] <= in_byte[3];
+                    2'd2: e_has_mv[2] <= in_byte[3];
+                    2'd3: e_has_mv[3] <= in_byte[3];
+                endcase
+            end
+            if(entry_off>=56) begin
+                case(entry_sel)
+                    2'd0: e_mv[0] <= {in_byte,e_mv[0][63:8]};
+                    2'd1: e_mv[1] <= {in_byte,e_mv[1][63:8]};
+                    2'd2: e_mv[2] <= {in_byte,e_mv[2][63:8]};
+                    2'd3: e_mv[3] <= {in_byte,e_mv[3][63:8]};
+                endcase
+            end
         end
     end
     assign song_mv0=(valid && hdr_version==2 && e_has_mv[0]) ? e_mv[0] : 64'd0;
@@ -252,18 +268,35 @@ module song_index_db #(
                         if (crc_in_span)
                             crc_calc <= crc32_byte(crc_calc, in_byte);
 
-                        if (entry_off == 6'd0) begin
-                            e_has_cover[entry_sel] <= in_byte[SIDX_FLAG_COVER];
-                            e_has_audio[entry_sel] <= in_byte[SIDX_FLAG_AUDIO];
-                        end else if (entry_off <= 6'd7) begin
-                            e_cov_cl[entry_sel] <= {in_byte, e_cov_cl[entry_sel][31:8]};
-                        end else if (entry_off <= 6'd11) begin
-                            e_cov_by[entry_sel] <= {in_byte, e_cov_by[entry_sel][31:8]};
-                        end else if (entry_off >= 6'd16 && entry_off <= 6'd19) begin
-                            e_aud_cl[entry_sel] <= {in_byte, e_aud_cl[entry_sel][31:8]};
-                        end else if (entry_off >= 6'd20 && entry_off <= 6'd23) begin
-                            e_aud_by[entry_sel] <= {in_byte, e_aud_by[entry_sel][31:8]};
-                        end
+                        // Store each field byte in its final little-endian lane.
+                        // These words are read only after P_STREAM completes, so
+                        // shifting the whole 32-bit field on every byte is wasteful.
+                        // Store the field bytes in their final little-endian lanes.
+                        // The entries are consumed only after P_STREAM completes.
+                        case (entry_off)
+                            6'd0: begin
+                                e_has_cover[entry_sel] <= in_byte[SIDX_FLAG_COVER];
+                                e_has_audio[entry_sel] <= in_byte[SIDX_FLAG_AUDIO];
+                            end
+                            // The cover cluster occupies bytes 4..7; 1..3 are reserved.
+                            6'd4:  e_cov_cl[entry_sel][7:0]   <= in_byte;
+                            6'd5:  e_cov_cl[entry_sel][15:8]  <= in_byte;
+                            6'd6:  e_cov_cl[entry_sel][23:16] <= in_byte;
+                            6'd7:  e_cov_cl[entry_sel][31:24] <= in_byte;
+                            6'd8:  e_cov_by[entry_sel][7:0]   <= in_byte;
+                            6'd9:  e_cov_by[entry_sel][15:8]  <= in_byte;
+                            6'd10: e_cov_by[entry_sel][23:16] <= in_byte;
+                            6'd11: e_cov_by[entry_sel][31:24] <= in_byte;
+                            6'd16: e_aud_cl[entry_sel][7:0]   <= in_byte;
+                            6'd17: e_aud_cl[entry_sel][15:8]  <= in_byte;
+                            6'd18: e_aud_cl[entry_sel][23:16] <= in_byte;
+                            6'd19: e_aud_cl[entry_sel][31:24] <= in_byte;
+                            6'd20: e_aud_by[entry_sel][7:0]   <= in_byte;
+                            6'd21: e_aud_by[entry_sel][15:8]  <= in_byte;
+                            6'd22: e_aud_by[entry_sel][23:16] <= in_byte;
+                            6'd23: e_aud_by[entry_sel][31:24] <= in_byte;
+                            default: ;
+                        endcase
                     end
                 end
 

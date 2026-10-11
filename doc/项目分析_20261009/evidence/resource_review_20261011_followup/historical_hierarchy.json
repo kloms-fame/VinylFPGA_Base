@@ -1,0 +1,1522 @@
+[
+  {
+    "instance": "top",
+    "module": "top",
+    "le": "16522",
+    "lut": "14164",
+    "ripple": "1519",
+    "seq": "10506",
+    "bram": "47",
+    "dsp": "10"
+  },
+  {
+    "instance": "U3",
+    "module": "sdram",
+    "le": "403",
+    "lut": "263",
+    "ripple": "13",
+    "seq": "383",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u2_ram",
+    "module": "sdr_as_ram",
+    "le": "403",
+    "lut": "263",
+    "ripple": "13",
+    "seq": "383",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u1_init_ref",
+    "module": "sdr_init_ref",
+    "le": "97",
+    "lut": "59",
+    "ripple": "13",
+    "seq": "85",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u2_wrrd",
+    "module": "sdr_wrrd",
+    "le": "306",
+    "lut": "204",
+    "ripple": "0",
+    "seq": "298",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "frame_read_write_m0",
+    "module": "frame_read_write",
+    "le": "578",
+    "lut": "440",
+    "ripple": "111",
+    "seq": "370",
+    "bram": "4",
+    "dsp": "0"
+  },
+  {
+    "instance": "frame_fifo_read_m0",
+    "module": "frame_fifo_read",
+    "le": "137",
+    "lut": "113",
+    "ripple": "24",
+    "seq": "79",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "frame_fifo_write_m0",
+    "module": "frame_fifo_write",
+    "le": "199",
+    "lut": "151",
+    "ripple": "47",
+    "seq": "105",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "read_buf",
+    "module": "rfifo_32_32_512",
+    "le": "119",
+    "lut": "77",
+    "ripple": "20",
+    "seq": "94",
+    "bram": "2",
+    "dsp": "0"
+  },
+  {
+    "instance": "ram_inst",
+    "module": "ram_infer_rfifo_32_32_512",
+    "le": "0",
+    "lut": "0",
+    "ripple": "0",
+    "seq": "0",
+    "bram": "2",
+    "dsp": "0"
+  },
+  {
+    "instance": "rd_to_wr_cross_inst",
+    "module": "fifo_cross_domain_addr_process_al_rfifo_32_32_512",
+    "le": "34",
+    "lut": "22",
+    "ripple": "0",
+    "seq": "34",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "wr_to_rd_cross_inst",
+    "module": "fifo_cross_domain_addr_process_al_rfifo_32_32_512",
+    "le": "34",
+    "lut": "27",
+    "ripple": "0",
+    "seq": "34",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "write_buf",
+    "module": "wfifo_32_32_512",
+    "le": "109",
+    "lut": "85",
+    "ripple": "20",
+    "seq": "87",
+    "bram": "2",
+    "dsp": "0"
+  },
+  {
+    "instance": "ram_inst",
+    "module": "ram_infer_wfifo_32_32_512",
+    "le": "0",
+    "lut": "0",
+    "ripple": "0",
+    "seq": "0",
+    "bram": "2",
+    "dsp": "0"
+  },
+  {
+    "instance": "rd_to_wr_cross_inst",
+    "module": "fifo_cross_domain_addr_process_al_wfifo_32_32_512",
+    "le": "29",
+    "lut": "25",
+    "ripple": "0",
+    "seq": "29",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "wr_to_rd_cross_inst",
+    "module": "fifo_cross_domain_addr_process_al_wfifo_32_32_512",
+    "le": "34",
+    "lut": "34",
+    "ripple": "0",
+    "seq": "34",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "sd_card_bmp_m0",
+    "module": "sd_card_bmp",
+    "le": "4275",
+    "lut": "3772",
+    "ripple": "214",
+    "seq": "3207",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "fat32_media_loader_m0",
+    "module": "fat32_media_loader",
+    "le": "3914",
+    "lut": "3447",
+    "ripple": "204",
+    "seq": "2965",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_file_streamer",
+    "module": "fat32_file_streamer",
+    "le": "563",
+    "lut": "489",
+    "ripple": "66",
+    "seq": "279",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_sd_sector_adapter",
+    "module": "sd_sector_adapter",
+    "le": "142",
+    "lut": "130",
+    "ripple": "12",
+    "seq": "79",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_song_index_db",
+    "module": "song_index_db",
+    "le": "1020",
+    "lut": "944",
+    "ripple": "10",
+    "seq": "890",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_volume_scanner",
+    "module": "fat32_volume_scanner",
+    "le": "1302",
+    "lut": "1122",
+    "ripple": "67",
+    "seq": "1047",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "sd_card_top_m0",
+    "module": "sd_card_top",
+    "le": "268",
+    "lut": "232",
+    "ripple": "10",
+    "seq": "188",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "sd_card_cmd_m0",
+    "module": "sd_card_cmd",
+    "le": "111",
+    "lut": "106",
+    "ripple": "5",
+    "seq": "58",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "sd_card_sec_read_write_m0",
+    "module": "sd_card_sec_read_write",
+    "le": "90",
+    "lut": "64",
+    "ripple": "0",
+    "seq": "86",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "spi_master_m0",
+    "module": "spi_master",
+    "le": "67",
+    "lut": "62",
+    "ripple": "5",
+    "seq": "44",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "seg_scan_m0",
+    "module": "seg_scan",
+    "le": "123",
+    "lut": "114",
+    "ripple": "9",
+    "seq": "30",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "sys_pll_m0",
+    "module": "sys_pll",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "1",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_audio_arc_calculate",
+    "module": "audio_arc_calculate",
+    "le": "68",
+    "lut": "39",
+    "ripple": "10",
+    "seq": "48",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_boot_layer",
+    "module": "boot_layer",
+    "le": "158",
+    "lut": "118",
+    "ripple": "40",
+    "seq": "64",
+    "bram": "10",
+    "dsp": "3"
+  },
+  {
+    "instance": "u_boot_logo_rom",
+    "module": "boot_logo_rom",
+    "le": "20",
+    "lut": "20",
+    "ripple": "0",
+    "seq": "5",
+    "bram": "10",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_brightness_contrast_steps",
+    "module": "brightness_contrast_steps",
+    "le": "355",
+    "lut": "295",
+    "ripple": "60",
+    "seq": "51",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_browse_fsm",
+    "module": "browse_fsm",
+    "le": "23",
+    "lut": "15",
+    "ripple": "0",
+    "seq": "23",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_cover_navigation",
+    "module": "cover_navigation",
+    "le": "34",
+    "lut": "34",
+    "ripple": "0",
+    "seq": "22",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_ec2_event_replay",
+    "module": "ec2_event_replay",
+    "le": "97",
+    "lut": "70",
+    "ripple": "27",
+    "seq": "36",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_ec2_param_controller",
+    "module": "ec2_param_controller",
+    "le": "64",
+    "lut": "58",
+    "ripple": "6",
+    "seq": "34",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_ec2_param_osd",
+    "module": "ec2_param_osd",
+    "le": "358",
+    "lut": "335",
+    "ripple": "23",
+    "seq": "115",
+    "bram": "1",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_ascii_font_rom",
+    "module": "ascii_font_rom",
+    "le": "58",
+    "lut": "58",
+    "ripple": "0",
+    "seq": "19",
+    "bram": "1",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_exp_reset",
+    "module": "reset_sync",
+    "le": "2",
+    "lut": "0",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_expansion_integration",
+    "module": "expansion_integration",
+    "le": "1908",
+    "lut": "1588",
+    "ripple": "304",
+    "seq": "929",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_board_key_sw_monitor",
+    "module": "key_dip_monitor",
+    "le": "132",
+    "lut": "105",
+    "ripple": "25",
+    "seq": "72",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_debounce_bank",
+    "module": "debounce_bank",
+    "le": "105",
+    "lut": "84",
+    "ripple": "20",
+    "seq": "53",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_buzzer_feedback",
+    "module": "buzzer_feedback",
+    "le": "225",
+    "lut": "196",
+    "ripple": "29",
+    "seq": "102",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_debounce_tick",
+    "module": "debounce_tick",
+    "le": "16",
+    "lut": "9",
+    "ripple": "7",
+    "seq": "9",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_expansion_io_hub",
+    "module": "expansion_io_hub",
+    "le": "883",
+    "lut": "724",
+    "ripple": "145",
+    "seq": "433",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_encoder_monitor",
+    "module": "encoder_monitor",
+    "le": "285",
+    "lut": "220",
+    "ripple": "62",
+    "seq": "111",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_enc1",
+    "module": "quadrature_decoder",
+    "le": "108",
+    "lut": "81",
+    "ripple": "27",
+    "seq": "40",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_sync_a",
+    "module": "sync_bit",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_enc2",
+    "module": "quadrature_decoder",
+    "le": "118",
+    "lut": "89",
+    "ripple": "27",
+    "seq": "43",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_sync_a",
+    "module": "sync_bit",
+    "le": "2",
+    "lut": "0",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_sw_bank",
+    "module": "debounce_bank",
+    "le": "59",
+    "lut": "50",
+    "ripple": "8",
+    "seq": "28",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_ir_nec_decoder",
+    "module": "ir_nec_decoder",
+    "le": "218",
+    "lut": "206",
+    "ripple": "11",
+    "seq": "128",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_sync_ir",
+    "module": "sync_bit",
+    "le": "1",
+    "lut": "0",
+    "ripple": "0",
+    "seq": "1",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_key_dip_monitor",
+    "module": "key_dip_monitor",
+    "le": "380",
+    "lut": "298",
+    "ripple": "72",
+    "seq": "194",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_debounce_bank",
+    "module": "debounce_bank",
+    "le": "380",
+    "lut": "298",
+    "ripple": "72",
+    "seq": "194",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_led_business_driver",
+    "module": "led_business_driver",
+    "le": "103",
+    "lut": "80",
+    "ripple": "23",
+    "seq": "41",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_ui_command_router",
+    "module": "ui_command_router",
+    "le": "119",
+    "lut": "93",
+    "ripple": "26",
+    "seq": "51",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_ui_event_bus",
+    "module": "ui_event_bus",
+    "le": "158",
+    "lut": "158",
+    "ripple": "0",
+    "seq": "74",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_ui_ms_tick",
+    "module": "ui_ms_tick",
+    "le": "33",
+    "lut": "24",
+    "ripple": "9",
+    "seq": "12",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_ws2812_effects",
+    "module": "ws2812_effects",
+    "le": "161",
+    "lut": "133",
+    "ripple": "28",
+    "seq": "82",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_ws2812_driver",
+    "module": "ws2812_driver",
+    "le": "113",
+    "lut": "99",
+    "ripple": "14",
+    "seq": "55",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_health_monitor",
+    "module": "health_monitor",
+    "le": "6",
+    "lut": "6",
+    "ripple": "0",
+    "seq": "6",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_hdmi2phy_wrapper",
+    "module": "hdmi_phy_wrapper",
+    "le": "40",
+    "lut": "39",
+    "ripple": "0",
+    "seq": "38",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u0_lane_lvds_8_1",
+    "module": "lane_lvds_10_1",
+    "le": "21",
+    "lut": "20",
+    "ripple": "0",
+    "seq": "19",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u1_lane_lvds_8_1",
+    "module": "lane_lvds_10_1",
+    "le": "10",
+    "lut": "10",
+    "ripple": "0",
+    "seq": "10",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u2_lane_lvds_8_1",
+    "module": "lane_lvds_10_1",
+    "le": "8",
+    "lut": "8",
+    "ripple": "0",
+    "seq": "8",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u3_lane_lvds_8_1",
+    "module": "lane_lvds_10_1",
+    "le": "1",
+    "lut": "1",
+    "ripple": "0",
+    "seq": "1",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_hdmi_1_4b_transmitter_core_wrapper",
+    "module": "hdmi_1_4b_transmitter_core_wrapper",
+    "le": "1766",
+    "lut": "1431",
+    "ripple": "149",
+    "seq": "1461",
+    "bram": "16",
+    "dsp": "0"
+  },
+  {
+    "instance": "u0_reset_sync",
+    "module": "hdmi_1_4b_tx_reset_sync",
+    "le": "10",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "9",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_hdmi_edid_wrapper",
+    "module": "hdmi_edid_wrapper",
+    "le": "282",
+    "lut": "237",
+    "ripple": "38",
+    "seq": "161",
+    "bram": "2",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_hdmi_edid_read_controller",
+    "module": "hdmi_edid_read_controller",
+    "le": "15",
+    "lut": "9",
+    "ripple": "6",
+    "seq": "10",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_iic_master_wrapper",
+    "module": "iic_master_wrapper",
+    "le": "267",
+    "lut": "228",
+    "ripple": "32",
+    "seq": "151",
+    "bram": "2",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_iic_bit_transmitter",
+    "module": "iic_bit_transmitter",
+    "le": "91",
+    "lut": "77",
+    "ripple": "14",
+    "seq": "32",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_iic_receiver_controller",
+    "module": "iic_receiver_controller",
+    "le": "4",
+    "lut": "4",
+    "ripple": "0",
+    "seq": "0",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_iic_transmitter_controller",
+    "module": "iic_transmitter_controller",
+    "le": "172",
+    "lut": "147",
+    "ripple": "18",
+    "seq": "119",
+    "bram": "2",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_iic_w11_d1024_fifo",
+    "module": "iic_w11_d1024_fifo",
+    "le": "61",
+    "lut": "54",
+    "ripple": "0",
+    "seq": "59",
+    "bram": "2",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_hdmi_tx_controller_wrapper",
+    "module": "hdmi_tx_controller_wrapper",
+    "le": "1474",
+    "lut": "1192",
+    "ripple": "111",
+    "seq": "1291",
+    "bram": "14",
+    "dsp": "0"
+  },
+  {
+    "instance": "u0_hdmi_tmds_encode",
+    "module": "hdmi_tmds_encode",
+    "le": "215",
+    "lut": "130",
+    "ripple": "30",
+    "seq": "165",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u1_hdmi_tmds_encode",
+    "module": "hdmi_tmds_encode",
+    "le": "146",
+    "lut": "104",
+    "ripple": "30",
+    "seq": "107",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u2_hdmi_tmds_encode",
+    "module": "hdmi_tmds_encode",
+    "le": "166",
+    "lut": "128",
+    "ripple": "30",
+    "seq": "112",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_hdmi_data_distribution",
+    "module": "hdmi_data_distribution",
+    "le": "34",
+    "lut": "22",
+    "ripple": "0",
+    "seq": "34",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_hdmi_island_data_assemble",
+    "module": "hdmi_island_data_assemble",
+    "le": "395",
+    "lut": "352",
+    "ripple": "0",
+    "seq": "392",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_hdmi_island_data_gen",
+    "module": "hdmi_island_data_gen",
+    "le": "382",
+    "lut": "348",
+    "ripple": "5",
+    "seq": "358",
+    "bram": "11",
+    "dsp": "0"
+  },
+  {
+    "instance": "U_audio_sample_packet_2_channel",
+    "module": "audio_sample_packet_2_channel",
+    "le": "175",
+    "lut": "165",
+    "ripple": "5",
+    "seq": "162",
+    "bram": "11",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_w96_d1024_fifo",
+    "module": "w96_d1024_fifo",
+    "le": "59",
+    "lut": "59",
+    "ripple": "0",
+    "seq": "56",
+    "bram": "11",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_BCH_32_24_encode",
+    "module": "BCH_32_24_encode",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_BCH_64_56_encode",
+    "module": "BCH_64_56_encode",
+    "le": "12",
+    "lut": "12",
+    "ripple": "0",
+    "seq": "10",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_audio_clock_regeneration_packet",
+    "module": "audio_clock_regeneration_packet",
+    "le": "61",
+    "lut": "37",
+    "ripple": "0",
+    "seq": "59",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_BCH_64_56_encode",
+    "module": "BCH_64_56_encode",
+    "le": "11",
+    "lut": "11",
+    "ripple": "0",
+    "seq": "9",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_hdmi_video_data_assemble",
+    "module": "hdmi_video_data_assemble",
+    "le": "28",
+    "lut": "19",
+    "ripple": "0",
+    "seq": "28",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_hdmi_video_source",
+    "module": "hdmi_video_source",
+    "le": "51",
+    "lut": "35",
+    "ripple": "16",
+    "seq": "38",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_video_axi_stream_receiver",
+    "module": "video_axi_stream_receiver",
+    "le": "57",
+    "lut": "54",
+    "ripple": "0",
+    "seq": "57",
+    "bram": "3",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_w24_d1024_fifo",
+    "module": "w24_d1024_fifo",
+    "le": "57",
+    "lut": "54",
+    "ripple": "0",
+    "seq": "57",
+    "bram": "3",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_lrc_scroll_controller",
+    "module": "lrc_scroll_controller",
+    "le": "56",
+    "lut": "51",
+    "ripple": "5",
+    "seq": "24",
+    "bram": "0",
+    "dsp": "1"
+  },
+  {
+    "instance": "u_lrc_window_controller",
+    "module": "lrc_window_controller",
+    "le": "375",
+    "lut": "368",
+    "ripple": "5",
+    "seq": "266",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_media_probe",
+    "module": "media_probe",
+    "le": "47",
+    "lut": "40",
+    "ripple": "7",
+    "seq": "31",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_media_supervisor",
+    "module": "media_supervisor",
+    "le": "139",
+    "lut": "115",
+    "ripple": "24",
+    "seq": "79",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_media_video_reset",
+    "module": "reset_sync",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_mem_reset",
+    "module": "reset_sync",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_mv_metadata_cdc",
+    "module": "cdc_bundle_latest",
+    "le": "239",
+    "lut": "222",
+    "ripple": "0",
+    "seq": "162",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_ack_sync",
+    "module": "sync_2ff",
+    "le": "1",
+    "lut": "0",
+    "ripple": "0",
+    "seq": "1",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_dst_alive_sync",
+    "module": "sync_2ff",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_mv_preloaded_sync",
+    "module": "sync_2ff",
+    "le": "1",
+    "lut": "0",
+    "ripple": "0",
+    "seq": "1",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_mv_stream_player",
+    "module": "mv_stream_player",
+    "le": "118",
+    "lut": "98",
+    "ripple": "20",
+    "seq": "77",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_mv_writer_sync",
+    "module": "sync_2ff",
+    "le": "3",
+    "lut": "0",
+    "ripple": "0",
+    "seq": "3",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_pcm_tap",
+    "module": "pcm_tap",
+    "le": "71",
+    "lut": "54",
+    "ripple": "17",
+    "seq": "20",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_pcm_volume_fade",
+    "module": "pcm_volume_fade",
+    "le": "0",
+    "lut": "0",
+    "ripple": "0",
+    "seq": "0",
+    "bram": "0",
+    "dsp": "1"
+  },
+  {
+    "instance": "u_play_ctrl",
+    "module": "play_ctrl",
+    "le": "22",
+    "lut": "18",
+    "ripple": "0",
+    "seq": "22",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_playback_page",
+    "module": "playback_page",
+    "le": "916",
+    "lut": "881",
+    "ripple": "35",
+    "seq": "357",
+    "bram": "8",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_lrc_five_osd",
+    "module": "lrc_five_osd",
+    "le": "20",
+    "lut": "10",
+    "ripple": "10",
+    "seq": "1",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_shared_song_font",
+    "module": "song_font_rom",
+    "le": "629",
+    "lut": "629",
+    "ripple": "0",
+    "seq": "233",
+    "bram": "8",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_playback_progress",
+    "module": "playback_progress",
+    "le": "527",
+    "lut": "495",
+    "ripple": "32",
+    "seq": "325",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_promax_audio_waveform",
+    "module": "promax_audio_waveform",
+    "le": "136",
+    "lut": "111",
+    "ripple": "24",
+    "seq": "35",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_rotation_param_cdc",
+    "module": "cdc_bundle_latest",
+    "le": "17",
+    "lut": "14",
+    "ripple": "0",
+    "seq": "17",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_ack_sync",
+    "module": "sync_2ff",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_dst_alive_sync",
+    "module": "sync_2ff",
+    "le": "2",
+    "lut": "0",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_req_sync",
+    "module": "sync_2ff",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_s6_video_layer",
+    "module": "s6_video_layer",
+    "le": "578",
+    "lut": "471",
+    "ripple": "87",
+    "seq": "310",
+    "bram": "0",
+    "dsp": "2"
+  },
+  {
+    "instance": "scheduler",
+    "module": "mv_frame_scheduler",
+    "le": "372",
+    "lut": "311",
+    "ripple": "61",
+    "seq": "148",
+    "bram": "0",
+    "dsp": "1"
+  },
+  {
+    "instance": "u_sdcard_reset",
+    "module": "reset_sync",
+    "le": "1",
+    "lut": "0",
+    "ripple": "0",
+    "seq": "1",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_sdram_init_sync",
+    "module": "sync_2ff",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_seek_controller",
+    "module": "seek_controller",
+    "le": "342",
+    "lut": "312",
+    "ripple": "30",
+    "seq": "238",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_seg_business_mux",
+    "module": "seg_business_mux",
+    "le": "116",
+    "lut": "109",
+    "ripple": "7",
+    "seq": "89",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_slideshow_beep_event_sync",
+    "module": "sync_2ff",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_slideshow_controller",
+    "module": "slideshow_controller",
+    "le": "81",
+    "lut": "74",
+    "ripple": "7",
+    "seq": "50",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_slideshow_dip2_sync",
+    "module": "sync_2ff",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_song_metadata_cdc",
+    "module": "cdc_bundle_latest",
+    "le": "14",
+    "lut": "14",
+    "ripple": "0",
+    "seq": "14",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_ack_sync",
+    "module": "sync_2ff",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_req_sync",
+    "module": "sync_2ff",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_song_text_rom",
+    "module": "song_text_rom",
+    "le": "282",
+    "lut": "279",
+    "ripple": "3",
+    "seq": "126",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_startup_pulse",
+    "module": "startup_pulse",
+    "le": "32",
+    "lut": "26",
+    "ripple": "6",
+    "seq": "21",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_stream_session",
+    "module": "stream_session",
+    "le": "13",
+    "lut": "12",
+    "ripple": "0",
+    "seq": "11",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_sync_fade_gain",
+    "module": "sync_fade_gain",
+    "le": "108",
+    "lut": "106",
+    "ripple": "0",
+    "seq": "85",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_timebase_48k",
+    "module": "timebase_48k",
+    "le": "223",
+    "lut": "180",
+    "ripple": "43",
+    "seq": "123",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_ui_event_bridge",
+    "module": "ui_event_bridge",
+    "le": "266",
+    "lut": "221",
+    "ripple": "45",
+    "seq": "80",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_ui_param_csr",
+    "module": "ui_param_csr",
+    "le": "25",
+    "lut": "25",
+    "ripple": "0",
+    "seq": "19",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_ui_params_cdc",
+    "module": "cdc_bundle_latest",
+    "le": "51",
+    "lut": "48",
+    "ripple": "0",
+    "seq": "51",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_ack_sync",
+    "module": "sync_2ff",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_req_sync",
+    "module": "sync_2ff",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_video_fade_transition",
+    "module": "video_fade_transition",
+    "le": "53",
+    "lut": "48",
+    "ripple": "4",
+    "seq": "44",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_video_read_ack_sync",
+    "module": "sync_2ff",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_video_rgb_to_axis_640x480",
+    "module": "video_rgb_to_axis_640x480",
+    "le": "123",
+    "lut": "123",
+    "ripple": "0",
+    "seq": "57",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_video_transition_apply",
+    "module": "video_transition_apply",
+    "le": "12",
+    "lut": "6",
+    "ripple": "6",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "3"
+  },
+  {
+    "instance": "u_volume_bridge_dst_reset",
+    "module": "reset_sync",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_volume_bridge_src_reset",
+    "module": "reset_sync",
+    "le": "2",
+    "lut": "2",
+    "ripple": "0",
+    "seq": "2",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_volume_intent_bridge",
+    "module": "volume_intent_bridge",
+    "le": "52",
+    "lut": "52",
+    "ripple": "0",
+    "seq": "37",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_wav_stream_player",
+    "module": "wav_stream_player",
+    "le": "434",
+    "lut": "360",
+    "ripple": "60",
+    "seq": "283",
+    "bram": "8",
+    "dsp": "0"
+  },
+  {
+    "instance": "video_pll_m0",
+    "module": "video_pll",
+    "le": "0",
+    "lut": "0",
+    "ripple": "0",
+    "seq": "0",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "video_timing_data_m0",
+    "module": "video_timing_data",
+    "le": "44",
+    "lut": "30",
+    "ripple": "14",
+    "seq": "26",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "color_bar_m0",
+    "module": "color_bar",
+    "le": "41",
+    "lut": "27",
+    "ripple": "14",
+    "seq": "23",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "u_pcm_media_tone",
+    "module": "pcm_media_tone",
+    "le": "15",
+    "lut": "15",
+    "ripple": "0",
+    "seq": "8",
+    "bram": "0",
+    "dsp": "0"
+  },
+  {
+    "instance": "video_delay_m0",
+    "module": "video_delay",
+    "le": "55",
+    "lut": "52",
+    "ripple": "0",
+    "seq": "55",
+    "bram": "0",
+    "dsp": "0"
+  }
+]

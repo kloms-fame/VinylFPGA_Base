@@ -1,0 +1,100 @@
+Net Fanout Histogram
+-------------------------------
+  Fanout   |  Nets   |    %    
+-------------------------------
+     1     |  19529  |  68.75  
+     2     |  4559   |  16.05  
+     3     |  1486   |  5.23   
+     4     |   733   |  2.58   
+   5-10    |  1479   |  5.21   
+   11-50   |   499   |  1.76   
+  51-100   |   92    |  0.32   
+  101-500  |   18    |  0.06   
+   >500    |   10    |  0.04   
+-------------------------------
+   Total   |  28405  |  100%   
+-------------------------------
+Net Fanout Summary
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                          Net                                                           |  Fanout  |     Driver      |  Driver location  
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                      sd_card_clk                                                       |   4459   |   EG_PHY_GCLK   |       [-,-]       
+                                                u_sync_fade_gain/pix_clk                                                |   4109   |   EG_PHY_GCLK   |       [-,-]       
+                                                     sd_media_rst_n                                                     |   3585   |   AL_MAP_LUT2   |       [-,-]       
+                                                       clk_dup_1                                                        |   1196   |   EG_PHY_PAD    |       [-,-]       
+                                             u_expansion_integration/rst_n                                              |   1175   |   AL_BUFKEEP    |       [-,-]       
+                                               u_sync_fade_gain/pix_rst_n                                               |   1045   |   AL_BUFKEEP    |       [-,-]       
+     u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_edid_wrapper/u_iic_master_wrapper/u_iic_receiver_controller/I_rst      |   949    |   AL_MAP_SEQ    |       [-,-]       
+                                             U3/u2_ram/u1_init_ref/Sdr_clk                                              |   810    |   EG_PHY_PLL    |       [-,-]       
+                                                   media_video_rst_n                                                    |   793    |   AL_BUFKEEP    |       [-,-]       
+                                                      sdcard_rst_n                                                      |   553    |   AL_BUFKEEP    |       [-,-]       
+                                     u_lrc_window_controller/tail_pending_reg_syn_5                                     |   425    |   AL_MAP_LUT2   |       [-,-]       
+                                 sd_card_bmp_m0/fat32_media_loader_m0/media_status[22]                                  |   387    |   AL_MAP_SEQ    |       [-,-]       
+                         sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/chk_ok_reg_syn_5                          |   324    |   AL_MAP_LUT2   |       [-,-]       
+                                                       mem_rst_n                                                        |   274    |   AL_BUFKEEP    |       [-,-]       
+  u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_assemble/S_island_packet_req_2d  |   272    |   AL_MAP_SEQ    |       [-,-]       
+                                                      frame_start                                                       |   252    |   AL_MAP_LUT2   |       [-,-]       
+                  u_expansion_integration/u_expansion_io_hub/u_key_dip_monitor/u_debounce_bank/tick_ce                  |   200    |   AL_MAP_LUT2   |       [-,-]       
+                                                  metadata_song_sd[1]                                                   |   198    |   AL_MAP_SEQ    |       [-,-]       
+                                      u_playback_page/u_lrc_five_osd/sel0_syn_2[1]                                      |   167    |   AL_MAP_LUT3   |       [-,-]       
+                          sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/mux34_syn_2759                          |   156    |   AL_MAP_LUT5   |       [-,-]       
+               sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sectors_per_cluster_shift_b[1]_syn_2               |   153    |   AL_MAP_LUT5   |       [-,-]       
+  u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_assemble/S_island_packet_req_1d  |   141    |   AL_MAP_SEQ    |       [-,-]       
+                               sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/valid                               |   139    |   AL_MAP_SEQ    |       [-,-]       
+                               sd_card_bmp_m0/fat32_media_loader_m0/load_index_latched[1]                               |   130    |   AL_MAP_SEQ    |       [-,-]       
+                                             u_song_text_rom/add0_syn_3[1]                                              |   123    |  EG_PHY_MSLICE  |       [-,-]       
+                                      u_wav_stream_player/limit_reached_reg_syn_5                                       |   120    |   AL_MAP_LUT2   |       [-,-]       
+                                             u_song_text_rom/add0_syn_3[0]                                              |   116    |  EG_PHY_MSLICE  |       [-,-]       
+                               sd_card_bmp_m0/fat32_media_loader_m0/audio_meta_pending_n                                |   102    |   AL_MAP_LUT4   |       [-,-]       
+                                         u_lrc_window_controller/sel0_syn_2[0]                                          |    96    |   AL_MAP_LUT4   |       [-,-]       
+                                            u_play_ctrl/restart_request_int                                             |    94    |   AL_MAP_SEQ    |       [-,-]       
+                                      u_playback_page/u_lrc_five_osd/sel0_syn_2[0]                                      |    91    |   AL_MAP_LUT4   |       [-,-]       
+                                           u_song_text_rom/ramread0_syn_3963                                            |    90    |   AL_MAP_LUT4   |       [-,-]       
+                                  sd_card_bmp_m0/fat32_media_loader_m0/mux32_syn_2[26]                                  |    87    |   AL_MAP_LUT3   |       [-,-]       
+                                       u_s6_video_layer/scheduler/busy_reg_syn_5                                        |    85    |   AL_MAP_LUT2   |       [-,-]       
+  u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_video_axi_stream_receiver/u_w24_d1024_fifo/I_rst  |    85    |   AL_MAP_LUT2   |       [-,-]       
+                                         u_lrc_window_controller/rom_line_valid                                         |    84    |   AL_MAP_SEQ    |       [-,-]       
+                                   u_playback_page/u_shared_song_font/addr[4]_syn_31                                    |    83    |   AL_MAP_LUT2   |       [-,-]       
+                                        u_lrc_window_controller/mux125_syn_8[0]                                         |    83    |   AL_MAP_LUT5   |       [-,-]       
+                                        u_lrc_window_controller/mux124_syn_8[0]                                         |    83    |   AL_MAP_LUT3   |       [-,-]       
+                                        u_lrc_window_controller/mux124_syn_2[0]                                         |    83    |   AL_MAP_LUT4   |       [-,-]       
+                                        u_lrc_window_controller/mux123_syn_8[0]                                         |    83    |   AL_MAP_LUT3   |       [-,-]       
+                                        u_lrc_window_controller/mux123_syn_2[0]                                         |    83    |   AL_MAP_LUT4   |       [-,-]       
+                                        u_lrc_window_controller/mux122_syn_8[0]                                         |    83    |   AL_MAP_LUT5   |       [-,-]       
+                                        u_lrc_window_controller/mux122_syn_2[0]                                         |    83    |   AL_MAP_LUT4   |       [-,-]       
+                                        u_lrc_window_controller/mux121_syn_2[0]                                         |    83    |   AL_MAP_LUT4   |       [-,-]       
+                                        u_lrc_window_controller/mux120_syn_8[0]                                         |    83    |   AL_MAP_LUT5   |       [-,-]       
+                                        u_lrc_window_controller/mux120_syn_2[0]                                         |    83    |   AL_MAP_LUT4   |       [-,-]       
+                                       u_lrc_window_controller/mux119_syn_2[127]                                        |    83    |   AL_MAP_LUT3   |       [-,-]       
+                                      u_lrc_window_controller/mux115_syn_131[109]                                       |    83    |   AL_MAP_LUT5   |       [-,-]       
+                                          u_audio_arc_calculate/I_audio_valid                                           |    83    |   AL_MAP_LUT3   |       [-,-]       
+         u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_gen/sel0_syn_464          |    79    |   AL_MAP_LUT3   |       [-,-]       
+                           sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/mux110_syn_66                           |    78    |   AL_MAP_LUT2   |       [-,-]       
+                        sd_card_bmp_m0/fat32_media_loader_m0/u_file_streamer/state_reg_syn_1[9]                         |    76    |   AL_MAP_SEQ    |       [-,-]       
+                                      u_playback_page/u_lrc_five_osd/sel0_syn_2[2]                                      |    75    |   AL_MAP_LUT3   |       [-,-]       
+                          sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/mux110_syn_136                           |    74    |   AL_MAP_LUT2   |       [-,-]       
+                          sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/mux110_syn_126                           |    74    |   AL_MAP_LUT2   |       [-,-]       
+                          sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/mux110_syn_116                           |    74    |   AL_MAP_LUT2   |       [-,-]       
+                          sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/mux110_syn_106                           |    74    |   AL_MAP_LUT2   |       [-,-]       
+                           sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/mux110_syn_96                           |    74    |   AL_MAP_LUT2   |       [-,-]       
+                           sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/mux110_syn_86                           |    74    |   AL_MAP_LUT2   |       [-,-]       
+                           sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/mux110_syn_76                           |    74    |   AL_MAP_LUT2   |       [-,-]       
+                                      u_wav_stream_player/limit_reached_reg_syn_7                                       |    73    |   AL_MAP_LUT2   |       [-,-]       
+                        sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/phase_reg_syn_1[1]                         |    73    |   AL_MAP_SEQ    |       [-,-]       
+                                                  metadata_song_sd[0]                                                   |    73    |   AL_MAP_SEQ    |       [-,-]       
+                                           u_playback_progress/mux72_syn_2[0]                                           |    72    |   AL_MAP_LUT2   |       [-,-]       
+                        sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/state_reg_syn_1[2]                        |    71    |   AL_MAP_SEQ    |       [-,-]       
+                            sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/chk_idx[1]                             |    71    |   AL_MAP_SEQ    |       [-,-]       
+                              sd_card_bmp_m0/fat32_media_loader_m0/scan_phase_reg_syn_1[1]                              |    71    |   AL_MAP_SEQ    |       [-,-]       
+                          sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/audio_valid_n                           |    69    |   AL_MAP_LUT2   |       [-,-]       
+                        sd_card_bmp_m0/fat32_media_loader_m0/u_file_streamer/state_reg_syn_1[0]                         |    69    |   AL_MAP_SEQ    |       [-,-]       
+                               sd_card_bmp_m0/fat32_media_loader_m0/load_index_latched[0]                               |    69    |   AL_MAP_SEQ    |       [-,-]       
+                          sd_card_bmp_m0/fat32_media_loader_m0/audio_cluster_m2_d_b1[30]_syn_7                          |    68    |   AL_MAP_LUT3   |       [-,-]       
+                        sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/state_reg_syn_1[5]                        |    67    |   AL_MAP_SEQ    |       [-,-]       
+                                           u_playback_progress/mux70_syn_2[0]                                           |    66    |   AL_MAP_LUT2   |       [-,-]       
+                                           u_mv_metadata_cdc/force_publish_n4                                           |    66    |   AL_MAP_LUT5   |       [-,-]       
+                        sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/state_reg_syn_1[4]                        |    66    |   AL_MAP_SEQ    |       [-,-]       
+                   sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sectors_per_cluster_shift[2]                   |    65    |   AL_MAP_SEQ    |       [-,-]       
+                          sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/mux585_syn_53                           |    65    |   AL_MAP_LUT5   |       [-,-]       
+                          sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/mux585_syn_50                           |    65    |   AL_MAP_LUT5   |       [-,-]       
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------

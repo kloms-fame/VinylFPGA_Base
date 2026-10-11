@@ -12,11 +12,9 @@ module lrc_five_osd (
     input  wire [9:0]    pixel_x,
     input  wire [9:0]    pixel_y,
     input  wire          window_valid,
-    input  wire [5:0]    row_valid,
-    input  wire [41:0]   row_indices,
+    input  wire          scroll_active,
     input  wire [29:0]   row_lengths,
     input  wire [767:0]  row_glyphs,
-    input  wire [6:0]    highlight_index,
     input  wire [5:0]    scroll_offset,
     input  wire [7:0]    line_count,
     input  wire [127:0] no_lyrics_glyphs,
@@ -33,15 +31,38 @@ module lrc_five_osd (
     wire lyric_y_active = (pixel_y >= `PLAYBACK_INFO_Y0) &&
         (pixel_y < `PLAYBACK_INFO_Y1);
 
-    integer slot;
-    reg signed [11:0] row_top_signed;
-    reg signed [11:0] pixel_y_signed;
-    reg signed [7:0] row_distance;
+    wire [10:0] lyric_y_sum = {1'b0, pixel_y} + {5'd0, scroll_offset};
+    wire [5:0] lyric_row_phase = lyric_y_sum[9:4] - 6'd8;
     reg [2:0] selected_slot;
     reg selected_row_found;
     reg [3:0] selected_row_pixel;
-    reg [6:0] selected_index;
     reg [4:0] selected_length;
+    reg [127:0] selected_row_glyphs;
+
+    function [7:0] glyph_byte_at;
+        input [127:0] glyphs;
+        input [3:0] column;
+        begin
+            case (column)
+                4'd0: glyph_byte_at = glyphs[7:0];
+                4'd1: glyph_byte_at = glyphs[15:8];
+                4'd2: glyph_byte_at = glyphs[23:16];
+                4'd3: glyph_byte_at = glyphs[31:24];
+                4'd4: glyph_byte_at = glyphs[39:32];
+                4'd5: glyph_byte_at = glyphs[47:40];
+                4'd6: glyph_byte_at = glyphs[55:48];
+                4'd7: glyph_byte_at = glyphs[63:56];
+                4'd8: glyph_byte_at = glyphs[71:64];
+                4'd9: glyph_byte_at = glyphs[79:72];
+                4'd10: glyph_byte_at = glyphs[87:80];
+                4'd11: glyph_byte_at = glyphs[95:88];
+                4'd12: glyph_byte_at = glyphs[103:96];
+                4'd13: glyph_byte_at = glyphs[111:104];
+                4'd14: glyph_byte_at = glyphs[119:112];
+                default: glyph_byte_at = glyphs[127:120];
+            endcase
+        end
+    endfunction
 
     always @* begin
         font_request = 1'b0;
@@ -53,11 +74,8 @@ module lrc_five_osd (
         selected_slot = 3'd0;
         selected_row_found = 1'b0;
         selected_row_pixel = 4'd0;
-        selected_index = 7'd0;
         selected_length = 5'd0;
-        row_top_signed = 12'sd0;
-        pixel_y_signed = $signed({2'b00, pixel_y});
-        row_distance = 8'sd0;
+        selected_row_glyphs = 128'd0;
 
         if (enable && de && lyric_x_active && lyric_y_active) begin
             if (line_count == 0) begin
@@ -65,36 +83,46 @@ module lrc_five_osd (
                     (pixel_y < (`PLAYBACK_LYRIC_Y + 10'd16)) &&
                     (font_column < 4'd9)) begin
                     font_request = 1'b1;
-                    font_glyph = no_lyrics_glyphs[font_column*8 +: 8];
+                    font_glyph = glyph_byte_at(no_lyrics_glyphs, font_column);
                     font_row = pixel_y - `PLAYBACK_LYRIC_Y;
                 end
             end else if (window_valid) begin
-                for (slot = 0; slot < 6; slot = slot + 1) begin
-                    row_top_signed = $signed({2'b00, `PLAYBACK_LYRIC_Y}) - 12'sd96 +
-                                     (slot * 12'sd48) -
-                                     $signed({6'd0, scroll_offset});
-                    if (($signed(pixel_y_signed) >= row_top_signed) &&
-                        ($signed(pixel_y_signed) < (row_top_signed + 12'sd16)) &&
-                        row_valid[slot]) begin
-                        selected_slot = slot[2:0];
-                        selected_row_found = 1'b1;
-                        selected_row_pixel = pixel_y_signed[3:0] - row_top_signed[3:0];
-                    end
+                // Rows start every 48 pixels at y=128-scroll_offset.  After
+                // folding the offset into y, each glyph occupies phase 0..15
+                // of row groups 0,3,6,9,12,15 (16-pixel units).
+                if (lyric_y_sum >= 11'd128) begin
+                    case (lyric_row_phase)
+                        6'd0:  begin selected_slot = 3'd0; selected_row_found = 1'b1; end
+                        6'd3:  begin selected_slot = 3'd1; selected_row_found = 1'b1; end
+                        6'd6:  begin selected_slot = 3'd2; selected_row_found = 1'b1; end
+                        6'd9:  begin selected_slot = 3'd3; selected_row_found = 1'b1; end
+                        6'd12: begin selected_slot = 3'd4; selected_row_found = 1'b1; end
+                        6'd15: begin selected_slot = 3'd5; selected_row_found = 1'b1; end
+                        default: ;
+                    endcase
+                    selected_row_pixel = lyric_y_sum[3:0];
                 end
 
                 if (selected_row_found) begin
-                    selected_index = row_indices[selected_slot*7 +: 7];
-                    selected_length = row_lengths[selected_slot*5 +: 5];
+                    case (selected_slot)
+                        3'd0: begin selected_length = row_lengths[4:0];   selected_row_glyphs = row_glyphs[127:0]; end
+                        3'd1: begin selected_length = row_lengths[9:5];   selected_row_glyphs = row_glyphs[255:128]; end
+                        3'd2: begin selected_length = row_lengths[14:10]; selected_row_glyphs = row_glyphs[383:256]; end
+                        3'd3: begin selected_length = row_lengths[19:15]; selected_row_glyphs = row_glyphs[511:384]; end
+                        3'd4: begin selected_length = row_lengths[24:20]; selected_row_glyphs = row_glyphs[639:512]; end
+                        default: begin selected_length = row_lengths[29:25]; selected_row_glyphs = row_glyphs[767:640]; end
+                    endcase
                     if (font_column < selected_length) begin
                         font_request = 1'b1;
-                        font_glyph = row_glyphs[
-                            selected_slot*128 + font_column*8 +: 8];
+                        font_glyph = glyph_byte_at(selected_row_glyphs, font_column);
                         font_row = selected_row_pixel;
-                        row_distance = $signed({1'b0, selected_index}) -
-                                       $signed({1'b0, highlight_index});
-                        if (row_distance == 0)
+                        if ((scroll_active && (selected_slot == 3'd3)) ||
+                            (!scroll_active && (selected_slot == 3'd2)))
                             text_color = 24'hFFFFFF;
-                        else if ((row_distance == 8'sd1) || (row_distance == -8'sd1))
+                        else if ((!scroll_active &&
+                                  ((selected_slot == 3'd1) || (selected_slot == 3'd3))) ||
+                                 (scroll_active &&
+                                  ((selected_slot == 3'd2) || (selected_slot == 3'd4))))
                             text_color = 24'hB8C5D1;
                         else
                             text_color = 24'h738397;

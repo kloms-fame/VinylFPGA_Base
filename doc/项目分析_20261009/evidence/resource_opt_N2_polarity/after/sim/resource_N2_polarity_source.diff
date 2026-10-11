@@ -1,0 +1,39 @@
+--- N2_after/src/SD/song_index_db.v
++++ N2_polarity_after/src/SD/song_index_db.v
+@@ -77,7 +77,8 @@
+     // nonzero high byte cannot alias a supported version.
+     reg        hdr_version_lo_v1;
+     reg        hdr_version_lo_v2;
+-    reg        hdr_version_hi_zero;
++    reg        hdr_version_hi_nonzero;
++    wire       hdr_version_hi_zero = !hdr_version_hi_nonzero;
+     wire       version_is_v1 = hdr_version_lo_v1 && hdr_version_hi_zero;
+     wire       version_is_v2 = hdr_version_lo_v2 && hdr_version_hi_zero;
+     reg [15:0] hdr_entry_size;
+@@ -196,7 +197,7 @@
+             magic_ok       <= 1'b0;
+             hdr_version_lo_v1  <= 1'b0;
+             hdr_version_lo_v2  <= 1'b0;
+-            hdr_version_hi_zero<= 1'b1;
++            hdr_version_hi_nonzero<= 1'b0;
+             hdr_entry_size <= 16'd0;
+             hdr_count      <= 16'd0;
+             hdr_crc_exp    <= 32'd0;
+@@ -229,7 +230,7 @@
+                     magic_ok       <= 1'b1;
+                     hdr_version_lo_v1  <= 1'b0;
+                     hdr_version_lo_v2  <= 1'b0;
+-                    hdr_version_hi_zero<= 1'b1;
++                    hdr_version_hi_nonzero<= 1'b0;
+                     hdr_entry_size <= 16'd0;
+                     hdr_count      <= 16'd0;
+                     hdr_crc_exp    <= 32'd0;
+@@ -266,7 +267,7 @@
+                                 hdr_version_lo_v1 <= (in_byte == SIDX_VERSION[7:0]);
+                                 hdr_version_lo_v2 <= (in_byte == 8'd2);
+                             end
+-                            6'd9:  hdr_version_hi_zero <= (in_byte == 8'd0);
++                            6'd9:  hdr_version_hi_nonzero <= (in_byte != 8'd0);
+                             6'd10: hdr_entry_size[7:0] <= in_byte;
+                             6'd11: hdr_entry_size[15:8]<= in_byte;
+                             6'd12: hdr_count[7:0]      <= in_byte;

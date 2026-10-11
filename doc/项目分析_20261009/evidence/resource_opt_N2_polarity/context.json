@@ -1,0 +1,15 @@
+{
+  "workspace": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA",
+  "base": "C:\\Users\\Renni\\AppData\\Local\\Temp\\vinylfpga_resource_N1_N2_20261011_170501",
+  "before": "C:\\Users\\Renni\\AppData\\Local\\Temp\\vinylfpga_resource_N1_N2_20261011_170501\\N2_before",
+  "after": "C:\\Users\\Renni\\AppData\\Local\\Temp\\vinylfpga_resource_N1_N2_20261011_170501\\N2_polarity_after",
+  "round": "N2",
+  "before_full": "C:/Users/Renni/AppData/Local/Temp/vinylfpga_resource_N1_N2_20261011_170501/N1_before/sim/resource_N1_before_full",
+  "native_before": "C:\\Users\\Renni\\AppData\\Local\\Temp\\vinylfpga_resource_review_20261011_163045_native2",
+  "n1_decision": "Rejected: final Slice+3, PLB+1, setup116ps->0ps, hold30ps->27ps; no main-tree RTL applied.",
+  "mcp_prefixes": {
+    "before": "n2_before_1720",
+    "after": "n2_polarity_1730"
+  },
+  "variant": "N2 high-byte predicate stored with zero reset; logical classification unchanged"
+}

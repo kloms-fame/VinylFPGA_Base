@@ -1,0 +1,134 @@
+{
+  "current_count": 53,
+  "current_pass": 40,
+  "current_fail": 13,
+  "failed_set_matches_historical": true,
+  "failures": [
+    {
+      "name": "tb_browse_fsm",
+      "category": "compile/interface",
+      "evidence": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_browse_fsm.v:37: error: port ``view_mode'' is not a port of dut.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_browse_fsm.v:37: error: port ``thumb_right'' is not a port of dut.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_browse_fsm.v:37: error: port ``thumb_left'' is not a port of dut."
+      ]
+    },
+    {
+      "name": "tb_s3_browse_integration",
+      "category": "compile/interface",
+      "evidence": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s3_browse_integration.v:109: error: port ``view_mode'' is not a port of u_browse.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s3_browse_integration.v:109: error: port ``thumb_right'' is not a port of u_browse.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s3_browse_integration.v:109: error: port ``thumb_left'' is not a port of u_browse."
+      ]
+    },
+    {
+      "name": "tb_s7_browse_semantics",
+      "category": "compile/interface",
+      "evidence": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_browse_semantics.v:20: error: port ``view_mode'' is not a port of dut.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_browse_semantics.v:20: error: port ``thumb_mode'' is not a port of dut.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_browse_semantics.v:20: error: port ``go_home'' is not a port of dut."
+      ]
+    },
+    {
+      "name": "tb_s7_play_policy",
+      "category": "compile/interface",
+      "evidence": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_play_policy.v:9: error: port ``volume'' is not a port of dut.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_play_policy.v:9: error: port ``volume'' is not a port of dut."
+      ]
+    },
+    {
+      "name": "tb_s7_top",
+      "category": "compile/interface",
+      "evidence": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_top.v:43: error: Unable to bind wire/reg/memory `dut.thumb_mode_sd' in `tb_s7_top'",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_top.v:43: error: Unable to elaborate condition expression.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s7_top.v:46: error: Unable to bind wire/reg/memory `dut.thumb_mode_sd' in `tb_s7_top'"
+      ]
+    },
+    {
+      "name": "tb_thumbnail_view_reader",
+      "category": "compile/interface",
+      "evidence": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_thumbnail_view_reader.v:115: error: Unknown module type: thumbnail_view_reader"
+      ]
+    },
+    {
+      "name": "tb_sdram_rd_arbiter",
+      "category": "compile/interface",
+      "evidence": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_sdram_rd_arbiter.v:49: error: Unknown module type: sdram_rd_arbiter"
+      ]
+    },
+    {
+      "name": "tb_s5_play",
+      "category": "compile/interface",
+      "evidence": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s5_play.v:65: error: port ``volume'' is not a port of u_pc.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s5_play.v:65: error: port ``volume_update'' is not a port of u_pc.",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_s5_play.v:65: error: port ``volume'' is not a port of u_pc."
+      ]
+    },
+    {
+      "name": "tb_opt_osd_bypass",
+      "category": "compile/interface",
+      "evidence": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_opt_osd_bypass.v:23: error: Unable to bind wire/reg/memory `dut.contrast_frame' in `tb_opt_osd_bypass'",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_opt_osd_bypass.v:23: error: Unable to elaborate condition expression."
+      ]
+    },
+    {
+      "name": "tb_opt_metadata",
+      "category": "compile/interface",
+      "evidence": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_opt_metadata.v:33: error: Could not find variable ``dut.thumb_mode_sd'' in ``tb_opt_metadata''",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_opt_metadata.v:33: error: Could not find variable ``dut.thumb_focus_index_sd'' in ``tb_opt_metadata''"
+      ]
+    },
+    {
+      "name": "tb_x1x2_lights",
+      "category": "simulation assertion",
+      "evidence": [
+        "FATAL: D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_x1x2_lights.v:50: FAIL VU frame=33 mode=1 level=32 got=000000000000000000000000000000000000000000000000 want=000000000000000000000000000000000000000000300000"
+      ]
+    },
+    {
+      "name": "tb_ws_vu_only",
+      "category": "simulation assertion",
+      "evidence": [
+        "FATAL: D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_ws_vu_only.v:56: FAIL full-scale VU frame"
+      ]
+    },
+    {
+      "name": "tb_visual_feedback_top",
+      "category": "compile/interface",
+      "evidence": [
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_visual_feedback_top.v:33: error: Could not find variable ``dut.thumb_mode_sd'' in ``tb_visual_feedback_top''",
+        "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_visual_feedback_top.v:33: error: Could not find variable ``dut.thumb_focus_index_sd'' in ``tb_visual_feedback_top''"
+      ]
+    }
+  ],
+  "fresh_directed": {
+    "tb_fat32_media_loader": true,
+    "tb_fat32_index_loader": true,
+    "tb_fat32_file_streamer": true,
+    "tb_fat32_volume_scanner": true,
+    "tb_song_index_db": true,
+    "tb_sd_card_bmp_fourbank": true,
+    "tb_s7_media_lifecycle": true
+  },
+  "native_utilization": {
+    "mslice": 4296,
+    "lslice": 4292,
+    "plb": 2422,
+    "lut": 15683,
+    "reg": 10449,
+    "bram": 47,
+    "dsp": 10
+  },
+  "native_complete": true,
+  "native_qor_identical_to_E_confirm": true,
+  "input_files_changed": []
+}

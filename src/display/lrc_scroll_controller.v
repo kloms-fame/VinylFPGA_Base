@@ -17,8 +17,6 @@ module lrc_scroll_controller (
     input  wire         window_valid,
     input  wire         window_ready,
     input  wire [6:0]   window_center_index,
-    input  wire [5:0]   row_valid,
-    input  wire [41:0]  row_indices,
     output reg          scroll_active,
     output reg  [5:0]   scroll_offset,
     output wire [6:0]   highlight_index,
@@ -32,8 +30,6 @@ module lrc_scroll_controller (
 
     wire frame_tick = vs_q && !vs;
     wire [7:0] center_plus_one = {1'b0, window_center_index} + 8'd1;
-    wire [6:0] next_slot_index = row_indices[27:21];
-    wire next_slot_matches = row_valid[3] && (next_slot_index == target_index);
     assign highlight_index = scroll_active ? animation_target : window_center_index;
 
     always @(posedge clk or negedge rst_n) begin
@@ -80,8 +76,7 @@ module lrc_scroll_controller (
                         scroll_offset <= ({2'b00, phase} + 6'd1) * 6'd3;
                     end
                 end else if (window_ready &&
-                             ({1'b0, target_index} == center_plus_one) &&
-                             next_slot_matches) begin
+                             ({1'b0, target_index} == center_plus_one)) begin
                     // The phase starts at zero and cannot retrigger while
                     // this target remains selected.
                     animation_target <= target_index;

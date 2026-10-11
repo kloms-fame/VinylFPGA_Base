@@ -1,0 +1,23 @@
+Location         : C:\Users\Renni\AppData\Local\Temp\vinylfpga_candF_20261011\native_after\prj
+Running with     : Tang Dynasty v6.2.168116
+                   Copyright (c) 2012-2025 Anlogic Inc.
+Top Model        : top
+Device           : EG4S20BG256
+Speed            : NA
+
+Timing Mode      : basic
+Setup            : WNS  -492ps  TNS    -3156ps  NUM_FEPS    41
+Hold             : WNS   471ps  TNS        0ps  NUM_FEPS     0
+
+Flow Statistics  :
+---------------------------------------------------------------------------------------------------
+     command     |  #calls  |  wall time   |  cpu time(s)  |  used memory(mb)  |  peak memory(mb)  
+---------------------------------------------------------------------------------------------------
+  optimize_gate  |    1     |  1m17s(66%)  |    76(67%)    |        771        |        771        
+  optimize_rtl   |    1     |   39s(33%)   |    37(32%)    |        652        |        731        
+  import_device  |    1     |    0s(0%)    |     0(0%)     |        83         |        83         
+    read_adc     |    1     |    0s(0%)    |     0(0%)     |        426        |        426        
+    read_sdc     |    2     |    0s(0%)    |     0(0%)     |        771        |        771        
+---------------------------------------------------------------------------------------------------
+      total      |    6     |    1m56s     |      113      |        771        |        771        
+---------------------------------------------------------------------------------------------------

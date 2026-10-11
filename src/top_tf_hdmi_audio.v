@@ -2112,8 +2112,6 @@ wire [6:0] lyric_target_index;
 wire lyric_window_valid;
 wire lyric_window_ready;
 wire [6:0] lyric_window_center;
-wire [5:0] lyric_row_valid;
-wire [41:0] lyric_row_indices;
 wire [29:0] lyric_row_lengths;
 wire [767:0] lyric_row_glyphs;
 wire lyric_scroll_active;
@@ -2145,8 +2143,8 @@ lrc_window_controller u_lrc_window_controller (
     .rom_line_index(song_line_rom_index),.song_line_count_frame(song_line_count_frame),
     .target_valid(lyric_target_valid),.target_index(lyric_target_index),
     .window_valid(lyric_window_valid),.window_ready(lyric_window_ready),
-    .window_center_index(lyric_window_center),.row_valid(lyric_row_valid),
-    .row_indices(lyric_row_indices),.row_lengths(lyric_row_lengths),
+    .window_center_index(lyric_window_center),
+    .row_lengths(lyric_row_lengths),
     .row_glyphs(lyric_row_glyphs)
 );
 lrc_scroll_controller u_lrc_scroll_controller (
@@ -2155,8 +2153,8 @@ lrc_scroll_controller u_lrc_scroll_controller (
     .song_id(song_id_frame),.generation(song_generation_frame),
     .target_valid(lyric_target_valid),.target_index(lyric_target_index),
     .window_valid(lyric_window_valid),.window_ready(lyric_window_ready),
-    .window_center_index(lyric_window_center),.row_valid(lyric_row_valid),
-    .row_indices(lyric_row_indices),.scroll_active(lyric_scroll_active),
+    .window_center_index(lyric_window_center),
+    .scroll_active(lyric_scroll_active),
     .scroll_offset(lyric_scroll_offset),.highlight_index(lyric_highlight_index),
     .scroll_commit(lyric_scroll_commit)
 );
@@ -2185,10 +2183,10 @@ playback_page u_playback_page (
     .song_id(song_id_frame),.title_length(song_title_length),
     .artist_length(song_artist_length),.title_glyphs(song_title_glyphs),
     .artist_glyphs(song_artist_glyphs),.line_count(song_line_count_frame),
-    .lyric_window_valid(lyric_window_valid),.lyric_row_valid(lyric_row_valid),
-    .lyric_row_indices(lyric_row_indices),.lyric_row_lengths(lyric_row_lengths),
+    .lyric_window_valid(lyric_window_valid),
+    .lyric_scroll_active(lyric_scroll_active),
+    .lyric_row_lengths(lyric_row_lengths),
     .lyric_row_glyphs(lyric_row_glyphs),
-    .lyric_highlight_index(lyric_highlight_index),
     .lyric_scroll_offset(lyric_scroll_offset),
     .no_lyrics_glyphs(song_no_lyrics_glyphs),
     .progress_fill(playback_progress_fill),.time_ascii(playback_time_ascii),

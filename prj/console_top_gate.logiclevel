@@ -1,0 +1,49 @@
+Created by          : Tang Dynasty v6.2.168116
+                    : Copyright (c) 2012-2025 Anlogic Inc.
+Generated           : Sun Oct 11 10:47:04 2026
+
+Top Model           : top
+Device              : EG4S20BG256
+Speed               : NA
+STA coverage        : 99.96%
+Constraint File     : D:/Data_Backup/VinylFPGA_Workspace_Base/VinylFPGA/constraints/timing.sdc;
+Confidence          : Synthesized
+Check Corner        : Both (Slow and Fast)
+CRPR Enabled        : Yes
+Report Scheme       : 10 end point(s) per path group, 1 path(s) per end point
+
+
+Check Status
+-------------
+
+Corner   | Max      Min     
+------------------------------------
+Slow     | yes      yes     
+Fast     | yes      yes     
+
+       Clock-Id:       C-Freq       Fanout   Clock-Name
+--------------------------------------------------------------------------------
+           clk0:      100.000         4511   sd_card_clk
+           clk1:       25.000         4253   video_clk
+           clk2:       50.000         1199   clk
+           clk3:      125.000          949   ext_mem_clk
+           clk4:      125.000           50   hdmi_5x_clk
+           clk5:      125.000            1   ext_mem_clk_sft
+--------------------------------------------------------------------------------
+
+
+
+Logic Level Distribution
+--------------------------------------------------
+
+  Name      Max         0         1         2         3         4         5         6         7         8         9        10     11-15     16-20     21-25     26-30       >30
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  clk0        8         0         0         0         0         0         0         0         0         8         0         0         0         0         0         0         0
+  clk1        0         0         0         0         0         0         0         0         0         0         0         0         0         0         0         0         0
+  clk2        0         0         0         0         0         0         0         0         0         0         0         0         0         0         0         0         0
+  clk3        7         0         0         0         0         0         0         3         1         0         0         0         0         0         0         0         0
+  clk4        0         0         0         0         0         0         0         0         0         0         0         0         0         0         0         0         0
+  clk5        0         0         0         0         0         0         0         0         0         0         0         0         0         0         0         0         0
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+

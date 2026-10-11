@@ -1,0 +1,50 @@
+  AL_MAP_LUT4 #(
+    .EQN("~(~(D*B)*~(C*A))"),
+    .INIT(16'heca0))
+    \u_playback_page/u_shared_song_font/addr[0]_syn_8  (
+    .a(\u_playback_page/u_shared_song_font/addr[8]_syn_6 ),
+    .b(\u_playback_page/u_shared_song_font/addr[3]_syn_6 ),
+    .c(\u_playback_page/u_lrc_five_osd/lyric_y_sum [0]),
+    .d(\u_playback_page/line_y [0]),
+    .o(\u_playback_page/u_shared_song_font/addr[0]_syn_4 ));
+
+  AL_MAP_LUT4 #(
+    .EQN("~(~(D*B)*~(C*A))"),
+    .INIT(16'heca0))
+    \u_playback_page/u_shared_song_font/addr[1]_syn_8  (
+    .a(\u_playback_page/u_shared_song_font/addr[8]_syn_6 ),
+    .b(\u_playback_page/u_shared_song_font/addr[3]_syn_6 ),
+    .c(\u_playback_page/u_lrc_five_osd/lyric_y_sum [1]),
+    .d(\u_playback_page/line_y [1]),
+    .o(\u_playback_page/u_shared_song_font/addr[1]_syn_4 ));
+
+  AL_MAP_LUT4 #(
+    .EQN("~(~(D*B)*~(C*A))"),
+    .INIT(16'heca0))
+    \u_playback_page/u_shared_song_font/addr[2]_syn_8  (
+    .a(\u_playback_page/u_shared_song_font/addr[8]_syn_6 ),
+    .b(\u_playback_page/u_shared_song_font/addr[3]_syn_6 ),
+    .c(\u_playback_page/u_lrc_five_osd/lyric_y_sum [2]),
+    .d(\u_playback_page/line_y [2]),
+    .o(\u_playback_page/u_shared_song_font/addr[2]_syn_4 ));
+
+  AL_MAP_LUT4 #(
+    .EQN("(~(D*C)*~(~B*A))"),
+    .INIT(16'h0ddd))
+    \u_playback_page/u_shared_song_font/addr[3]_syn_5  (
+    .a(al_362),
+    .b(\u_playback_page/u_shared_song_font/addr[5]_syn_8 ),
+    .c(\u_playback_page/u_shared_song_font/addr[4]_syn_15 ),
+    .d(\u_lrc_window_controller/song_line_count_frame [2]),
+    .o(\u_playback_page/u_shared_song_font/addr[3]_syn_6 ));
+
+  AL_MAP_LUT5 #(
+    .EQN("~(~((E@C)*B)*~(D*A))"),
+    .INIT(32'hae0ceac0))
+    \u_playback_page/u_shared_song_font/addr[3]_syn_7  (
+    .a(\u_playback_page/u_shared_song_font/addr[8]_syn_6 ),
+    .b(\u_playback_page/u_shared_song_font/addr[3]_syn_6 ),
+    .c(\u_playback_page/u_shared_song_font/addr[4]_syn_39 ),
+    .d(\u_playback_page/u_lrc_five_osd/lyric_y_sum [3]),
+    .e(\u_playback_page/line_y [3]),
+    .o(\u_playback_page/u_shared_song_font/addr[3]_syn_4 ));
