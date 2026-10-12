@@ -13,6 +13,7 @@ module playback_page (
     input  wire         de,
     input  wire [9:0]   pixel_x,
     input  wire         enable,
+    input  wire         selection_enable,
     input  wire [23:0]  rgb_in,
     input  wire [1:0]   song_id,
     input  wire [4:0]   title_length,
@@ -46,10 +47,11 @@ module playback_page (
     localparam [23:0] TRACK_COLOR    = 24'h273744;
     localparam [23:0] PROGRESS_KNOB_COLOR = 24'hE8F7F5;
 
-    localparam [1:0] TEXT_TITLE  = 2'd0;
-    localparam [1:0] TEXT_ARTIST = 2'd1;
-    localparam [1:0] TEXT_TIME   = 2'd2;
-    localparam [1:0] TEXT_LYRIC  = 2'd3;
+    localparam [2:0] TEXT_TITLE     = 3'd0;
+    localparam [2:0] TEXT_ARTIST    = 3'd1;
+    localparam [2:0] TEXT_TIME      = 3'd2;
+    localparam [2:0] TEXT_LYRIC     = 3'd3;
+    localparam [2:0] TEXT_SELECTION = 3'd4;
 
     function [7:0] packed_glyph_at;
         input [127:0] packed;
@@ -102,9 +104,10 @@ module playback_page (
     reg de_q, vs_q;
     reg [23:0] base_rgb_q;
     reg page_enable_q;
+    reg selection_enable_q;
     reg text_hit_q;
     reg [3:0] font_px_col_q;
-    reg [1:0] text_kind_q;
+    reg [2:0] text_kind_q;
     reg [23:0] text_color_q;
     reg [9:0] pixel_y_q;
     reg [7:0] progress_fill_q;
@@ -115,7 +118,7 @@ module playback_page (
     reg [3:0] selected_column;
     reg [3:0] selected_pixel_col;
     reg [3:0] selected_row;
-    reg [1:0] selected_kind;
+    reg [2:0] selected_kind;
     reg [7:0] selected_ascii;
     reg [23:0] selected_text_color;
     reg title_fallback;
@@ -124,6 +127,10 @@ module playback_page (
     wire [9:0] title_dx = pixel_x - `PLAYBACK_TITLE_X;
     wire [9:0] artist_dx = pixel_x - `PLAYBACK_ARTIST_X;
     wire [9:0] time_dx = pixel_x - `PLAYBACK_TIME_X;
+    wire [9:0] selection_dx = pixel_x - `SELECT_INFO_X0;
+    wire selection_region = selection_enable && de &&
+        (line_y >= `SELECT_INFO_Y) && (line_y < (`SELECT_INFO_Y + 10'd16)) &&
+        (pixel_x >= `SELECT_INFO_X0) && (pixel_x < `SELECT_INFO_X1);
     wire title_region = enable && de &&
         (line_y >= `PLAYBACK_TITLE_Y) && (line_y < (`PLAYBACK_TITLE_Y + 10'd16)) &&
         (pixel_x >= `PLAYBACK_TITLE_X) && (pixel_x < (`PLAYBACK_TITLE_X + 10'd256));
@@ -250,6 +257,44 @@ module playback_page (
             direct_glyph = lyric_font_glyph;
             text_request = lyric_font_request;
             selected_text_color = lyric_text_color;
+        end else if (selection_region) begin
+            selected_kind = TEXT_SELECTION;
+            selected_text_color = TEXT_COLOR;
+            selected_row = line_y - `SELECT_INFO_Y;
+            if (pixel_x < 10'd48) begin
+                selected_column = selection_dx[7:4];
+                selected_pixel_col = selection_dx[3:0];
+                if (selected_column < 2) begin
+                    text_request = 1'b1;
+                    ascii_mode = 1'b1;
+                    selected_ascii = (selected_column == 0) ? 8'd48 :
+                                     (8'd49 + {6'd0, song_id});
+                    ascii_code = selected_ascii;
+                end
+            end else if (pixel_x >= 10'd64 && pixel_x < 10'd320) begin
+                selected_column = (pixel_x - 10'd64) >> 4;
+                selected_pixel_col = pixel_x[3:0];
+                if (selected_column < title_length) begin
+                    text_request = 1'b1;
+                    direct_glyph = packed_glyph_at(title_glyphs, selected_column);
+                end
+            end else if (pixel_x >= 10'd336 && pixel_x < 10'd528) begin
+                selected_column = (pixel_x - 10'd336) >> 4;
+                selected_pixel_col = pixel_x[3:0];
+                if ((selected_column < artist_length) && (selected_column < 5'd12)) begin
+                    text_request = 1'b1;
+                    direct_glyph = packed_glyph_at(artist_glyphs, selected_column);
+                end
+            end else if (pixel_x >= 10'd544) begin
+                selected_column = (pixel_x - 10'd544) >> 4;
+                selected_pixel_col = pixel_x[3:0];
+                if (selected_column < 5) begin
+                    text_request = 1'b1;
+                    ascii_mode = 1'b1;
+                    selected_ascii = packed_ascii_at(time_ascii, selected_column + 4'd8);
+                    ascii_code = selected_ascii;
+                end
+            end
         end
     end
 
@@ -266,6 +311,7 @@ module playback_page (
             vs_q <= 1'b1;
             base_rgb_q <= 24'h000000;
             page_enable_q <= 1'b0;
+            selection_enable_q <= 1'b0;
             text_hit_q <= 1'b0;
             font_px_col_q <= 4'd0;
             text_kind_q <= TEXT_TITLE;
@@ -285,6 +331,7 @@ module playback_page (
 
             base_rgb_q <= base_rgb_in;
             page_enable_q <= enable;
+            selection_enable_q <= selection_enable;
             text_hit_q <= text_request;
             font_px_col_q <= selected_pixel_col;
             text_kind_q <= selected_kind;
@@ -332,13 +379,13 @@ module playback_page (
 
     always @* begin
         out_rgb = base_rgb_q;
-        if (page_enable_q && out_de) begin
-            if (in_left_panel)
+        if ((page_enable_q || selection_enable_q) && out_de) begin
+            if (page_enable_q && in_left_panel)
                 out_rgb = left_border ? BORDER_COLOR : PANEL_COLOR;
-            else if (in_right_panel)
+            else if (page_enable_q && in_right_panel)
                 out_rgb = right_border ? BORDER_COLOR : PANEL_COLOR;
 
-            if (in_progress_bar) begin
+            if (page_enable_q && in_progress_bar) begin
                 if (progress_thumb)
                     out_rgb = PROGRESS_KNOB_COLOR;
                 else

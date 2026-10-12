@@ -37,4 +37,7 @@
 `define PLAYBACK_INFO_X1          10'd632
 `define PLAYBACK_INFO_Y0          10'd120
 `define PLAYBACK_INFO_Y1          10'd360
+`define SELECT_INFO_X0            10'd16
+`define SELECT_INFO_X1            10'd624
+`define SELECT_INFO_Y             10'd432
 `endif
