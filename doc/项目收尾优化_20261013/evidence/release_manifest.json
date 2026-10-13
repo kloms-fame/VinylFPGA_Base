@@ -1,0 +1,30 @@
+{
+  "round": "closure_opt_20261013_r5",
+  "branch": "main",
+  "base_commit": "16ede67bac6864bd948a776eda64a8e98153e00b",
+  "source_snapshot_matches_current": true,
+  "bit": "D:/Data_Backup/VinylFPGA_Workspace_Base/VinylFPGA/prj/resource_opt_verified_20261005/closure_opt_20261013_r5/VinylFPGA_optimized.bit",
+  "sha256": "1b3d770307fc81744743ab9835b12933e972d4236c236207bd273eb7468c385a",
+  "bytes": 651740,
+  "metrics": {
+    "lut": 16925,
+    "reg": 10941,
+    "mslice": 4536,
+    "lslice": 4528,
+    "plb": 2436,
+    "bram": 47,
+    "dsp": 10,
+    "slice": 9064,
+    "Setup WNS": 140,
+    "Setup TNS": 0,
+    "Hold WNS": 22,
+    "Hold TNS": 0
+  },
+  "map_mode": "area_prior",
+  "seed": 5,
+  "fix_hold": true,
+  "board_acceptance": "pending",
+  "optimization_commit": "pending_board_acceptance",
+  "regression_full_r3": "closure_verification_20261013_final",
+  "regression_affected_r5": "closure_verification_20261013_r5_final"
+}

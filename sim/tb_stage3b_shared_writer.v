@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-module tb_stage3b_shared_writer;
+module tb_stage3b_shared_writer #(parameter SHORT_ART=0);
  reg sd_clk=0,mem_clk=0,rst_n=0,enable=0,mv_request=0;
  always #5 sd_clk=~sd_clk;
  always #4 mem_clk=~mem_clk;
@@ -24,6 +24,12 @@ module tb_stage3b_shared_writer;
  integer head=0,tail=0,used=0,total=0,art_words=0,song_words=0,mv_words=0,checks=0;
  reg [31:0] popped;
  wire [9:0] fifo_words=used;
+ wire pipeline_valid;
+ wire [31:0] pipeline_data;
+ media_write_pipeline pipeline(.clk(sd_clk),.rst_n(rst_n),
+  .background_owner(bg_active),.mv_owner(mv_active),.background_valid(bg_pixel),
+  .mv_valid(mv_pixel),.cover_valid(1'b0),.background_data(bg_data),.mv_data(mv_data),
+  .cover_data(32'd0),.pixel_valid(pipeline_valid),.pixel_data(pipeline_data));
  sync_2ff bg_sync(.clk(mem_clk),.rst_n(rst_n),.async_in(bg_active),.sync_out(bg_mem));
  sync_2ff mv_sync(.clk(mem_clk),.rst_n(rst_n),.async_in(mv_active),.sync_out(mv_mem));
  background_cache_loader #(.FRAME_SECTORS(1)) bg(
@@ -65,9 +71,9 @@ module tb_stage3b_shared_writer;
  // Behavioral dual-clock FIFO, matching ownership and clear signals of top.
  // Clocks have no coincident positive edges, so queue operations are ordered.
  always @(posedge fifo_clear or negedge rst_n) begin head=0;tail=0;used=0;end
- always @(posedge sd_clk) if(rst_n && !fifo_clear && (bg_active ? bg_pixel : mv_pixel)) begin
+ always @(posedge sd_clk) if(rst_n && !fifo_clear && pipeline_valid) begin
   check(used<512,"write FIFO overflow");
-  fifo[tail]=bg_active ? bg_data : mv_data;tail=(tail+1)%512;used=used+1;
+  fifo[tail]=pipeline_data;tail=(tail+1)%512;used=used+1;
  end
  always @(posedge mem_clk) if(rst_n) begin
   if(write_finish) finish_toggle<=~finish_toggle;
@@ -75,7 +81,7 @@ module tb_stage3b_shared_writer;
    check(used>0,"write FIFO underflow");
    popped=fifo[head];head=(head+1)%512;used=used-1;total=total+1;
    if(total<=256) begin
-    check(write_addr===1766400+art_words && popped===32'hFF000000,"art chunk protected from pending MV");art_words=art_words+1;
+    check(write_addr===1766400+art_words && popped===((SHORT_ART && art_words>=6)?32'd0:32'hFF000000),"art chunk protected from pending MV, including padding");art_words=art_words+1;
    end else if(total<=512) begin
     check(write_addr===1228800+mv_words && popped===32'h0000FF00,"MV owns following transaction");mv_words=mv_words+1;
    end else begin
@@ -91,7 +97,7 @@ module tb_stage3b_shared_writer;
   if(!rst_n) begin sec_busy=0;adapter_count=0;end
   else if(!sec_busy && adapter_take) begin sec_busy=1;adapter_count=0;adapter_lba=sec_lba;end
   else if(sec_busy) begin
-   if(adapter_count<1024) begin
+   if(adapter_count<((SHORT_ART && adapter_lba==5800)?24:1024)) begin
     if(adapter_count%2==0) begin
      sec_valid=1;sec_index=adapter_count/2;
      sec_byte=(adapter_lba==10000) ? ((sec_index[0]) ? 8'h00:8'h1F) : ((sec_index[0])?8'hF8:8'h00);
@@ -102,11 +108,11 @@ module tb_stage3b_shared_writer;
  end
  initial begin
   repeat(5) @(negedge sd_clk);rst_n=1;enable=1;
-  wait(bg.state==5 && bg.byte_count>100);
+  wait(bg.state==5 && bg.byte_count>((SHORT_ART)?4:100));
   @(negedge sd_clk);mv_request=1;
   wait(mv_active);
   check(bg_active,"MV request arrives during BG ownership");
-  wait(ready[3:2]==2'b11 && mv_done);
+  wait(ready[2] && ((SHORT_ART) ? !ready[3] : ready[3]) && mv_done);
   repeat(20) @(negedge sd_clk);
   check(total==768 && art_words==256 && mv_words==256 && song_words==256 && used==0 && !mv_failed,"exact transactions and no lost FIFO data");
   $display("PASS stage3b shared writer: %0d checks, actual frame_fifo_write, BG/MV collision and FIFO data",checks);$finish;

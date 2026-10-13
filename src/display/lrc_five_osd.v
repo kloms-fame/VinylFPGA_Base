@@ -37,7 +37,7 @@ module lrc_five_osd (
     reg selected_row_found;
     reg [3:0] selected_row_pixel;
     reg [4:0] selected_length;
-    reg [127:0] selected_row_glyphs;
+    reg [7:0] selected_glyph;
 
     function [7:0] glyph_byte_at;
         input [127:0] glyphs;
@@ -75,7 +75,7 @@ module lrc_five_osd (
         selected_row_found = 1'b0;
         selected_row_pixel = 4'd0;
         selected_length = 5'd0;
-        selected_row_glyphs = 128'd0;
+        selected_glyph = 8'd0;
 
         if (enable && de && lyric_x_active && lyric_y_active) begin
             if (line_count == 0) begin
@@ -105,16 +105,16 @@ module lrc_five_osd (
 
                 if (selected_row_found) begin
                     case (selected_slot)
-                        3'd0: begin selected_length = row_lengths[4:0];   selected_row_glyphs = row_glyphs[127:0]; end
-                        3'd1: begin selected_length = row_lengths[9:5];   selected_row_glyphs = row_glyphs[255:128]; end
-                        3'd2: begin selected_length = row_lengths[14:10]; selected_row_glyphs = row_glyphs[383:256]; end
-                        3'd3: begin selected_length = row_lengths[19:15]; selected_row_glyphs = row_glyphs[511:384]; end
-                        3'd4: begin selected_length = row_lengths[24:20]; selected_row_glyphs = row_glyphs[639:512]; end
-                        default: begin selected_length = row_lengths[29:25]; selected_row_glyphs = row_glyphs[767:640]; end
+                        3'd0: begin selected_length = row_lengths[4:0];   selected_glyph = glyph_byte_at(row_glyphs[127:0], font_column); end
+                        3'd1: begin selected_length = row_lengths[9:5];   selected_glyph = glyph_byte_at(row_glyphs[255:128], font_column); end
+                        3'd2: begin selected_length = row_lengths[14:10]; selected_glyph = glyph_byte_at(row_glyphs[383:256], font_column); end
+                        3'd3: begin selected_length = row_lengths[19:15]; selected_glyph = glyph_byte_at(row_glyphs[511:384], font_column); end
+                        3'd4: begin selected_length = row_lengths[24:20]; selected_glyph = glyph_byte_at(row_glyphs[639:512], font_column); end
+                        default: begin selected_length = row_lengths[29:25]; selected_glyph = glyph_byte_at(row_glyphs[767:640], font_column); end
                     endcase
                     if (font_column < selected_length) begin
                         font_request = 1'b1;
-                        font_glyph = glyph_byte_at(selected_row_glyphs, font_column);
+                        font_glyph = selected_glyph;
                         font_row = selected_row_pixel;
                         if ((scroll_active && (selected_slot == 3'd3)) ||
                             (!scroll_active && (selected_slot == 3'd2)))

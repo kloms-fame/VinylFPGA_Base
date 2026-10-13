@@ -205,12 +205,33 @@ module song_index_db #(
     assign song_audio2 = valid ? {e_aud_by[2], e_aud_cl[2]} : 64'd0;
     assign song_audio3 = valid ? {e_aud_by[3], e_aud_cl[3]} : 64'd0;
 
-    // P_CHK 阶段每拍只比较一首歌
-    wire cover_entry_bad =
-        !e_has_cover[chk_idx] ||
-        (e_cov_cl[chk_idx] < 32'd2) ||
-        (e_cov_cl[chk_idx] > max_cluster) ||
-        (e_cov_by[chk_idx] == 32'd0);
+    // Look one entry ahead; keep the original one-entry-per-clock P_CHK.
+    // The final stream beat prepares entry zero, then each check prepares
+    // its successor. Splitting the range at 16 bits avoids mux -> wide
+    // comparator -> accumulated validity in one 100 MHz path.
+    reg [2:0] check_read_index = 3'd0;
+    reg [5:0] entry_checks = 6'd0;
+    wire [31:0] check_cluster = e_cov_cl[check_read_index];
+    wire [31:0] check_bytes = e_cov_by[check_read_index];
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) check_read_index <= 3'd0;
+        else if (start && phase == P_IDLE) check_read_index <= 3'd0;
+        else if (phase == P_STREAM && in_done) check_read_index <= 3'd1;
+        else if (phase == P_CHK) check_read_index <= check_read_index + 3'd1;
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) entry_checks <= 6'd0;
+        else if ((phase == P_STREAM && in_done) || phase == P_CHK)
+            entry_checks <= {check_cluster[15:0] > max_cluster[15:0],
+                             check_cluster[31:16] == max_cluster[31:16],
+                             check_cluster[31:16] > max_cluster[31:16],
+                             check_cluster < 32'd2,
+                             check_bytes == 32'd0,
+                             !e_has_cover[check_read_index]};
+    end
+    wire cover_entry_bad = entry_checks[0] || entry_checks[1] ||
+                           entry_checks[2] || entry_checks[3] ||
+                           (entry_checks[4] && entry_checks[5]);
 
     // CRC-32/ISO-HDLC 的按字节内层循环（反射多项式 0xEDB88320）
     function [31:0] crc32_byte;

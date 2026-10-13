@@ -1,0 +1,19 @@
+{
+  "stage3b_full": true,
+  "tb_media_write_pipeline": true,
+  "tb_closure_writer_padding": true,
+  "tb_fat32_index_loader": true,
+  "tb_fat32_file_streamer": true,
+  "tb_fat32_volume_scanner": true,
+  "tb_wav_stream_player": true,
+  "tb_wav_stream_player_flow": true,
+  "tb_mv_audio_shared": true,
+  "tb_x2_seek": true,
+  "tb_cdc_bundle_latest": true,
+  "loader_cycle_equivalence": true,
+  "lyric_equivalence": true,
+  "window_equivalence": true,
+  "write_geometry_1": true,
+  "write_geometry_8": true,
+  "write_geometry_640": true
+}

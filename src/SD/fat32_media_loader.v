@@ -281,21 +281,49 @@ module fat32_media_loader #(
     reg  [31:0] expected_pixel_count_q;
     reg  [31:0] required_pixel_bytes_q;
     reg         pixel_geom_ready;
+    reg header_format_ok = 1'b0;
+    reg header_offset_ok = 1'b0;
+    reg header_payload_ok = 1'b0;
+    reg [3:0] header_offset_parts = 4'd0;
 
     assign expected_pixel_count = expected_pixel_count_q;
     assign required_pixel_bytes = required_pixel_bytes_q;
 
-    wire header_valid = (header0 == "B") && (header1 == "M") &&
-                        (dib_size >= 32'd40) &&
+    wire header_valid = header_format_ok &&
                         (width[15:0] == bmp_width) &&
                         (height[15:0] == bmp_height) &&
-                        (planes == 16'd1) &&
-                        (bit_count == 16'd24) &&
-                        (compression == 32'd0) &&
-                        (data_offset >= 32'd54) &&
-                        (data_offset < file_len) &&
+                        header_offset_ok &&
                         pixel_geom_ready &&
-                        (file_len >= pixel_end);
+                        header_payload_ok;
+
+    // Every consumed header field is complete by byte 33. Prepare invariants
+    // in the unused tail bytes, keeping byte 53's decision and stream timing.
+    always @(posedge clk or posedge rst) begin
+        if (rst) header_format_ok <= 1'b0;
+        else if (streamer_valid && load_state == LD_HEADER && header_byte_cnt == 6'd51)
+            header_format_ok <= header0 == "B" && header1 == "M" &&
+                dib_size >= 32'd40 && planes == 16'd1 &&
+                bit_count == 16'd24 && compression == 32'd0;
+    end
+    always @(posedge clk or posedge rst) begin
+        if (rst) header_offset_parts <= 4'd0;
+        else if (streamer_valid && load_state == LD_HEADER && header_byte_cnt == 6'd49)
+            header_offset_parts <= {data_offset >= 32'd54,
+                                    data_offset[31:16] < file_len[31:16],
+                                    data_offset[31:16] == file_len[31:16],
+                                    data_offset[15:0] < file_len[15:0]};
+    end
+    always @(posedge clk or posedge rst) begin
+        if (rst) header_offset_ok <= 1'b0;
+        else if (streamer_valid && load_state == LD_HEADER && header_byte_cnt == 6'd51)
+            header_offset_ok <= header_offset_parts[3] &&
+                (header_offset_parts[2] || (header_offset_parts[1] && header_offset_parts[0]));
+    end
+    always @(posedge clk or posedge rst) begin
+        if (rst) header_payload_ok <= 1'b0;
+        else if (streamer_valid && load_state == LD_HEADER && header_byte_cnt == 6'd52)
+            header_payload_ok <= file_len >= pixel_end;
+    end
 
     function [2:0] spc_shift;
         input [7:0] value;
@@ -731,6 +759,10 @@ module fat32_media_loader #(
         end else begin
             load_error <= 1'b0;
             bmp_data_wr_en <= 1'b0;
+            if (load_state == LD_WAIT_WRITE && !pixel_geom_ready) begin
+                required_pixel_bytes_q <= (expected_pixel_count_q << 1) + expected_pixel_count_q;
+                pixel_geom_ready <= 1'b1;
+            end
 
             // 1. 接受加载请求：先申请 SDRAM 写区。
             if (load_launch_pending && use_streamer &&
@@ -756,11 +788,9 @@ module fat32_media_loader #(
                     // bmp_width/bmp_height 是常量输入，到 54 字节头校验时
                     // 已有 50+ 拍余量，乘法器完全不进入 header_valid 路径。
                     expected_pixel_count_q <= {16'd0, bmp_width} * {16'd0, bmp_height};
-                    // Exact modulo-2^32 multiply by three; avoid a second multiplier.
-                    required_pixel_bytes_q <=
-                        (({16'd0, bmp_width} * {16'd0, bmp_height}) << 1) +
-                         ({16'd0, bmp_width} * {16'd0, bmp_height});
-                    pixel_geom_ready      <= 1'b1;
+                    // Reuse this product in the following write-ACK wait beat.
+                    // Generic test dimensions and modulo-2^32 arithmetic stay.
+                    pixel_geom_ready      <= 1'b0;
                 end
             end
 
@@ -803,9 +833,9 @@ module fat32_media_loader #(
                 endcase
 
                 // All header fields are complete by byte 33. Prepare the
-                // existing end register one byte before validation, including
+                // existing end register two bytes before validation, including
                 // the original modulo-2^32 wrap. No output or handshake moves.
-                if (header_byte_cnt == 6'd52)
+                if (header_byte_cnt == 6'd51)
                     pixel_end <= data_offset + required_pixel_bytes;
 
                 if (header_byte_cnt == 6'd53) begin

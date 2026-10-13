@@ -82,7 +82,8 @@ end
 always @(posedge mem_clk or posedge rst) begin
  if(rst) linear_latch<=0; else if(state==S_ACK) linear_latch<=linear_d1;
 end
-reg [15:0]                            wr_x;                       // current x position in one input row
+localparam integer X_BITS = (FRAME_WIDTH < 2) ? 1 : $clog2(FRAME_WIDTH);
+reg [X_BITS-1:0]                      wr_x;                       // current x position in one input row
 
 reg [BURST_BITS - 1:0]				burst_cnt;
 wire								wr_burst_finish;

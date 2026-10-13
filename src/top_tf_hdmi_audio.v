@@ -73,6 +73,7 @@
 `include "video/background_cache_loader.v"
 `include "video/background_raster_address.v"
 `include "video/background_frame_select.v"
+`include "video/media_write_pipeline.v"
 `include "video/mv_stream_player.v"
 `include "video/mv_frame_scheduler.v"
 `include "video/s6_video_layer.v"
@@ -268,7 +269,6 @@ reg  [1:0]  ec2_state_frame;
 reg  [2:0]  ec2_selected_frame;
 
 wire [3:0]  state_code;
-wire [6:0]  seg_data_0;
 
 wire        video_read_req;
 wire        video_read_req_ack_mem;
@@ -1384,11 +1384,6 @@ video_fade_transition #(
     .transition_kind (transition_kind)
 );
 
-seg_decoder seg_decoder_m0(
-    .bin_data          (state_code),
-    .seg_data          (seg_data_0)
-);
-
 // 诊断 D：自检模式下 7 段管显示"读回不一致像素计数"的 6 位十六进制
 function [6:0] hex7seg;
     input [3:0] v;
@@ -1591,6 +1586,17 @@ assign osd_rgb_out = (!display_valid_sync2 && media_err_code_frame != 0) ? 24'h2
 
 
 
+wire shared_write_valid;
+wire [31:0] shared_write_data;
+media_write_pipeline u_media_write_pipeline (
+    .clk(sd_card_clk),.rst_n(sd_media_rst_n),
+    .background_owner(background_writer_active),.mv_owner(mv_writer_active),
+    .background_valid(background_pixel_valid),.mv_valid(mv_pixel_valid),
+    .cover_valid(sd_write_en_eff),.background_data(background_pixel_data),
+    .mv_data(mv_pixel_data),.cover_data(sd_write_data_eff),
+    .pixel_valid(shared_write_valid),.pixel_data(shared_write_data)
+);
+
 frame_read_write #(
     .DYNAMIC_LINEAR   (1),
     .COMPOSITE_READ   (1),
@@ -1646,8 +1652,8 @@ frame_read_write #(
     .write_addr_3      (background_writer_mem ? background_write_address : (mv_writer_mem ? MV_ADDR0 : BUF3_ADDR)),
     .write_addr_index  (background_writer_active ? 2'd0 : (mv_writer_active ? mv_write_bank : write_buf_idx_eff)),
     .write_len         (background_writer_active ? 24'd256 : (mv_writer_active ? 24'd76800 : FRAME_PIXELS)),
-    .write_en          (background_writer_active ? background_pixel_valid : (mv_writer_active ? mv_pixel_valid : sd_write_en_eff)),
-    .write_data        (background_writer_active ? background_pixel_data : (mv_writer_active ? mv_pixel_data : sd_write_data_eff))
+    .write_en          (shared_write_valid),
+    .write_data        (shared_write_data)
 );
 
 sdram U3(
@@ -2227,7 +2233,7 @@ song_text_rom u_song_text_rom (
     .line_glyphs(song_line_rom_glyphs),.song_text_valid(song_text_valid),
     .title_length(song_title_length),.artist_length(song_artist_length),
     .title_glyphs(song_title_glyphs),.artist_glyphs(song_artist_glyphs),
-    .no_lyrics_glyphs(song_no_lyrics_glyphs),.ui_ascii_code(8'h20),.ui_glyph()
+    .no_lyrics_glyphs(song_no_lyrics_glyphs),.ui_ascii_code(8'h20)
 );
 lrc_window_controller u_lrc_window_controller (
     .clk(video_clk),.rst_n(video_rst_n),.vs(vs),

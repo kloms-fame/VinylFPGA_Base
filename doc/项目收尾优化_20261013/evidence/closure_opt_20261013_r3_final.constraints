@@ -1,0 +1,661 @@
+Table of Contents
+-----------------
+1. checking no clock(0) (HIGH)
+2. checking clock definition(0) (HIGH)
+3. checking dummy node(3) (HIGH)
+4. checking invalid constraint(0) (HIGH)
+5. checking pll/clock buffer clock constraints(2) (HIGH)
+6. checking combinational loops(0) (HIGH)
+7. checking soft fifo timing exception constraints(0) (HIGH)
+8. checking no path constraints(0) (MEDIUM)
+9. checking shadowed/ignored timing exception constraints(0) (MEDIUM)
+10. checking no input delay(33) (MEDIUM)
+11. checking no output delay(38) (MEDIUM)
+12. checking partial input delay(0) (MEDIUM)
+13. checking partial output delay(0) (MEDIUM)
+14. checking abnormal input delay(0) (MEDIUM)
+
+
+1. checking nets with no clock driven. (HIGH)
+---------------------------------------------
+2. checking clock definition problems. (HIGH)
+---------------------------------------------
+2.1 There are 0 leaf clock pins driven by multiple clocks. (HIGH)
+
+
+2.2 There are 0 clocks created on internal clock network. (HIGH)
+
+
+2.3 There are 0 unexpandable clock sets. (HIGH)
+
+
+2.4 There are 0 local clocks. (HIGH)
+
+
+2.5 There are 0 generated clocks that are not connected to their master clocks. (HIGH)
+
+
+3. checking dummy nodes. (HIGH)
+---------------------------------------------
+There are 3 nodes are dangling. (HIGH)
+
+DummyNode in Model: EG_PHY_LSLICE
+	metadata_song_sd_reg[1]_syn_26.mi[1]
+	metadata_song_sd_reg[0]_syn_16.mi[0]
+	u_mv_metadata_cdc/dst_data_reg[30]_syn_4.b[1]
+	u_mv_metadata_cdc/dst_data_reg[34]_syn_4.b[0]
+	u_mv_metadata_cdc/dst_data_reg[30]_syn_4.b[0]
+	u_lrc_window_controller/tail_pending_reg_syn_241.c[1]
+	u_media_supervisor/media_err_code_reg[1]_syn_8.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource0_size_reg[12]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_33.mi[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_36.mi[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_30.mi[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_33.mi[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_36.mi[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_43.mi[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/e_cov_by_reg[32]_syn_4.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_43.a[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_43.a[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_43.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_43.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/e_cov_by_reg[32]_syn_4.b[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/max_cluster_reg[21]_syn_4.a[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/max_cluster_reg[21]_syn_4.b[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/max_cluster_reg[21]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/max_cluster_reg[21]_syn_4.e[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/max_cluster_reg[21]_syn_4.d[0]
+	U3/u2_ram/u2_wrrd/app_wr_din_5d_reg[26]_syn_4.c[1]
+	U3/u2_ram/u2_wrrd/app_wr_din_5d_reg[26]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_36.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/valid_reg_syn_20.mi[0]
+	u_mv_metadata_cdc/dst_data_reg[30]_syn_4.c[1]
+	u_mv_metadata_cdc/dst_data_reg[34]_syn_4.c[0]
+	u_mv_metadata_cdc/dst_data_reg[30]_syn_4.c[0]
+	u_mv_metadata_cdc/dst_data_reg[30]_syn_4.d[1]
+	u_mv_metadata_cdc/dst_data_reg[34]_syn_4.d[0]
+	u_mv_metadata_cdc/dst_data_reg[30]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/e_cov_by_reg[32]_syn_4.c[1]
+	U3/u2_ram/u2_wrrd/app_wr_din_5d_reg[26]_syn_4.d[1]
+	U3/u2_ram/u2_wrrd/app_wr_din_5d_reg[26]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_36.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3803]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3803]_syn_4.b[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3803]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3837]_syn_4.e[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3795]_syn_4.e[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[23]_syn_4.e[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[28]_syn_4.e[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3836]_syn_4.e[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3802]_syn_4.e[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3832]_syn_4.e[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_43.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_43.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_43.b[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_43.b[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_sd_sector_adapter/sector_lba[5]_syn_8.mi[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sectors_per_cluster_shift_reg[2]_syn_12.mi[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sectors_per_cluster_shift_reg[1]_syn_8.mi[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3837]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3795]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[23]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[28]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3836]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3802]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3832]_syn_4.d[0]
+	u_startup_pulse/O_pulse_reg_syn_5.mi[0]
+	u_expansion_integration/exp_actions_ready_reg_syn_21.mi[0]
+	u_promax_audio_waveform/mux45_syn_111.mi[0]
+	frame_read_write_m0/frame_fifo_read_m0/sel2_syn_256.mi[0]
+	u_ec2_param_osd/rgb_in[5]_syn_19.mi[0]
+	u_shared_ascii_font_rom/addr[6]_syn_65.mi[0]
+	u_song_text_rom/ramread0_syn_4501.mi[0]
+	u_song_text_rom/ramread0_syn_4503.mi[0]
+	u_song_text_rom/ramread0_syn_4507.mi[0]
+	u_brightness_contrast_steps/blue_adj[5]_syn_42.mi[0]
+	u_lrc_window_controller/tail_pending_reg_syn_241.d[1]
+	u_song_text_rom/ramread0_syn_4501.d[1]
+	u_song_text_rom/ramread0_syn_4503.d[1]
+	u_lrc_window_controller/tail_pending_reg_syn_274.d[0]
+	u_song_text_rom/ramread0_syn_4507.d[1]
+	u_lrc_window_controller/tail_pending_reg_syn_270.d[0]
+	u_lrc_window_controller/tail_pending_reg_syn_272.d[0]
+	u_lrc_window_controller/tail_pending_reg_syn_217.d[1]
+	u_playback_page/direct_glyph_b[5]_syn_286.d[0]
+	u_lrc_window_controller/tail_pending_reg_syn_188.d[1]
+	u_lrc_window_controller/tail_pending_reg_syn_211.d[1]
+	u_lrc_window_controller/tail_pending_reg_syn_223.d[1]
+	u_lrc_window_controller/tail_pending_reg_syn_217.c[1]
+	u_playback_page/direct_glyph_b[5]_syn_286.c[0]
+	u_lrc_window_controller/tail_pending_reg_syn_188.c[1]
+	u_lrc_window_controller/tail_pending_reg_syn_211.c[1]
+	u_lrc_window_controller/tail_pending_reg_syn_223.c[1]
+	u_media_supervisor/media_err_code_reg[1]_syn_8.e[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/planes_reg[9]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/planes_reg[9]_syn_4.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/bmp_data_reg[15]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/bmp_data_reg[8]_syn_4.d[0]
+	u_wav_stream_player/buffer_write_syn_143.d[1]
+	u_seg_business_mux/sh_reg[2]_syn_13.d[0]
+	metadata_song_sd_reg[0]_syn_16.d[0]
+	u_seg_business_mux/difference_reg[21]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_sector_count_reg[30]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_sd_sector_adapter/sector_lba[5]_syn_8.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3984]_syn_4.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3821]_syn_4.d[0]
+	sd_card_bmp_m0/sd_card_top_m0/sd_card_sec_read_write_m0/sec_addr_reg[22]_syn_4.d[1]
+	sd_card_bmp_m0/sd_card_top_m0/sd_card_sec_read_write_m0/sec_addr_reg[22]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource0_cluster_reg[21]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/e_cov_by_reg[100]_syn_4.d[0]
+	u_s6_video_layer/scheduler/request_lba_reg[26]_syn_4.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/load_index_latched_reg[1]_syn_15.d[1]
+	u_wav_stream_player/buffer_write_syn_155.d[1]
+	u_wav_stream_player/buffer_write_syn_145.d[1]
+	u_wav_stream_player/buffer_write_syn_153.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource3_cluster_reg[31]_syn_4.d[0]
+	u_wav_stream_player/buffer_write_syn_133.d[1]
+	u_wav_stream_player/buffer_write_syn_135.d[1]
+	u_seek_controller/sum_reg_reg[34]_syn_4.c[1]
+	u_seek_controller/mux18_syn_26.c[1]
+	u_playback_page/direct_glyph_b[0]_syn_292.c[1]
+	u_playback_page/direct_glyph_b[0]_syn_293.c[1]
+	u_playback_page/direct_glyph_b[0]_syn_292.b[1]
+	u_playback_page/direct_glyph_b[0]_syn_293.b[1]
+	u_playback_page/direct_glyph_b[0]_syn_292.a[1]
+	u_playback_page/direct_glyph_b[0]_syn_293.a[1]
+	u_playback_page/direct_glyph_b[0]_syn_292.d[1]
+	u_playback_page/direct_glyph_b[0]_syn_293.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_sd_sector_adapter/sector_lba[5]_syn_8.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/bmp_data_reg[15]_syn_4.c[0]
+	sd_card_bmp_m0/sd_card_top_m0/sd_card_sec_read_write_m0/sec_addr_reg[22]_syn_4.c[0]
+	sd_card_bmp_m0/sd_card_top_m0/sd_card_sec_read_write_m0/sec_addr_reg[22]_syn_4.c[1]
+	u_wav_stream_player/buffer_write_syn_143.c[1]
+	metadata_song_sd_reg[0]_syn_16.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3821]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3984]_syn_4.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_sector_count_reg[30]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/planes_reg[9]_syn_4.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/e_cov_by_reg[100]_syn_4.c[0]
+	u_wav_stream_player/buffer_write_syn_153.c[1]
+	u_seg_business_mux/difference_reg[21]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource0_cluster_reg[21]_syn_4.c[0]
+	u_wav_stream_player/buffer_write_syn_135.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/bmp_data_reg[8]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource3_cluster_reg[31]_syn_4.c[0]
+	u_wav_stream_player/buffer_write_syn_133.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/planes_reg[9]_syn_4.c[0]
+	u_wav_stream_player/buffer_write_syn_145.c[1]
+	u_wav_stream_player/buffer_write_syn_155.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/load_index_latched_reg[1]_syn_15.c[1]
+	u_seg_business_mux/sh_reg[2]_syn_13.c[0]
+	u_s6_video_layer/scheduler/request_lba_reg[26]_syn_4.c[1]
+	u_seek_controller/sum_reg_reg[34]_syn_4.d[1]
+	u_seek_controller/mux18_syn_26.d[1]
+	u_lrc_window_controller/tail_pending_reg_syn_270.b[0]
+	u_lrc_window_controller/tail_pending_reg_syn_272.b[0]
+	u_lrc_window_controller/tail_pending_reg_syn_274.b[0]
+	u_song_text_rom/ramread0_syn_4501.c[1]
+	u_song_text_rom/ramread0_syn_4503.c[1]
+	u_song_text_rom/ramread0_syn_4507.c[1]
+	u_lrc_window_controller/tail_pending_reg_syn_270.a[0]
+	u_lrc_window_controller/tail_pending_reg_syn_272.a[0]
+	u_lrc_window_controller/tail_pending_reg_syn_274.a[0]
+	u_lrc_window_controller/tail_pending_reg_syn_274.c[0]
+	u_lrc_window_controller/tail_pending_reg_syn_272.c[0]
+	u_lrc_window_controller/tail_pending_reg_syn_270.c[0]
+	u_stream_session/enable_reg_syn_18.mi[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/e_cov_by_reg[32]_syn_4.a[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource0_size_reg[12]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3837]_syn_4.a[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3795]_syn_4.a[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[23]_syn_4.a[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[28]_syn_4.a[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3836]_syn_4.a[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3802]_syn_4.a[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3832]_syn_4.a[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3837]_syn_4.b[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3795]_syn_4.b[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[23]_syn_4.b[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[28]_syn_4.b[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3836]_syn_4.b[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3802]_syn_4.b[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3832]_syn_4.b[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3837]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3795]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[23]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[28]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3836]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3802]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3832]_syn_4.c[0]
+	u_media_supervisor/media_err_code_reg[1]_syn_8.a[1]
+	u_media_supervisor/media_err_code_reg[1]_syn_8.b[1]
+	u_media_supervisor/media_err_code_reg[1]_syn_8.c[1]
+
+DummyNode in Model: EG_PHY_MSLICE
+	sd_card_bmp_m0/fat32_media_loader_m0/src_valid_reg[2]_syn_14.mi[0]
+	metadata_song_sd_reg[1]_syn_34.mi[0]
+	metadata_song_sd_reg[0]_syn_18.mi[0]
+	metadata_song_sd_reg[0]_syn_28.mi[1]
+	metadata_song_sd_reg[0]_syn_30.mi[1]
+	u_s6_video_layer/meta1_reg[8]_syn_4.b[0]
+	u_s6_video_layer/meta1_reg[10]_syn_4.b[1]
+	u_s6_video_layer/meta1_reg[10]_syn_4.b[0]
+	u_s6_video_layer/meta1_reg[8]_syn_4.b[1]
+	u_mv_metadata_cdc/dst_data_reg[29]_syn_4.b[1]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_4.b[1]
+	u_s6_video_layer/meta2_reg[9]_syn_4.b[0]
+	u_s6_video_layer/meta2_reg[8]_syn_4.b[1]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_4.b[0]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_5.b[0]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_7.b[0]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_8.b[1]
+	U3/u2_ram/u2_wrrd/app_wr_din_3d_reg[27]_syn_5.mi[0]
+	U3/u2_ram/u2_wrrd/app_wr_din_3d_reg[27]_syn_6.mi[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/left_shift0_syn_435.mi[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_39.mi[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/index_mode_reg_syn_39.mi[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/mux32_syn_209.a[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/mux32_syn_211.a[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/mux32_syn_213.a[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_20.b[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_21.b[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_22.b[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_20.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_21.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_22.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_20.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_21.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_22.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_20.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_21.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_22.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_20.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_21.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_22.c[1]
+	metadata_song_sd_reg[0]_syn_28.c[0]
+	metadata_song_sd_reg[0]_syn_30.c[0]
+	metadata_song_sd_reg[0]_syn_28.d[0]
+	metadata_song_sd_reg[0]_syn_30.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/mux32_syn_211.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/mux32_syn_209.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/mux32_syn_213.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_20.b[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_21.b[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_22.b[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/mux32_syn_211.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/mux32_syn_209.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/mux32_syn_213.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_20.a[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_21.a[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_22.a[0]
+	metadata_song_sd_reg[0]_syn_28.b[0]
+	metadata_song_sd_reg[0]_syn_30.b[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/mux32_syn_211.b[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/mux32_syn_209.b[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/mux32_syn_213.b[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource3_cluster_reg[24]_syn_5.b[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource3_cluster_reg[24]_syn_5.a[1]
+	u_mv_metadata_cdc/dst_data_reg[29]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/chk_ok_reg_syn_392.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/chk_ok_reg_syn_410.c[1]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_4.c[0]
+	u_s6_video_layer/meta1_reg[8]_syn_4.c[0]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_5.c[0]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_7.c[0]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_4.c[1]
+	u_s6_video_layer/meta1_reg[8]_syn_4.c[1]
+	u_mv_metadata_cdc/dst_data_reg[29]_syn_4.c[1]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_8.c[1]
+	u_s6_video_layer/meta2_reg[8]_syn_4.c[1]
+	u_s6_video_layer/meta1_reg[10]_syn_4.c[1]
+	u_s6_video_layer/meta2_reg[9]_syn_4.c[0]
+	u_s6_video_layer/meta1_reg[10]_syn_4.c[0]
+	u_s6_video_layer/meta2_reg[9]_syn_4.d[0]
+	u_s6_video_layer/meta2_reg[8]_syn_4.d[1]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_4.d[1]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_4.d[0]
+	u_s6_video_layer/meta1_reg[10]_syn_4.d[1]
+	u_s6_video_layer/meta1_reg[10]_syn_4.d[0]
+	u_s6_video_layer/meta1_reg[8]_syn_4.d[1]
+	u_s6_video_layer/meta1_reg[8]_syn_4.d[0]
+	u_mv_metadata_cdc/dst_data_reg[29]_syn_4.d[1]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_5.d[0]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_7.d[0]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_8.d[1]
+	u_mv_metadata_cdc/dst_data_reg[29]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/chk_ok_reg_syn_392.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/chk_ok_reg_syn_410.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[26]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[22]_syn_4.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3799]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[26]_syn_4.b[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[22]_syn_4.b[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3799]_syn_4.b[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[26]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[22]_syn_4.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/sector_buffer_reg[3799]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource3_cluster_reg[24]_syn_5.mi[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource3_cluster_reg[24]_syn_5.mi[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource3_cluster_reg[0]_syn_5.mi[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource3_cluster_reg[0]_syn_6.mi[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource3_cluster_reg[0]_syn_7.mi[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource3_cluster_reg[24]_syn_5.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource3_cluster_reg[24]_syn_5.c[1]
+	metadata_song_sd_reg[0]_syn_28.a[1]
+	metadata_song_sd_reg[0]_syn_30.a[1]
+	metadata_song_sd_reg[0]_syn_28.b[1]
+	metadata_song_sd_reg[0]_syn_30.b[1]
+	metadata_song_sd_reg[0]_syn_28.c[1]
+	metadata_song_sd_reg[0]_syn_30.c[1]
+	metadata_song_sd_reg[0]_syn_28.d[1]
+	metadata_song_sd_reg[0]_syn_30.d[1]
+	u_promax_audio_waveform/ramread1_syn_112.c[1]
+	u_promax_audio_waveform/ramread0_syn_84.c[1]
+	u_promax_audio_waveform/ramread0_syn_112.c[1]
+	u_promax_audio_waveform/ramread1_syn_84.c[1]
+	u_promax_audio_waveform/ramread1_syn_112.b[1]
+	u_promax_audio_waveform/ramread0_syn_84.b[1]
+	u_promax_audio_waveform/ramread0_syn_112.b[1]
+	u_promax_audio_waveform/ramread1_syn_84.b[1]
+	u_promax_audio_waveform/ramread1_syn_112.a[1]
+	u_promax_audio_waveform/ramread0_syn_84.a[1]
+	u_promax_audio_waveform/ramread0_syn_112.a[1]
+	u_promax_audio_waveform/ramread1_syn_84.a[1]
+	u_video_rgb_to_axis_640x480/I_rgb[6]_syn_170.mi[0]
+	u_brightness_contrast_steps/blue_adj[4]_syn_19.mi[0]
+	u_ec2_param_osd/rgb_in[3]_syn_15.mi[0]
+	u_hdmi_1_4b_transmitter_core_wrapper/u0_reset_sync/O_sync_reset_reg_syn_63.mi[1]
+	u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_assemble/S_island_packet_req_2d_reg_syn_21.mi[1]
+	u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controller_wrapper/u_hdmi_island_data_assemble/S_island_packet_req_1d_reg_syn_18.mi[0]
+	u_song_text_rom/ramread0_syn_4357.c[1]
+	u_song_text_rom/ramread0_syn_4371.c[1]
+	u_song_text_rom/ramread0_syn_4417.c[1]
+	u_song_text_rom/ramread0_syn_4357.b[1]
+	u_song_text_rom/ramread0_syn_4371.b[1]
+	u_lrc_window_controller/tail_pending_reg_syn_213.d[1]
+	u_lrc_window_controller/tail_pending_reg_syn_215.d[1]
+	u_lrc_window_controller/tail_pending_reg_syn_221.d[1]
+	u_lrc_window_controller/tail_pending_reg_syn_213.c[1]
+	u_lrc_window_controller/tail_pending_reg_syn_215.c[1]
+	u_lrc_window_controller/tail_pending_reg_syn_221.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/bmp_data_reg[5]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/mux128_syn_626.d[0]
+	u_wav_stream_player/buffer_write_syn_139.d[0]
+	u_wav_stream_player/buffer_write_syn_161.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/e_aud_by_reg[50]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[22]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/dir_name7_reg[4]_syn_4.d[0]
+	sd_card_bmp_m0/sd_card_top_m0/sd_card_sec_read_write_m0/sec_addr_reg[23]_syn_4.d[0]
+	U3/u2_ram/u2_wrrd/app_wr_din_3d_reg[27]_syn_4.d[0]
+	sd_card_bmp_m0/sd_card_top_m0/sd_card_sec_read_write_m0/sec_addr_reg[31]_syn_4.d[1]
+	sd_card_bmp_m0/sd_card_top_m0/sd_card_sec_read_write_m0/sec_addr_reg[31]_syn_4.d[0]
+	u_wav_stream_player/buffer_write_syn_167.d[1]
+	u_s6_video_layer/meta2_reg[14]_syn_4.d[0]
+	u_s6_video_layer/meta1_reg[21]_syn_4.d[1]
+	u_s6_video_layer/meta1_reg[21]_syn_4.d[0]
+	u_s6_video_layer/meta1_reg[28]_syn_4.d[0]
+	u_s6_video_layer/meta2_reg[8]_syn_4.d[0]
+	u_s6_video_layer/meta2_reg[10]_syn_4.d[0]
+	u_s6_video_layer/meta1_reg[22]_syn_4.d[0]
+	u_s6_video_layer/meta2_reg[15]_syn_4.d[0]
+	u_s6_video_layer/meta2_reg[8]_syn_6.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource3_size_reg[19]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_file_streamer/file_byte_reg[3]_syn_4.d[0]
+	u_s6_video_layer/meta2_reg[6]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/left_shift0_syn_459.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource3_size_reg[29]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/load_index_latched_reg[1]_syn_25.d[0]
+	u_seg_business_mux/sh_reg[2]_syn_15.d[0]
+	u_s6_video_layer/meta2_reg[8]_syn_5.d[0]
+	u_wav_stream_player/buffer_write_syn_151.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/load_index_latched_reg[1]_syn_26.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource2_size_reg[22]_syn_4.d[1]
+	u_wav_stream_player/buffer_write_syn_141.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource2_size_reg[0]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource2_cluster_reg[6]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/e_cov_by_reg[13]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource1_cluster_reg[16]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/e_cov_by_reg[71]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/dir_cluster_high_reg[12]_syn_4.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource1_cluster_reg[8]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/dir_cluster_high_reg[12]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/dir_cluster_high_reg[1]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/e_cov_cl_reg[70]_syn_4.d[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/e_cov_cl_reg[16]_syn_4.d[0]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_5.mi[0]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_8.mi[0]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_7.mi[0]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_5.mi[1]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_8.mi[1]
+	u_mv_metadata_cdc/dst_data_reg[38]_syn_7.mi[1]
+	u_promax_audio_waveform/ramread1_syn_112.d[1]
+	u_promax_audio_waveform/ramread0_syn_84.d[1]
+	u_promax_audio_waveform/ramread0_syn_112.d[1]
+	u_promax_audio_waveform/ramread1_syn_84.d[1]
+	u_s6_video_layer/meta2_reg[8]_syn_5.mi[0]
+	u_s6_video_layer/meta2_reg[8]_syn_6.mi[0]
+	u_s6_video_layer/meta2_reg[9]_syn_6.mi[0]
+	u_s6_video_layer/meta2_reg[8]_syn_5.mi[1]
+	u_s6_video_layer/meta2_reg[8]_syn_6.mi[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/left_shift0_syn_459.c[0]
+	u_s6_video_layer/meta2_reg[8]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/data_start_lba_reg[22]_syn_4.c[0]
+	u_s6_video_layer/meta2_reg[15]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/dir_cluster_high_reg[1]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/e_cov_cl_reg[70]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/dir_name7_reg[4]_syn_4.c[0]
+	sd_card_bmp_m0/sd_card_top_m0/sd_card_sec_read_write_m0/sec_addr_reg[23]_syn_4.c[0]
+	u_wav_stream_player/buffer_write_syn_167.c[1]
+	u_s6_video_layer/meta1_reg[21]_syn_4.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource3_size_reg[29]_syn_4.c[0]
+	u_s6_video_layer/meta1_reg[28]_syn_4.c[0]
+	u_s6_video_layer/meta1_reg[22]_syn_4.c[0]
+	sd_card_bmp_m0/sd_card_top_m0/sd_card_sec_read_write_m0/sec_addr_reg[31]_syn_4.c[0]
+	sd_card_bmp_m0/sd_card_top_m0/sd_card_sec_read_write_m0/sec_addr_reg[31]_syn_4.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource1_cluster_reg[8]_syn_4.c[0]
+	u_s6_video_layer/meta2_reg[10]_syn_4.c[0]
+	u_s6_video_layer/meta1_reg[21]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/mux128_syn_626.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource3_size_reg[19]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_file_streamer/file_byte_reg[3]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/e_cov_by_reg[71]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/e_aud_by_reg[50]_syn_4.c[0]
+	u_wav_stream_player/buffer_write_syn_139.c[0]
+	u_wav_stream_player/buffer_write_syn_151.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/e_cov_cl_reg[16]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/dir_cluster_high_reg[12]_syn_4.c[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/dir_cluster_high_reg[12]_syn_4.c[0]
+	u_s6_video_layer/meta2_reg[6]_syn_4.c[0]
+	U3/u2_ram/u2_wrrd/app_wr_din_3d_reg[27]_syn_4.c[0]
+	u_s6_video_layer/meta2_reg[14]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource1_cluster_reg[16]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource2_cluster_reg[6]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/e_cov_by_reg[13]_syn_4.c[0]
+	u_wav_stream_player/buffer_write_syn_161.c[1]
+	u_seg_business_mux/sh_reg[2]_syn_15.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource2_size_reg[22]_syn_4.c[1]
+	u_wav_stream_player/buffer_write_syn_141.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_volume_scanner/resource2_size_reg[0]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/bmp_data_reg[5]_syn_4.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/load_index_latched_reg[1]_syn_25.c[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/load_index_latched_reg[1]_syn_26.c[0]
+	u_s6_video_layer/meta2_reg[8]_syn_5.c[0]
+	u_s6_video_layer/meta2_reg[8]_syn_6.c[0]
+	u_song_text_rom/ramread0_syn_4417.d[1]
+	u_song_text_rom/ramread0_syn_4417.b[1]
+	u_song_text_rom/ramread0_syn_4357.d[1]
+	u_song_text_rom/ramread0_syn_4371.d[1]
+	U3/u2_ram/u2_wrrd/app_wr_din_3d_reg[25]_syn_4.c[1]
+	U3/u2_ram/u2_wrrd/app_wr_din_3d_reg[25]_syn_4.c[0]
+	U3/u2_ram/u2_wrrd/app_wr_din_3d_reg[25]_syn_4.d[0]
+	U3/u2_ram/u2_wrrd/app_wr_din_3d_reg[25]_syn_4.d[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/load_index_latched_reg[1]_syn_17.mi[0]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_20.a[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_21.a[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/scan_emit_idx_reg[0]_syn_22.a[1]
+	sd_card_bmp_m0/fat32_media_loader_m0/u_song_index_db/chk_idx_reg[1]_syn_12.mi[0]
+
+DummyNode in Model: EG_PHY_PAD
+	exp_ext_o[5]_syn_1.opad
+	exp_ext_o[4]_syn_1.opad
+	exp_ext_o[3]_syn_1.opad
+	exp_ext_o[2]_syn_1.opad
+	exp_ext_o[1]_syn_1.opad
+	seg_data[7]_syn_1.opad
+	uart_tx_syn_1.opad
+	U3/sdram_syn_5.opad
+	U3/sdram_syn_10.opad
+
+4. checking invalid constraints. (HIGH)
+---------------------------------------------
+There are 0 invalid constraints. (HIGH)
+
+
+5. checking PLL/buffer clocks. (HIGH)
+---------------------------------------------
+PLL/buffer inst: sys_pll_m0/pll_inst
+{
+	There are 0 clock pins that have no clock constraints. (HIGH)
+
+
+	There are 0 clocks whose clock frequency do not match the PLL setting. (HIGH)
+
+
+}
+
+PLL/buffer inst: video_pll_m0/pll_inst
+{
+	There are 0 clock pins that have no clock constraints. (HIGH)
+
+
+	There are 0 clocks whose clock frequency do not match the PLL setting. (HIGH)
+
+
+}
+
+6. checking combinational loops. (HIGH)
+---------------------------------------------
+There are 0 combinational loops. (HIGH)
+
+
+7. checking soft fifo set_max_delay constraints. (HIGH)
+---------------------------------------------
+There are 0 max-delay datapath-only paths that are part of the provided async clock paths, whereas the timing between other registers is not relaxed or ignored. (HIGH)
+
+
+8. checking no path constraints. (MEDIUM)
+---------------------------------------------
+There are 0 constraints that have no timing paths. (MEDIUM)
+
+
+9. checking path exception constraints shadowed/ignored by other constraints. (MEDIUM)
+---------------------------------------------
+
+MCP/SMD Summary
+--------------------
+
+		Max Check
+		--------------------
+		     Total    Dominated     Shadowed      Ignored   Constraint
+		        16           16            0            0   set_max_delay -from [get_clocks {hdmi_5x_clk}] -to [get_ports {HDMI_CLK_P HDMI_D0_P HDMI_D1_P HDMI_D2_P}] 8.000 -datapath_only
+
+		Min Check
+		--------------------
+		     Total    Dominated     Shadowed      Ignored   Constraint
+
+10. checking no input delay (MEDIUM)
+--------------------------
+There are 33 input ports that with no input delay specified. (MEDIUM)
+
+	HDMI_DDC_SDA
+	exp_dip_n[5]
+	exp_dip_n[4]
+	exp_dip_n[3]
+	exp_dip_n[2]
+	exp_dip_n[1]
+	exp_dip_n[0]
+	exp_enc1_a
+	exp_enc1_b
+	exp_enc1_sw_n
+	exp_enc2_a
+	exp_enc2_b
+	exp_enc2_sw_n
+	exp_ir_rx
+	exp_key_n[11]
+	exp_key_n[10]
+	exp_key_n[9]
+	exp_key_n[8]
+	exp_key_n[7]
+	exp_key_n[6]
+	exp_key_n[5]
+	exp_key_n[4]
+	exp_key_n[3]
+	exp_key_n[2]
+	exp_key_n[1]
+	exp_key_n[0]
+	key3
+	rst_n
+	sd_miso
+	sw1
+	sw2
+	sw3
+	sw4
+
+11. checking no output delay (MEDIUM)
+--------------------------
+There are 38 output ports that with no output delay specified. (MEDIUM)
+
+	HDMI_CLK_P
+	HDMI_D0_P
+	HDMI_D1_P
+	HDMI_D2_P
+	HDMI_DDC_SCL
+	HDMI_DDC_SDA
+	board_buzzer_n
+	exp_ext_o[5]
+	exp_ext_o[4]
+	exp_ext_o[3]
+	exp_ext_o[2]
+	exp_ext_o[1]
+	exp_ext_o[0]
+	exp_led_n[3]
+	exp_led_n[2]
+	exp_led_n[1]
+	exp_led_n[0]
+	exp_ws2812_data
+	sd_dclk
+	sd_mosi
+	sd_ncs
+	seg_data[7]
+	seg_data[6]
+	seg_data[5]
+	seg_data[4]
+	seg_data[3]
+	seg_data[2]
+	seg_data[1]
+	seg_data[0]
+	seg_sel[7]
+	seg_sel[6]
+	seg_sel[5]
+	seg_sel[4]
+	seg_sel[3]
+	seg_sel[2]
+	seg_sel[1]
+	seg_sel[0]
+	uart_tx
+
+12. checking partial input delay (MEDIUM)
+--------------------------
+There are 0 input ports with partial input delay specified. (MEDIUM)
+
+
+13. checking partial output delay (MEDIUM)
+--------------------------
+There are 0 output ports with partial output delay specified. (MEDIUM)
+
+
+14. checking abnormal set_input_delay constraints. (MEDIUM)
+---------------------------------------------
+There are 0 abnormal set_input_delay constraints. (MEDIUM)
+
+

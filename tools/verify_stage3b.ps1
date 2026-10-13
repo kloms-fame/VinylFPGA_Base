@@ -17,7 +17,7 @@ try {
         @{Name='tb_background_index'; Files=@('src/SD/song_index_db.v','sim/tb_background_index.v')},
         @{Name='tb_song_index_db'; Files=@('src/SD/song_index_db.v','sim/tb_song_index_db.v')},
         @{Name='tb_stage3b_raster_read'; Files=@('src/video/background_raster_address.v','src/SD/frame_fifo_read.v','sim/tb_stage3b_raster_read.v')},
-        @{Name='tb_stage3b_shared_writer'; Files=@('src/video/background_cache_loader.v','src/video/background_sector_mux.v','src/video/mv_stream_player.v','src/SD/frame_fifo_write.v','src/sync_2ff.v','sim/tb_stage3b_shared_writer.v')},
+        @{Name='tb_stage3b_shared_writer'; Files=@('src/video/media_write_pipeline.v','src/video/background_cache_loader.v','src/video/background_sector_mux.v','src/video/mv_stream_player.v','src/SD/frame_fifo_write.v','src/sync_2ff.v','sim/tb_stage3b_shared_writer.v')},
         @{Name='tb_frame_fifo_read_pace'; Files=@('src/video/background_raster_address.v','src/SD/frame_fifo_read.v','sim/tb_frame_fifo_read_pace.v')},
         @{Name='tb_frame_fifo_write'; Files=@('src/SD/frame_fifo_write.v','sim/tb_frame_fifo_write.v')}
     )

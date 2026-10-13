@@ -25,8 +25,9 @@ module background_raster_address (
     // End a burst before switching source slot, screen row or physical
     // SDRAM column row. Each burst stays contiguous through the controller.
     wire media_row = y >= 9'd48 && y < 9'd288;
-    wire [9:0] screen_span = (media_row && x < 10'd16) ? 10'd16 - x :
-                            (media_row && x < 10'd336) ? 10'd336 - x : 10'd640 - x;
+    wire [9:0] next_boundary = (media_row && x < 10'd16) ? 10'd16 :
+                              (media_row && x < 10'd336) ? 10'd336 : 10'd640;
+    wire [9:0] screen_span = next_boundary - x;
     reg [7:0] column_index_q = 8'd0;
     reg [9:0] screen_span_q = 10'd0;
     // Burst preparation happens after the existing 10-cycle drain. Register

@@ -254,49 +254,70 @@ module lrc_window_controller (
     // The row cache is hidden whenever window_valid is low and is completely
     // overwritten before publication. It therefore does not need reset or a
     // clear-on-refill pass; only the active slot and scroll-tail writes remain.
+    wire cache_cycle = rst_n && !frame_start;
+    wire cache_shift = scroll_commit && window_valid;
+    wire fill_clear = (state == ST_FILL_ISSUE) && !fill_index_in_range;
+    wire fill_read = state == ST_FILL_WAIT;
+    wire tail_clear = (state == ST_TAIL_ISSUE) && !tail_index_in_range;
+    wire tail_read = state == ST_TAIL_WAIT;
+    // All slots load the same ROM-or-zero token. Share that wide selection;
+    // each slot only selects its next row for a committed scroll.
+    wire load_valid = (fill_read || tail_read) && rom_line_valid;
+    wire [127:0] load_glyphs = load_valid ? rom_line_glyphs : 128'd0;
+    wire [4:0] load_length = load_valid ? rom_line_length : 5'd0;
+    wire load_slot_0 = !cache_shift && ((fill_clear || fill_read) && (fill_slot == 3'd0));
+    wire load_slot_1 = !cache_shift && ((fill_clear || fill_read) && (fill_slot == 3'd1));
+    wire load_slot_2 = !cache_shift && ((fill_clear || fill_read) && (fill_slot == 3'd2));
+    wire load_slot_3 = !cache_shift && ((fill_clear || fill_read) && (fill_slot == 3'd3));
+    wire load_slot_4 = !cache_shift && ((fill_clear || fill_read) && (fill_slot == 3'd4));
+    wire load_slot_5 = !cache_shift && (((fill_clear || fill_read) && (fill_slot == 3'd5)) || tail_clear || tail_read);
     always @(posedge clk) begin
-        if (rst_n && !frame_start) begin
-            if (scroll_commit && window_valid) begin
-                row_glyph_0 <= row_glyph_1;
-                row_glyph_1 <= row_glyph_2;
-                row_glyph_2 <= row_glyph_3;
-                row_glyph_3 <= row_glyph_4;
-                row_glyph_4 <= row_glyph_5;
-                row_glyph_5 <= 128'd0;
-                row_length_0 <= row_length_1;
-                row_length_1 <= row_length_2;
-                row_length_2 <= row_length_3;
-                row_length_3 <= row_length_4;
-                row_length_4 <= row_length_5;
-                row_length_5 <= 5'd0;
-            end else if ((state == ST_FILL_ISSUE) && !fill_index_in_range) begin
-                case (fill_slot)
-                    3'd0: begin row_length_0 <= 5'd0; row_glyph_0 <= 128'd0; end
-                    3'd1: begin row_length_1 <= 5'd0; row_glyph_1 <= 128'd0; end
-                    3'd2: begin row_length_2 <= 5'd0; row_glyph_2 <= 128'd0; end
-                    3'd3: begin row_length_3 <= 5'd0; row_glyph_3 <= 128'd0; end
-                    3'd4: begin row_length_4 <= 5'd0; row_glyph_4 <= 128'd0; end
-                    3'd5: begin row_length_5 <= 5'd0; row_glyph_5 <= 128'd0; end
-                    default: ;
-                endcase
-            end else if (state == ST_FILL_WAIT) begin
-                case (fill_slot)
-                    3'd0: begin row_length_0 <= rom_line_valid ? rom_line_length : 5'd0; row_glyph_0 <= rom_line_valid ? rom_line_glyphs : 128'd0; end
-                    3'd1: begin row_length_1 <= rom_line_valid ? rom_line_length : 5'd0; row_glyph_1 <= rom_line_valid ? rom_line_glyphs : 128'd0; end
-                    3'd2: begin row_length_2 <= rom_line_valid ? rom_line_length : 5'd0; row_glyph_2 <= rom_line_valid ? rom_line_glyphs : 128'd0; end
-                    3'd3: begin row_length_3 <= rom_line_valid ? rom_line_length : 5'd0; row_glyph_3 <= rom_line_valid ? rom_line_glyphs : 128'd0; end
-                    3'd4: begin row_length_4 <= rom_line_valid ? rom_line_length : 5'd0; row_glyph_4 <= rom_line_valid ? rom_line_glyphs : 128'd0; end
-                    3'd5: begin row_length_5 <= rom_line_valid ? rom_line_length : 5'd0; row_glyph_5 <= rom_line_valid ? rom_line_glyphs : 128'd0; end
-                    default: ;
-                endcase
-            end else if ((state == ST_TAIL_ISSUE) && !tail_index_in_range) begin
-                row_length_5 <= 5'd0;
-                row_glyph_5 <= 128'd0;
-            end else if (state == ST_TAIL_WAIT) begin
-                row_length_5 <= rom_line_valid ? rom_line_length : 5'd0;
-                row_glyph_5 <= rom_line_valid ? rom_line_glyphs : 128'd0;
-            end
-        end
+        if (cache_cycle && (cache_shift || load_slot_0))
+            row_glyph_0 <= cache_shift ? row_glyph_1 : load_glyphs;
+    end
+    always @(posedge clk) begin
+        if (cache_cycle && (cache_shift || load_slot_0))
+            row_length_0 <= cache_shift ? row_length_1 : load_length;
+    end
+    always @(posedge clk) begin
+        if (cache_cycle && (cache_shift || load_slot_1))
+            row_glyph_1 <= cache_shift ? row_glyph_2 : load_glyphs;
+    end
+    always @(posedge clk) begin
+        if (cache_cycle && (cache_shift || load_slot_1))
+            row_length_1 <= cache_shift ? row_length_2 : load_length;
+    end
+    always @(posedge clk) begin
+        if (cache_cycle && (cache_shift || load_slot_2))
+            row_glyph_2 <= cache_shift ? row_glyph_3 : load_glyphs;
+    end
+    always @(posedge clk) begin
+        if (cache_cycle && (cache_shift || load_slot_2))
+            row_length_2 <= cache_shift ? row_length_3 : load_length;
+    end
+    always @(posedge clk) begin
+        if (cache_cycle && (cache_shift || load_slot_3))
+            row_glyph_3 <= cache_shift ? row_glyph_4 : load_glyphs;
+    end
+    always @(posedge clk) begin
+        if (cache_cycle && (cache_shift || load_slot_3))
+            row_length_3 <= cache_shift ? row_length_4 : load_length;
+    end
+    always @(posedge clk) begin
+        if (cache_cycle && (cache_shift || load_slot_4))
+            row_glyph_4 <= cache_shift ? row_glyph_5 : load_glyphs;
+    end
+    always @(posedge clk) begin
+        if (cache_cycle && (cache_shift || load_slot_4))
+            row_length_4 <= cache_shift ? row_length_5 : load_length;
+    end
+    always @(posedge clk) begin
+        if (cache_cycle && (cache_shift || load_slot_5))
+            row_glyph_5 <= cache_shift ? 128'd0 : load_glyphs;
+    end
+    always @(posedge clk) begin
+        if (cache_cycle && (cache_shift || load_slot_5))
+            row_length_5 <= cache_shift ? 5'd0 : load_length;
     end
 endmodule
 `endif

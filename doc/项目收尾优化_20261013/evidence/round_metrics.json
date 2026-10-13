@@ -1,0 +1,73 @@
+{
+  "stage3b_background_20261013_r1": {
+    "lut": 16880,
+    "reg": 10920,
+    "mslice": 4527,
+    "lslice": 4506,
+    "plb": 2442,
+    "bram": 47,
+    "dsp": 10,
+    "slice": 9033,
+    "Setup WNS": -82,
+    "Setup TNS": -199,
+    "Hold WNS": 24,
+    "Hold TNS": 0
+  },
+  "closure_opt_20261013_r1": {
+    "lut": 16947,
+    "reg": 10985,
+    "mslice": 4574,
+    "lslice": 4571,
+    "plb": 2442,
+    "bram": 47,
+    "dsp": 10,
+    "slice": 9145,
+    "Setup WNS": 100,
+    "Setup TNS": 0,
+    "Hold WNS": 24,
+    "Hold TNS": 0
+  },
+  "closure_opt_20261013_r2": {},
+  "closure_opt_20261013_r3": {
+    "lut": 16846,
+    "reg": 10971,
+    "mslice": 4535,
+    "lslice": 4525,
+    "plb": 2446,
+    "bram": 47,
+    "dsp": 10,
+    "slice": 9060,
+    "Setup WNS": -279,
+    "Setup TNS": -279,
+    "Hold WNS": 24,
+    "Hold TNS": 0
+  },
+  "closure_opt_20261013_r4": {
+    "lut": 16944,
+    "reg": 10996,
+    "mslice": 4545,
+    "lslice": 4538,
+    "plb": 2438,
+    "bram": 47,
+    "dsp": 10,
+    "slice": 9083,
+    "Setup WNS": -1638,
+    "Setup TNS": -21376,
+    "Hold WNS": 27,
+    "Hold TNS": 0
+  },
+  "closure_opt_20261013_r5": {
+    "lut": 16925,
+    "reg": 10941,
+    "mslice": 4536,
+    "lslice": 4528,
+    "plb": 2436,
+    "bram": 47,
+    "dsp": 10,
+    "slice": 9064,
+    "Setup WNS": 140,
+    "Setup TNS": 0,
+    "Hold WNS": 22,
+    "Hold TNS": 0
+  }
+}
