@@ -3,6 +3,7 @@ module frame_read_write
 #
 (
 	parameter DYNAMIC_LINEAR         = 0,
+    parameter COMPOSITE_READ        = 0,
 	parameter EXTERNAL_READ_BUSY     = 0,
 	parameter MEM_DATA_BITS          = 32,
 	parameter READ_DATA_BITS         = 32,
@@ -16,6 +17,9 @@ module frame_read_write
 ) 
 (
 	input                            linear_write,
+    input wire background_enable, background_media_mv, background_epoch,
+    input wire [20:0] background_media_base, background_base,
+    output wire background_epoch_ack,
 	input                            external_read_busy,
 	output                           app_write_busy,
 	input                            rst,                  
@@ -167,6 +171,7 @@ rfifo_32_32_512 read_buf
 frame_fifo_read
 #
 (
+	.COMPOSITE_READ             (COMPOSITE_READ           ),
 	.MEM_DATA_BITS              (MEM_DATA_BITS            ),
 	.ADDR_BITS                  (ADDR_BITS                ),
 	.BURST_BITS                 (BURST_BITS               ),
@@ -174,6 +179,10 @@ frame_fifo_read
 )
 frame_fifo_read_m0
 (
+    .background_enable(background_enable),
+    .background_media_mv(background_media_mv),.background_epoch(background_epoch),
+    .background_media_base(background_media_base),.background_base(background_base),
+    .background_epoch_ack(background_epoch_ack),
 	.rst                        (rst                      ),
 	.mem_clk                    (mem_clk                  ),
     .Sdr_init_done				(Sdr_init_done),

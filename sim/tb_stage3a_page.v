@@ -1,10 +1,11 @@
 `timescale 1ns/1ps
-module tb_stage3a_page;
+module tb_stage3a_page #(parameter IMAGE_BACKGROUND=0);
     reg clk=0, source_clk=0, sd_clk=0, rst_n=0;
     always #20 clk=~clk;
     always #10 source_clk=~source_clk;
     always #5 sd_clk=~sd_clk;
     reg vs=1, de=0, enable=1, browse=0;
+    reg background_image_active=0;
     reg [9:0] x=0, test_y=0;
     reg [23:0] rgb=24'h123456;
     reg ev_valid=0;
@@ -26,8 +27,9 @@ module tb_stage3a_page;
         .ev_home_tgl(1'b0),.mode_play(enable),.play_stop(stop));
     always @(posedge sd_clk) if (rst_n && stop) stops=stops+1;
     ascii_font_rom ascii_rom(.clk(clk),.addr(ascii_addr),.dout(ascii_row));
-    playback_page page(.clk(clk),.rst_n(rst_n),.vs(vs),.de(de),.pixel_x(x),
+    playback_page #(.IMAGE_BACKGROUND(IMAGE_BACKGROUND)) page(.clk(clk),.rst_n(rst_n),.vs(vs),.de(de),.pixel_x(x),
         .enable(enable),.browse_mode(browse),.bg_cycle_toggle_async(home_tgl),
+        .background_image_active(background_image_active),
         .rgb_in(rgb),.song_id(2'd0),.title_length(5'd1),.artist_length(5'd1),
         .title_glyphs(128'd1),.artist_glyphs(128'd1),.line_count(8'd6),
         .lyric_window_valid(1'b1),.lyric_scroll_active(1'b0),
@@ -129,6 +131,17 @@ module tb_stage3a_page;
         frame; check(page.line_y===0,"next VS starts new frame");
         rst_n=0; repeat(3) @(negedge clk); rst_n=1;
         check(page.background_mode_frame===0,"video reset defaults gray");
+        if(IMAGE_BACKGROUND) begin
+            force page.line_y=test_y;
+            de=1;background_image_active=1;
+            pixel(400,400);check(out_rgb===rgb,"ready image passes through canvas");
+            pixel(16,48);check(out_rgb===rgb,"ready image preserves media window");
+            glyph(16,298,16,24'hFFFFFF);
+            glyph(16,350,40,24'hD0D4D8);
+            background_image_active=0;
+            pixel(400,400);check(out_rgb!==rgb && out_rgb[23:16]>=105 && out_rgb[23:16]<=128,"image unavailable restores gray");
+            release page.line_y;
+        end
         $display("PASS stage3a page: %0d checks, real key bridge, return control and font ROMs",checks);
         $finish;
     end

@@ -58,6 +58,7 @@ module fat32_media_loader #(
 
     // 第十一讲：AUDIO.PCM 元数据与额外扇区客户端。
     output wire [63:0] mv_metadata, // S6 selected song; zero for v1/absent MV
+    output wire [31:0] background_base_lba,
     output wire        audio_file_valid,
     output wire [31:0] audio_start_lba,
     output wire [31:0] audio_total_sectors,
@@ -178,6 +179,8 @@ module fat32_media_loader #(
     wire [63:0] idx_cover0, idx_cover1, idx_cover2, idx_cover3;
     wire [63:0] idx_audio0, idx_audio1, idx_audio2, idx_audio3;
     wire [63:0] idx_mv0,idx_mv1,idx_mv2,idx_mv3;
+    wire [31:0] idx_background_base_lba;
+    assign background_base_lba = index_mode ? idx_background_base_lba : 32'd0;
     assign mv_metadata = !index_mode ? 64'd0 :
                          song_sel==0 ? idx_mv0 : song_sel==1 ? idx_mv1 :
                          song_sel==2 ? idx_mv2 : idx_mv3;
@@ -529,7 +532,8 @@ module fat32_media_loader #(
         .song_audio1    (idx_audio1),
         .song_audio2    (idx_audio2),
         .song_audio3    (idx_audio3),
-        .song_mv0(idx_mv0), .song_mv1(idx_mv1), .song_mv2(idx_mv2), .song_mv3(idx_mv3)
+        .song_mv0(idx_mv0), .song_mv1(idx_mv1), .song_mv2(idx_mv2), .song_mv3(idx_mv3),
+        .background_base_lba(idx_background_base_lba)
     );
 
     // 索引条目与旧扫描结果的取数选择（index_mode=0 时严格等于旧路径）

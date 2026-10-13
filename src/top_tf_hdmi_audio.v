@@ -69,6 +69,10 @@
 `include "display/playback_page.v"
 `include "display/ec2_param_osd.v"
 `include "video/mv_sector_mux.v"
+`include "video/background_sector_mux.v"
+`include "video/background_cache_loader.v"
+`include "video/background_raster_address.v"
+`include "video/background_frame_select.v"
 `include "video/mv_stream_player.v"
 `include "video/mv_frame_scheduler.v"
 `include "video/s6_video_layer.v"
@@ -162,6 +166,23 @@ parameter S6_VIDEO_ENABLE = 1'b1;
 // SDRAM word addresses: covers [0,1228800), MV [1228800,1459200).
 localparam [20:0] MV_ADDR0=21'd1228800, MV_ADDR1=21'd1305600, MV_ADDR2=21'd1382400;
 wire [63:0] mv_metadata_sd;
+wire [31:0] background_base_lba_sd;
+wire [4:0] background_ready_sd, background_ready_video;
+reg [4:0] background_ready_previous = 5'd0;
+wire background_writer_active, background_writer_mem, background_write_req;
+wire background_pixel_valid, background_sector_req, background_sector_busy;
+wire background_sector_valid, background_sector_done;
+wire [20:0] background_write_address;
+wire [31:0] background_pixel_data, background_sector_lba;
+wire background_image_active, background_epoch, background_epoch_ack;
+wire [20:0] background_read_base;
+wire [1:0] background_mode;
+wire [20:0] background_media_base = mv_read_active
+    ? ((mv_read_bank == 2'd0) ? MV_ADDR0 :
+       (mv_read_bank == 2'd1) ? MV_ADDR1 : MV_ADDR2)
+    : ((disp_buf_idx_eff == 2'd0) ? BUF0_ADDR[20:0] :
+       (disp_buf_idx_eff == 2'd1) ? BUF1_ADDR[20:0] :
+       (disp_buf_idx_eff == 2'd2) ? BUF2_ADDR[20:0] : BUF3_ADDR[20:0]);
 wire [63:0] mv_metadata_video;
 wire media_preloaded_sd, media_preloaded_vid;
 wire mv_visual_tgl, mv_req_tgl, mv_done_tgl, mv_failed;
@@ -1063,7 +1084,7 @@ sd_card_bmp #(
     .image_ready_out   (image_ready_sd),
 
     .write_req         (sd_card_write_req),
-    .write_req_ack     (sd_card_write_req_ack_sync[1] && !mv_writer_active),
+    .write_req_ack     (sd_card_write_req_ack_sync[1] && !mv_writer_active && !background_writer_active),
     .write_en          (sd_card_write_en),
     .write_data        (sd_card_write_data),
     .SD_nCS            (sd_ncs),
@@ -1071,6 +1092,7 @@ sd_card_bmp #(
     .SD_MOSI           (sd_mosi),
     .SD_MISO           (sd_miso),
     .mv_metadata       (mv_metadata_sd),
+    .background_base_lba(background_base_lba_sd),
     .media_preloaded    (media_preloaded_sd),
     .audio_file_valid  (audio_file_valid),
     .audio_start_lba   (audio_start_lba),
@@ -1461,7 +1483,7 @@ sync_2ff u_video_read_ack_sync(
     .clk(video_clk),.rst_n(video_rst_n),.async_in(video_read_req_ack_mem),
     .sync_out(video_read_req_ack));
 
-assign frw_read_en_gated = video_read_en & mv_fifo_read_allowed;
+assign frw_read_en_gated = video_read_en & (background_image_active || mv_fifo_read_allowed);
 
 // 8~10 段竖彩条：大块纯色区域最容易暴露单像素彩点。
 always @(*) begin
@@ -1511,7 +1533,7 @@ assign vout_data = (`DIAG_LOCAL_PATTERN) ? local_pattern_rgb
                             : (display_ok ? vout_data_raw : 24'd0));
 
 // MV 未覆盖的像素显示中央封面；保持像素和 HDMI 时序链不变。
-assign view_rgb = (mv_read_active && !mv_window_visible) ? 24'd0 : vout_data;
+assign view_rgb = (mv_read_active && !background_image_active && !mv_window_visible) ? 24'd0 : vout_data;
 
 // ===================== 第九讲：OSD状态字幕叠加 =====================
 // OSD 紧跟在黑屏屏蔽之后、video_rgb_to_axis 之前，纯组合替换像素，
@@ -1571,12 +1593,17 @@ assign osd_rgb_out = (!display_valid_sync2 && media_err_code_frame != 0) ? 24'h2
 
 frame_read_write #(
     .DYNAMIC_LINEAR   (1),
+    .COMPOSITE_READ   (1),
     .EXTERNAL_READ_BUSY(0),
     .WRITE_V_FLIP     (1),
     .FRAME_WIDTH      (640),
     .FRAME_HEIGHT     (480)
 ) frame_read_write_m0(
-    .linear_write      (mv_writer_active),
+    .linear_write      (background_writer_active || mv_writer_active),
+    .background_enable(background_image_active && !pat_mode),
+    .background_media_mv(mv_read_active),.background_epoch(background_epoch),
+    .background_media_base(background_media_base),.background_base(background_read_base),
+    .background_epoch_ack(background_epoch_ack),
     .external_read_busy(1'b0),
     .app_write_busy    (frw_write_busy),
     .mem_clk           (ext_mem_clk),
@@ -1600,7 +1627,7 @@ frame_read_write #(
     .read_addr_2       (mv_read_active ? MV_ADDR2 : BUF2_ADDR),
     .read_addr_3       (mv_read_active ? MV_ADDR0 : BUF3_ADDR),
     .read_addr_index   (mv_read_active ? mv_read_bank : disp_buf_idx_eff),
-    .read_len          (mv_read_active ? 24'd76800 : FRAME_PIXELS),
+    .read_len          (background_image_active ? FRAME_PIXELS : (mv_read_active ? 24'd76800 : FRAME_PIXELS)),
     .read_en           (frw_read_en_gated),
     .read_data         (video_read_data),
 
@@ -1610,17 +1637,17 @@ frame_read_write #(
     .App_wr_dm         (App_wr_dm),
 
     .write_clk         (sd_card_clk),
-    .write_req         (mv_writer_active ? mv_write_req : sd_write_req_eff),
+    .write_req         (background_writer_active ? background_write_req : (mv_writer_active ? mv_write_req : sd_write_req_eff)),
     .write_req_ack     (sd_card_write_req_ack),
     .write_finish      (frame_write_finish),
-    .write_addr_0      (mv_writer_mem ? MV_ADDR0 : BUF0_ADDR),
-    .write_addr_1      (mv_writer_mem ? MV_ADDR1 : BUF1_ADDR),
-    .write_addr_2      (mv_writer_mem ? MV_ADDR2 : BUF2_ADDR),
-    .write_addr_3      (mv_writer_mem ? MV_ADDR0 : BUF3_ADDR),
-    .write_addr_index  (mv_writer_active ? mv_write_bank : write_buf_idx_eff),
-    .write_len         (mv_writer_active ? 24'd76800 : FRAME_PIXELS),
-    .write_en          (mv_writer_active ? mv_pixel_valid : sd_write_en_eff),
-    .write_data        (mv_writer_active ? mv_pixel_data : sd_write_data_eff)
+    .write_addr_0      (background_writer_mem ? background_write_address : (mv_writer_mem ? MV_ADDR0 : BUF0_ADDR)),
+    .write_addr_1      (background_writer_mem ? background_write_address : (mv_writer_mem ? MV_ADDR1 : BUF1_ADDR)),
+    .write_addr_2      (background_writer_mem ? background_write_address : (mv_writer_mem ? MV_ADDR2 : BUF2_ADDR)),
+    .write_addr_3      (background_writer_mem ? background_write_address : (mv_writer_mem ? MV_ADDR0 : BUF3_ADDR)),
+    .write_addr_index  (background_writer_active ? 2'd0 : (mv_writer_active ? mv_write_bank : write_buf_idx_eff)),
+    .write_len         (background_writer_active ? 24'd256 : (mv_writer_active ? 24'd76800 : FRAME_PIXELS)),
+    .write_en          (background_writer_active ? background_pixel_valid : (mv_writer_active ? mv_pixel_valid : sd_write_en_eff)),
+    .write_data        (background_writer_active ? background_pixel_data : (mv_writer_active ? mv_pixel_data : sd_write_data_eff))
 );
 
 sdram U3(
@@ -2058,6 +2085,37 @@ boot_layer #(
 wire s2_boot_on = S2_BOOT_ENABLE && !pat_mode;
 
 // S6 reuses the existing SD client and frame FIFOs. No new clocks or IO.
+// 3B: storage completion is bundled with the cache tag/epoch. A new epoch
+// forces a gray frame; the memory reader ACK permits reusing the song slot
+// only after the preceding read burst has drained and its FIFO is cleared.
+always @(posedge sd_card_clk or negedge sd_media_rst_n) begin
+ if(!sd_media_rst_n) background_ready_previous <= 5'd0;
+ else background_ready_previous <= background_ready_sd;
+end
+cdc_bundle_latest #(.WIDTH(5)) u_background_ready_cdc (
+ .src_clk(sd_card_clk),.src_rst_n(sd_media_rst_n),.src_data(background_ready_sd),
+ .src_update(background_ready_sd != background_ready_previous),
+ .dst_clk(video_clk),.dst_rst_n(media_video_rst_n),.dst_data(background_ready_video));
+sync_2ff u_background_writer_sync(.clk(ext_mem_clk),.rst_n(mem_rst_n),
+ .async_in(background_writer_active),.sync_out(background_writer_mem));
+background_cache_loader u_background_cache_loader (
+ .clk(sd_card_clk),.rst_n(sd_media_rst_n),.enable(media_preloaded_sd && !pat_mode),
+ .base_lba(background_base_lba_sd),.song_id(metadata_song_sd),
+ .mv_writer_active(mv_writer_active),.invalidate_ack_async(background_epoch_ack),
+ .ready_info(background_ready_sd),.invalidate_toggle(),
+ .writer_active(background_writer_active),.write_req(background_write_req),
+ .write_ack(sd_card_write_req_ack),
+ .write_finish_toggle(frame_write_toggle_mem),.write_address(background_write_address),
+ .pixel_valid(background_pixel_valid),.pixel_data(background_pixel_data),
+ .sector_req(background_sector_req),.sector_lba(background_sector_lba),
+ .sector_busy(background_sector_busy),.sector_valid(background_sector_valid),
+ .sector_byte(wav_sec_byte),.sector_byte_index(wav_sec_byte_index),
+ .sector_done(background_sector_done),.sector_error(wav_sec_error));
+background_frame_select u_background_frame_select (
+ .clk(video_clk),.rst_n(video_rst_n),.frame_start(frame_start),
+ .enable(playback_page_mode_frame && !pat_mode),.mode(background_mode),
+ .song_id(song_id_frame),.ready_info(background_ready_video),
+ .image_active(background_image_active),.epoch(background_epoch),.base(background_read_base));
 sync_2ff u_mv_preloaded_sync(.clk(video_clk),.rst_n(video_rst_n),
  .async_in(media_preloaded_sd),.sync_out(media_preloaded_vid));
 sync_2ff u_mv_writer_sync(.clk(ext_mem_clk),.rst_n(mem_rst_n),
@@ -2066,10 +2124,14 @@ always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
  if(!sdcard_rst_n) mv_audio_low_sync<=2'b11;
  else mv_audio_low_sync<={mv_audio_low_sync[0],wav_buffer_low};
 end
-mv_sector_mux u_mv_sector_mux(
+background_sector_mux u_mv_sector_mux(
  .clk(sd_card_clk),.rst_n(sd_media_rst_n),.audio_req(wav_sec_req),.audio_lba(wav_sec_lba),
  .video_req(mv_sec_req),.video_lba(mv_sec_lba),
  .allow_video(!audio_play_enable_gated || !mv_audio_low_sync[1]),
+ .background_req(background_sector_req),.background_lba(background_sector_lba),
+ .allow_background(!audio_play_enable_gated || !mv_audio_low_sync[1]),
+ .background_busy(background_sector_busy),.background_valid(background_sector_valid),
+ .background_done(background_sector_done),
  .audio_busy(wav_sec_busy),.video_busy(mv_sec_busy),
  .audio_valid(wav_sec_valid),.video_valid(mv_sec_valid),
  .audio_done(wav_sec_done),.video_done(mv_sec_done),
@@ -2079,7 +2141,7 @@ mv_stream_player u_mv_stream_player(
  .clk(sd_card_clk),.rst_n(sd_media_rst_n),.abort_request(!stream_enable_sd),.request_toggle(mv_req_tgl),
  .request_lba(mv_request_lba),.request_bank(mv_request_bank),
  .done_toggle(mv_done_tgl),.failed(mv_failed),.writer_active(mv_writer_active),
- .write_req(mv_write_req),.write_ack(sd_card_write_req_ack),
+ .write_req(mv_write_req),.write_ack(sd_card_write_req_ack && !background_writer_active),
  .write_finish_toggle(frame_write_toggle_mem),.write_bank(mv_write_bank),
  .pixel_valid(mv_pixel_valid),.pixel_data(mv_pixel_data),
  .sector_req(mv_sec_req),.sector_lba(mv_sec_lba),.sector_busy(mv_sec_busy),
@@ -2087,14 +2149,14 @@ mv_stream_player u_mv_stream_player(
  .sector_done(mv_sec_done),.sector_error(wav_sec_error));
 // Original timing issues read_req before delayed vs/frame_start. In PLAY wait
 // 32 pixels (1.28 us of vertical blank) for committed MV base and length.
-// BROWSE keeps its original request and full-frame read sequence.
+// Keep the same blanking budget on every page so leaving an image background
+// also waits for its frame-committed disable before capturing browse reads.
 always @(posedge video_clk or negedge video_rst_n) begin
  if(!video_rst_n) s6_read_wait<=0;
  else if(!video_read_req) s6_read_wait<=0;
  else if(s6_read_wait!=63) s6_read_wait<=s6_read_wait+1'b1;
 end
-assign s6_frame_read_req=video_read_req &&
- (!S6_VIDEO_ENABLE || (!play_active_v2 && !mv_read_active) || s6_read_wait>=32);
+assign s6_frame_read_req=video_read_req && (s6_read_wait>=32);
 s6_video_layer #(.ENABLE(S6_VIDEO_ENABLE)) u_s6_video_layer(
  .clk(video_clk),.rst_n(media_video_rst_n),.frame_start(frame_start),
  .play_active(S5_PLAY_ENABLE && play_active_v2),.paused(paused_v2),
@@ -2232,11 +2294,12 @@ wire [9:0] shared_ascii_font_addr = playback_ascii_request
 ascii_font_rom u_shared_ascii_font_rom (
     .clk(video_clk),.addr(shared_ascii_font_addr),.dout(shared_ascii_font_row)
 );
-playback_page u_playback_page (
+playback_page #(.IMAGE_BACKGROUND(1)) u_playback_page (
     .clk(video_clk),.rst_n(video_rst_n),.vs(vs),.de(adjusted_de),
     .pixel_x(adjusted_pixel_x),
     .enable(playback_page_mode_frame),
     .bg_cycle_toggle_async(brw_ev_home_tgl),
+    .background_image_active(background_image_active),.background_mode(background_mode),
     .browse_mode(browse_page_mode_frame),.rgb_in(lrc_rgb),
     .song_id(active_ui_song_id),.title_length(song_title_length),
     .artist_length(song_artist_length),.title_glyphs(song_title_glyphs),

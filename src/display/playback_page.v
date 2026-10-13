@@ -6,7 +6,9 @@
 // Playback and browse UI share the song-font path for Chinese glyphs and a
 // dedicated ASCII ROM for digits and punctuation. Font data and pixel controls
 // stay aligned through one synchronous read stage.
-module playback_page (
+module playback_page #(
+    parameter IMAGE_BACKGROUND = 0
+)(
     input  wire         clk,
     input  wire         rst_n,
     input  wire         vs,
@@ -15,6 +17,8 @@ module playback_page (
     input  wire         enable,
     input  wire         browse_mode,
     input  wire         bg_cycle_toggle_async,
+    input  wire         background_image_active,
+    output wire [1:0]   background_mode,
     input  wire [23:0]  rgb_in,
     input  wire [1:0]   song_id,
     input  wire [4:0]   title_length,
@@ -191,6 +195,7 @@ module playback_page (
     wire [3:0] lyric_font_row;
     wire [23:0] lyric_text_color;
     wire [1:0] background_mode_frame;
+    assign background_mode = background_mode_frame;
     wire [23:0] generated_background_rgb;
     wire [23:0] readable_subtext_color = (background_mode_frame == 2'd3)
                                        ? SUBTEXT_COLOR : GRAY_SUBTEXT_COLOR;
@@ -393,7 +398,8 @@ module playback_page (
                             ? (((line_y == 10'd416) || (line_y == 10'd456))
                                ? BROWSE_BAR_EDGE_COLOR : dimmed_cover_rgb)
                             : ((enable && de && !preserve_media)
-                               ? generated_background_rgb : rgb_in);
+                               ? ((IMAGE_BACKGROUND && background_image_active)
+                                  ? rgb_in : generated_background_rgb) : rgb_in);
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin

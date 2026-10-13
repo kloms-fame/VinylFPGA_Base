@@ -54,7 +54,8 @@ module song_index_db #(
     output wire [63:0] song_audio1,
     output wire [63:0] song_audio2,
     output wire [63:0] song_audio3,
-    output wire [63:0] song_mv0, song_mv1, song_mv2, song_mv3
+    output wire [63:0] song_mv0, song_mv1, song_mv2, song_mv3,
+    output wire [31:0] background_base_lba
 );
     `include "song_index_defs.vh"
 
@@ -79,6 +80,57 @@ module song_index_db #(
     reg [31:0] hdr_crc_exp;
     reg [31:0] crc_calc;
     reg [8:0]  byte_idx;
+
+    // Optional BGR1 header extension. An absent/invalid extension disables only
+    // backgrounds: entry CRC and all legacy cover/audio/MV validation stay intact.
+    reg bg_magic_ok;
+    reg bg_layout_ok;
+    reg [31:0] bg_base_lba;
+    initial bg_magic_ok = 1'b0;
+    initial bg_layout_ok = 1'b0;
+    initial bg_base_lba = 32'd0;
+    assign background_base_lba = valid && bg_magic_ok && bg_layout_ok &&
+        bg_base_lba != 32'd0 && bg_base_lba <= 32'hFFFFE88F ? bg_base_lba : 32'd0;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) bg_magic_ok <= 1'b0;
+        else if (start && phase == P_IDLE) bg_magic_ok <= 1'b1;
+        else if (phase == P_STREAM && in_valid) begin
+            case (byte_idx)
+                9'd32: bg_magic_ok <= bg_magic_ok && in_byte == 8'h42;
+                9'd33: bg_magic_ok <= bg_magic_ok && in_byte == 8'h47;
+                9'd34: bg_magic_ok <= bg_magic_ok && in_byte == 8'h52;
+                9'd35: bg_magic_ok <= bg_magic_ok && in_byte == 8'h31;
+                default: ;
+            endcase
+        end
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) bg_layout_ok <= 1'b0;
+        else if (start && phase == P_IDLE) bg_layout_ok <= 1'b1;
+        else if (phase == P_STREAM && in_valid) begin
+            case (byte_idx)
+                9'd40, 9'd43, 9'd45, 9'd46, 9'd47:
+                    bg_layout_ok <= bg_layout_ok && in_byte == 8'h00;
+                9'd41: bg_layout_ok <= bg_layout_ok && in_byte == 8'h60;
+                9'd42: bg_layout_ok <= bg_layout_ok && in_byte == 8'h09;
+                9'd44: bg_layout_ok <= bg_layout_ok && in_byte == 8'h05;
+                default: ;
+            endcase
+        end
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) bg_base_lba <= 32'd0;
+        else if (start && phase == P_IDLE) bg_base_lba <= 32'd0;
+        else if (phase == P_STREAM && in_valid) begin
+            case (byte_idx)
+                9'd36: bg_base_lba[7:0] <= in_byte;
+                9'd37: bg_base_lba[15:8] <= in_byte;
+                9'd38: bg_base_lba[23:16] <= in_byte;
+                9'd39: bg_base_lba[31:24] <= in_byte;
+                default: ;
+            endcase
+        end
+    end
 
     // ---- 条目 ----
     // 封面：每首都要（S4 的 4 张封面来自索引）—— 保留 4 组。

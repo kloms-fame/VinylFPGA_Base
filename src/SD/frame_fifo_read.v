@@ -3,6 +3,7 @@ module frame_fifo_read
 #
 (
 	parameter MEM_DATA_BITS          = 32,
+    parameter COMPOSITE_READ        = 0,
 	parameter ADDR_BITS              = 21,
 	parameter BURST_BITS             = 9,
 	parameter FIFO_DEPTH             = 512,
@@ -21,7 +22,7 @@ module frame_fifo_read
 	parameter FIFO_LOW_WATERMARK     = 128
 )               
 (
-	input                            rst,                  
+	input                            rst,
 	input                            mem_clk,                    // external memory controller user interface clock
 	input							 Sdr_init_done,
 	input							 Sdr_init_ref_vld,
@@ -50,6 +51,10 @@ module frame_fifo_read
 	input[ADDR_BITS - 1:0]           read_len,                   // data read module read request data length
 	output reg                       fifo_aclr,                  // to fifo asynchronous clear
 	input[9:0]                      wrusedw                     // from fifo write used words
+
+    ,input wire background_enable, background_media_mv, background_epoch
+    ,input wire [20:0] background_media_base, background_base
+    ,output wire background_epoch_ack
 
 );
 localparam ONE                       = 256'd1;                   //256 bit '1'   you can use ONE[n-1:0] for n bit '1'
@@ -91,8 +96,26 @@ wire      fifo_low   = (wrusedw <= FIFO_LOW_WATERMARK);
 wire rd_vld;
 reg [3:0] rd_delay;
 
-assign App_rd_addr = {App_rd_addr_r[ADDR_BITS - 1:0]};
-assign rd_vld = (state == S_READ_BURST && burst_cnt >= BURST_SIZE);
+wire raster_enabled;
+wire [20:0] raster_address;
+wire [8:0] raster_span;
+reg [BURST_BITS-1:0] burst_limit = BURST_SIZE;
+background_raster_address u_background_raster_address (
+    .clk(mem_clk),.rst_n(!rst),.latch(state == S_ACK),.advance(App_rd_en),
+    .enable(COMPOSITE_READ && background_enable),.media_mv(background_media_mv),
+    .epoch(background_epoch),.media_base(background_media_base),
+    .background_base(background_base),.enabled(raster_enabled),
+    .epoch_ack(background_epoch_ack),.address(raster_address),
+    .contiguous_words(raster_span)
+);
+assign App_rd_addr = raster_enabled ? raster_address : App_rd_addr_r;
+assign rd_vld = (state == S_READ_BURST && burst_cnt >= burst_limit);
+always @(posedge mem_clk or posedge rst) begin
+    if (rst) burst_limit <= BURST_SIZE;
+    else if (state == S_CHECK_FIFO)
+        burst_limit <= (raster_enabled && raster_span < BURST_SIZE)
+                       ? raster_span : BURST_SIZE;
+end
 
 assign O_rd_busy = (state == S_READ_BURST);//读指令期间
 //burst_cnt代表发送的读指令
@@ -174,7 +197,7 @@ begin
 		else
 			App_rd_addr_r <= App_rd_addr_r;
 		//
-		if(App_rd_en_r && burst_cnt + App_rd_en < BURST_SIZE)
+		if(App_rd_en_r && burst_cnt + App_rd_en < burst_limit)
 			App_rd_en_d0 <= 1'b1;
 		else
 			App_rd_en_d0 <= 1'b0;
@@ -269,7 +292,7 @@ begin
 					App_rd_en_r <= 1'b0;
 					state <= S_READ_BURST_END;
 					//read counter + burst length
-					read_cnt <= read_cnt + BURST_SIZE[ADDR_BITS - 1:0];
+					read_cnt <= read_cnt + burst_limit;
 					//the next burst read address is generated
 					//rd_burst_addr <= rd_burst_addr + BURST_SIZE[ADDR_BITS - 1:0];
 				end     
