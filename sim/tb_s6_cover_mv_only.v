@@ -13,7 +13,7 @@ wire [31:0] request_lba;
 s6_video_layer dut(
  .clk(clk),.rst_n(rst_n),.frame_start(frame_start),.play_active(play_active),
  .paused(1'b0),.restart(1'b0),.diagnostic(1'b0),.transport_ready(1'b0),
- .covers_ready(1'b1),.metadata_async(64'd0),.time_ms(32'd0),.seek_frame(16'd0),
+ .track_id(2'd0),.covers_ready(1'b1),.metadata_async(64'd0),.time_ms(32'd0),.seek_frame(16'd0),
  .visual_toggle(1'b0),.raw_read_en(1'b0),.out_de(1'b0),.out_x(10'd176),
  .adjusted_de(adjusted_de),.adjusted_x(adjusted_x),
  .rgb_in(24'h123456),.rgb_out(rgb_out),.mv_read_active(mv_read_active),

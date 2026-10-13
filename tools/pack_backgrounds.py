@@ -2,7 +2,7 @@
 """离线背景打包：保留原 FAT32 卡，扩容生成可供 FPGA 直接读取的新镜像。
 
 python tools/pack_backgrounds.py --source doc/资源/sd卡/card_S6.img \
-    --output-dir doc/资源/sd卡/stage3b
+    --output-dir doc/资源/sd卡/stage4
 
 不访问物理磁盘。扩容时保留原簇号、FAT 链、目录项及文件内容；数据区
 整体平移后只更新 INDEX.BIN 的绝对音频/MV LBA 和条目 CRC。
@@ -26,7 +26,7 @@ from vinyl_packer import Fat32Image, PackError, parse_index
 WIDTH, HEIGHT = 640, 480
 FRAME_BYTES = WIDTH * HEIGHT * 2
 FRAME_SECTORS = FRAME_BYTES // 512
-FRAME_COUNT = 5
+FRAME_COUNT = 6
 BACKGROUND_BYTES = FRAME_BYTES * FRAME_COUNT
 BACKGROUND_NAME = b"BG      BIN"
 EXT_MAGIC = b"BGR1"
@@ -104,6 +104,19 @@ def art_background() -> Image.Image:
     return Image.frombytes("RGB", (WIDTH, HEIGHT), bytes(pixels))
 
 
+def art_background_two() -> Image.Image:
+    """低饱和暖金/青灰光晕，与原蓝紫艺术图形成区别。"""
+    pixels = bytearray()
+    for y in range(HEIGHT):
+        for x in range(WIDTH):
+            gold = math.exp(-(((x - 170) / 300) ** 2 + ((y - 330) / 230) ** 2))
+            teal = math.exp(-(((x - 540) / 250) ** 2 + ((y - 90) / 260) ** 2))
+            pixels.extend((round(86 + 33 * gold + 6 * teal),
+                           round(88 + 21 * gold + 21 * teal),
+                           round(88 + 5 * gold + 24 * teal)))
+    return Image.frombytes("RGB", (WIDTH, HEIGHT), bytes(pixels))
+
+
 def patch_index(index: bytes, lba_delta: int, background_lba: int) -> bytes:
     info = parse_index(index)
     if not 0 < background_lba <= 0xFFFFFFFF - FRAME_COUNT * FRAME_SECTORS:
@@ -133,8 +146,8 @@ def background_metadata(index: bytes) -> dict | None:
     if index[32:36] != EXT_MAGIC:
         return None
     lba, frame_bytes, count = struct.unpack_from("<III", index, 36)
-    if (frame_bytes != FRAME_BYTES or count != FRAME_COUNT or not lba or
-            lba > 0xFFFFFFFF - FRAME_COUNT * FRAME_SECTORS):
+    if (frame_bytes != FRAME_BYTES or count not in (5, FRAME_COUNT) or not lba or
+            lba > 0xFFFFFFFF - count * FRAME_SECTORS):
         raise PackError("BGR1背景参数非法")
     return {"base_lba": lba, "frame_bytes": frame_bytes,
             "frame_sectors": FRAME_SECTORS, "frame_count": count}
@@ -249,7 +262,7 @@ def append_background(volume: Fat32Image, data: bytes) -> int:
 def pack(source_path: Path, output_dir: Path, size_mib: int = 128) -> dict:
     source_path = source_path.resolve()
     output_dir = output_dir.resolve()
-    target = output_dir / "card_STAGE3B.img"
+    target = output_dir / "card_STAGE4.img"
     if target.resolve() == source_path:
         raise PackError("输出镜像不能覆盖原卡")
     if target.exists():
@@ -288,6 +301,8 @@ def pack(source_path: Path, output_dir: Path, size_mib: int = 128) -> dict:
             previews.append(f"song_{number + 1}_blur.png")
         frames.append(rgb565_le(art_background(), dither=True))
         previews.append("shared_art.png")
+        frames.append(rgb565_le(art_background_two(), dither=True))
+        previews.append("shared_art_2.png")
         delta = grow_fat32(source, target, size_mib)
     blob = b"".join(frames)
     with Fat32Image(target, writable=True) as volume:
@@ -334,6 +349,8 @@ def pack(source_path: Path, output_dir: Path, size_mib: int = 128) -> dict:
     if sha256_file(source_path) != original_hash:
         raise PackError("原卡镜像hash发生变化")
     (output_dir / "BG.BIN").write_bytes(blob)
+    (output_dir / "ART1.BIN").write_bytes(frames[4])
+    (output_dir / "ART2.BIN").write_bytes(frames[5])
     (output_dir / "INDEX.BIN").write_bytes(updated_index)
     frame_report = []
     for number, (frame, preview) in enumerate(zip(frames, previews)):
@@ -367,7 +384,7 @@ def main(argv=None) -> int:
         print(f"PACK_BACKGROUND_FAILED: {error}", file=sys.stderr)
         return 1
     print(f"PACK_BACKGROUND_OK {report['image']} "
-          f"base_lba={report['background']['base_lba']} frames=5 "
+          f"base_lba={report['background']['base_lba']} frames={FRAME_COUNT} "
           f"crc={report['index_entries_crc32']}")
     return 0
 

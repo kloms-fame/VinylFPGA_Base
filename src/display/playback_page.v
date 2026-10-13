@@ -197,10 +197,9 @@ module playback_page #(
     wire [1:0] background_mode_frame;
     assign background_mode = background_mode_frame;
     wire [23:0] generated_background_rgb;
-    wire [23:0] readable_subtext_color = (background_mode_frame == 2'd3)
-                                       ? SUBTEXT_COLOR : GRAY_SUBTEXT_COLOR;
+    wire [23:0] readable_subtext_color = GRAY_SUBTEXT_COLOR;
     wire [23:0] readable_lyric_color =
-        ((background_mode_frame != 2'd3) && (lyric_text_color == 24'h606068))
+        (lyric_text_color == 24'h606068)
         ? GRAY_LYRIC_COLOR : lyric_text_color;
 
     // Use the page's existing scan coordinates and RGB register stage.

@@ -1,0 +1,6 @@
+WINDOW Anlogic TD 6.2.1 - D:/Data_Backup/VinylFPGA_Workspace_Base/VinylFPGA/prj - VinylFPGA
+ControlType.TreeItem syn_1(active)
+ControlType.TreeItem phy_1(active)
+ControlType.TreeItem MultiSeed complete
+ControlType.TreeItem 0.140ns
+ControlType.TreeItem 0.022ns

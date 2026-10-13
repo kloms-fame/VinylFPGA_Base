@@ -4,13 +4,13 @@ module tb_background_cache_full_frame;
  reg rst_n=0,enable=0,ack=0,fin=0,busy=0,valid=0,done=0;
  reg [7:0] byte_value=0;
  reg [8:0] index=0;
- wire [4:0] info;
+ wire [5:0] info;
  wire active,wr,pv,sr;
  wire [20:0] address;
  wire [31:0] pd,lba;
  integer frame,chunk,i,pixels=0;
  background_cache_loader dut(.clk(clk),.rst_n(rst_n),.enable(enable),
-  .base_lba(32'd1000),.song_id(2'd0),.mv_writer_active(1'b0),.invalidate_ack_async(1'b0),
+  .base_lba(32'd1000),.song_id(2'd0),.art2_supported(1'b0),.art_request_async(1'b0),.art2_request_async(1'b0),.mv_writer_active(1'b0),.invalidate_ack_async(1'b0),
   .write_ack(ack),.write_finish_toggle(fin),.ready_info(info),.invalidate_toggle(),
   .writer_active(active),.write_req(wr),.write_address(address),.pixel_valid(pv),.pixel_data(pd),
   .sector_req(sr),.sector_lba(lba),.sector_busy(busy),.sector_valid(valid),

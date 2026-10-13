@@ -18,6 +18,7 @@ module frame_read_write
 (
 	input                            linear_write,
     input wire background_enable, background_media_mv, background_epoch,
+    input wire background_write_hold, background_write_cancel,
     input wire [20:0] background_media_base, background_base,
     output wire background_epoch_ack,
 	input                            external_read_busy,
@@ -92,6 +93,7 @@ wire                                 write_fifo_aclr;            // fifo Asynchr
 
 wire O_wr_busy;
 wire O_rd_busy;
+wire read_data_keep;
 
 assign App_wr_busy = O_wr_busy;//下个时钟写指令拉高
 assign app_write_busy = O_wr_busy;
@@ -128,6 +130,7 @@ frame_fifo_write
 ) 
 frame_fifo_write_m0              
 (  
+    .write_hold(background_write_hold),.write_cancel(background_write_cancel),
     .linear_write(linear_write),
 	.rst                        (rst                      ),
 	.mem_clk                    (mem_clk                  ),
@@ -158,7 +161,7 @@ rfifo_32_32_512 read_buf
 	.clkr                     	(read_clk                   ),          // Read side clock
 	.clkw                     	(mem_clk                    ),          // Write side clock
 	.rst                      	(read_fifo_aclr             ),          // Asynchronous clear
-	.we                     	(Sdr_rd_en       			),          // Write Request
+	.we                     	(Sdr_rd_en && read_data_keep),          // even cover columns only
 	.re                     	(read_en                    ),          // Read Request
 	.di                      	(Sdr_rd_dout                ),          // Input Data
 	.empty_flag					(                           ),          // Read side Empty flag
@@ -183,6 +186,7 @@ frame_fifo_read_m0
     .background_media_mv(background_media_mv),.background_epoch(background_epoch),
     .background_media_base(background_media_base),.background_base(background_base),
     .background_epoch_ack(background_epoch_ack),
+    .read_data_keep(read_data_keep),
 	.rst                        (rst                      ),
 	.mem_clk                    (mem_clk                  ),
     .Sdr_init_done				(Sdr_init_done),

@@ -1,0 +1,27 @@
+{
+  "project": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\VinylFPGA.al",
+  "flow": "TD GUI MultiSeed, one fixed seed 5",
+  "timing_ns": {
+    "SWNS": 0.182,
+    "STNS": 0.0,
+    "HWNS": 0.032,
+    "HTNS": 0.0
+  },
+  "bit": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\VinylFPGA_Runs\\phy_1\\seed_5\\VinylFPGA.bit",
+  "bit_sha256": "8ccd75f73f830a031b078b3f5747fb027fcc6b6f8a5bfdba37725de1212beacf",
+  "bit_bytes": 651740,
+  "snapshot_checked": true,
+  "resources": {
+    "mslice": 4511,
+    "lslice": 4503,
+    "plb": 2439,
+    "lut": 16831,
+    "reg": 11004,
+    "bram": 47,
+    "dsp": 10
+  },
+  "regression_count": 27,
+  "board_acceptance": "pending",
+  "git_branch": "main",
+  "sd_image_sha256": "e9f24f4c8a901a820fd2a0d6b4fdad572d9d842a6af5390ca3b0fb059b0f94f1"
+}

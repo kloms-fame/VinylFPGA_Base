@@ -1,0 +1,18 @@
+{
+  "verified_round": "al_project_verified_20261013_r1",
+  "backup": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\resource_opt_verified_20261005\\al_project_verified_20261013_r1\\original_runs_before_20261013_180328_131371",
+  "input_hashes_verified": true,
+  "project_hash": "dda55f63bc37849dce1deec8ab40c007da267ca63a606210ef7683a2e8c6c0b1",
+  "gate_database_sha256": "b2590b93ce5dd7fbe0f4472762649af04c05cdd53c781a2ba61f56ee7fc5a05e",
+  "route_database_sha256": "86cbbdb24de2ac28c87e1ba0aa813ef933630a8ad8120375ab95e6e850546412",
+  "final_timing_ps": {
+    "Setup WNS": 140,
+    "Hold WNS": 22,
+    "Setup TNS": 0,
+    "Hold TNS": 0
+  },
+  "bit": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\VinylFPGA_Runs\\phy_1\\VinylFPGA.bit",
+  "bit_sha256": "7461db67298db2e5aaac9dac56b409ae72f1660f2dc63d7ddfe6f8e524b203f0",
+  "operation": "import_actual_verified_databases_recompute_reports_generate_bit",
+  "programmed": false
+}

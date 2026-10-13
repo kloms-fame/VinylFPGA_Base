@@ -7,7 +7,8 @@ module tb_stage3b_shared_writer #(parameter SHORT_ART=0);
  wire mv_active,mv_req,mv_pixel,mv_sec_req,mv_sec_busy,mv_sec_valid,mv_sec_done,mv_done,mv_failed;
  wire [31:0] bg_data,mv_data,bg_lba,mv_lba;
  wire [20:0] bg_addr;
- wire [4:0] ready;
+ wire [5:0] ready;
+ wire bg_hold,bg_cancel,bg_hold_mem,bg_cancel_mem;
  wire write_ack,write_finish,write_en,fifo_clear;
  wire [20:0] write_addr;
  wire bg_mem,mv_mem;
@@ -32,11 +33,13 @@ module tb_stage3b_shared_writer #(parameter SHORT_ART=0);
   .cover_data(32'd0),.pixel_valid(pipeline_valid),.pixel_data(pipeline_data));
  sync_2ff bg_sync(.clk(mem_clk),.rst_n(rst_n),.async_in(bg_active),.sync_out(bg_mem));
  sync_2ff mv_sync(.clk(mem_clk),.rst_n(rst_n),.async_in(mv_active),.sync_out(mv_mem));
+ sync_2ff hs(.clk(mem_clk),.rst_n(rst_n),.async_in(bg_hold),.sync_out(bg_hold_mem));
+ sync_2ff cs(.clk(mem_clk),.rst_n(rst_n),.async_in(bg_cancel),.sync_out(bg_cancel_mem));
  background_cache_loader #(.FRAME_SECTORS(1)) bg(
   .clk(sd_clk),.rst_n(rst_n),.enable(enable),.base_lba(32'd1000),.song_id(2'd0),
-  .mv_writer_active(mv_active),.invalidate_ack_async(1'b0),
+  .art2_supported(1'b0),.art_request_async(1'b0),.art2_request_async(1'b0),.mv_writer_active(mv_active),.invalidate_ack_async(1'b0),
   .write_ack(write_ack),.write_finish_toggle(finish_toggle),.ready_info(ready),
-  .writer_active(bg_active),.write_req(bg_req),.write_address(bg_addr),
+  .write_hold(bg_hold),.write_cancel(bg_cancel),.writer_active(bg_active),.write_req(bg_req),.write_address(bg_addr),
   .pixel_valid(bg_pixel),.pixel_data(bg_data),.sector_req(bg_sec_req),.sector_lba(bg_lba),
   .sector_busy(bg_sec_busy),.sector_valid(bg_sec_valid),.sector_byte(sec_byte),
   .sector_byte_index(sec_index),.sector_done(bg_sec_done),.sector_error(8'd0));
@@ -56,7 +59,7 @@ module tb_stage3b_shared_writer #(parameter SHORT_ART=0);
   .sector_busy(sec_busy),.sector_valid(sec_valid),.sector_done(sec_done));
  wire [20:0] selected_base=bg_mem ? bg_addr : 21'd1228800;
  frame_fifo_write #(.DYNAMIC_LINEAR(1),.BURST_SIZE(256)) writer(
-  .linear_write(bg_active || mv_active),.rst(!rst_n),.mem_clk(mem_clk),
+  .write_hold(bg_mem && bg_hold_mem),.write_cancel(bg_mem && bg_cancel_mem),.linear_write(bg_active || mv_active),.rst(!rst_n),.mem_clk(mem_clk),
   .Sdr_init_done(1'b1),.Sdr_init_ref_vld(1'b0),.Sdr_busy(1'b0),.App_rd_busy(1'b0),
   .App_wr_en(write_en),.App_wr_addr(write_addr),
   .write_req(bg_active ? bg_req : mv_req),.write_req_ack(write_ack),.write_finish(write_finish),
@@ -80,9 +83,9 @@ module tb_stage3b_shared_writer #(parameter SHORT_ART=0);
   if(write_en) begin
    check(used>0,"write FIFO underflow");
    popped=fifo[head];head=(head+1)%512;used=used-1;total=total+1;
-   if(total<=256) begin
-    check(write_addr===1766400+art_words && popped===((SHORT_ART && art_words>=6)?32'd0:32'hFF000000),"art chunk protected from pending MV, including padding");art_words=art_words+1;
-   end else if(total<=512) begin
+   if(write_addr>=1766400) begin
+    check(write_addr===1766400+art_words && popped===32'hFF000000,"art chunk protected from pending MV, including padding");art_words=art_words+1;
+   end else if(write_addr<1459200) begin
     check(write_addr===1228800+mv_words && popped===32'h0000FF00,"MV owns following transaction");mv_words=mv_words+1;
    end else begin
     check(write_addr===1459200+song_words && popped===32'hFF000000,"song background resumes without contamination");song_words=song_words+1;
@@ -114,7 +117,7 @@ module tb_stage3b_shared_writer #(parameter SHORT_ART=0);
   check(bg_active,"MV request arrives during BG ownership");
   wait(ready[2] && ((SHORT_ART) ? !ready[3] : ready[3]) && mv_done);
   repeat(20) @(negedge sd_clk);
-  check(total==768 && art_words==256 && mv_words==256 && song_words==256 && used==0 && !mv_failed,"exact transactions and no lost FIFO data");
+  check(total==(SHORT_ART?512:768) && art_words==(SHORT_ART?0:256) && mv_words==256 && song_words==256 && used==0 && !mv_failed,"exact transactions and no lost FIFO data");
   $display("PASS stage3b shared writer: %0d checks, actual frame_fifo_write, BG/MV collision and FIFO data",checks);$finish;
  end
  initial begin #2000000;$display("FAIL shared writer timeout BG=%0d MV=%0d writer=%0d used=%0d",bg.state,mv.state,writer.state,used);$finish_and_return(1);end

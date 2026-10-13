@@ -6,7 +6,7 @@ module tb_background_cache_loader;
  reg [1:0] song=0;
  reg [7:0] data=0,error=0;
  reg [8:0] idx=0;
- wire [4:0] info;
+ wire [5:0] info;
  wire inv,active,wr,pv,sr;
  wire [20:0] address;
  wire [31:0] pd,lba;
@@ -15,7 +15,7 @@ module tb_background_cache_loader;
  reg epoch_saved;
  background_cache_loader #(.FRAME_SECTORS(2)) dut(
   .clk(clk),.rst_n(rst_n),.enable(enable),.base_lba(base),.song_id(song),
-  .mv_writer_active(mv),.invalidate_ack_async(invack),.write_ack(ack),
+  .art2_supported(1'b0),.art_request_async(1'b0),.art2_request_async(1'b0),.mv_writer_active(mv),.invalidate_ack_async(invack),.write_ack(ack),
   .write_finish_toggle(fin),.ready_info(info),.invalidate_toggle(inv),
   .writer_active(active),.write_req(wr),.write_address(address),
   .pixel_valid(pv),.pixel_data(pd),.sector_req(sr),.sector_lba(lba),
@@ -49,7 +49,7 @@ module tb_background_cache_loader;
  end endtask
  task finish_chunk;
  begin
-  wait(dut.state==7);
+  wait(dut.state==7 || dut.state==9);
   repeat(8) @(negedge clk);
   if(!active) $fatal(1,"writer ownership released before SDRAM completion");
   fin=!fin;
@@ -87,11 +87,15 @@ module tb_background_cache_loader;
   if(info[3:0]!==4'b1110) $fatal(1,"latest song tag/art persistence");
   song=1; repeat(5) @(negedge clk); invack=inv;
   pad_allowed=1;
+  handshake(21'd1459200); sector(12,2200,0);
+  handshake(21'd1459200); sector(12,2200,0);
   handshake(21'd1459200); sector(12,2200,0); finish_chunk;
-  if(padded!=250 || info[2]) $fatal(1,"short sector must pad and never publish");
+  if(padded!=0 || info[2]) $fatal(1,"short sector must cancel without padding or publishing");
   repeat(30) @(negedge clk); if(wr||sr||active) $fatal(1,"failed song must not immediately retry");
   // New song clears failure; explicit adapter error also drains and blocks retry.
   song=0; repeat(5) @(negedge clk); invack=inv;
+  handshake(21'd1459200); sector(512,1000,8'h20);
+  handshake(21'd1459200); sector(512,1000,8'h20);
   handshake(21'd1459200); sector(512,1000,8'h20); finish_chunk;
   repeat(30) @(negedge clk); if(wr||sr||active||info[2]) $fatal(1,"SD error publication/retry");
   $display("TEST_PASS background_cache_loader pixels addresses priority epoch coalescing drain short error");

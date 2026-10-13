@@ -39,6 +39,7 @@ module tb_frame_fifo_write;
         .FRAME_WIDTH   (640),
         .FRAME_HEIGHT  (480)
     ) dut (
+        .write_hold(1'b0),.write_cancel(1'b0),
         .rst                 (rst),
         .mem_clk             (mem_clk),
         .Sdr_init_done       (1'b1),

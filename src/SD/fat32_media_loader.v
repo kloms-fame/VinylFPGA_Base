@@ -59,6 +59,7 @@ module fat32_media_loader #(
     // 第十一讲：AUDIO.PCM 元数据与额外扇区客户端。
     output wire [63:0] mv_metadata, // S6 selected song; zero for v1/absent MV
     output wire [31:0] background_base_lba,
+    output wire background_art2_supported,
     output wire        audio_file_valid,
     output wire [31:0] audio_start_lba,
     output wire [31:0] audio_total_sectors,
@@ -127,6 +128,23 @@ module fat32_media_loader #(
     wire        streamer_done;
     wire        streamer_valid;
     wire [7:0]  streamer_byte;
+    // Keep BMP byte, valid and completion aligned in one pipeline stage.
+    // Index parsing still consumes the original stream. This cuts the measured
+    // file-valid -> RGB byte-state path without changing bytes or ordering.
+    reg         bmp_stream_valid;
+    reg [7:0]   bmp_stream_byte;
+    reg         bmp_stream_done;
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            bmp_stream_valid <= 1'b0;
+            bmp_stream_byte <= 8'd0;
+            bmp_stream_done <= 1'b0;
+        end else begin
+            bmp_stream_valid <= streamer_valid && sd_init_done;
+            bmp_stream_byte <= streamer_byte;
+            bmp_stream_done <= streamer_done && sd_init_done;
+        end
+    end
     wire [7:0]  streamer_error;
     wire        streamer_req;
     wire [31:0] streamer_lba;
@@ -180,7 +198,9 @@ module fat32_media_loader #(
     wire [63:0] idx_audio0, idx_audio1, idx_audio2, idx_audio3;
     wire [63:0] idx_mv0,idx_mv1,idx_mv2,idx_mv3;
     wire [31:0] idx_background_base_lba;
+    wire idx_background_art2_supported;
     assign background_base_lba = index_mode ? idx_background_base_lba : 32'd0;
+    assign background_art2_supported = index_mode && idx_background_art2_supported;
     assign mv_metadata = !index_mode ? 64'd0 :
                          song_sel==0 ? idx_mv0 : song_sel==1 ? idx_mv1 :
                          song_sel==2 ? idx_mv2 : idx_mv3;
@@ -300,14 +320,14 @@ module fat32_media_loader #(
     // in the unused tail bytes, keeping byte 53's decision and stream timing.
     always @(posedge clk or posedge rst) begin
         if (rst) header_format_ok <= 1'b0;
-        else if (streamer_valid && load_state == LD_HEADER && header_byte_cnt == 6'd51)
+        else if (bmp_stream_valid && load_state == LD_HEADER && header_byte_cnt == 6'd51)
             header_format_ok <= header0 == "B" && header1 == "M" &&
                 dib_size >= 32'd40 && planes == 16'd1 &&
                 bit_count == 16'd24 && compression == 32'd0;
     end
     always @(posedge clk or posedge rst) begin
         if (rst) header_offset_parts <= 4'd0;
-        else if (streamer_valid && load_state == LD_HEADER && header_byte_cnt == 6'd49)
+        else if (bmp_stream_valid && load_state == LD_HEADER && header_byte_cnt == 6'd49)
             header_offset_parts <= {data_offset >= 32'd54,
                                     data_offset[31:16] < file_len[31:16],
                                     data_offset[31:16] == file_len[31:16],
@@ -315,13 +335,13 @@ module fat32_media_loader #(
     end
     always @(posedge clk or posedge rst) begin
         if (rst) header_offset_ok <= 1'b0;
-        else if (streamer_valid && load_state == LD_HEADER && header_byte_cnt == 6'd51)
+        else if (bmp_stream_valid && load_state == LD_HEADER && header_byte_cnt == 6'd51)
             header_offset_ok <= header_offset_parts[3] &&
                 (header_offset_parts[2] || (header_offset_parts[1] && header_offset_parts[0]));
     end
     always @(posedge clk or posedge rst) begin
         if (rst) header_payload_ok <= 1'b0;
-        else if (streamer_valid && load_state == LD_HEADER && header_byte_cnt == 6'd52)
+        else if (bmp_stream_valid && load_state == LD_HEADER && header_byte_cnt == 6'd52)
             header_payload_ok <= file_len >= pixel_end;
     end
 
@@ -561,7 +581,8 @@ module fat32_media_loader #(
         .song_audio2    (idx_audio2),
         .song_audio3    (idx_audio3),
         .song_mv0(idx_mv0), .song_mv1(idx_mv1), .song_mv2(idx_mv2), .song_mv3(idx_mv3),
-        .background_base_lba(idx_background_base_lba)
+        .background_base_lba(idx_background_base_lba),
+        .background_art2_supported(idx_background_art2_supported)
     );
 
     // 索引条目与旧扫描结果的取数选择（index_mode=0 时严格等于旧路径）
@@ -801,34 +822,34 @@ module fat32_media_loader #(
             end
 
             // 3. 解析 BMP 前 54 字节。只消费 LD_HEADER 阶段的有效字节。
-            if (streamer_valid && (load_state == LD_HEADER)) begin
+            if (bmp_stream_valid && (load_state == LD_HEADER)) begin
                 case (header_byte_cnt)
-                    6'd0:  header0 <= streamer_byte;
-                    6'd1:  header1 <= streamer_byte;
-                    6'd2:  file_len[7:0] <= streamer_byte;
-                    6'd3:  file_len[15:8] <= streamer_byte;
-                    6'd4:  file_len[23:16] <= streamer_byte;
-                    6'd5:  file_len[31:24] <= streamer_byte;
-                    6'd10: data_offset[7:0] <= streamer_byte;
-                    6'd11: data_offset[15:8] <= streamer_byte;
-                    6'd12: data_offset[23:16] <= streamer_byte;
-                    6'd13: data_offset[31:24] <= streamer_byte;
-                    6'd14: dib_size[7:0] <= streamer_byte;
-                    6'd15: dib_size[15:8] <= streamer_byte;
-                    6'd16: dib_size[23:16] <= streamer_byte;
-                    6'd17: dib_size[31:24] <= streamer_byte;
-                    6'd18: width[7:0] <= streamer_byte;
-                    6'd19: width[15:8] <= streamer_byte;
-                    6'd22: height[7:0] <= streamer_byte;
-                    6'd23: height[15:8] <= streamer_byte;
-                    6'd26: planes[7:0] <= streamer_byte;
-                    6'd27: planes[15:8] <= streamer_byte;
-                    6'd28: bit_count[7:0] <= streamer_byte;
-                    6'd29: bit_count[15:8] <= streamer_byte;
-                    6'd30: compression[7:0] <= streamer_byte;
-                    6'd31: compression[15:8] <= streamer_byte;
-                    6'd32: compression[23:16] <= streamer_byte;
-                    6'd33: compression[31:24] <= streamer_byte;
+                    6'd0:  header0 <= bmp_stream_byte;
+                    6'd1:  header1 <= bmp_stream_byte;
+                    6'd2:  file_len[7:0] <= bmp_stream_byte;
+                    6'd3:  file_len[15:8] <= bmp_stream_byte;
+                    6'd4:  file_len[23:16] <= bmp_stream_byte;
+                    6'd5:  file_len[31:24] <= bmp_stream_byte;
+                    6'd10: data_offset[7:0] <= bmp_stream_byte;
+                    6'd11: data_offset[15:8] <= bmp_stream_byte;
+                    6'd12: data_offset[23:16] <= bmp_stream_byte;
+                    6'd13: data_offset[31:24] <= bmp_stream_byte;
+                    6'd14: dib_size[7:0] <= bmp_stream_byte;
+                    6'd15: dib_size[15:8] <= bmp_stream_byte;
+                    6'd16: dib_size[23:16] <= bmp_stream_byte;
+                    6'd17: dib_size[31:24] <= bmp_stream_byte;
+                    6'd18: width[7:0] <= bmp_stream_byte;
+                    6'd19: width[15:8] <= bmp_stream_byte;
+                    6'd22: height[7:0] <= bmp_stream_byte;
+                    6'd23: height[15:8] <= bmp_stream_byte;
+                    6'd26: planes[7:0] <= bmp_stream_byte;
+                    6'd27: planes[15:8] <= bmp_stream_byte;
+                    6'd28: bit_count[7:0] <= bmp_stream_byte;
+                    6'd29: bit_count[15:8] <= bmp_stream_byte;
+                    6'd30: compression[7:0] <= bmp_stream_byte;
+                    6'd31: compression[15:8] <= bmp_stream_byte;
+                    6'd32: compression[23:16] <= bmp_stream_byte;
+                    6'd33: compression[31:24] <= bmp_stream_byte;
                     default: ;
                 endcase
 
@@ -853,7 +874,7 @@ module fat32_media_loader #(
             end
 
             // 4. 跳过 BMP 数据偏移，然后 BGR -> RGB。
-            if (streamer_valid && (load_state == LD_DATA)) begin
+            if (bmp_stream_valid && (load_state == LD_DATA)) begin
                 // 字节消费上界改用 pixel_count 守卫：pixel_count 在本状态
                 // 外保持清零、进入前已复位，且只在本分支内每 3 字节加一，
                 // 故“已消费字节数 N”与 pixel_count 恒有 N=3*pixel_count+r。
@@ -863,15 +884,15 @@ module fat32_media_loader #(
                 if (pixel_count < expected_pixel_count) begin
                     case (rgb_byte_cnt)
                         3'd0: begin
-                            bmp_data[7:0] <= streamer_byte;
+                            bmp_data[7:0] <= bmp_stream_byte;
                             rgb_byte_cnt <= 3'd1;
                         end
                         3'd1: begin
-                            bmp_data[15:8] <= streamer_byte;
+                            bmp_data[15:8] <= bmp_stream_byte;
                             rgb_byte_cnt <= 3'd2;
                         end
                         3'd2: begin
-                            bmp_data[23:16] <= streamer_byte;
+                            bmp_data[23:16] <= bmp_stream_byte;
                             rgb_byte_cnt <= 3'd0;
                             bmp_data_wr_en <= 1'b1;
                             pixel_count <= pixel_count + 32'd1;
@@ -882,7 +903,7 @@ module fat32_media_loader #(
             end
 
             // 5. 文件流结束后的完整性判定。
-            if (streamer_done && (load_state != LD_IDLE)) begin
+            if (bmp_stream_done && (load_state != LD_IDLE)) begin
                 if ((load_state == LD_DATA) &&
                     (pixel_count >= expected_pixel_count)) begin
                     load_state <= LD_IDLE;

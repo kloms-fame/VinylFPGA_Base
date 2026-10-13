@@ -1,0 +1,34 @@
+{
+  "project": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\VinylFPGA.al",
+  "flow": "TD GUI MultiSeed, one fixed seed 5",
+  "timing_ns": {
+    "SWNS": 0.14,
+    "STNS": 0.0,
+    "HWNS": 0.022,
+    "HTNS": 0.0
+  },
+  "bit": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\VinylFPGA_Runs\\phy_1\\seed_5\\VinylFPGA.bit",
+  "bit_sha256": "bb32ce99ce03cb00c155578cdb8684df6341c767139b557d7d6e8a58b95dc4f0",
+  "bit_bytes": 651740,
+  "snapshot_checked": true,
+  "git_branch": "main",
+  "git_head": "9c4c5810a650f6ba21fe317432dd56f85749c5ad",
+  "checked_at": "2026-10-13T18:50:33.291693+08:00",
+  "project_sha256": "762e29819298a63e458c02f766bc1e447dae8dbbf1e72fb2e2cf573e9a593f55",
+  "hardware_acceptance": "pending_user",
+  "resources": {
+    "LUT": 16925,
+    "REG": 10941,
+    "MSlice": 4536,
+    "LSlice": 4528,
+    "PLB": 2436,
+    "BRAM9K": 47,
+    "DSP": 10
+  },
+  "constraints_checks": {
+    "no clock": 0,
+    "clock definition": 0,
+    "invalid constraint": 0,
+    "combinational loops": 0
+  }
+}

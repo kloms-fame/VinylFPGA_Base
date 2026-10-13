@@ -13,6 +13,7 @@ module frame_fifo_write
 )               
 (
 	input                            linear_write,
+    input wire write_hold, write_cancel,
 	input                            rst,                  
 	input                            mem_clk,                    // external memory controller user interface clock
 	input							 Sdr_init_done,
@@ -93,7 +94,16 @@ reg App_wr_en_r;
 reg App_wr_en_d0;
 
 wire into_burst;
-	assign into_burst = (((write_len_latch <= (rdusedw_r + write_cnt))||rdusedw_r > BURST_SIZE) && ~App_rd_busy);//当rd在突发时不会进入burst
+reg fifo_ready = 1'b0;
+// Only this writer removes FIFO words, and the previous burst drains before
+// S_CHECK_FIFO. Stage the wide credit comparison; keep live read-busy/hold
+// arbitration outside the register so no simultaneous read/write is issued.
+always @(posedge mem_clk or posedge rst) begin
+    if (rst) fifo_ready <= 1'b0;
+    else fifo_ready <= (write_len_latch <= (rdusedw_r + write_cnt)) ||
+                       rdusedw_r > BURST_SIZE;
+end
+assign into_burst = fifo_ready && ~App_rd_busy && !write_hold;
 
 assign App_wr_addr = {App_wr_addr_r[ADDR_BITS - 1:0]};
 //assign O_wr_busy = (state != S_IDLE || (S_IDLE && write_req_d2));
@@ -257,6 +267,12 @@ begin
 					state <= S_ACK;
 				end
 				//if the FIFO space is a burst write request, goto burst write state
+                else if(write_cancel) begin
+                    // Cancel only at a drained burst boundary. Background
+                    // keeps hold asserted, so a rejected sector never writes.
+                    fifo_aclr <= 1'b1;
+                    state <= S_END;
+                end
 				else if(into_burst)
 				begin
 					state <= S_WRITE_BURST;

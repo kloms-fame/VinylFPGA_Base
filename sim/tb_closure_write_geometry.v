@@ -7,7 +7,7 @@ module tb_closure_write_geometry #(parameter WIDTH=640, HEIGHT=4, BURST=128);
  wire [20:0] addr;
  integer words=0,expected;
  frame_fifo_write #(.DYNAMIC_LINEAR(1),.WRITE_V_FLIP(1),.FRAME_WIDTH(WIDTH),.FRAME_HEIGHT(HEIGHT),.BURST_SIZE(BURST)) dut(
-  .linear_write(1'b0),.rst(rst),.mem_clk(clk),.Sdr_init_done(1'b1),
+  .write_hold(1'b0),.write_cancel(1'b0),.linear_write(1'b0),.rst(rst),.mem_clk(clk),.Sdr_init_done(1'b1),
   .Sdr_init_ref_vld(1'b0),.Sdr_busy(1'b0),.App_rd_busy(1'b0),
   .App_wr_en(en),.App_wr_addr(addr),.write_req(req),.write_req_ack(ack),.write_finish(done),
   .write_addr_0(21'd1000),.write_addr_1(21'd1000),.write_addr_2(21'd1000),.write_addr_3(21'd1000),

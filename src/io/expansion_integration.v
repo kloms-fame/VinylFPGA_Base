@@ -384,21 +384,32 @@ module expansion_integration #(
     assign encoder_switch_any        = enc1_sw_fall_pulse | enc2_sw_fall_pulse;
     assign encoder_switch_source_any = enc2_sw_fall_pulse;
 
+    // Register the entire sound-event bundle together: preserve simultaneous
+    // event priority and parameters, with only one 50 MHz cycle of latency.
+    // This breaks the measured NEC-repeat -> tone-classification setup path.
+    reg [9:0] sound_events_q;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) sound_events_q <= 10'd0;
+        else sound_events_q <= {key_press_any,dip_change_any,dip_target,
+            encoder_step_any,encoder_direction_any,encoder_source_any,
+            encoder_switch_any,encoder_switch_source_any,
+            (ir_event & ~ir_repeat_event & dip_level[4]),slideshow_beep_event};
+    end
     buzzer_feedback u_buzzer_feedback (
         .clk                   (clk),
         .rst_n                 (rst_n),
         .sound_enable          (BUZZER_ENABLE),
-        .key_press             (key_press_any),
-        .dip_change            (dip_change_any),
-        .dip_target            (dip_target),
-        .encoder_step          (encoder_step_any),
-        .encoder_direction     (encoder_direction_any),
-        .encoder_source        (encoder_source_any),
-        .encoder_switch        (encoder_switch_any),
-        .encoder_switch_source (encoder_switch_source_any),
-        .ir_event              (ir_event & ~ir_repeat_event & dip_level[4]),
+        .key_press             (sound_events_q[9]),
+        .dip_change            (sound_events_q[8]),
+        .dip_target            (sound_events_q[7]),
+        .encoder_step          (sound_events_q[6]),
+        .encoder_direction     (sound_events_q[5]),
+        .encoder_source        (sound_events_q[4]),
+        .encoder_switch        (sound_events_q[3]),
+        .encoder_switch_source (sound_events_q[2]),
+        .ir_event              (sound_events_q[1]),
         .ir_action             (2'd0),
-        .slideshow_event       (slideshow_beep_event),
+        .slideshow_event       (sound_events_q[0]),
         .buzzer_n              (board_buzzer_n),
         .busy                  ()
     );

@@ -109,8 +109,8 @@ module tb_playback_background;
         key_event;
         expect_mode(2'd1);
         commit_frame(2'd3);
-        expect_pixel(10'd0, 10'd0, 24'h08080C);
-        expect_pixel(10'd1023, 10'd1023, 24'h08080C);
+        expect_pixel(10'd0, 10'd0, 24'h767676);
+        expect_pixel(10'd1023, 10'd1023, 24'h4C4C4C);
 
         // Verify every visible mode and the modulo-four wrap.
         key_event;

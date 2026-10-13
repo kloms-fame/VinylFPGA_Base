@@ -70,10 +70,8 @@ module playback_background (
     wire [5:0] shade = {1'b0, dx[9:5]} + {1'b0, dy[9:5]};
     wire [7:0] gray = 8'd128 - {2'b0, shade};
 
-    // Stage 3A keeps image modes on a readable gray fallback until 3B loads
-    // their images. Mode 3 is immediately available without any media access.
-    assign background_rgb = (mode_frame == 2'd3) ?
-        24'h08080C : {gray, gray, gray};
+    // All image modes fall back to the same readable gray while loading.
+    assign background_rgb = {gray, gray, gray};
 
 endmodule
 

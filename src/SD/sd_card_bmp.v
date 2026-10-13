@@ -50,6 +50,7 @@ module sd_card_bmp #(
     output wire media_preloaded,
     output wire [63:0] mv_metadata, // S6 selected song; zero for v1/absent MV
     output wire [31:0] background_base_lba,
+    output wire background_art2_supported,
     output wire                 audio_file_valid,
     output wire [31:0]          audio_start_lba,
     output wire [31:0]          audio_total_sectors,
@@ -576,6 +577,7 @@ module sd_card_bmp #(
         .bmp_data               (bmp_data),
         .mv_metadata            (mv_metadata),
         .background_base_lba    (background_base_lba),
+        .background_art2_supported(background_art2_supported),
         .audio_file_valid       (audio_file_valid),
         .audio_start_lba        (audio_start_lba),
         .audio_total_sectors    (audio_total_sectors),

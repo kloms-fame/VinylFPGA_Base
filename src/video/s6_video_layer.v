@@ -7,12 +7,14 @@ module s6_video_layer #(
  input wire clk,rst_n,frame_start,play_active,paused,restart,diagnostic,
  input wire transport_ready,
  input wire covers_ready, input wire [63:0] metadata_async,
+ input wire [1:0] track_id,
  input wire [31:0] time_ms, input wire [15:0] seek_frame, input wire visual_toggle,
  input wire raw_read_en, out_de, input wire [9:0] out_x,
  input wire adjusted_de, input wire [9:0] adjusted_x,
  input wire [23:0] rgb_in, output wire [23:0] rgb_out,
  output reg mv_read_active, output wire [1:0] mv_read_bank,
  output wire fifo_read_allowed, output wire mv_window_visible,
+ output reg mv_preloading = 1'b0,
  output wire request_toggle, output wire [31:0] request_lba,
  output wire [1:0] request_bank, input wire done_toggle,failed
 );
@@ -21,6 +23,14 @@ module s6_video_layer #(
  reg visual_pending,prefer_vinyl;
  reg [9:0] raw_x,raw_y,out_y;
  reg raw_q,out_q;
+ reg [1:0] track_q = 2'd0;
+ reg play_q = 1'b0;
+ wire track_changed = track_id != track_q;
+ wire entering_play = play_active && !play_q;
+ always @(posedge clk or negedge rst_n) begin
+  if(!rst_n) begin track_q<=0;play_q<=0;end
+  else if(frame_start) begin track_q<=track_id;play_q<=play_active;end
+ end
  wire visual_event=visual_sync[2]^visual_sync[1];
  wire [32:0] mv_end_lba={1'b0,meta2[31:0]} + (meta2[47:32]*33'd300);
  wire mv_meta_valid=(meta2[63:56]==8'd1 && meta2[55:48]==8'd10 &&
@@ -55,11 +65,21 @@ module s6_video_layer #(
  always @(posedge clk or negedge rst_n) begin
   if(!rst_n) mv_read_active<=0;
   else if(frame_start) mv_read_active<=display_enable && display_valid &&
+       !track_changed && !entering_play &&
+       !(prefer_vinyl ^ (play_active && (visual_pending^visual_event)));
+ end
+ // Do not black out the user's deliberate cover preference. Commit the
+ // placeholder on the same frame edge as the actual video/cover choice.
+ always @(posedge clk or negedge rst_n) begin
+  if(!rst_n) mv_preloading<=0;
+  else if(frame_start) mv_preloading<=ENABLE && play_active && covers_ready && !diagnostic &&
+       (entering_play || track_changed || (mv_meta_valid && !display_valid)) &&
        !(prefer_vinyl ^ (play_active && (visual_pending^visual_event)));
  end
  mv_frame_scheduler scheduler(
   .clk(clk),.rst_n(rst_n),.frame_start(frame_start),.enable(schedule_enable),
-  .paused(paused),.restart(restart),.retain_display(display_enable),.time_ms(time_ms),.start_lba(meta2[31:0]),
+  .paused(paused),.restart(restart || track_changed),
+  .retain_display(display_enable && !track_changed && !entering_play),.time_ms(time_ms),.start_lba(meta2[31:0]),
   .frame_count(meta2[47:32]),.seek_frame(seek_frame),.done_toggle(done_toggle),.failed(failed),
   .request_toggle(request_toggle),.request_lba(request_lba),.request_bank(request_bank),
   .display_valid(display_valid),.display_bank(mv_read_bank),.display_frame(display_frame),.waiting(waiting));

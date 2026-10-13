@@ -1,219 +1,195 @@
 `ifndef VINYL_BACKGROUND_CACHE_LOADER_V
 `define VINYL_BACKGROUND_CACHE_LOADER_V
-// SD clock domain. A writer owns one 256-word chunk from ACK until SDRAM
-// completion. Short/error sectors are padded before releasing ownership.
-// Song invalidation is a persistent epoch handshake with the memory reader;
-// further song changes coalesce while the reader drains the old frame.
+// One sector is staged in the existing shared write FIFO. Hold its SDRAM
+// writer until all 512 bytes validate; retry ACK clears that FIFO in place.
+// Every slot replacement waits for the persistent reader epoch/ACK fence.
 module background_cache_loader #(
- parameter integer FRAME_SECTORS = 1200
+ parameter integer FRAME_SECTORS = 1200,
+ parameter integer SECTOR_RETRIES = 2
 )(
  input wire clk, rst_n, enable,
  input wire [31:0] base_lba,
  input wire [1:0] song_id,
+ input wire art2_supported, art_request_async, art2_request_async,
  input wire mv_writer_active, invalidate_ack_async,
  input wire write_ack, write_finish_toggle,
- output wire [4:0] ready_info,
+ output wire [5:0] ready_info,
  output wire invalidate_toggle, writer_active, write_req,
- output reg [20:0] write_address,
+ output wire write_hold, write_cancel,
+ output reg [20:0] write_address = 21'd0,
  output wire pixel_valid, output wire [31:0] pixel_data,
- output wire sector_req, output reg [31:0] sector_lba,
+ output wire sector_req, output reg [31:0] sector_lba = 32'd0,
  input wire sector_busy, sector_valid,
  input wire [7:0] sector_byte,
  input wire [8:0] sector_byte_index,
  input wire sector_done,
  input wire [7:0] sector_error
 );
- localparam [3:0] IDLE=4'd0, WAIT_CHUNK=4'd1, ACK=4'd2, CLEAR=4'd3,
-     REQ=4'd4, READ=4'd5, PAD=4'd6, DRAIN=4'd7, NEXT=4'd8;
+ localparam [3:0] IDLE=0, WAIT_CHUNK=1, ACK=2, CLEAR=3,
+     REQ=4, READ=5, DRAIN=7, NEXT=8, ABORT=9;
  localparam [20:0] SONG_ADDRESS=21'd1459200, ART_ADDRESS=21'd1766400;
- reg [3:0] state;
- (* async_reg = "true" *) reg [1:0] invalidation_ack_sync;
- (* async_reg = "true" *) reg [1:0] write_ack_sync;
- (* async_reg = "true" *) reg [1:0] finish_sync;
- reg epoch;
- reg [1:0] target_song;
- reg [1:0] cached_song;
- reg art_ready, song_ready;
- reg art_failed, song_failed;
- reg job_art;
- reg [1:0] job_song;
- reg [10:0] chunk;
- reg [9:0] byte_count;
- reg [8:0] word_count;
- reg [7:0] low_byte;
- reg failed;
- reg finish_mark;
+ reg [3:0] state = IDLE;
+ (* async_reg = "true" *) reg [1:0] invalidation_ack_sync = 2'd0;
+ (* async_reg = "true" *) reg [1:0] write_ack_sync = 2'd0;
+ (* async_reg = "true" *) reg [1:0] finish_sync = 2'd0;
+ (* async_reg = "true" *) reg [1:0] art_request_sync = 2'd0;
+ (* async_reg = "true" *) reg [1:0] art2_request_sync = 2'd0;
+ reg epoch = 1'b0;
+ reg [1:0] target_song = 2'd0, cached_song = 2'd0;
+ reg target_art2 = 1'b0, cached_art2 = 1'b0;
+ reg art_ready = 1'b0, song_ready = 1'b0;
+ reg art_failed = 1'b0, song_failed = 1'b0;
+ reg job_art = 1'b0, job_art2 = 1'b0;
+ reg [1:0] job_song = 2'd0;
+ reg [10:0] chunk = 11'd0;
+ reg [9:0] byte_count = 10'd0;
+ reg [7:0] low_byte = 8'd0;
+ reg failed = 1'b0, abandoned = 1'b0, finish_mark = 1'b0;
+ reg [1:0] retry_count = 2'd0;
  reg [31:0] source_base = 32'd0;
- reg source_base_valid = 1'b0;
- reg source_enabled = 1'b0;
- always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) source_enabled <= 1'b0;
-  else source_enabled <= enable;
- end
- always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) source_base <= 32'd0;
-  else source_base <= base_lba;
- end
- always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) source_base_valid <= 1'b0;
-  else source_base_valid <= source_base != 32'd0 && source_base <= 32'hFFFFE88F;
- end
+ reg source_base_valid = 1'b0, source_enabled = 1'b0;
  wire source_valid = source_enabled && source_base_valid;
  wire song_changed = song_id != target_song;
+ wire requested_art2 = art2_supported && art2_request_sync[1];
+ wire art_changed = art_request_sync[1] && requested_art2 != target_art2;
  wire invalidate_pending = invalidation_ack_sync[1] != epoch;
- wire job_obsolete = !source_valid || (!job_art && (job_song != song_id || song_changed));
- wire start_art = state == IDLE && source_valid && !art_ready && !art_failed;
+ wire job_obsolete = !source_valid || (job_art
+     ? (job_art2 != target_art2 || art_changed)
+     : (job_song != song_id || song_changed));
+ wire start_art = state == IDLE && source_valid && !art_ready && !art_failed && !art_changed;
  wire start_song = state == IDLE && source_valid && (art_ready || art_failed) &&
      !song_ready && !song_failed && !song_changed && !invalidate_pending;
  wire byte_bad = sector_valid && (byte_count >= 10'd512 || sector_byte_index != byte_count[8:0]);
- wire read_pixel = state == READ && sector_valid && sector_byte_index[0] && !failed && !byte_bad;
  wire [10:0] byte_count_with_valid = {1'b0,byte_count} + (sector_valid ? 11'd1 : 11'd0);
  wire sector_bad = sector_error != 8'd0 || byte_count_with_valid != 11'd512 || byte_bad;
- wire frame_finished = state == NEXT && !failed && !job_obsolete && chunk == FRAME_SECTORS-1;
+ wire frame_finished = state == NEXT && !failed && !abandoned && !job_obsolete && chunk == FRAME_SECTORS-1;
  wire [15:0] rgb565 = {sector_byte,low_byte};
- assign ready_info = {epoch,art_ready,song_ready,cached_song};
+ assign ready_info = {epoch,cached_art2,art_ready,song_ready,cached_song};
  assign invalidate_toggle = epoch;
- assign writer_active = state >= ACK && state <= DRAIN;
+ assign writer_active = state == ACK || state == CLEAR || state == REQ ||
+                        state == READ || state == DRAIN || state == ABORT;
  assign write_req = state == ACK;
- assign sector_req = state == REQ && !sector_busy && !job_obsolete;
- assign pixel_valid = read_pixel || (state == PAD && word_count < 9'd256);
- assign pixel_data = state == PAD ? 32'd0 :
-     {rgb565[15:11],rgb565[15:13],rgb565[10:5],rgb565[10:9],rgb565[4:0],rgb565[4:2],8'd0};
- initial state=IDLE;
- initial invalidation_ack_sync=2'd0;
- initial write_ack_sync=2'd0;
- initial finish_sync=2'd0;
- initial epoch=1'b0;
- initial target_song=2'd0;
- initial cached_song=2'd0;
- initial art_ready=1'b0;
- initial song_ready=1'b0;
- initial art_failed=1'b0;
- initial song_failed=1'b0;
- initial job_art=1'b0;
- initial job_song=2'd0;
- initial chunk=11'd0;
- initial byte_count=10'd0;
- initial word_count=9'd0;
- initial low_byte=8'd0;
- initial failed=1'b0;
- initial finish_mark=1'b0;
- initial write_address=21'd0;
- initial sector_lba=32'd0;
+ assign write_hold = state != DRAIN;
+ assign write_cancel = state == ABORT;
+ assign sector_req = state == REQ && !sector_busy && !job_obsolete && !abandoned;
+ assign pixel_valid = state == READ && sector_valid && sector_byte_index[0] &&
+                      !failed && !byte_bad && !job_obsolete && !abandoned;
+ assign pixel_data = {rgb565[15:11],rgb565[15:13],rgb565[10:5],rgb565[10:9],rgb565[4:0],rgb565[4:2],8'd0};
  always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) invalidation_ack_sync<=2'd0;
-  else invalidation_ack_sync<={invalidation_ack_sync[0],invalidate_ack_async};
+  if (!rst_n) begin
+   invalidation_ack_sync<=0; write_ack_sync<=0; finish_sync<=0;
+   art_request_sync<=0; art2_request_sync<=0;
+  end else begin
+   invalidation_ack_sync<={invalidation_ack_sync[0],invalidate_ack_async};
+   write_ack_sync<={write_ack_sync[0],write_ack};
+   finish_sync<={finish_sync[0],write_finish_toggle};
+   art_request_sync<={art_request_sync[0],art_request_async};
+   art2_request_sync<={art2_request_sync[0],art2_request_async};
+  end
  end
  always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) write_ack_sync<=2'd0;
-  else write_ack_sync<={write_ack_sync[0],write_ack};
+  if (!rst_n) begin source_enabled<=0; source_base<=0; source_base_valid<=0; end
+  else begin
+   source_enabled<=enable; source_base<=base_lba;
+   source_base_valid<=source_base != 0 && source_base <= (art2_supported ? 32'hFFFFE3DF : 32'hFFFFE88F);
+  end
  end
  always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) finish_sync<=2'd0;
-  else finish_sync<={finish_sync[0],write_finish_toggle};
- end
- always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) target_song<=2'd0;
-  else target_song<=song_id;
- end
- always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) epoch<=1'b0;
-  else if (song_changed && !invalidate_pending) epoch<=!epoch;
+  if (!rst_n) begin target_song<=0; target_art2<=0; epoch<=0; end
+  else begin
+   target_song<=song_id;
+   if (art_request_sync[1]) target_art2<=requested_art2;
+   if ((song_changed || art_changed) && !invalidate_pending) epoch<=!epoch;
+  end
  end
  always @(posedge clk or negedge rst_n) begin
   if (!rst_n) state<=IDLE;
   else case (state)
    IDLE: if (start_art || start_song) state<=WAIT_CHUNK;
-   WAIT_CHUNK: if (job_obsolete) state<=IDLE;
-               else if (!mv_writer_active && (job_art || (!invalidate_pending && !song_changed))) state<=ACK;
+   WAIT_CHUNK: if (job_obsolete || abandoned) state<=IDLE;
+               else if (!mv_writer_active && !invalidate_pending && !song_changed && !art_changed) state<=ACK;
    ACK: if (write_ack_sync[1]) state<=CLEAR;
    CLEAR: if (!write_ack_sync[1]) state<=REQ;
-   REQ: if (job_obsolete) state<=PAD;
+   REQ: if (job_obsolete || abandoned) state<=ABORT;
         else if (!sector_busy) state<=READ;
-   READ: if (sector_done) state<=PAD;
-   PAD: if (word_count == 9'd256) state<=DRAIN;
-   DRAIN: if (finish_sync[1] != finish_mark) state<=NEXT;
-   NEXT: if (failed || job_obsolete || chunk == FRAME_SECTORS-1) state<=IDLE;
+   READ: if (sector_done) begin
+    if (job_obsolete || abandoned) state<=ABORT;
+    else if (failed || sector_bad) state<=(retry_count < SECTOR_RETRIES) ? ACK : ABORT;
+    else state<=DRAIN;
+   end
+   DRAIN, ABORT: if (finish_sync[1] != finish_mark) state<=NEXT;
+   NEXT: if (failed || abandoned || job_obsolete || chunk == FRAME_SECTORS-1) state<=IDLE;
          else state<=WAIT_CHUNK;
    default: state<=IDLE;
   endcase
  end
  always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) job_art<=1'b0;
-  else if (start_art || start_song) job_art<=start_art;
+  if (!rst_n) begin job_art<=0; job_art2<=0; job_song<=0; chunk<=0; end
+  else if (start_art || start_song) begin
+   job_art<=start_art; job_art2<=target_art2; job_song<=song_id; chunk<=0;
+  end else if (state == NEXT) chunk<=chunk+11'd1;
  end
  always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) job_song<=2'd0;
-  else if (start_song) job_song<=song_id;
- end
- always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) chunk<=11'd0;
-  else if (start_art || start_song) chunk<=11'd0;
-  else if (state == NEXT) chunk<=chunk+11'd1;
- end
- always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) sector_lba<=32'd0;
-  else if (start_art) sector_lba<=source_base+32'd4800;
-  else if (start_song) begin
+  if (!rst_n) begin sector_lba<=0; write_address<=0; end
+  else if (start_art) begin
+   sector_lba<=source_base+(target_art2 ? 32'd6000 : 32'd4800);
+   write_address<=ART_ADDRESS;
+  end else if (start_song) begin
    case(song_id)
-    2'd0: sector_lba<=source_base;
-    2'd1: sector_lba<=source_base+32'd1200;
-    2'd2: sector_lba<=source_base+32'd2400;
-    2'd3: sector_lba<=source_base+32'd3600;
+    0: sector_lba<=source_base;
+    1: sector_lba<=source_base+32'd1200;
+    2: sector_lba<=source_base+32'd2400;
+    3: sector_lba<=source_base+32'd3600;
    endcase
-  end else if (state == NEXT) sector_lba<=sector_lba+32'd1;
+   write_address<=SONG_ADDRESS;
+  end else if (state == NEXT) begin
+   sector_lba<=sector_lba+32'd1; write_address<=write_address+21'd256;
+  end
  end
  always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) write_address<=21'd0;
-  else if (start_art) write_address<=ART_ADDRESS;
-  else if (start_song) write_address<=SONG_ADDRESS;
-  else if (state == NEXT) write_address<=write_address+21'd256;
+  if (!rst_n) byte_count<=0;
+  else if (state == REQ) byte_count<=0;
+  else if (state == READ && sector_valid && byte_count < 512) byte_count<=byte_count+10'd1;
  end
  always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) byte_count<=10'd0;
-  else if (state == REQ) byte_count<=10'd0;
-  else if (state == READ && sector_valid && byte_count < 10'd512) byte_count<=byte_count+10'd1;
- end
- always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) word_count<=9'd0;
-  else if (state == ACK) word_count<=9'd0;
-  else if (pixel_valid) word_count<=word_count+9'd1;
- end
- always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) low_byte<=8'd0;
+  if (!rst_n) low_byte<=0;
   else if (state == READ && sector_valid && !sector_byte_index[0]) low_byte<=sector_byte;
  end
  always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) failed<=1'b0;
-  else if (start_art || start_song) failed<=1'b0;
-  else if (job_obsolete && state != IDLE) failed<=1'b1;
-  else if (state == READ && (byte_bad || (sector_done && sector_bad))) failed<=1'b1;
+  if (!rst_n) failed<=0;
+  else if (start_art || start_song || state == ACK) failed<=0;
+  else if (state == READ && (byte_bad || (sector_done && sector_bad))) failed<=1;
  end
  always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) finish_mark<=1'b0;
+  if (!rst_n) abandoned<=0;
+  else if (start_art || start_song) abandoned<=0;
+  else if (state != IDLE && job_obsolete) abandoned<=1;
+ end
+ always @(posedge clk or negedge rst_n) begin
+  if (!rst_n) retry_count<=0;
+  else if (start_art || start_song || state == NEXT) retry_count<=0;
+  else if (state == READ && sector_done && (failed || sector_bad) && retry_count < SECTOR_RETRIES)
+   retry_count<=retry_count+2'd1;
+ end
+ always @(posedge clk or negedge rst_n) begin
+  if (!rst_n) finish_mark<=0;
   else if (state == ACK) finish_mark<=finish_sync[1];
  end
  always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) art_ready<=1'b0;
-  else if (frame_finished && job_art) art_ready<=1'b1;
+  if (!rst_n) begin art_ready<=0; art_failed<=0; cached_art2<=0; end
+  else begin
+   if (art_changed || !source_valid) begin art_ready<=0; art_failed<=0; end
+   else if (frame_finished && job_art) begin art_ready<=1; cached_art2<=job_art2; end
+   else if (state == NEXT && failed && !abandoned && job_art) art_failed<=1;
+  end
  end
  always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) song_ready<=1'b0;
-  else if (song_changed || !source_valid) song_ready<=1'b0;
-  else if (frame_finished && !job_art) song_ready<=1'b1;
- end
- always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) cached_song<=2'd0;
-  else if (frame_finished && !job_art) cached_song<=job_song;
- end
- always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) art_failed<=1'b0;
-  else if (state == NEXT && failed && job_art) art_failed<=1'b1;
- end
- always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) song_failed<=1'b0;
-  else if (song_changed) song_failed<=1'b0;
-  else if (state == NEXT && failed && !job_art && job_song == song_id) song_failed<=1'b1;
+  if (!rst_n) begin song_ready<=0; song_failed<=0; cached_song<=0; end
+  else begin
+   if (song_changed || !source_valid) begin song_ready<=0; song_failed<=0; end
+   else if (frame_finished && !job_art) begin song_ready<=1; cached_song<=job_song; end
+   else if (state == NEXT && failed && !abandoned && !job_art && job_song == song_id) song_failed<=1;
+  end
  end
 endmodule
 `endif

@@ -1,0 +1,154 @@
+{
+  "source": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\资源\\sd卡\\card_S6.img",
+  "source_sha256": "a8be9d182a9b206a39f8baffe5277fe93fd1308221ffed14d7c0af70611b42ef",
+  "image": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\资源\\sd卡\\stage4\\card_STAGE4.img",
+  "image_bytes": 134217728,
+  "image_sha256": "e9f24f4c8a901a820fd2a0d6b4fdad572d9d842a6af5390ca3b0fb059b0f94f1",
+  "geometry": {
+    "total_sectors": 262144,
+    "fat_size": 2031,
+    "data_start_lba": 4094,
+    "sectors_per_cluster": 1
+  },
+  "data_lba_delta": 1822,
+  "background": {
+    "base_lba": 147317,
+    "frame_bytes": 614400,
+    "frame_sectors": 1200,
+    "frame_count": 6
+  },
+  "background_sha256": "b2c38721a435a6e160d24a695be1eefca3521a24432a90fb811d774aee8c1dff",
+  "index_entries_crc32": "0x0218C950",
+  "songs": [
+    {
+      "flags": 11,
+      "cover_cluster": 3,
+      "cover_bytes": 921654,
+      "cover_crc32": 1501277422,
+      "audio_cluster": 7207,
+      "audio_bytes": 23560704,
+      "audio_crc32": 2584348186,
+      "audio_lba": 11299,
+      "title": "Rick Astley",
+      "mv_lba": 57316,
+      "mv_frames": 300,
+      "mv_fps": 10,
+      "mv_codec": 1
+    },
+    {
+      "flags": 3,
+      "cover_cluster": 1804,
+      "cover_bytes": 921654,
+      "cover_crc32": 4139441714,
+      "audio_cluster": 7207,
+      "audio_bytes": 23560704,
+      "audio_crc32": 2584348186,
+      "audio_lba": 11299,
+      "title": "Track 2",
+      "mv_lba": 0,
+      "mv_frames": 0,
+      "mv_fps": 0,
+      "mv_codec": 0
+    },
+    {
+      "flags": 3,
+      "cover_cluster": 3605,
+      "cover_bytes": 921654,
+      "cover_crc32": 1009442038,
+      "audio_cluster": 7207,
+      "audio_bytes": 23560704,
+      "audio_crc32": 2584348186,
+      "audio_lba": 11299,
+      "title": "Track 3",
+      "mv_lba": 0,
+      "mv_frames": 0,
+      "mv_fps": 0,
+      "mv_codec": 0
+    },
+    {
+      "flags": 3,
+      "cover_cluster": 5406,
+      "cover_bytes": 921654,
+      "cover_crc32": 1342983010,
+      "audio_cluster": 7207,
+      "audio_bytes": 23560704,
+      "audio_crc32": 2584348186,
+      "audio_lba": 11299,
+      "title": "Track 4",
+      "mv_lba": 0,
+      "mv_frames": 0,
+      "mv_fps": 0,
+      "mv_codec": 0
+    }
+  ],
+  "preserved_files": {
+    "PIC1.BMP": {
+      "bytes": 921654,
+      "sha256": "f9938325dcf16100ef4cd08ab2827e1e646878ae54518cb1604dc04875dca218"
+    },
+    "PIC2.BMP": {
+      "bytes": 921654,
+      "sha256": "958c09c75d9c1c329419b59b74c5b338f299e05648b1f76c8b93a1e567bb7665"
+    },
+    "PIC3.BMP": {
+      "bytes": 921654,
+      "sha256": "e84c4a500b919251a0df1ab6b8448e2d94438065fca0fe14a520e3c658e06bdd"
+    },
+    "PIC4.BMP": {
+      "bytes": 921654,
+      "sha256": "78c9692b7c47af62e82220ba294e71548507da16990aa04f7c3dd58987b3ca06"
+    },
+    "AUDIO.PCM": {
+      "bytes": 23560704,
+      "sha256": "bf2e41ca37f3903c9b5b4063c60617e06060d53eee118df1a55a106c973947f7"
+    },
+    "TRACK1.MV": {
+      "bytes": 46080000,
+      "sha256": "491644a183a76e3b5f48cd66d6f4307a01b50dcacf8fdb28d18ff820f1a2d7c5"
+    },
+    "INDEX.BIN": {
+      "bytes": 512,
+      "sha256": "f5c346a1064c38e7ce8031ff6ddc3eef92ee1fd71c8eb702cef7c502367de1d2"
+    }
+  },
+  "frames": [
+    {
+      "number": 0,
+      "preview": "song_1_blur.png",
+      "start_lba": 147317,
+      "sha256": "22072f9dda6ebbfe5b97ca4dfb42aae201494e93f2838131720c13eb88da84a6"
+    },
+    {
+      "number": 1,
+      "preview": "song_2_blur.png",
+      "start_lba": 148517,
+      "sha256": "6dfd323d35924e72b071667852f502997748e593fde1ea1493e464c85cfa84ab"
+    },
+    {
+      "number": 2,
+      "preview": "song_3_blur.png",
+      "start_lba": 149717,
+      "sha256": "7004d2d15062bd2b05d71fbf8b3369ff9e873f8f3b09c406dc077e142a1abd3d"
+    },
+    {
+      "number": 3,
+      "preview": "song_4_blur.png",
+      "start_lba": 150917,
+      "sha256": "03083350899420d71a84286c3d39f7d68c175f56624939b98019d3a0375ab6c6"
+    },
+    {
+      "number": 4,
+      "preview": "shared_art.png",
+      "start_lba": 152117,
+      "sha256": "dec5d14cfdd61b035434b18dc063800042112a344c951781b9c09f0399940491"
+    },
+    {
+      "number": 5,
+      "preview": "shared_art_2.png",
+      "start_lba": 153317,
+      "sha256": "8c27416a6a8430a07558f88b9b6afc4c94fbd1c00bf77e10f394bf85b12a10c9"
+    }
+  ],
+  "input_unchanged": true,
+  "physical_background_readback": true
+}

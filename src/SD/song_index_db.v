@@ -55,7 +55,8 @@ module song_index_db #(
     output wire [63:0] song_audio2,
     output wire [63:0] song_audio3,
     output wire [63:0] song_mv0, song_mv1, song_mv2, song_mv3,
-    output wire [31:0] background_base_lba
+    output wire [31:0] background_base_lba,
+    output wire background_art2_supported
 );
     `include "song_index_defs.vh"
 
@@ -86,11 +87,19 @@ module song_index_db #(
     reg bg_magic_ok;
     reg bg_layout_ok;
     reg [31:0] bg_base_lba;
+    reg bg_art2 = 1'b0;
     initial bg_magic_ok = 1'b0;
     initial bg_layout_ok = 1'b0;
     initial bg_base_lba = 32'd0;
     assign background_base_lba = valid && bg_magic_ok && bg_layout_ok &&
-        bg_base_lba != 32'd0 && bg_base_lba <= 32'hFFFFE88F ? bg_base_lba : 32'd0;
+        bg_base_lba != 32'd0 && bg_base_lba <= (bg_art2 ? 32'hFFFFE3DF : 32'hFFFFE88F) ? bg_base_lba : 32'd0;
+    assign background_art2_supported = background_base_lba != 0 && bg_art2;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) bg_art2 <= 1'b0;
+        else if (start && phase == P_IDLE) bg_art2 <= 1'b0;
+        else if (phase == P_STREAM && in_valid && byte_idx == 9'd44)
+            bg_art2 <= in_byte == 8'd6;
+    end
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) bg_magic_ok <= 1'b0;
         else if (start && phase == P_IDLE) bg_magic_ok <= 1'b1;
@@ -113,7 +122,7 @@ module song_index_db #(
                     bg_layout_ok <= bg_layout_ok && in_byte == 8'h00;
                 9'd41: bg_layout_ok <= bg_layout_ok && in_byte == 8'h60;
                 9'd42: bg_layout_ok <= bg_layout_ok && in_byte == 8'h09;
-                9'd44: bg_layout_ok <= bg_layout_ok && in_byte == 8'h05;
+                9'd44: bg_layout_ok <= bg_layout_ok && (in_byte == 8'd5 || in_byte == 8'd6);
                 default: ;
             endcase
         end

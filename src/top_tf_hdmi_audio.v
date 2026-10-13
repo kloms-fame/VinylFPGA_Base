@@ -168,8 +168,10 @@ parameter S6_VIDEO_ENABLE = 1'b1;
 localparam [20:0] MV_ADDR0=21'd1228800, MV_ADDR1=21'd1305600, MV_ADDR2=21'd1382400;
 wire [63:0] mv_metadata_sd;
 wire [31:0] background_base_lba_sd;
-wire [4:0] background_ready_sd, background_ready_video;
-reg [4:0] background_ready_previous = 5'd0;
+wire [5:0] background_ready_sd, background_ready_video;
+reg [5:0] background_ready_previous = 6'd0;
+wire background_art2_supported;
+wire background_hold_sd, background_cancel_sd, background_hold_mem, background_cancel_mem;
 wire background_writer_active, background_writer_mem, background_write_req;
 wire background_pixel_valid, background_sector_req, background_sector_busy;
 wire background_sector_valid, background_sector_done;
@@ -178,6 +180,8 @@ wire [31:0] background_pixel_data, background_sector_lba;
 wire background_image_active, background_epoch, background_epoch_ack;
 wire [20:0] background_read_base;
 wire [1:0] background_mode;
+wire [1:0] song_id_frame;
+reg playback_page_mode_frame;
 wire [20:0] background_media_base = mv_read_active
     ? ((mv_read_bank == 2'd0) ? MV_ADDR0 :
        (mv_read_bank == 2'd1) ? MV_ADDR1 : MV_ADDR2)
@@ -197,7 +201,7 @@ wire mv_sec_req,mv_sec_busy,mv_sec_valid,mv_sec_done;
 wire [31:0] mv_sec_lba;
 wire media_sec_req,media_sec_busy,media_sec_valid,media_sec_done;
 wire [31:0] media_sec_lba;
-wire mv_read_active,mv_fifo_read_allowed,mv_window_visible;
+wire mv_read_active,mv_fifo_read_allowed,mv_window_visible,mv_preloading;
 wire [23:0] s6_rgb;
 reg [1:0] mv_audio_low_sync;
 reg [5:0] s6_read_wait;
@@ -1093,6 +1097,7 @@ sd_card_bmp #(
     .SD_MISO           (sd_miso),
     .mv_metadata       (mv_metadata_sd),
     .background_base_lba(background_base_lba_sd),
+    .background_art2_supported(background_art2_supported),
     .media_preloaded    (media_preloaded_sd),
     .audio_file_valid  (audio_file_valid),
     .audio_start_lba   (audio_start_lba),
@@ -1478,7 +1483,7 @@ sync_2ff u_video_read_ack_sync(
     .clk(video_clk),.rst_n(video_rst_n),.async_in(video_read_req_ack_mem),
     .sync_out(video_read_req_ack));
 
-assign frw_read_en_gated = video_read_en & (background_image_active || mv_fifo_read_allowed);
+assign frw_read_en_gated = video_read_en & (playback_page_mode_frame || mv_fifo_read_allowed);
 
 // 8~10 段竖彩条：大块纯色区域最容易暴露单像素彩点。
 always @(*) begin
@@ -1528,7 +1533,8 @@ assign vout_data = (`DIAG_LOCAL_PATTERN) ? local_pattern_rgb
                             : (display_ok ? vout_data_raw : 24'd0));
 
 // MV 未覆盖的像素显示中央封面；保持像素和 HDMI 时序链不变。
-assign view_rgb = (mv_read_active && !background_image_active && !mv_window_visible) ? 24'd0 : vout_data;
+assign view_rgb = (mv_preloading && mv_window_visible) ? 24'd0 :
+    (mv_read_active && !background_image_active && !mv_window_visible) ? 24'd0 : vout_data;
 
 // ===================== 第九讲：OSD状态字幕叠加 =====================
 // OSD 紧跟在黑屏屏蔽之后、video_rgb_to_axis 之前，纯组合替换像素，
@@ -1606,7 +1612,9 @@ frame_read_write #(
     .FRAME_HEIGHT     (480)
 ) frame_read_write_m0(
     .linear_write      (background_writer_active || mv_writer_active),
-    .background_enable(background_image_active && !pat_mode),
+    .background_enable(playback_page_mode_frame && !pat_mode),
+    .background_write_hold(background_writer_mem && background_hold_mem),
+    .background_write_cancel(background_writer_mem && background_cancel_mem),
     .background_media_mv(mv_read_active),.background_epoch(background_epoch),
     .background_media_base(background_media_base),.background_base(background_read_base),
     .background_epoch_ack(background_epoch_ack),
@@ -1633,7 +1641,7 @@ frame_read_write #(
     .read_addr_2       (mv_read_active ? MV_ADDR2 : BUF2_ADDR),
     .read_addr_3       (mv_read_active ? MV_ADDR0 : BUF3_ADDR),
     .read_addr_index   (mv_read_active ? mv_read_bank : disp_buf_idx_eff),
-    .read_len          (background_image_active ? FRAME_PIXELS : (mv_read_active ? 24'd76800 : FRAME_PIXELS)),
+    .read_len          (playback_page_mode_frame ? (mv_read_active ? FRAME_PIXELS : 24'd384000) : FRAME_PIXELS),
     .read_en           (frw_read_en_gated),
     .read_data         (video_read_data),
 
@@ -2095,21 +2103,28 @@ wire s2_boot_on = S2_BOOT_ENABLE && !pat_mode;
 // forces a gray frame; the memory reader ACK permits reusing the song slot
 // only after the preceding read burst has drained and its FIFO is cleared.
 always @(posedge sd_card_clk or negedge sd_media_rst_n) begin
- if(!sd_media_rst_n) background_ready_previous <= 5'd0;
+ if(!sd_media_rst_n) background_ready_previous <= 6'd0;
  else background_ready_previous <= background_ready_sd;
 end
-cdc_bundle_latest #(.WIDTH(5)) u_background_ready_cdc (
+cdc_bundle_latest #(.WIDTH(6)) u_background_ready_cdc (
  .src_clk(sd_card_clk),.src_rst_n(sd_media_rst_n),.src_data(background_ready_sd),
  .src_update(background_ready_sd != background_ready_previous),
  .dst_clk(video_clk),.dst_rst_n(media_video_rst_n),.dst_data(background_ready_video));
 sync_2ff u_background_writer_sync(.clk(ext_mem_clk),.rst_n(mem_rst_n),
  .async_in(background_writer_active),.sync_out(background_writer_mem));
+sync_2ff u_background_hold_sync(.clk(ext_mem_clk),.rst_n(mem_rst_n),
+ .async_in(background_hold_sd),.sync_out(background_hold_mem));
+sync_2ff u_background_cancel_sync(.clk(ext_mem_clk),.rst_n(mem_rst_n),
+ .async_in(background_cancel_sd),.sync_out(background_cancel_mem));
 background_cache_loader u_background_cache_loader (
  .clk(sd_card_clk),.rst_n(sd_media_rst_n),.enable(media_preloaded_sd && !pat_mode),
  .base_lba(background_base_lba_sd),.song_id(metadata_song_sd),
+ .art2_supported(background_art2_supported),.art_request_async(background_mode[1]),
+ .art2_request_async(background_mode[0]),
  .mv_writer_active(mv_writer_active),.invalidate_ack_async(background_epoch_ack),
  .ready_info(background_ready_sd),.invalidate_toggle(),
  .writer_active(background_writer_active),.write_req(background_write_req),
+ .write_hold(background_hold_sd),.write_cancel(background_cancel_sd),
  .write_ack(sd_card_write_req_ack),
  .write_finish_toggle(frame_write_toggle_mem),.write_address(background_write_address),
  .pixel_valid(background_pixel_valid),.pixel_data(background_pixel_data),
@@ -2168,19 +2183,19 @@ s6_video_layer #(.ENABLE(S6_VIDEO_ENABLE)) u_s6_video_layer(
  .play_active(S5_PLAY_ENABLE && play_active_v2),.paused(paused_v2),
  .restart(play_track_restart_vid),.diagnostic(pat_mode),
  .transport_ready(stream_enable_vid[1] && !seek_frame_busy),.covers_ready(media_preloaded_vid),.metadata_async(mv_metadata_video),.time_ms(lyric_time_ms),
+ .track_id(song_metadata_video[1:0]),
  .seek_frame(seek_frame_vid),
  .visual_toggle(mv_visual_tgl),.raw_read_en(video_read_en),.out_de(de),.out_x(osd_pixel_x),
  .adjusted_de(adjusted_de),.adjusted_x(adjusted_pixel_x),.rgb_in(wave_rgb_eff),.rgb_out(s6_rgb),
  .mv_read_active(mv_read_active),.mv_read_bank(mv_read_bank),
  .fifo_read_allowed(mv_fifo_read_allowed),.mv_window_visible(mv_window_visible),
+ .mv_preloading(mv_preloading),
  .request_toggle(mv_req_tgl),.request_lba(mv_request_lba),.request_bank(mv_request_bank),
  .done_toggle(mv_done_tgl),.failed(mv_failed));
 
 // ===================== D11/D12：六槽歌词窗口与单口字库像素仲裁 ================
 wire [23:0] lrc_rgb;
-wire [1:0] song_id_frame;
 reg  [1:0] browse_song_id_frame;
-reg         playback_page_mode_frame;
 reg         browse_page_mode_frame;
 wire [1:0] active_ui_song_id = playback_page_mode_frame
                              ? song_id_frame : browse_song_id_frame;

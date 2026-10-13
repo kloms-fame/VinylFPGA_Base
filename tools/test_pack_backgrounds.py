@@ -11,7 +11,7 @@ import zlib
 
 from PIL import Image
 from vinyl_packer import Fat32Image, IndexSong, PackError, build_index, parse_index
-from pack_backgrounds import (BACKGROUND_BYTES, FRAME_BYTES, FRAME_COUNT,
+from pack_backgrounds import (BACKGROUND_BYTES, FRAME_BYTES, FRAME_COUNT, FRAME_SECTORS,
                               append_background, background_metadata,
                               decode_rgb565, grow_fat32, pack, patch_index,
                               rgb565_le, sha256_file)
@@ -145,7 +145,7 @@ class BackgroundFormatTests(unittest.TestCase):
 
     def test_background_lba_and_header_rejection(self):
         original = build_index([IndexSong() for _ in range(4)])
-        for lba in (0, -1, 0xFFFFFFFF - 5999):
+        for lba in (0, -1, 0xFFFFFFFF - FRAME_COUNT * FRAME_SECTORS + 1):
             with self.assertRaises(PackError):
                 patch_index(original, 0, lba)
         legal = patch_index(original, 0, 10000)
@@ -154,6 +154,32 @@ class BackgroundFormatTests(unittest.TestCase):
             struct.pack_into("<I", corrupted, offset, value)
             with self.assertRaises(PackError):
                 background_metadata(corrupted)
+
+    def test_legacy_five_frame_background_extension_remains_parseable(self):
+        original = build_index([IndexSong() for _ in range(4)])
+        legacy = bytearray(patch_index(original, 0, 10000))
+        struct.pack_into("<I", legacy, 44, 5)
+        metadata = background_metadata(legacy)
+        self.assertEqual(metadata["frame_count"], 5)
+        self.assertEqual(metadata["base_lba"], 10000)
+        self.assertEqual(metadata["frame_bytes"], FRAME_BYTES)
+        self.assertEqual(parse_index(legacy), parse_index(original))
+        # 旧格式的溢出边界按5帧计算，不得因生产输出扩为6帧而误拒绝。
+        struct.pack_into("<I", legacy, 36, 0xFFFFFFFF - 5 * FRAME_SECTORS)
+        self.assertEqual(background_metadata(legacy)["frame_count"], 5)
+        struct.pack_into("<I", legacy, 36, 0xFFFFFFFF - 5 * FRAME_SECTORS + 1)
+        with self.assertRaises(PackError):
+            background_metadata(legacy)
+
+    def test_new_six_frame_extension_and_crc_remain_valid(self):
+        original = build_index([IndexSong() for _ in range(4)])
+        patched = patch_index(original, 0, 10000)
+        self.assertEqual(FRAME_COUNT, 6)
+        self.assertEqual(background_metadata(patched)["frame_count"], FRAME_COUNT)
+        info = parse_index(patched)
+        payload = patched[64:64 + info["count"] * 64]
+        self.assertEqual(info["entries_crc32"], zlib.crc32(payload) & 0xFFFFFFFF)
+        self.assertEqual(patched[64:], original[64:])
 
 
 class BackgroundImageTests(unittest.TestCase):
@@ -194,18 +220,38 @@ class BackgroundImageTests(unittest.TestCase):
                 self.assertEqual(new_song["audio_lba"], old_song["audio_lba"] + delta)
                 self.assertEqual(new_song["mv_lba"], old_song["mv_lba"] + delta if old_song["mv_lba"] else 0)
 
-    def test_five_frames_contiguous_physical_readback_hashes(self):
+    def test_all_frames_contiguous_physical_readback_hashes(self):
         with Fat32Image(Path(self.report["image"])) as volume:
             entry = volume.find_root_file("BG.BIN")
             self.assertEqual(entry.size, BACKGROUND_BYTES)
             base = self.report["background"]["base_lba"]
-            self.assertEqual(volume.cluster_runs(entry.first_cluster), [(base, 6000)])
+            self.assertEqual(volume.cluster_runs(entry.first_cluster),
+                             [(base, FRAME_COUNT * FRAME_SECTORS)])
+            self.assertEqual(len(self.report["frames"]), FRAME_COUNT)
             for number, frame in enumerate(self.report["frames"]):
-                volume.fh.seek((base + number * 1200) * 512)
+                volume.fh.seek((base + number * FRAME_SECTORS) * 512)
                 data = volume.fh.read(FRAME_BYTES)
                 self.assertEqual(hashlib.sha256(data).hexdigest(), frame["sha256"])
-                self.assertEqual(frame["start_lba"], base + number * 1200)
-            self.assertEqual(len(set(frame["sha256"] for frame in self.report["frames"])), 5)
+                self.assertEqual(frame["start_lba"], base + number * FRAME_SECTORS)
+            self.assertEqual(len(set(frame["sha256"] for frame in self.report["frames"])), FRAME_COUNT)
+
+    def test_art1_and_art2_exports_match_on_card_frames_and_previews(self):
+        output = Path(self.report["image"]).parent
+        blob = (output / "BG.BIN").read_bytes()
+        self.assertEqual(len(blob), BACKGROUND_BYTES)
+        for number, name, preview in ((4, "ART1.BIN", "shared_art.png"),
+                                     (5, "ART2.BIN", "shared_art_2.png")):
+            exported = (output / name).read_bytes()
+            self.assertEqual(len(exported), FRAME_BYTES)
+            self.assertEqual(exported, blob[number * FRAME_BYTES:(number + 1) * FRAME_BYTES])
+            self.assertEqual(hashlib.sha256(exported).hexdigest(),
+                             self.report["frames"][number]["sha256"])
+            with Image.open(output / preview) as restored:
+                self.assertEqual(restored.size, (640, 480))
+                self.assertEqual(restored.convert("RGB").tobytes(),
+                                 decode_rgb565(exported).tobytes())
+        self.assertNotEqual((output / "ART1.BIN").read_bytes(),
+                            (output / "ART2.BIN").read_bytes())
 
     def test_refuse_overwrite_or_undersize_or_wrong_blob(self):
         with self.assertRaises(PackError):

@@ -55,6 +55,7 @@ module frame_fifo_read
     ,input wire background_enable, background_media_mv, background_epoch
     ,input wire [20:0] background_media_base, background_base
     ,output wire background_epoch_ack
+    ,output wire read_data_keep
 
 );
 localparam ONE                       = 256'd1;                   //256 bit '1'   you can use ONE[n-1:0] for n bit '1'
@@ -99,6 +100,9 @@ reg [3:0] rd_delay;
 wire raster_enabled;
 wire [20:0] raster_address;
 wire [8:0] raster_span;
+wire raster_span_ready, raster_cover;
+reg burst_cover = 1'b0;
+reg returned_pair = 1'b0;
 reg [BURST_BITS-1:0] burst_limit = BURST_SIZE;
 background_raster_address u_background_raster_address (
     .clk(mem_clk),.rst_n(!rst),.latch(state == S_ACK),.advance(App_rd_en),
@@ -106,8 +110,22 @@ background_raster_address u_background_raster_address (
     .epoch(background_epoch),.media_base(background_media_base),
     .background_base(background_base),.enabled(raster_enabled),
     .epoch_ack(background_epoch_ack),.address(raster_address),
-    .contiguous_words(raster_span)
+    .contiguous_words(raster_span),.span_ready(raster_span_ready),
+    .cover_words(raster_cover)
 );
+// Source boundaries and 128-word/256-column splits make every cover burst
+// even. Hold its type until all returns drain; sample returned data, not the
+// command-side cursor or an assumed fixed SDRAM latency.
+assign read_data_keep = !burst_cover || !returned_pair;
+always @(posedge mem_clk or posedge rst) begin
+    if (rst) burst_cover <= 1'b0;
+    else if (state == S_CHECK_FIFO) burst_cover <= raster_cover;
+end
+always @(posedge mem_clk or posedge rst) begin
+    if (rst) returned_pair <= 1'b0;
+    else if (state == S_CHECK_FIFO || fifo_aclr) returned_pair <= 1'b0;
+    else if (Sdr_rd_en && burst_cover) returned_pair <= !returned_pair;
+end
 assign App_rd_addr = raster_enabled ? raster_address : App_rd_addr_r;
 assign rd_vld = (state == S_READ_BURST && burst_cnt >= burst_limit);
 always @(posedge mem_clk or posedge rst) begin
@@ -274,7 +292,8 @@ begin
 				//第十二讲彩点修正：除了 FIFO 空间和写忙判据，还要满足
 				//  (1) 与上一次读突发之间已间隔 BURST_GAP_CYCLES 个空闲周期；
 				//  (2) 控制器处于空闲窗口（非刷新、非忙），或 FIFO 已到低水位。
-				else if(wrusedw < (FIFO_DEPTH - BURST_SIZE) && ~App_wr_busy &&
+				else if((!raster_enabled || raster_span_ready) &&
+                        wrusedw < (FIFO_DEPTH - BURST_SIZE) && ~App_wr_busy &&
 				        rd_gap_ok && (ctrl_quiet || fifo_low))
 				begin
 					state <= S_READ_BURST;

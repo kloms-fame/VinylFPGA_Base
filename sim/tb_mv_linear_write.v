@@ -5,7 +5,7 @@ reg rst=1,req=0,linear=1;
 wire ack,finish,we;wire[20:0]addr;
 integer n=0,mode=0,expected;
 frame_fifo_write #(.DYNAMIC_LINEAR(1),.BURST_SIZE(8),.FRAME_WIDTH(8),.FRAME_HEIGHT(4)) dut(
- .rst(rst),.mem_clk(clk),.linear_write(linear),.Sdr_init_done(1'b1),.Sdr_init_ref_vld(1'b0),
+ .rst(rst),.mem_clk(clk),.write_hold(1'b0),.write_cancel(1'b0),.linear_write(linear),.Sdr_init_done(1'b1),.Sdr_init_ref_vld(1'b0),
  .Sdr_busy(1'b0),.App_rd_busy(1'b0),.App_wr_en(we),.App_wr_addr(addr),
  .write_req(req),.write_req_ack(ack),.write_finish(finish),
  .write_addr_0(21'd1228800),.write_addr_1(21'd1305600),.write_addr_2(21'd1382400),.write_addr_3(21'd0),
