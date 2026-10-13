@@ -1,0 +1,28 @@
+git status --short --branch
+## main...origin/main [behind 1]
+ M prj/.lock.f
+?? "doc/\350\265\204\346\272\220/\351\230\266\346\256\265\344\270\200\345\274\200\345\217\221\345\217\202\350\200\203\345\206\205\345\256\271.txt"
+?? "doc/\351\241\271\347\233\256\345\210\206\346\236\220_20261013/"
+
+git branch -avv
+  backup/post-cb12-main-20261008    2faf8f7 开始进行优化
+  backup/pre-linearize-20261004     d6b6f02 WAV音频播放
+  backup/pre-reset-0536a67-20261012 9ccfebb backup: preserve generated image and bit artifacts
+  backup/stage1-dev-20261013        5131624 备份阶段一优化工作区（回退前）
+  codex/current-dev-20261009        12cab2b 保存当前开发现场 2026-10-09
++ codex/opt-o0-o2                   24b680f (D:/Data_Backup/VinylFPGA_Workspace_Base/VinylFPGA/.worktrees/codex-opt-o0-o2) Validate frozen O0 manifest integrity
++ codex/player-ui-stage-b           a618637 (D:/Data_Backup/VinylFPGA_Workspace_Base/VinylFPGA/.worktrees/codex-stage-b) feat: refine playback progress display
++ codex/player-ui-stage1            0536a67 (D:/Data_Backup/VinylFPGA_Workspace_Base/VinylFPGA/.worktrees/player-ui-stage1) docs: plan runtime song content and player UI
+  codex/r0-closeout-20261008        428b777 refactor: reduce fat32 volume scanner boot parsing cost
+* main                              0536a67 [origin/main: behind 1] docs: plan runtime song content and player UI
+  opt/slice-lut-20261007            bd5c7c1 调参，歌曲，ui，拓展开发待人工审查验收
+  remotes/origin/main               a9e6415 feat: add browse track info row
+
+git worktree list
+D:/Data_Backup/VinylFPGA_Workspace_Base/VinylFPGA                             0536a67 [main]
+D:/Data_Backup/VinylFPGA_Workspace_Base/_c2base                               8c6798d (detached HEAD)
+D:/Data_Backup/VinylFPGA_Workspace_Base/VinylFPGA/.worktrees/codex-opt-o0-o2  24b680f [codex/opt-o0-o2]
+D:/Data_Backup/VinylFPGA_Workspace_Base/VinylFPGA/.worktrees/codex-stage-b    a618637 [codex/player-ui-stage-b]
+D:/Data_Backup/VinylFPGA_Workspace_Base/VinylFPGA/.worktrees/player-ui-stage1 0536a67 [codex/player-ui-stage1]
+
+git tag -n

@@ -1,0 +1,23 @@
+Location         : D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\prj\VinylFPGA_Runs\syn_1
+Running with     : Tang Dynasty v6.2.168116
+                   Copyright (c) 2012-2025 Anlogic Inc.
+Top Model        : top
+Device           : EG4S20BG256
+Speed            : NA
+
+Timing Mode      : basic
+Setup            : WNS  -369ps  TNS    -1121ps  NUM_FEPS     9
+Hold             : WNS   471ps  TNS        0ps  NUM_FEPS     0
+
+Flow Statistics  :
+--------------------------------------------------------------------------------------------------
+     command     |  #calls  |  wall time  |  cpu time(s)  |  used memory(mb)  |  peak memory(mb)  
+--------------------------------------------------------------------------------------------------
+  optimize_gate  |    1     |  1m1s(66%)  |    59(66%)    |        775        |        775        
+  optimize_rtl   |    1     |  31s(33%)   |    30(33%)    |        654        |        733        
+  import_device  |    1     |   0s(0%)    |     0(0%)     |        83         |        83         
+    read_adc     |    1     |   0s(0%)    |     0(0%)     |        430        |        430        
+    read_sdc     |    1     |   0s(0%)    |     0(0%)     |        430        |        430        
+--------------------------------------------------------------------------------------------------
+      total      |    5     |    1m32s    |      89       |        775        |        775        
+--------------------------------------------------------------------------------------------------

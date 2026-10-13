@@ -2091,6 +2091,11 @@ s6_video_layer #(.ENABLE(S6_VIDEO_ENABLE)) u_s6_video_layer(
 // ===================== D11/D12：六槽歌词窗口与单口字库像素仲裁 ================
 wire [23:0] lrc_rgb;
 wire [1:0] song_id_frame;
+reg  [1:0] browse_song_id_frame;
+reg         playback_page_mode_frame;
+reg         browse_page_mode_frame;
+wire [1:0] active_ui_song_id = playback_page_mode_frame
+                             ? song_id_frame : browse_song_id_frame;
 wire       song_generation_frame;
 wire [6:0] song_line_rom_index;
 wire [7:0] song_line_count_rom;
@@ -2119,8 +2124,24 @@ wire [5:0] lyric_scroll_offset;
 wire [6:0] lyric_highlight_index;
 wire lyric_scroll_commit;
 assign lrc_rgb = s6_rgb;
+
+// Commit both page modes and the browse focus together at frame start so the
+// cover, metadata, title glyphs, track label, and duration stay associated.
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n) begin
+        browse_song_id_frame <= 2'd0;
+        playback_page_mode_frame <= 1'b0;
+        browse_page_mode_frame <= 1'b0;
+    end else if (frame_start) begin
+        browse_song_id_frame <= song_metadata_video[1:0];
+        playback_page_mode_frame <= S5_PLAY_ENABLE && play_active_v2 && !pat_mode;
+        browse_page_mode_frame <= S5_PLAY_ENABLE && !play_active_v2 &&
+                                  display_valid_sync2 && !boot_active && !pat_mode;
+    end
+end
+
 song_text_rom u_song_text_rom (
-    .clk(video_clk),.song_id(song_id_frame),.line_index(song_line_rom_index),
+    .clk(video_clk),.song_id(active_ui_song_id),.line_index(song_line_rom_index),
     .line_count(song_line_count_rom),.line_valid(song_line_rom_valid),
     .line_time_ms(song_line_rom_time_ms),.line_length(song_line_rom_length),
     .line_glyphs(song_line_rom_glyphs),.song_text_valid(song_text_valid),
@@ -2179,8 +2200,9 @@ wire [23:0] playback_page_rgb;
 playback_page u_playback_page (
     .clk(video_clk),.rst_n(video_rst_n),.vs(vs),.de(adjusted_de),
     .pixel_x(adjusted_pixel_x),
-    .enable(S5_PLAY_ENABLE && play_active_v2 && !pat_mode),.rgb_in(lrc_rgb),
-    .song_id(song_id_frame),.title_length(song_title_length),
+    .enable(playback_page_mode_frame),
+    .browse_mode(browse_page_mode_frame),.rgb_in(lrc_rgb),
+    .song_id(active_ui_song_id),.title_length(song_title_length),
     .artist_length(song_artist_length),.title_glyphs(song_title_glyphs),
     .artist_glyphs(song_artist_glyphs),.line_count(song_line_count_frame),
     .lyric_window_valid(lyric_window_valid),

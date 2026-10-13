@@ -1,0 +1,158 @@
+* 5131624 2026-10-13  (backup/stage1-dev-20261013) 备份阶段一优化工作区（回退前）
+| * 9ccfebb 2026-10-12  (backup/pre-reset-0536a67-20261012) backup: preserve generated image and bit artifacts
+| * 733b0b0 2026-10-12  backup: snapshot work before restoring 0536a67
+| * a9e6415 2026-10-12  (origin/main) feat: add browse track info row
+|/  
+| * a618637 2026-10-11  (codex/player-ui-stage-b) feat: refine playback progress display
+|/  
+* 0536a67 2026-10-11  (HEAD -> main, codex/player-ui-stage1) docs: plan runtime song content and player UI
+* ec23958 2026-10-11  优化资源
+* 6aebc37 2026-10-11  文档: 归档资源与时序独立复核系列与 AI 交接说明
+* 263425f 2026-10-11  fat32_media_loader: 用 pixel_count 守卫替换 pixel_byte_cnt，消除 native setup 违例
+* bb72d8d 2026-10-11  移除缩略图选曲并释放资源
+* 1398a1a 2026-10-10  实现五行歌词与帧同步滚动
+* 13d19c5 2026-10-10  修复播放页文字与波形显示
+* ff7ec31 2026-10-10  实现D10静态播放页与进度显示
+* 818c47c 2026-10-10  实现D9多曲文字与单行歌词
+* cd879e0 2026-10-10  实现D8灯条亮度调节
+* 011435c 2026-10-10  实现D7轮播周期调节
+* 792e982 2026-10-10  实现D4-D6亮度对比度与EC2浮窗
+* 257123c 2026-10-10  实现D3 EC2音量控制与统一音量源
+* 70c236b 2026-10-10  完善D3唯一音量源设计与实施计划
+* a34ec10 2026-10-10  优化轮播节奏并添加切图蜂鸣
+* 397b69a 2026-10-10  记录三秒轮播蜂鸣设计
+* d9d4648 2026-10-10  增加D2测试音演示素材工具
+* b9a04a1 2026-10-10  实现D1定时图片自动轮播
+* 9ffa210 2026-10-10  修复 al 工程文件
+* 6fd4a98 2026-10-10  整合O2两态灯效并记录O6整机评估
+* 0672178 2026-10-10  记录 O5 启动图无损评估与清理结论
+* 13e31ce 2026-10-10  记录 O5b 生产源与参考源分类
+* 74dbdd9 2026-10-10  明确 O5 查表参数兼容与资源门槛
+* 7450003 2026-10-10  记录 O5 启动图无损评估方案
+* df3f6fa 2026-10-10  简化黑胶显示并复用图片缩略图
+* 4f4763a 2026-10-09  评估 O3 蜂鸣器减负并保持基线声音
+* 24b680f 2026-10-09  (codex/opt-o0-o2) Validate frozen O0 manifest integrity
+* 6c1ef28 2026-10-09  Freeze O0 baseline and metrics
+| * 9aa3d91 2026-10-09  (refs/stash) On main: 保留主分支上现有音量与WS改动
+|/| 
+| * f9ebc5c 2026-10-09  index on main: c70aa52 chore: ignore local worktrees
+|/  
+* c70aa52 2026-10-09  chore: ignore local worktrees
+* afd8bfb 2026-10-09  后续拓展功能开发
+| * 12cab2b 2026-10-09  (codex/current-dev-20261009) 保存当前开发现场 2026-10-09
+| * cf53bd3 2026-10-09  阶段U4：压缩五行歌词为四字符资源受限显示
+| * 0ebeb89 2026-10-09  阶段U3：接入资源受限EC2浮窗与五行歌词
+| * 0fd7e68 2026-10-09  阶段R1：缓存UIRES描述符几何校验并收敛状态路径
+| * 49cb93f 2026-10-09  阶段R0：拆分像素与UIRES地址路径，建立可复现的TD优化基线
+| * 6bfe956 2026-10-08  修复顶层元数据声明顺序以保证仿真编译
+| * 1501aa0 2026-10-08  阶段Task10：统一事件路由审计与并发回归
+| * abf60f5 2026-10-08  阶段C2.12：Logo逐行跨度压缩并完成物理实现评估
+| * 7976e99 2026-10-08  阶段C2.11：WS2812灯效查表化并移除实时乘法
+| * f656437 2026-10-08  阶段C2.10：黑胶几何去乘法器并改善门级资源时序
+| * 842232c 2026-10-08  阶段C2.9：修正C1参数迁移后的S5回归口径
+| * cf31ad9 2026-10-08  阶段C2.8：优化动态歌词行提交时序
+| * 3709aec 2026-10-08  阶段C2.7：接入缓存歌词动态行字形显示
+| * a24b2ad 2026-10-08  阶段C2.6：接入UIRES后台仲裁与歌词缓存时间定位
+| * 0b6b654 2026-10-08  feat: add UIRES static slot loader
+| * 4ee32fb 2026-10-08  feat: discover UIRES and add low-priority sector client
+| * 55300c1 2026-10-08  feat: add C2 UIRES contract and lyric timeline core
+| * 7a288b3 2026-10-08  EC2 三态参数控制，唯一参数 CSR，EC2 计数差快速旋转重放
+| * 44755e1 2026-10-08  feat(c1): add parameter CSR and EC2 control core
+|/  
+| * 2faf8f7 2026-10-08  (backup/post-cb12-main-20261008) 开始进行优化
+| * 428b777 2026-10-08  (codex/r0-closeout-20261008) refactor: reduce fat32 volume scanner boot parsing cost
+| * 48ea98a 2026-10-08  fix: make build manifest compatible with Windows PowerShell 5.1
+| * 8f80653 2026-10-08  build: enforce reproducible fpga signoff metrics
+| * 1e96f31 2026-10-08  build: trim redundant project source entries for r0
+| * bd5c7c1 2026-10-08  (opt/slice-lut-20261007) 调参，歌曲，ui，拓展开发待人工审查验收
+| * 55a1cd2 2026-10-08  perf(u2): 压缩五行歌词行缓存并恢复物理布放余量
+| * a48af13 2026-10-08  fix(u2): 修正歌词同步行表时序与滚动提交节拍
+| * 92898e5 2026-10-08  feat(u2): 实现五行歌词窗口与滚动模式基础
+| * 5948700 2026-10-08  feat(u1): 接入静态歌名歌手与播放进度图层
+| * b3fb0e7 2026-10-08  wip(u1): 建立静态播放图层坐标与进度计算基础
+| * 871e967 2026-10-08  wip(c4): 暂存组合取像与显示状态提交模块草稿
+| * 96affdb 2026-10-08  fix(c3): 完善背景装载资源减负与完整物理构建验证
+| * a6ffc03 2026-10-08  fix(c3): 完善切曲安全收尾并补齐背景装载资源减负
+| * 7f3f575 2026-10-08  fix(c3): 修正背景首图门控、暂停保持与双缓冲提交确认
+| * 2a8c416 2026-10-08  refactor(c3): 优化背景描述符装载并校正CRC收尾时序
+| * f9a6634 2026-10-08  wip(c3): 背景装载描述符现场读取与 MSlice 减负中间态
+| * d4ed493 2026-10-08  wip(c3): 接入播放背景装载写端口与顶层双缓冲骨架
+| * e491f14 2026-10-08  wip(c3): 播放背景装载、双缓冲与轮播链路骨架
+| * 8c6798d 2026-10-08  feat(c2): 打通 UIRES/VLRC 歌词数据链路并切分关键路径时序
+| * cc57a03 2026-10-08  refactor(c2): 扩展歌词缓存为255字形8位槽并保持VLRC兼容
+| * 390c0d8 2026-10-08  feat(c2): 接入UIRES侧车发现与最低优先级后台扇区通路
+| * 4c10087 2026-10-08  feat(c2): 冻结UIRES资源格式并完成镜像连续性与索引绑定校验
+| * 6c261c3 2026-10-08  feat(c2): 交付多曲歌词加载与时间定位数据核心并补齐回归
+| * 1063b20 2026-10-08  fix(c1): 按 X2 之后核心链路方案收口参数与 EC2 控制核心
+| * b1f3082 2026-10-07  wip(c2): preserve lyric index plumbing before UIRES redesign
+| * 2183a78 2026-10-07  wip(c2): lyric asset RTL plumbing checkpoint
+| * 6396b3b 2026-10-07  feat(c2): lyric asset generator + packer validation
+| * 125db81 2026-10-07  feat(c2): define multi-song lyric asset format
+| * 49e9e92 2026-10-07  feat(c1): parameter CSR + EC2 knob control core (VOL/BRI/CON, snapshot CDC, WS brightness)
+| * cb64ee8 2026-10-07  chore: checkpoint before C1 param/EC2 core (docs, .al refresh, progress_bar draft)
+|/  
+* cb12d8d 2026-10-07  fix(fpga): remove diagnostic display and implement VU charge effects
+* 4250262 2026-10-07  feat(fpga): add rainbow audio flow and exact progress pulse display
+* a4362f9 2026-10-07  perf(fpga): reduce IR and WS2812 resources with verified O8 release
+* 6ffce23 2026-10-07  优化 Slice/LUT 并通过时序、位流和 SRAM 下载验证
+* 533f605 2026-10-07  优化数码管，WS2812b,seek跳转，EC1播控，修复.al
+* 66da60f 2026-10-07  X2：三级流水 Seek 控制器并显式修复 hold
+* 9848757 2026-10-07  X2 r11-r12：寄存器段码与 Seek 事件流水，消除 SD 域最后 -0.023ns 违例
+* def35c4 2026-10-07  X2 r10：寄存媒体就绪信号切断 SD 调度长路径
+* fe44791 2026-10-07  X2 r8-r9：降低 SD 探测与按键仲裁组合深度
+* 1381d41 2026-10-07  X2 r5-r7：降低媒体挂载组合路径并提交全量回归
+* 542678e 2026-10-07  X2 r4：降低 Seek/定位路径组合深度并恢复全量回归
+* 1d80349 2026-10-07  X2：播放结束策略、重播与 Seek 控制器
+* e9f2faa 2026-10-07  X1：状态反馈执行器（LED 业务化 / WS2812 律动与进度 / 数码管业务 mux）
+* ece989d 2026-10-07  X0R：基线补证、IO 审计和零行为减负
+* a357339 2026-10-06  S7-03b 交互修复：KEY07 主界面/播放态直达缩略图选曲，KEY11 回主界面
+* 29a4593 2026-10-06  优化资源，继续后续开发阶段
+* 1c0a962 2026-10-06  S7-03 M5-M6: reject timing failures; retain M4 LUT -477 FF -505 BRAM -6 DSP -1
+* ead2ee0 2026-10-06  S7-03 M4: save 6 BRAM9K with lossless banked logo; total LUT -477 FF -505 DSP -1
+* 636db9b 2026-10-06  S7-03 M12: reduce media LUT by 501 FF by 509 DSP by 1; close timing and verify SRAM boot
+* d0b0e39 2026-10-06  S7-03 M0: reproduce resource baseline LUT16185 FF10191 BRAM46 DSP16 and automate verification
+* ad06ded 2026-10-06  优化功能
+* 0828f4f 2026-10-06  S7-04 资源优化 R1：切断乘法组合链，时序收敛
+* 7f99785 2026-10-06  S7-03 统一事件、完整红外与 DIP 控制：事件总线 pending 位图、红外白名单/反码/节流、运行时 DIP 消隐/重启确认，并外提 fat32 像素加法收口时序
+* 6707a1d 2026-10-06  S7-02 交付说明：媒体故障恢复与错误反馈实现/验证/时序收敛记录
+* 4642e43 2026-10-06  S7-02 媒体故障恢复与错误反馈：收敛时序并瘦身监督器
+* b0f2808 2026-10-06  S7-02 媒体故障恢复与错误反馈：新增 media_supervisor 挂载/扇区超时监督与 SD 复位代次，adapter 扇区超时释放，集中错误码 CDC 与 OSD 呈现
+* 57f5933 2026-10-06  S7-01 资源时序诊断与边界审计：新增 health_monitor 被动遥测与 STAT/ERR 串口输出
+* e8f7d1a 2026-10-06  增加mv与黑胶模式
+* 06ba8e8 2026-10-06  S0-S5验收完成，修复已知问题
+* a165f9a 2026-10-06  黑胶视觉层模块（S6 部分），顶层集成待收敛
+* 1beb7db 2026-10-06  音频播放与歌词渲染（S5），待验收
+* 7f8a2fc 2026-10-06  SD卡曲目索引体系（S4），待验收
+* 5b34188 2026-10-05  主界面选歌，待验收
+* 68d9b97 2026-10-05  开机 logo 待验证
+* e3714fa 2026-10-05  增加交互音效反馈
+* 76ba2a7 2026-10-05  接入J2拓展板，串口验证
+* 04fb6d4 2026-10-05  提供开发资料，主链路开发方案
+* 7c338a7 2026-10-05  音频资源优化
+* 530fccc 2026-10-05  优化资源
+* c4bfcd3 2026-10-05  修复缩略图 bank 映射与 TD 源文件登记
+* eacc5c9 2026-10-05  缩略图交互选择功能
+* 705d8b9 2026-10-05  亮度对比度调节功能
+* 868f622 2026-10-05  图片缩放与略缩图功能
+* 19f8035 2026-10-05  优化WAV 缓冲，减少LUT资源
+* 279fec4 2026-10-05  perf: close lecture 12 timing and release BRAM-optimized firmware
+* 9e9aee8 2026-10-05  perf: map full WAV buffer to BRAM with cycle-equivalent outputs
+* e45b1d5 2026-10-05  docs: preserve lecture 12 resource optimization baseline and plan
+* 78dbb17 2026-10-05  修复SDRAM掉电导致图片出现彩点的问题
+* e988191 2026-10-04  音频波形可视化
+* 83fdd76 2026-10-04  修复工程源文件列表：补齐第十讲显示模块与第十一讲WAV模块
+* 528b183 2026-10-04  WAV音频播放
+* c4a494f 2026-10-04  图片转场特效
+| * d6b6f02 2026-10-04  (backup/pre-linearize-20261004) WAV音频播放
+|/  
+* 1004043 2026-10-04  OSD字幕叠加
+* 5194de0 2026-10-04  四bank帧缓存架构
+* becf86c 2026-10-04  FAT32文件系统升级
+* 7d1d3f7 2026-10-04  第六讲：Flash固化与上电自启（复位同步/PLL锁定/SDRAM就绪/约束）
+* ba7771d 2026-10-04  修复上电黑屏与按键失效：SD超时改为按扇区计时，加固坏图快跳越界
+* a4fb241 2026-10-04  第五讲：系统稳定性增强（BMP严格校验/错误恢复/超时/像素完整性）并修复sd_card_clk时序
+* 6dfe4b0 2026-10-04  按键或轮播逻辑恢复，修复PLL链路
+* 4927dc0 2026-10-04  HDMI音频输出基础
+* 51dbe1a 2026-10-03  按键切换与自动轮播
+* 6ffec91 2026-10-03  增加.gitignore文件
+* 9d3d0d9 2026-10-03  初始化工程文件
