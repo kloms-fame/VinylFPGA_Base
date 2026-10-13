@@ -3,9 +3,9 @@
 `define EXP_PLAYBACK_PAGE_V
 `include "playback_layout.vh"
 
-// D10b-D12: playback page with the media rectangle preserved in the incoming
-// stream; the waveform is composited after this page so its canvas is opaque.
-// One shared synchronous font port serves title, artist, time and five lyrics.
+// Stage 1 playback UI: 320-pixel progress, text-only lyric overlay, compact
+// elapsed/total time, and one-cycle RGB/DE/VS/x alignment. The media window is
+// preserved from rgb_in; all text shares the existing synchronous song font.
 module playback_page (
     input  wire         clk,
     input  wire         rst_n,
@@ -26,7 +26,7 @@ module playback_page (
     input  wire [767:0] lyric_row_glyphs,
     input  wire [5:0]   lyric_scroll_offset,
     input  wire [127:0] no_lyrics_glyphs,
-    input  wire [7:0]   progress_fill,
+    input  wire [8:0]   progress_fill,
     input  wire [103:0] time_ascii,
     input  wire [7:0]   ascii_glyph,
     output reg  [7:0]   ascii_code,
@@ -38,13 +38,10 @@ module playback_page (
     `include "song_text_geom.vh"
 
     localparam [23:0] BG_COLOR       = 24'h080D13;
-    localparam [23:0] PANEL_COLOR    = 24'h111B27;
-    localparam [23:0] BORDER_COLOR   = 24'h314153;
     localparam [23:0] TEXT_COLOR     = 24'hE6EEF5;
     localparam [23:0] SUBTEXT_COLOR  = 24'hA7B8C8;
-    localparam [23:0] PROGRESS_COLOR = 24'h45D7B0;
-    localparam [23:0] TRACK_COLOR    = 24'h273744;
-    localparam [23:0] PROGRESS_KNOB_COLOR = 24'hE8F7F5;
+    localparam [23:0] PROGRESS_COLOR = 24'hD4AF37;
+    localparam [23:0] TRACK_COLOR    = 24'h282830;
 
     localparam [1:0] TEXT_TITLE  = 2'd0;
     localparam [1:0] TEXT_ARTIST = 2'd1;
@@ -107,7 +104,7 @@ module playback_page (
     reg [1:0] text_kind_q;
     reg [23:0] text_color_q;
     reg [9:0] pixel_y_q;
-    reg [7:0] progress_fill_q;
+    reg [8:0] progress_fill_q;
 
     reg text_request;
     reg ascii_mode;
@@ -126,13 +123,16 @@ module playback_page (
     wire [9:0] time_dx = pixel_x - `PLAYBACK_TIME_X;
     wire title_region = enable && de &&
         (line_y >= `PLAYBACK_TITLE_Y) && (line_y < (`PLAYBACK_TITLE_Y + 10'd16)) &&
-        (pixel_x >= `PLAYBACK_TITLE_X) && (pixel_x < (`PLAYBACK_TITLE_X + 10'd256));
+        (pixel_x >= `PLAYBACK_TITLE_X) &&
+        (pixel_x < (`PLAYBACK_TITLE_X + 10'd208));
     wire artist_region = enable && de &&
         (line_y >= `PLAYBACK_ARTIST_Y) && (line_y < (`PLAYBACK_ARTIST_Y + 10'd16)) &&
-        (pixel_x >= `PLAYBACK_ARTIST_X) && (pixel_x < (`PLAYBACK_ARTIST_X + 10'd256));
+        (pixel_x >= `PLAYBACK_ARTIST_X) &&
+        (pixel_x < (`PLAYBACK_ARTIST_X + 10'd208));
     wire time_region = enable && de &&
         (line_y >= `PLAYBACK_TIME_Y) && (line_y < (`PLAYBACK_TIME_Y + 10'd16)) &&
-        (pixel_x >= `PLAYBACK_TIME_X) && (pixel_x < (`PLAYBACK_TIME_X + 10'd208));
+        (pixel_x >= `PLAYBACK_TIME_X) &&
+        (pixel_x < (`PLAYBACK_TIME_X + `PLAYBACK_TIME_W));
     wire [7:0] selected_font_glyph = ascii_mode ? ascii_glyph : direct_glyph;
     wire [11:0] font_addr_full = {selected_font_glyph, 4'b0000} + {8'd0, selected_row};
     wire [SONG_FONT_ADDR_W-1:0] font_addr = font_addr_full[SONG_FONT_ADDR_W-1:0];
@@ -233,8 +233,11 @@ module playback_page (
         end else if (time_region) begin
             selected_kind = TEXT_TIME;
             selected_text_color = SUBTEXT_COLOR;
-            selected_column = time_dx[7:4];
-            selected_pixel_col = time_dx[3:0];
+            // 13 compact 8-pixel cells occupy 104 pixels. The existing
+            // 16x16 glyph row is sampled at every other column; no font ROM
+            // or read port is added.
+            selected_column = time_dx[6:3];
+            selected_pixel_col = {1'b0, time_dx[2:0]};
             selected_row = line_y - `PLAYBACK_TIME_Y;
             if (selected_column < 13) begin
                 text_request = 1'b1;
@@ -271,7 +274,7 @@ module playback_page (
             text_kind_q <= TEXT_TITLE;
             text_color_q <= TEXT_COLOR;
             pixel_y_q <= 10'd0;
-            progress_fill_q <= 8'd0;
+            progress_fill_q <= 9'd0;
             out_vs <= 1'b1;
             out_de <= 1'b0;
             out_pixel_x <= 10'd0;
@@ -299,50 +302,24 @@ module playback_page (
 
     wire [9:0] progress_dx = out_pixel_x - `PLAYBACK_PROGRESS_X;
     wire [9:0] progress_dy = pixel_y_q - `PLAYBACK_PROGRESS_Y;
-    wire [9:0] progress_inset = ((progress_dy == 0) ||
-                                 (progress_dy == (`PLAYBACK_PROGRESS_H - 10'd1)))
-                               ? 10'd2
-                               : ((progress_dy == 10'd1) ||
-                                  (progress_dy == (`PLAYBACK_PROGRESS_H - 10'd2)))
-                               ? 10'd1 : 10'd0;
     wire in_progress_bar = out_de &&
         (progress_dy < `PLAYBACK_PROGRESS_H) &&
-        (progress_dx >= progress_inset) &&
-        (progress_dx < (`PLAYBACK_PROGRESS_W - progress_inset));
-    wire progress_thumb = (progress_fill_q >= 8'd2) &&
-        (progress_dy >= 10'd1) &&
-        (progress_dy <= (`PLAYBACK_PROGRESS_H - 10'd2)) &&
-        (progress_dx >= ({2'b00, progress_fill_q} - 10'd2)) &&
-        (progress_dx < ({2'b00, progress_fill_q} + 10'd2));
-    wire in_left_panel =
-        (out_pixel_x >= `PLAYBACK_META_X0) && (out_pixel_x < `PLAYBACK_META_X1) &&
-        (pixel_y_q >= `PLAYBACK_META_Y0) && (pixel_y_q < `PLAYBACK_META_Y1);
-    wire in_right_panel =
-        (out_pixel_x >= `PLAYBACK_INFO_X0) && (out_pixel_x < `PLAYBACK_INFO_X1) &&
-        (pixel_y_q >= `PLAYBACK_INFO_Y0) && (pixel_y_q < `PLAYBACK_INFO_Y1);
-    wire left_border = (out_pixel_x == `PLAYBACK_META_X0) ||
-                       (out_pixel_x == (`PLAYBACK_META_X1 - 10'd1)) ||
-                       (pixel_y_q == `PLAYBACK_META_Y0) ||
-                       (pixel_y_q == (`PLAYBACK_META_Y1 - 10'd1));
-    wire right_border = (out_pixel_x == `PLAYBACK_INFO_X0) ||
-                        (out_pixel_x == (`PLAYBACK_INFO_X1 - 10'd1)) ||
-                        (pixel_y_q == `PLAYBACK_INFO_Y0) ||
-                        (pixel_y_q == (`PLAYBACK_INFO_Y1 - 10'd1));
-    wire font_pixel = font_row[4'd15 - font_px_col_q];
+        (progress_dx < `PLAYBACK_PROGRESS_W);
+    wire in_progress_fill = in_progress_bar &&
+        (progress_dx < {1'b0, progress_fill_q});
+    wire progress_track_row = (progress_dy == 10'd1);
+    wire font_pixel = (text_kind_q == TEXT_TIME)
+                    ? font_row[4'd15 - {font_px_col_q[2:0], 1'b0}]
+                    : font_row[4'd15 - font_px_col_q];
 
     always @* begin
-        out_rgb = base_rgb_q;
+        out_rgb = out_de ? base_rgb_q : 24'h000000;
         if (page_enable_q && out_de) begin
-            if (in_left_panel)
-                out_rgb = left_border ? BORDER_COLOR : PANEL_COLOR;
-            else if (in_right_panel)
-                out_rgb = right_border ? BORDER_COLOR : PANEL_COLOR;
-
             if (in_progress_bar) begin
-                if (progress_thumb)
-                    out_rgb = PROGRESS_KNOB_COLOR;
-                else
-                    out_rgb = (progress_dx < progress_fill_q) ? PROGRESS_COLOR : TRACK_COLOR;
+                if (in_progress_fill)
+                    out_rgb = PROGRESS_COLOR;
+                else if (progress_track_row)
+                    out_rgb = TRACK_COLOR;
             end
 
             if (text_hit_q && font_pixel) begin

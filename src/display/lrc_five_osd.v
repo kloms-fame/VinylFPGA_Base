@@ -118,14 +118,14 @@ module lrc_five_osd (
                         font_row = selected_row_pixel;
                         if ((scroll_active && (selected_slot == 3'd3)) ||
                             (!scroll_active && (selected_slot == 3'd2)))
-                            text_color = 24'hFFFFFF;
+                            text_color = 24'hFFD700;
                         else if ((!scroll_active &&
                                   ((selected_slot == 3'd1) || (selected_slot == 3'd3))) ||
                                  (scroll_active &&
                                   ((selected_slot == 3'd2) || (selected_slot == 3'd4))))
-                            text_color = 24'hB8C5D1;
+                            text_color = 24'h606068;
                         else
-                            text_color = 24'h738397;
+                            text_color = 24'h606068;
                     end
                 end
             end

@@ -2159,9 +2159,9 @@ lrc_scroll_controller u_lrc_scroll_controller (
     .scroll_commit(lyric_scroll_commit)
 );
 
-// D10a: exact 240-pixel progress and elapsed/total text are updated in the
-// vertical blank interval from the same consumed-sample timebase as lyrics.
-wire [7:0] playback_progress_fill;
+// Frame-synchronous 320-pixel progress and elapsed/total text use the same
+// consumed-sample timebase as lyrics.
+wire [8:0] playback_progress_fill;
 wire [103:0] playback_time_ascii;
 wire playback_time_known;
 playback_progress u_playback_progress (
