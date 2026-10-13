@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 `ifndef EXP_ASCII_FONT_ROM_V
 `define EXP_ASCII_FONT_ROM_V
-// Compact synchronous 8x8 ASCII font used by the EC2 panel and future time text.
+// Compact synchronous 8x8 ASCII font shared by the EC2 panel and playback UI.
 module ascii_font_rom (
     input  wire       clk,
     input  wire [9:0] addr, // {ASCII[6:0], row[2:0]}
@@ -35,6 +35,12 @@ module ascii_font_rom (
         row_mem[456] = 8'h3c; row_mem[457] = 8'h66; row_mem[458] = 8'h66; row_mem[459] = 8'h3e;
         row_mem[460] = 8'h06; row_mem[461] = 8'h0c; row_mem[462] = 8'h38;
 
+        // Time punctuation: '-' and ':'
+        row_mem[360] = 8'h00; row_mem[361] = 8'h00; row_mem[362] = 8'h00; row_mem[363] = 8'h7e;
+        row_mem[364] = 8'h7e; row_mem[365] = 8'h00; row_mem[366] = 8'h00; row_mem[367] = 8'h00;
+        row_mem[464] = 8'h00; row_mem[465] = 8'h18; row_mem[466] = 8'h18; row_mem[467] = 8'h00;
+        row_mem[468] = 8'h00; row_mem[469] = 8'h18; row_mem[470] = 8'h18; row_mem[471] = 8'h00;
+
         // Uppercase letters required for VOL/BRI/CON and SEL/ADJ.
         row_mem[520] = 8'h18; row_mem[521] = 8'h3c; row_mem[522] = 8'h66; row_mem[523] = 8'h66;
         row_mem[524] = 8'h7e; row_mem[525] = 8'h66; row_mem[526] = 8'h66; // A
@@ -52,6 +58,8 @@ module ascii_font_rom (
         row_mem[588] = 8'h18; row_mem[589] = 8'h18; row_mem[590] = 8'h3c; // I
         row_mem[592] = 8'h1e; row_mem[593] = 8'h0c; row_mem[594] = 8'h0c; row_mem[595] = 8'h0c;
         row_mem[596] = 8'h0c; row_mem[597] = 8'h6c; row_mem[598] = 8'h38; // J
+        row_mem[600] = 8'h66; row_mem[601] = 8'h6c; row_mem[602] = 8'h78; row_mem[603] = 8'h70;
+        row_mem[604] = 8'h78; row_mem[605] = 8'h6c; row_mem[606] = 8'h66; // K
         row_mem[608] = 8'h60; row_mem[609] = 8'h60; row_mem[610] = 8'h60; row_mem[611] = 8'h60;
         row_mem[612] = 8'h60; row_mem[613] = 8'h60; row_mem[614] = 8'h7e; // L
         row_mem[624] = 8'h66; row_mem[625] = 8'h76; row_mem[626] = 8'h7e; row_mem[627] = 8'h7e;

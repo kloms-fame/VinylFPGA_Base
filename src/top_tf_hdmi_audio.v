@@ -514,6 +514,16 @@ wire [31:0] audio_size_bytes;
 // X2：本曲真实样本总数（连续 PCM 布局，16 bit 单声道）；末扇区填充字节
 // 不再计入时间基、进度和 Seek 范围。
 wire [31:0] play_total_samples = {1'b0, audio_size_bytes[31:1]};
+reg  [31:0] playback_total_samples_src_d;
+wire        playback_total_samples_update_sd =
+    (play_total_samples != playback_total_samples_src_d);
+wire [31:0] playback_total_samples_video;
+always @(posedge sd_card_clk or negedge sd_media_rst_n) begin
+    if (!sd_media_rst_n)
+        playback_total_samples_src_d <= 32'd0;
+    else
+        playback_total_samples_src_d <= play_total_samples;
+end
 wire        audio_play_enable;
 wire        wav_sec_req;
 wire [31:0] wav_sec_lba;
@@ -679,6 +689,14 @@ cdc_bundle_latest #(.WIDTH(3)) u_song_metadata_cdc(
     .src_clk(sd_card_clk),.src_rst_n(sd_media_rst_n),.src_data(song_metadata_src),
     .src_update(song_metadata_update_sd),.dst_clk(video_clk),
     .dst_rst_n(media_video_rst_n),.dst_data(song_metadata_video));
+// Transfer the slowly changing track length as one stable bundle. The live
+// SD-domain value remains local to storage/seek logic; the display uses only
+// this acknowledged video-domain copy.
+cdc_bundle_latest #(.WIDTH(32)) u_playback_total_samples_cdc(
+    .src_clk(sd_card_clk),.src_rst_n(sd_media_rst_n),
+    .src_data(play_total_samples),.src_update(playback_total_samples_update_sd),
+    .dst_clk(video_clk),.dst_rst_n(media_video_rst_n),
+    .dst_data(playback_total_samples_video));
 // One parameter CSR lives in the 50 MHz UI domain. PLAY-domain volume intents
 // return through the existing FIFO; FIFO traffic wins over a simultaneous EC2 write.
 assign volume_bridge_async_rst_n = exp_rst_n;
@@ -2104,13 +2122,11 @@ wire [31:0] song_line_rom_time_ms;
 wire [4:0] song_line_rom_length;
 wire [127:0] song_line_rom_glyphs;
 wire [127:0] song_no_lyrics_glyphs;
-wire [7:0] song_ui_glyph;
 wire [4:0] song_title_length;
 wire [4:0] song_artist_length;
 wire [127:0] song_title_glyphs;
 wire [127:0] song_artist_glyphs;
 wire song_text_valid;
-wire [7:0] song_page_ascii_code;
 wire [7:0] song_line_count_frame;
 wire lyric_target_valid;
 wire [6:0] lyric_target_index;
@@ -2147,8 +2163,7 @@ song_text_rom u_song_text_rom (
     .line_glyphs(song_line_rom_glyphs),.song_text_valid(song_text_valid),
     .title_length(song_title_length),.artist_length(song_artist_length),
     .title_glyphs(song_title_glyphs),.artist_glyphs(song_artist_glyphs),
-    .no_lyrics_glyphs(song_no_lyrics_glyphs),.ui_ascii_code(song_page_ascii_code),
-    .ui_glyph(song_ui_glyph)
+    .no_lyrics_glyphs(song_no_lyrics_glyphs),.ui_ascii_code(8'h20),.ui_glyph()
 );
 lrc_window_controller u_lrc_window_controller (
     .clk(video_clk),.rst_n(video_rst_n),.vs(vs),
@@ -2183,12 +2198,17 @@ lrc_scroll_controller u_lrc_scroll_controller (
 // Frame-synchronous 320-pixel progress and elapsed/total text use the same
 // consumed-sample timebase as lyrics.
 wire [8:0] playback_progress_fill;
-wire [103:0] playback_time_ascii;
+wire [39:0] playback_elapsed_time_ascii;
+wire [47:0] playback_remaining_time_ascii;
+wire [39:0] playback_total_time_ascii;
 wire playback_time_known;
 playback_progress u_playback_progress (
     .clk(video_clk),.rst_n(video_rst_n),.vs(vs),
-    .elapsed_samples(lyric_sample_count),.total_samples(play_total_samples),
-    .progress_fill(playback_progress_fill),.time_ascii(playback_time_ascii),
+    .elapsed_samples(lyric_sample_count),.total_samples(playback_total_samples_video),
+    .progress_fill(playback_progress_fill),
+    .elapsed_time_ascii(playback_elapsed_time_ascii),
+    .remaining_time_ascii(playback_remaining_time_ascii),
+    .total_time_ascii(playback_total_time_ascii),
     .time_known(playback_time_known)
 );
 
@@ -2197,6 +2217,19 @@ wire playback_page_vs;
 wire playback_page_de;
 wire [9:0] playback_page_x;
 wire [23:0] playback_page_rgb;
+wire [9:0] playback_ascii_addr;
+wire playback_ascii_request;
+wire [9:0] ec2_ascii_addr;
+wire ec2_ascii_request;
+wire [7:0] shared_ascii_font_row;
+wire [9:0] shared_ascii_font_addr = playback_ascii_request
+                                    ? playback_ascii_addr
+                                    : (ec2_ascii_request ? ec2_ascii_addr : 10'd256);
+// The player time/track text and EC2 parameter text occupy disjoint scan rows,
+// so they share one synchronous ASCII ROM without adding another BRAM block.
+ascii_font_rom u_shared_ascii_font_rom (
+    .clk(video_clk),.addr(shared_ascii_font_addr),.dout(shared_ascii_font_row)
+);
 playback_page u_playback_page (
     .clk(video_clk),.rst_n(video_rst_n),.vs(vs),.de(adjusted_de),
     .pixel_x(adjusted_pixel_x),
@@ -2211,8 +2244,13 @@ playback_page u_playback_page (
     .lyric_row_glyphs(lyric_row_glyphs),
     .lyric_scroll_offset(lyric_scroll_offset),
     .no_lyrics_glyphs(song_no_lyrics_glyphs),
-    .progress_fill(playback_progress_fill),.time_ascii(playback_time_ascii),
-    .ascii_glyph(song_ui_glyph),.ascii_code(song_page_ascii_code),
+    .progress_fill(playback_progress_fill),
+    .elapsed_time_ascii(playback_elapsed_time_ascii),
+    .remaining_time_ascii(playback_remaining_time_ascii),
+    .total_time_ascii(playback_total_time_ascii),
+    .ascii_font_row(shared_ascii_font_row),
+    .ascii_font_addr(playback_ascii_addr),
+    .ascii_font_request(playback_ascii_request),
     .out_vs(playback_page_vs),.out_de(playback_page_de),
     .out_pixel_x(playback_page_x),.out_rgb(playback_page_rgb)
 );
@@ -2241,7 +2279,7 @@ promax_audio_waveform #(
 );
 
 // D6: one frame-coherent overlay snapshot, above user media layers and below
-// Boot/blank priority. Its synchronous ASCII ROM adds one aligned RGB/DE/VS beat.
+// Boot/blank priority. Its ASCII rows share the player font read above.
 ec2_param_osd u_ec2_param_osd (
     .clk              (video_clk),
     .rst_n            (video_rst_n),
@@ -2258,6 +2296,9 @@ ec2_param_osd u_ec2_param_osd (
     .contrast_level   (contrast_level_frame),
     .rotation_level   (rotation_level_frame),
     .ws_level         (ws_brightness_level_frame),
+    .ascii_font_row   (shared_ascii_font_row),
+    .ascii_font_addr  (ec2_ascii_addr),
+    .ascii_font_request(ec2_ascii_request),
     .out_vs           (ec2_panel_vs),
     .out_de           (ec2_panel_de),
     .out_pixel_x      (ec2_panel_x),

@@ -3,9 +3,9 @@
 `define EXP_PLAYBACK_PAGE_V
 `include "playback_layout.vh"
 
-// Stage 1 playback UI: 320-pixel progress, text-only lyric overlay, compact
-// elapsed/total time, and one-cycle RGB/DE/VS/x alignment. The media window is
-// preserved from rgb_in; all text shares the existing synchronous song font.
+// Playback and browse UI share the song-font path for Chinese glyphs and a
+// dedicated ASCII ROM for digits and punctuation. Font data and pixel controls
+// stay aligned through one synchronous read stage.
 module playback_page (
     input  wire         clk,
     input  wire         rst_n,
@@ -28,9 +28,12 @@ module playback_page (
     input  wire [5:0]   lyric_scroll_offset,
     input  wire [127:0] no_lyrics_glyphs,
     input  wire [8:0]   progress_fill,
-    input  wire [103:0] time_ascii,
-    input  wire [7:0]   ascii_glyph,
-    output reg  [7:0]   ascii_code,
+    input  wire [39:0]  elapsed_time_ascii,
+    input  wire [47:0]  remaining_time_ascii,
+    input  wire [39:0]  total_time_ascii,
+    input  wire [7:0]   ascii_font_row,
+    output wire [9:0]   ascii_font_addr,
+    output wire         ascii_font_request,
     output reg          out_vs,
     output reg          out_de,
     output reg  [9:0]   out_pixel_x,
@@ -39,16 +42,16 @@ module playback_page (
     `include "song_text_geom.vh"
 
     localparam [23:0] BG_COLOR       = 24'h080D13;
-    localparam [23:0] TEXT_COLOR     = 24'hE6EEF5;
-    localparam [23:0] SUBTEXT_COLOR  = 24'hA7B8C8;
-    localparam [23:0] PROGRESS_COLOR = 24'hD4AF37;
-    localparam [23:0] TRACK_COLOR    = 24'h282830;
+    localparam [23:0] TEXT_COLOR     = 24'hFFFFFF;
+    localparam [23:0] SUBTEXT_COLOR  = 24'h98A0A8;
+    localparam [23:0] PROGRESS_COLOR = 24'hFFFFFF;
+    localparam [23:0] TRACK_COLOR    = 24'hB8BCC4;
     localparam [23:0] BROWSE_BAR_EDGE_COLOR = 24'h3A3528;
     localparam [23:0] BROWSE_DIVIDER_COLOR  = 24'h4A4030;
     localparam [23:0] BROWSE_TRACK_COLOR    = 24'h00CED1;
     localparam [23:0] BROWSE_TITLE_COLOR    = 24'hFFFFFF;
     localparam [23:0] BROWSE_ARTIST_COLOR   = 24'hA09880;
-    localparam [23:0] BROWSE_TIME_COLOR     = 24'hD4AF37;
+    localparam [23:0] BROWSE_TIME_COLOR     = 24'hFFFFFF;
     localparam [23:0] BROWSE_MARK_ACTIVE    = 24'hFFD700;
     localparam [23:0] BROWSE_MARK_IDLE      = 24'h404048;
 
@@ -86,23 +89,17 @@ module playback_page (
     endfunction
 
     function [7:0] packed_ascii_at;
-        input [103:0] packed;
-        input [3:0] index;
+        input [47:0] packed;
+        input [2:0] index;
         begin
             case (index)
-                4'd0: packed_ascii_at = packed[103:96];
-                4'd1: packed_ascii_at = packed[95:88];
-                4'd2: packed_ascii_at = packed[87:80];
-                4'd3: packed_ascii_at = packed[79:72];
-                4'd4: packed_ascii_at = packed[71:64];
-                4'd5: packed_ascii_at = packed[63:56];
-                4'd6: packed_ascii_at = packed[55:48];
-                4'd7: packed_ascii_at = packed[47:40];
-                4'd8: packed_ascii_at = packed[39:32];
-                4'd9: packed_ascii_at = packed[31:24];
-                4'd10: packed_ascii_at = packed[23:16];
-                4'd11: packed_ascii_at = packed[15:8];
-                default: packed_ascii_at = packed[7:0];
+                3'd0: packed_ascii_at = packed[47:40];
+                3'd1: packed_ascii_at = packed[39:32];
+                3'd2: packed_ascii_at = packed[31:24];
+                3'd3: packed_ascii_at = packed[23:16];
+                3'd4: packed_ascii_at = packed[15:8];
+                3'd5: packed_ascii_at = packed[7:0];
+                default: packed_ascii_at = 8'h20;
             endcase
         end
     endfunction
@@ -112,6 +109,7 @@ module playback_page (
     reg [23:0] base_rgb_q;
     reg page_enable_q;
     reg browse_mode_q;
+    reg ascii_mode_q;
     reg [1:0] browse_song_id_q;
     reg browse_divider_hit_q;
     reg text_hit_q;
@@ -133,10 +131,13 @@ module playback_page (
     reg artist_fallback;
     reg [3:0] browse_track_column;
     reg [3:0] browse_time_column;
+    reg [3:0] elapsed_time_column;
+    reg [3:0] remaining_time_column;
 
     wire [9:0] title_dx = pixel_x - `PLAYBACK_TITLE_X;
     wire [9:0] artist_dx = pixel_x - `PLAYBACK_ARTIST_X;
-    wire [9:0] time_dx = pixel_x - `PLAYBACK_TIME_X;
+    wire [9:0] elapsed_time_dx = pixel_x - `PLAYBACK_ELAPSED_X;
+    wire [9:0] remaining_time_dx = pixel_x - `PLAYBACK_REMAINING_X;
     wire [9:0] browse_track_dx = pixel_x - 10'd48;
     wire [8:0] browse_text_dx = pixel_x - 10'd164;
     wire [9:0] browse_time_dx = pixel_x - 10'd544;
@@ -155,25 +156,32 @@ module playback_page (
     wire browse_time_region = browse_mode && de &&
         (line_y >= 10'd424) && (line_y < 10'd440) &&
         (pixel_x >= 10'd544) && (pixel_x < 10'd584);
+    wire elapsed_time_region = enable && de &&
+        (line_y >= `PLAYBACK_TIME_Y) && (line_y < (`PLAYBACK_TIME_Y + 10'd16)) &&
+        (pixel_x >= `PLAYBACK_ELAPSED_X) &&
+        (pixel_x < (`PLAYBACK_ELAPSED_X + `PLAYBACK_ELAPSED_W));
+    wire remaining_time_region = enable && de &&
+        (line_y >= `PLAYBACK_TIME_Y) && (line_y < (`PLAYBACK_TIME_Y + 10'd16)) &&
+        (pixel_x >= `PLAYBACK_REMAINING_X) &&
+        (pixel_x < (`PLAYBACK_REMAINING_X + `PLAYBACK_REMAINING_W));
     wire browse_divider_region = browse_mode && de &&
         (line_y >= 10'd422) && (line_y < 10'd444) &&
         ((pixel_x == 10'd148) || (pixel_x == 10'd528));
+    // Each packed title/artist field holds 16 glyphs. Keep the scan window at
+    // exactly 16 cells; wider bounds would wrap dx[7:4] back to glyph zero.
     wire title_region = enable && de &&
         (line_y >= `PLAYBACK_TITLE_Y) && (line_y < (`PLAYBACK_TITLE_Y + 10'd16)) &&
         (pixel_x >= `PLAYBACK_TITLE_X) &&
-        (pixel_x < (`PLAYBACK_TITLE_X + 10'd208));
+        (pixel_x < (`PLAYBACK_TITLE_X + 10'd256));
     wire artist_region = enable && de &&
         (line_y >= `PLAYBACK_ARTIST_Y) && (line_y < (`PLAYBACK_ARTIST_Y + 10'd16)) &&
         (pixel_x >= `PLAYBACK_ARTIST_X) &&
-        (pixel_x < (`PLAYBACK_ARTIST_X + 10'd208));
-    wire time_region = enable && de &&
-        (line_y >= `PLAYBACK_TIME_Y) && (line_y < (`PLAYBACK_TIME_Y + 10'd16)) &&
-        (pixel_x >= `PLAYBACK_TIME_X) &&
-        (pixel_x < (`PLAYBACK_TIME_X + `PLAYBACK_TIME_W));
-    wire [7:0] selected_font_glyph = ascii_mode ? ascii_glyph : direct_glyph;
-    wire [11:0] font_addr_full = {selected_font_glyph, 4'b0000} + {8'd0, selected_row};
+        (pixel_x < (`PLAYBACK_ARTIST_X + 10'd256));
+    wire [11:0] font_addr_full = {direct_glyph, 4'b0000} + {8'd0, selected_row};
     wire [SONG_FONT_ADDR_W-1:0] font_addr = font_addr_full[SONG_FONT_ADDR_W-1:0];
     wire [15:0] font_row;
+    assign ascii_font_addr = {selected_ascii[6:0], selected_row[3:1]};
+    assign ascii_font_request = text_request && ascii_mode;
     wire lyric_font_request;
     wire [7:0] lyric_font_glyph;
     wire [3:0] lyric_font_column;
@@ -208,9 +216,10 @@ module playback_page (
         selected_ascii = 8'h20;
         title_fallback = (title_length == 0);
         artist_fallback = (artist_length == 0);
-        ascii_code = 8'h20;
         browse_track_column = browse_track_dx[6:3];
         browse_time_column = browse_time_dx[5:3];
+        elapsed_time_column = elapsed_time_dx[5:3];
+        remaining_time_column = remaining_time_dx[5:3];
 
         if (browse_track_region) begin
             selected_kind = BROWSE_TRACK;
@@ -218,19 +227,19 @@ module playback_page (
             selected_row = line_y - 10'd424;
             if (browse_track_column < 4'd11) begin
                 text_request = 1'b1;
-                // Reuse the glyph indices already present in song_text_rom.
+                ascii_mode = 1'b1;
                 case (browse_track_column)
-                    4'd0: direct_glyph = 8'd24; // T
-                    4'd1: direct_glyph = 8'd22; // R
-                    4'd2: direct_glyph = 8'd14; // A
-                    4'd3: direct_glyph = 8'd15; // C
-                    4'd4: direct_glyph = 8'd18; // K
-                    4'd5: direct_glyph = 8'd0;  // space
-                    4'd6: direct_glyph = 8'd3;  // 0
-                    4'd7: direct_glyph = 8'd4 + {6'd0, song_id}; // 1..4
-                    4'd8: direct_glyph = 8'd2;  // /
-                    4'd9: direct_glyph = 8'd3;  // 0
-                    default: direct_glyph = 8'd7; // 4
+                    4'd0: selected_ascii = 8'h54; // T
+                    4'd1: selected_ascii = 8'h52; // R
+                    4'd2: selected_ascii = 8'h41; // A
+                    4'd3: selected_ascii = 8'h43; // C
+                    4'd4: selected_ascii = 8'h4B; // K
+                    4'd5: selected_ascii = 8'h20;
+                    4'd6: selected_ascii = 8'h30;
+                    4'd7: selected_ascii = 8'd49 + {6'd0, song_id}; // 1..4
+                    4'd8: selected_ascii = 8'h2F; // /
+                    4'd9: selected_ascii = 8'h30;
+                    default: selected_ascii = 8'h34;
                 endcase
             end
         end else if (browse_text_region) begin
@@ -248,7 +257,8 @@ module playback_page (
                 selected_kind = BROWSE_SEPARATOR;
                 selected_pixel_col = {1'b0, browse_text_subpixel[2:0]};
                 text_request = 1'b1;
-                direct_glyph = 8'd1; // compact separator dash
+                ascii_mode = 1'b1;
+                selected_ascii = 8'h2D;
             end else begin
                 selected_kind = TEXT_ARTIST;
                 selected_column = browse_artist_dx[7:4];
@@ -266,9 +276,31 @@ module playback_page (
             if (browse_time_column < 4'd5) begin
                 text_request = 1'b1;
                 ascii_mode = 1'b1;
-                // The low 40 bits are the total duration, MM:SS.
-                selected_ascii = packed_ascii_at(time_ascii, browse_time_column + 4'd8);
-                ascii_code = selected_ascii;
+                selected_ascii = packed_ascii_at(
+                    {8'h00, total_time_ascii}, {1'b0, browse_time_column[2:0]} + 3'd1);
+            end
+        end else if (elapsed_time_region) begin
+            selected_kind = TEXT_TIME;
+            selected_pixel_col = {1'b0, elapsed_time_dx[2:0]};
+            selected_row = line_y - `PLAYBACK_TIME_Y;
+            elapsed_time_column = elapsed_time_dx[5:3];
+            if (elapsed_time_column < 4'd5) begin
+                text_request = 1'b1;
+                ascii_mode = 1'b1;
+                selected_ascii = packed_ascii_at(
+                    {8'h00, elapsed_time_ascii},
+                    {1'b0, elapsed_time_column[2:0]} + 3'd1);
+            end
+        end else if (remaining_time_region) begin
+            selected_kind = TEXT_TIME;
+            selected_pixel_col = {1'b0, remaining_time_dx[2:0]};
+            selected_row = line_y - `PLAYBACK_TIME_Y;
+            remaining_time_column = remaining_time_dx[5:3];
+            if (remaining_time_column < 4'd6) begin
+                text_request = 1'b1;
+                ascii_mode = 1'b1;
+                selected_ascii = packed_ascii_at(
+                    remaining_time_ascii, remaining_time_column[2:0]);
             end
         end else if (title_region) begin
             selected_kind = TEXT_TITLE;
@@ -289,7 +321,6 @@ module playback_page (
                         4'd6: selected_ascii = 8'h30;
                         default: selected_ascii = 8'd49 + {6'd0, song_id};
                     endcase
-                    ascii_code = selected_ascii;
                 end
             end else begin
                 if (selected_column < title_length) begin
@@ -316,27 +347,12 @@ module playback_page (
                         4'd6: selected_ascii = 8'h20;
                         default: selected_ascii = 8'h2D;
                     endcase
-                    ascii_code = selected_ascii;
                 end
             end else begin
                 if (selected_column < artist_length) begin
                     text_request = 1'b1;
                     direct_glyph = packed_glyph_at(artist_glyphs, selected_column);
                 end
-            end
-        end else if (time_region) begin
-            selected_kind = TEXT_TIME;
-            // 13 compact 8-pixel cells occupy 104 pixels. The existing
-            // 16x16 glyph row is sampled at every other column; no font ROM
-            // or read port is added.
-            selected_column = time_dx[6:3];
-            selected_pixel_col = {1'b0, time_dx[2:0]};
-            selected_row = line_y - `PLAYBACK_TIME_Y;
-            if (selected_column < 13) begin
-                text_request = 1'b1;
-                ascii_mode = 1'b1;
-                selected_ascii = packed_ascii_at(time_ascii, selected_column);
-                ascii_code = selected_ascii;
             end
         end else if (lyric_font_request) begin
             selected_kind = TEXT_LYRIC;
@@ -367,6 +383,7 @@ module playback_page (
             base_rgb_q <= 24'h000000;
             page_enable_q <= 1'b0;
             browse_mode_q <= 1'b0;
+            ascii_mode_q <= 1'b0;
             browse_song_id_q <= 2'd0;
             browse_divider_hit_q <= 1'b0;
             text_hit_q <= 1'b0;
@@ -389,6 +406,7 @@ module playback_page (
             base_rgb_q <= base_rgb_in;
             page_enable_q <= enable || browse_mode;
             browse_mode_q <= browse_mode;
+            ascii_mode_q <= ascii_mode;
             browse_song_id_q <= song_id;
             browse_divider_hit_q <= browse_divider_region;
             text_hit_q <= text_request;
@@ -410,7 +428,6 @@ module playback_page (
         (progress_dx < `PLAYBACK_PROGRESS_W);
     wire in_progress_fill = in_progress_bar &&
         (progress_dx < {1'b0, progress_fill_q});
-    wire progress_track_row = (progress_dy == 10'd1);
     wire [9:0] browse_marker_dx = out_pixel_x - 10'd288;
     wire [9:0] browse_marker_dy = pixel_y_q - 10'd464;
     wire in_browse_marker = out_de && browse_mode_q &&
@@ -422,9 +439,11 @@ module playback_page (
                            (text_kind_q == BROWSE_TRACK) ||
                            (text_kind_q == BROWSE_DURATION) ||
                            (text_kind_q == BROWSE_SEPARATOR);
-    wire font_pixel = font_half_width
-                    ? font_row[4'd15 - {font_px_col_q[2:0], 1'b0}]
-                    : font_row[4'd15 - font_px_col_q];
+    wire font_pixel = ascii_mode_q
+                    ? ascii_font_row[3'd7 - font_px_col_q[2:0]]
+                    : (font_half_width
+                       ? font_row[4'd15 - {font_px_col_q[2:0], 1'b0}]
+                       : font_row[4'd15 - font_px_col_q]);
 
     always @* begin
         out_rgb = out_de ? base_rgb_q : 24'h000000;
@@ -441,7 +460,7 @@ module playback_page (
                 if (in_progress_bar) begin
                     if (in_progress_fill)
                         out_rgb = PROGRESS_COLOR;
-                    else if (progress_track_row)
+                    else
                         out_rgb = TRACK_COLOR;
                 end
             end

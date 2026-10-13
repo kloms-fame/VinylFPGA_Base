@@ -21,6 +21,9 @@ module ec2_param_osd (
     input  wire [2:0]  contrast_level,
     input  wire [2:0]  rotation_level,
     input  wire [2:0]  ws_level,
+    input  wire [7:0]  ascii_font_row,
+    output wire [9:0]  ascii_font_addr,
+    output wire        ascii_font_request,
     output reg         out_vs,
     output reg         out_de,
     output reg  [9:0]  out_pixel_x,
@@ -207,8 +210,8 @@ module ec2_param_osd (
     end
 
     wire [9:0] font_addr = {font_char, font_row_index};
-    wire [7:0] font_row;
-    ascii_font_rom u_ascii_font_rom(.clk(clk), .addr(font_addr), .dout(font_row));
+    assign ascii_font_addr = font_addr;
+    assign ascii_font_request = title_region || status_region || value_region;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -276,7 +279,7 @@ module ec2_param_osd (
     wire [2:0] text_col = (title_text_area && out_pixel_x >= `PLAYBACK_EC2_STATUS_X)
                         ? (out_pixel_x - `PLAYBACK_EC2_STATUS_X)
                         : (out_pixel_x - `PLAYBACK_EC2_TEXT_X);
-    wire font_pixel = font_row[3'd7 - text_col];
+    wire font_pixel = ascii_font_row[3'd7 - text_col];
     wire bar_y = (pixel_y_d >= `PLAYBACK_EC2_BAR_Y) &&
                  (pixel_y_d < (`PLAYBACK_EC2_BAR_Y + 10'd6));
     wire [9:0] bar_x = out_pixel_x - `PLAYBACK_EC2_TEXT_X;

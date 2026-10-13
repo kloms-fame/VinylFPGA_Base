@@ -1,8 +1,8 @@
 `timescale 1ns/1ps
 `ifndef EXP_PLAYBACK_PROGRESS_V
 `define EXP_PLAYBACK_PROGRESS_V
-// Frame-snapshot progress/time formatter. The 41-bit scaled progress ratio
-// and time conversions run during vertical blanking, outside the pixel path.
+// Frame-snapshot progress/time formatter. All division and BCD conversion
+// runs in vertical blanking; the pixel path only reads registered ASCII data.
 module playback_progress (
     input  wire         clk,
     input  wire         rst_n,
@@ -10,7 +10,9 @@ module playback_progress (
     input  wire [31:0]  elapsed_samples,
     input  wire [31:0]  total_samples,
     output reg  [8:0]   progress_fill,
-    output reg  [103:0] time_ascii,
+    output reg  [39:0]  elapsed_time_ascii,
+    output reg  [47:0]  remaining_time_ascii,
+    output reg  [39:0]  total_time_ascii,
     output reg          time_known
 );
     localparam [3:0] ST_IDLE                = 4'd0;
@@ -19,10 +21,14 @@ module playback_progress (
     localparam [3:0] ST_DIV_TOTAL_SECONDS   = 4'd3;
     localparam [3:0] ST_DIV_ELAPSED_MINUTES = 4'd4;
     localparam [3:0] ST_DIV_TOTAL_MINUTES   = 4'd5;
-    localparam [3:0] ST_BCD_ELAPSED_MINUTES = 4'd6;
-    localparam [3:0] ST_BCD_TOTAL_MINUTES   = 4'd7;
-    localparam [103:0] UNKNOWN_TIME_ASCII = {
-        8'h2D,8'h2D,8'h3A,8'h2D,8'h2D,8'h20,8'h2F,
+    localparam [3:0] ST_DIV_REMAINING_MINUTES = 4'd6;
+    localparam [3:0] ST_BCD_ELAPSED_MINUTES = 4'd7;
+    localparam [3:0] ST_BCD_TOTAL_MINUTES   = 4'd8;
+    localparam [3:0] ST_BCD_REMAINING_MINUTES = 4'd9;
+    localparam [39:0] UNKNOWN_MSS_ASCII = {
+        8'h2D,8'h2D,8'h3A,8'h2D,8'h2D
+    };
+    localparam [47:0] UNKNOWN_REMAINING_ASCII = {
         8'h20,8'h2D,8'h2D,8'h3A,8'h2D,8'h2D
     };
 
@@ -45,20 +51,25 @@ module playback_progress (
 
     reg [16:0] elapsed_seconds_binary;
     reg [16:0] total_seconds_binary;
+    reg [16:0] remaining_seconds_binary;
     reg [10:0] elapsed_minutes_binary;
     reg [10:0] total_minutes_binary;
+    reg [10:0] remaining_minutes_binary;
     reg [5:0] elapsed_seconds_display;
     reg [5:0] total_seconds_display;
+    reg [5:0] remaining_seconds_display;
 
     reg [10:0] bcd_binary_work;
     reg [11:0] bcd_work;
     reg [11:0] elapsed_minutes_bcd;
+    reg [11:0] total_minutes_bcd;
     reg [3:0] bcd_count;
     reg [3:0] ones_adjusted;
     reg [3:0] tens_adjusted;
     reg [3:0] hundreds_adjusted;
     reg [11:0] bcd_adjusted;
     wire [11:0] bcd_next = {bcd_adjusted[10:0], bcd_binary_work[10]};
+
     function [7:0] seconds_to_bcd;
         input [5:0] seconds;
         reg [3:0] tens;
@@ -74,8 +85,10 @@ module playback_progress (
             seconds_to_bcd = {tens, ones[3:0]};
         end
     endfunction
+
     wire [7:0] elapsed_seconds_bcd = seconds_to_bcd(elapsed_seconds_display);
     wire [7:0] total_seconds_bcd = seconds_to_bcd(total_seconds_display);
+    wire [7:0] remaining_seconds_bcd = seconds_to_bcd(remaining_seconds_display);
 
     reg [31:0] elapsed_clamped_input;
     reg [40:0] elapsed_extended;
@@ -108,17 +121,23 @@ module playback_progress (
             divisor_work <= 32'd0;
             div_count <= 6'd0;
             progress_fill <= 9'd0;
-            time_ascii <= UNKNOWN_TIME_ASCII;
+            elapsed_time_ascii <= UNKNOWN_MSS_ASCII;
+            remaining_time_ascii <= UNKNOWN_REMAINING_ASCII;
+            total_time_ascii <= UNKNOWN_MSS_ASCII;
             time_known <= 1'b0;
             elapsed_seconds_binary <= 17'd0;
             total_seconds_binary <= 17'd0;
+            remaining_seconds_binary <= 17'd0;
             elapsed_minutes_binary <= 11'd0;
             total_minutes_binary <= 11'd0;
+            remaining_minutes_binary <= 11'd0;
             elapsed_seconds_display <= 6'd0;
             total_seconds_display <= 6'd0;
+            remaining_seconds_display <= 6'd0;
             bcd_binary_work <= 11'd0;
             bcd_work <= 12'd0;
             elapsed_minutes_bcd <= 12'd0;
+            total_minutes_bcd <= 12'd0;
             bcd_count <= 4'd0;
         end else begin
             vs_q <= vs;
@@ -126,7 +145,9 @@ module playback_progress (
             if (frame_start) begin
                 if (total_samples == 0) begin
                     progress_fill <= 9'd0;
-                    time_ascii <= UNKNOWN_TIME_ASCII;
+                    elapsed_time_ascii <= UNKNOWN_MSS_ASCII;
+                    remaining_time_ascii <= UNKNOWN_REMAINING_ASCII;
+                    total_time_ascii <= UNKNOWN_MSS_ASCII;
                     time_known <= 1'b0;
                     state <= ST_IDLE;
                     div_count <= 6'd0;
@@ -145,7 +166,8 @@ module playback_progress (
                     ST_DIV_ELAPSED_SECONDS,
                     ST_DIV_TOTAL_SECONDS,
                     ST_DIV_ELAPSED_MINUTES,
-                    ST_DIV_TOTAL_MINUTES: begin
+                    ST_DIV_TOTAL_MINUTES,
+                    ST_DIV_REMAINING_MINUTES: begin
                         if (div_count != 0) begin
                             if (div_count == 1) begin
                                 case (state)
@@ -171,6 +193,11 @@ module playback_progress (
                                     end
                                     ST_DIV_TOTAL_SECONDS: begin
                                         total_seconds_binary <= div_quotient_next[16:0];
+                                        if (div_quotient_next[16:0] > elapsed_seconds_binary)
+                                            remaining_seconds_binary <=
+                                                div_quotient_next[16:0] - elapsed_seconds_binary;
+                                        else
+                                            remaining_seconds_binary <= 17'd0;
                                         div_work <= {24'd0, elapsed_seconds_binary};
                                         remainder_work <= 33'd0;
                                         divisor_work <= 32'd60;
@@ -186,10 +213,20 @@ module playback_progress (
                                         div_count <= 6'd41;
                                         state <= ST_DIV_TOTAL_MINUTES;
                                     end
-                                    default: begin
+                                    ST_DIV_TOTAL_MINUTES: begin
                                         total_minutes_binary <= div_quotient_next[10:0];
                                         total_seconds_display <= div_remainder_next[5:0];
-                                        bcd_binary_work <= elapsed_minutes_binary;
+                                        div_work <= {24'd0, remaining_seconds_binary};
+                                        remainder_work <= 33'd0;
+                                        divisor_work <= 32'd60;
+                                        div_count <= 6'd41;
+                                        state <= ST_DIV_REMAINING_MINUTES;
+                                    end
+                                    default: begin
+                                        remaining_minutes_binary <= div_quotient_next[10:0];
+                                        remaining_seconds_display <= div_remainder_next[5:0];
+                                        bcd_binary_work <= (elapsed_minutes_binary > 11'd99)
+                                                         ? 11'd99 : elapsed_minutes_binary;
                                         bcd_work <= 12'd0;
                                         bcd_count <= 4'd11;
                                         state <= ST_BCD_ELAPSED_MINUTES;
@@ -205,35 +242,57 @@ module playback_progress (
                         end
                     end
                     ST_BCD_ELAPSED_MINUTES,
-                    ST_BCD_TOTAL_MINUTES: begin
+                    ST_BCD_TOTAL_MINUTES,
+                    ST_BCD_REMAINING_MINUTES: begin
                         bcd_work <= bcd_next;
                         bcd_binary_work <= {bcd_binary_work[9:0], 1'b0};
                         if (bcd_count == 1) begin
                             if (state == ST_BCD_ELAPSED_MINUTES) begin
                                 elapsed_minutes_bcd <= bcd_next;
-                                bcd_binary_work <= total_minutes_binary;
+                                bcd_binary_work <= (total_minutes_binary > 11'd99)
+                                                 ? 11'd99 : total_minutes_binary;
                                 bcd_work <= 12'd0;
                                 bcd_count <= 4'd11;
                                 state <= ST_BCD_TOTAL_MINUTES;
+                            end else if (state == ST_BCD_TOTAL_MINUTES) begin
+                                total_minutes_bcd <= bcd_next;
+                                bcd_binary_work <= (remaining_minutes_binary > 11'd99)
+                                                 ? 11'd99 : remaining_minutes_binary;
+                                bcd_work <= 12'd0;
+                                bcd_count <= 4'd11;
+                                state <= ST_BCD_REMAINING_MINUTES;
                             end else begin
-                                time_ascii <= {
-                                    8'd48 + ((elapsed_minutes_bcd[11:8] != 4'd0)
-                                             ? 4'd9 : elapsed_minutes_bcd[7:4]),
-                                    8'd48 + ((elapsed_minutes_bcd[11:8] != 4'd0)
-                                             ? 4'd9 : elapsed_minutes_bcd[3:0]),
+                                elapsed_time_ascii <=
+                                    (elapsed_minutes_bcd[7:4] == 4'd0)
+                                    ? {8'd48 + {4'd0, elapsed_minutes_bcd[3:0]},
+                                       8'h3A,
+                                       8'd48 + {4'd0, elapsed_seconds_bcd[7:4]},
+                                       8'd48 + {4'd0, elapsed_seconds_bcd[3:0]},
+                                       8'h20}
+                                    : {8'd48 + {4'd0, elapsed_minutes_bcd[7:4]},
+                                       8'd48 + {4'd0, elapsed_minutes_bcd[3:0]},
+                                       8'h3A,
+                                       8'd48 + {4'd0, elapsed_seconds_bcd[7:4]},
+                                       8'd48 + {4'd0, elapsed_seconds_bcd[3:0]}};
+                                remaining_time_ascii <=
+                                    (bcd_next[7:4] == 4'd0)
+                                    ? {8'h20, 8'h2D,
+                                       8'd48 + {4'd0, bcd_next[3:0]},
+                                       8'h3A,
+                                       8'd48 + {4'd0, remaining_seconds_bcd[7:4]},
+                                       8'd48 + {4'd0, remaining_seconds_bcd[3:0]}}
+                                    : {8'h2D,
+                                       8'd48 + {4'd0, bcd_next[7:4]},
+                                       8'd48 + {4'd0, bcd_next[3:0]},
+                                       8'h3A,
+                                       8'd48 + {4'd0, remaining_seconds_bcd[7:4]},
+                                       8'd48 + {4'd0, remaining_seconds_bcd[3:0]}};
+                                total_time_ascii <= {
+                                    8'd48 + {4'd0, total_minutes_bcd[7:4]},
+                                    8'd48 + {4'd0, total_minutes_bcd[3:0]},
                                     8'h3A,
-                                    8'd48 + elapsed_seconds_bcd[7:4],
-                                    8'd48 + elapsed_seconds_bcd[3:0],
-                                    8'h20,
-                                    8'h2F,
-                                    8'h20,
-                                    8'd48 + ((bcd_next[11:8] != 4'd0)
-                                             ? 4'd9 : bcd_next[7:4]),
-                                    8'd48 + ((bcd_next[11:8] != 4'd0)
-                                             ? 4'd9 : bcd_next[3:0]),
-                                    8'h3A,
-                                    8'd48 + total_seconds_bcd[7:4],
-                                    8'd48 + total_seconds_bcd[3:0]
+                                    8'd48 + {4'd0, total_seconds_bcd[7:4]},
+                                    8'd48 + {4'd0, total_seconds_bcd[3:0]}
                                 };
                                 time_known <= 1'b1;
                                 bcd_count <= 4'd0;

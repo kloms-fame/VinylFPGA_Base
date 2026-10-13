@@ -84,8 +84,8 @@ module s6_video_layer #(
   else if(frame_start) out_y<=0;
   else if(out_q && !out_de) out_y<=out_y+1'b1;
  end
- assign fifo_read_allowed=!mv_read_active || (raw_x>=16 && raw_x<336 && raw_y>=64 && raw_y<304);
- assign mv_window_visible=out_x>=16 && out_x<336 && out_y>=64 && out_y<304;
+ assign fifo_read_allowed=!mv_read_active || (raw_x>=16 && raw_x<336 && raw_y>=48 && raw_y<288);
+ assign mv_window_visible=out_x>=16 && out_x<336 && out_y>=48 && out_y<288;
  // Reuse the existing selected cover/image stream. The former animated vinyl
  // geometry only obscured this stream and required its own coordinate state.
  assign rgb_out=rgb_in;
