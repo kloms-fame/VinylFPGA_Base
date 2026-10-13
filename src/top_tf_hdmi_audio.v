@@ -65,6 +65,7 @@
 `include "display/brightness_contrast_steps.v"
 `include "display/ascii_font_rom.v"
 `include "display/playback_progress.v"
+`include "display/playback_background.v"
 `include "display/playback_page.v"
 `include "display/ec2_param_osd.v"
 `include "video/mv_sector_mux.v"
@@ -320,6 +321,7 @@ wire        brw_ev_prev_tgl;
 wire        brw_ev_next_tgl;
 wire        brw_ev_confirm_tgl;
 wire        brw_ev_mode_tgl;
+// Legacy home_tgl port now carries KEY11 to the video-domain background only.
 wire brw_ev_home_tgl,brw_ev_effect_tgl,brw_ev_end_mode_tgl;
 wire brw_play_start,brw_play_stop;
 wire [1:0] play_end_mode;
@@ -1270,7 +1272,7 @@ assign audio_play_enable_gated = S5_PLAY_ENABLE ? stream_enable_sd : audio_play_
 // 中央大图的下一张来自 J2 浏览事件或播放结束策略。
 
 // S3：选曲事件适配层（sd_card_clk 域）。事件侧(clk 域 toggle)在此同步/边沿还原，
-// 方向事件始终浏览中央大图；KEY7/KEY11 在播放态均返回选曲页。
+// 方向事件始终浏览中央大图；KEY7 返回选曲页，KEY11 切换播放背景。
 browse_fsm #(
     .J2_BROWSE_ENABLE (S3_J2_BROWSE_ENABLE)
 ) u_browse_fsm (
@@ -1280,7 +1282,7 @@ browse_fsm #(
     .ev_next_tgl     (brw_ev_next_tgl),
     .ev_confirm_tgl  (brw_ev_confirm_tgl),
     .ev_mode_tgl     (brw_ev_mode_tgl),
-    .ev_home_tgl     (brw_ev_home_tgl),
+    .ev_home_tgl     (1'b0),
     .play_start      (brw_play_start),
     .play_stop       (brw_play_stop),
     .mode_play       (play_active_sd),
@@ -2234,6 +2236,7 @@ playback_page u_playback_page (
     .clk(video_clk),.rst_n(video_rst_n),.vs(vs),.de(adjusted_de),
     .pixel_x(adjusted_pixel_x),
     .enable(playback_page_mode_frame),
+    .bg_cycle_toggle_async(brw_ev_home_tgl),
     .browse_mode(browse_page_mode_frame),.rgb_in(lrc_rgb),
     .song_id(active_ui_song_id),.title_length(song_title_length),
     .artist_length(song_artist_length),.title_glyphs(song_title_glyphs),

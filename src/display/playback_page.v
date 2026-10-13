@@ -14,6 +14,7 @@ module playback_page (
     input  wire [9:0]   pixel_x,
     input  wire         enable,
     input  wire         browse_mode,
+    input  wire         bg_cycle_toggle_async,
     input  wire [23:0]  rgb_in,
     input  wire [1:0]   song_id,
     input  wire [4:0]   title_length,
@@ -41,9 +42,10 @@ module playback_page (
 );
     `include "song_text_geom.vh"
 
-    localparam [23:0] BG_COLOR       = 24'h080D13;
     localparam [23:0] TEXT_COLOR     = 24'hFFFFFF;
     localparam [23:0] SUBTEXT_COLOR  = 24'h98A0A8;
+    localparam [23:0] GRAY_SUBTEXT_COLOR = 24'hD0D4D8;
+    localparam [23:0] GRAY_LYRIC_COLOR   = 24'hB0B4BC;
     localparam [23:0] PROGRESS_COLOR = 24'hFFFFFF;
     localparam [23:0] TRACK_COLOR    = 24'hB8BCC4;
     localparam [23:0] BROWSE_BAR_EDGE_COLOR = 24'h3A3528;
@@ -188,6 +190,24 @@ module playback_page (
     wire [3:0] lyric_font_pixel_column;
     wire [3:0] lyric_font_row;
     wire [23:0] lyric_text_color;
+    wire [1:0] background_mode_frame;
+    wire [23:0] generated_background_rgb;
+    wire [23:0] readable_subtext_color = (background_mode_frame == 2'd3)
+                                       ? SUBTEXT_COLOR : GRAY_SUBTEXT_COLOR;
+    wire [23:0] readable_lyric_color =
+        ((background_mode_frame != 2'd3) && (lyric_text_color == 24'h606068))
+        ? GRAY_LYRIC_COLOR : lyric_text_color;
+
+    // Use the page's existing scan coordinates and RGB register stage.
+    // The mode survives leaving playback; only video reset restores gray.
+    playback_background u_playback_background (
+        .clk(clk),.rst_n(rst_n),.frame_start(vs_q && !vs),
+        .enable(enable && !browse_mode),
+        .cycle_toggle_async(bg_cycle_toggle_async),
+        .pixel_x(pixel_x),.pixel_y(line_y),
+        .mode_frame(background_mode_frame),
+        .background_rgb(generated_background_rgb)
+    );
 
     lrc_five_osd u_lrc_five_osd (
         .enable(enable),.de(de),.pixel_x(pixel_x),.pixel_y(line_y),
@@ -373,7 +393,7 @@ module playback_page (
                             ? (((line_y == 10'd416) || (line_y == 10'd456))
                                ? BROWSE_BAR_EDGE_COLOR : dimmed_cover_rgb)
                             : ((enable && de && !preserve_media)
-                               ? BG_COLOR : rgb_in);
+                               ? generated_background_rgb : rgb_in);
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -412,7 +432,9 @@ module playback_page (
             text_hit_q <= text_request;
             font_px_col_q <= selected_pixel_col;
             text_kind_q <= selected_kind;
-            text_color_q <= lyric_text_color;
+            text_color_q <= ((selected_kind == TEXT_ARTIST) ||
+                             (selected_kind == TEXT_TIME))
+                            ? readable_subtext_color : readable_lyric_color;
             pixel_y_q <= line_y;
             progress_fill_q <= progress_fill;
             out_vs <= vs;
@@ -468,8 +490,8 @@ module playback_page (
             if (text_hit_q && font_pixel) begin
                 case (text_kind_q)
                     TEXT_ARTIST:
-                        out_rgb = browse_mode_q ? BROWSE_ARTIST_COLOR : SUBTEXT_COLOR;
-                    TEXT_TIME: out_rgb = SUBTEXT_COLOR;
+                        out_rgb = browse_mode_q ? BROWSE_ARTIST_COLOR : text_color_q;
+                    TEXT_TIME: out_rgb = text_color_q;
                     TEXT_LYRIC: out_rgb = text_color_q;
                     BROWSE_TRACK: out_rgb = BROWSE_TRACK_COLOR;
                     BROWSE_DURATION: out_rgb = BROWSE_TIME_COLOR;

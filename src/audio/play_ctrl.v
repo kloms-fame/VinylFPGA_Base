@@ -5,7 +5,7 @@
 // play_ctrl —— S5：播放态控制（选曲 / 播放暂停 / 切曲 / 音量）
 //
 // Runs in sd_card_clk, alongside browse_fsm. UI toggle inputs cross from clk.
-// browse_fsm exclusively routes KEY7 / KEY11 into stop_request; song_confirm
+// browse_fsm routes KEY7 into stop_request; KEY11 selects the background. song_confirm
 // starts the displayed/focused bank. End policy defaults to pause in PLAY.
 // Normal pause retains buffered data; EOF replay and every track step request a
 // drained stream_session restart. Storage failures are not successful EOF.

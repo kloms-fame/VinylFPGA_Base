@@ -5,7 +5,8 @@
 //
 // 运行在 sd_card_clk(100 MHz) 域，将 ui_event_bridge 的 toggle 事件还原为单拍。
 // 唯一选曲视图是中央大图：方向事件直接切换封面，确认事件开始播放当前封面。
-// KEY7 与 KEY11 在播放态都停止播放并返回中央大图选曲页。
+// KEY7 在播放态停止播放并返回中央大图选曲页。
+// 顶层将遗留 home 事件绑 0；KEY11 已独立路由到播放背景控制。
 //
 // CDC：四路 toggle 为目标域电平，先 3 级 FF（2 级同步 + 1 级延迟）再异或
 // 取边沿，事件间隔远大于同步延迟，不会丢步；一次边沿只产出一拍。
@@ -22,7 +23,7 @@ module browse_fsm #(
     input  wire        ev_mode_tgl,
     input  wire        ev_home_tgl,
 
-    input  wire        mode_play,      // 1=播放态：KEY7/KEY11 返回中央大图选曲页
+    input  wire        mode_play,      // 1=播放态：KEY7 返回中央大图选曲页
 
     output reg         fs_next,        // 全屏：下一张
     output reg         fs_prev,        // 全屏：上一张

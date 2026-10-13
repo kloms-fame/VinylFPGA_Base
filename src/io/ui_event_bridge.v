@@ -34,7 +34,7 @@ module ui_event_bridge (
     output reg         next_tgl,
     output reg         confirm_tgl,
     output reg         mode_tgl,
-    output reg         home_tgl,
+    output reg         home_tgl,       // Legacy port name: KEY11 background-cycle toggle
     output reg         effect_tgl,
     output reg         end_mode_tgl,
     // ---- S5：播放控制额外需要的"原始"事件（与上面 4 路并存）----
