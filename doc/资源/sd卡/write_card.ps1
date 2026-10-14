@@ -3,7 +3,9 @@ param(
     [switch]$DiagnoseOnly,
     [int]$DiskNumber = -1,
     [string]$ImagePath = '',
-    [string]$ExpectedSha256 = ''
+    [string]$ExpectedSha256 = '',
+    [ValidatePattern('^[A-Za-z0-9_-]{1,16}$')]
+    [string]$ReleaseName = 'S1'
 )
 $ErrorActionPreference = 'Stop'
 $S0Sha = 'e9f24f4c8a901a820fd2a0d6b4fdad572d9d842a6af5390ca3b0fb059b0f94f1'
@@ -19,7 +21,7 @@ if ([string]::IsNullOrWhiteSpace($ImagePath) -and [string]::IsNullOrWhiteSpace($
     if ($ExpectedSha256 -notmatch '^[0-9a-fA-F]{64}$') { throw 'ExpectedSha256必须是64位十六进制值。' }
     $image = [IO.Path]::GetFullPath($ImagePath)
     $expectedImageSha = $ExpectedSha256.ToLowerInvariant()
-    $releaseName = 'S1'
+    $releaseName = $ReleaseName.ToUpperInvariant()
 }
 $exitCode = 1
 $transcriptStarted = $false
