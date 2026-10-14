@@ -1,13 +1,26 @@
 ﻿#requires -Version 5.1
 param(
     [switch]$DiagnoseOnly,
-    [int]$DiskNumber = -1
+    [int]$DiskNumber = -1,
+    [string]$ImagePath = '',
+    [string]$ExpectedSha256 = ''
 )
 $ErrorActionPreference = 'Stop'
 $S0Sha = 'e9f24f4c8a901a820fd2a0d6b4fdad572d9d842a6af5390ca3b0fb059b0f94f1'
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
 $writer = Join-Path $root 'tools\safe_raw_writer.py'
-$image = Join-Path $PSScriptRoot 'stage4\card_STAGE4.img'
+$releaseName = 'S0'
+if ([string]::IsNullOrWhiteSpace($ImagePath) -and [string]::IsNullOrWhiteSpace($ExpectedSha256)) {
+    $image = Join-Path $PSScriptRoot 'stage4\card_STAGE4.img'
+    $expectedImageSha = $S0Sha
+} elseif ([string]::IsNullOrWhiteSpace($ImagePath) -or [string]::IsNullOrWhiteSpace($ExpectedSha256)) {
+    throw '自定义镜像路径与SHA256必须同时提供。'
+} else {
+    if ($ExpectedSha256 -notmatch '^[0-9a-fA-F]{64}$') { throw 'ExpectedSha256必须是64位十六进制值。' }
+    $image = [IO.Path]::GetFullPath($ImagePath)
+    $expectedImageSha = $ExpectedSha256.ToLowerInvariant()
+    $releaseName = 'S1'
+}
 $exitCode = 1
 $transcriptStarted = $false
 function Invoke-CardWriter([string[]]$Arguments) {
@@ -26,15 +39,16 @@ function Invoke-CardWriter([string[]]$Arguments) {
 try {
     $python = (Get-Command python -ErrorAction Stop).Source
     if (-not (Test-Path -LiteralPath $writer -PathType Leaf)) { throw "缺少写卡工具：$writer" }
-    if (-not (Test-Path -LiteralPath $image -PathType Leaf)) { throw "缺少 S0 基线镜像：$image" }
+    if (-not (Test-Path -LiteralPath $image -PathType Leaf)) { throw "缺少 $releaseName 镜像：$image" }
     $logDir = Join-Path $PSScriptRoot 'stage4\write_logs'
     New-Item -ItemType Directory -Path $logDir -Force | Out-Null
-    $logPath = Join-Path $logDir ('S0_' + (Get-Date -Format 'yyyyMMdd_HHmmss') + '_' + $PID + '.log')
+    $logPath = Join-Path $logDir ($releaseName + '_' + (Get-Date -Format 'yyyyMMdd_HHmmss') + '_' + $PID + '.log')
     Start-Transcript -LiteralPath $logPath | Out-Null
     $transcriptStarted = $true
-    Write-Host 'VinylFPGA S0：基线恢复与写卡诊断' -ForegroundColor Cyan
-    Write-Host '本镜像为 128 MiB INDEX v2 基线：旧封面、共享音频、仅歌曲1含30秒MV。'
-    Write-Host '四首完整独立媒体将在后续阶段交付。本入口不提供阶段五旧候选13/14。'
+    Write-Host ("VinylFPGA {0}：镜像与写卡诊断" -f $releaseName) -ForegroundColor Cyan
+    Write-Host ("Image: {0}" -f $image)
+    Write-Host ("Expected SHA256: {0}" -f $expectedImageSha)
+    Write-Host '请按配套教程确认当前固件与镜像版本匹配；本入口不提供阶段五旧候选13/14。'
     $raw = & $python $writer --list-disks
     if ($LASTEXITCODE -ne 0) { throw '无法读取设备列表，未写入。' }
     $inventory = (($raw | Out-String) | ConvertFrom-Json)
@@ -55,11 +69,11 @@ try {
     $target = $targets[0]
     Write-Host '选中设备（还未写入）：' -ForegroundColor Yellow
     $target | Format-List *
-    $common = @('--image',$image,'--disk-number',([string]$DiskNumber),'--expected-sha256',$S0Sha)
+    $common = @('--image',$image,'--disk-number',([string]$DiskNumber),'--expected-sha256',$expectedImageSha)
     $diagnosticExit = Invoke-CardWriter ($common + @('--diagnose'))
     if ($diagnosticExit -ne 0) { throw '预检查未通过，停止。请保存错误信息，未写入。' }
     if ($DiagnoseOnly) { $exitCode=0; return }
-    $action = Read-Host '输入 WRITE 写入本 S0 镜像；其他输入仅结束诊断'
+    $action = Read-Host ("输入 WRITE 写入本 {0} 镜像；其他输入仅结束诊断" -f $releaseName)
     if ($action -cne 'WRITE') { $exitCode=0; return }
     $id = [Security.Principal.WindowsIdentity]::GetCurrent()
     $admin = (New-Object Security.Principal.WindowsPrincipal($id)).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -70,10 +84,10 @@ try {
     if ($confirm -cne $expectedConfirm) { throw '确认文字不匹配，未写入。' }
     $writeExit = Invoke-CardWriter ($common + @('--write','--confirm',$confirm))
     if ($writeExit -ne 0) { throw '写入或回读校验失败，镜像未放行。保存输出中的失败偏移和错误码。' }
-    Write-Host 'S0 写入与完整回读成功。安全弹出后再装卡验收。' -ForegroundColor Green
+    Write-Host ("{0} 写入与完整回读成功。安全弹出后再装卡验收。" -f $releaseName) -ForegroundColor Green
     $exitCode=0
 } catch {
-    Write-Host ('S0_FAILED：' + $_.Exception.Message) -ForegroundColor Red
+    Write-Host ($releaseName + '_FAILED：' + $_.Exception.Message) -ForegroundColor Red
 } finally {
     if ($transcriptStarted) {
         Write-Host ('操作日志：' + $logPath)
