@@ -12,8 +12,8 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def verify(snapshot=None):
-    project = ROOT / 'prj/VinylFPGA.al'
+def verify(snapshot=None, run_root=None, project_file=None):
+    project = Path(project_file).resolve() if project_file else ROOT / 'prj/VinylFPGA.al'
     al = project.read_text(encoding='utf-8')
     # TD project files contain unescaped UsedInP&R; inspect native tags without
     # rewriting the file as generic XML.
@@ -30,7 +30,7 @@ def verify(snapshot=None):
     private_seeds = re.findall(r'<seed>(.*?)</seed>', al)
     if any(value.strip() != '0' for value in private_seeds):
         raise RuntimeError('Private seed would trigger the GUI Revert dialog')
-    runs = ROOT / 'prj/VinylFPGA_Runs'
+    runs = Path(run_root).resolve() if run_root else ROOT / 'prj/VinylFPGA_Runs'
     phy = runs / 'phy_1'
     seed = phy / 'seed_5'
     required = [phy / '.multiSeed.begin.f', phy / '.multiSeed.end.f',
@@ -76,5 +76,10 @@ def verify(snapshot=None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--snapshot', type=Path)
+    parser.add_argument('--run-root', type=Path,
+                        help='TD GUI run-output directory; defaults to prj/VinylFPGA_Runs')
+    parser.add_argument('--project-file', type=Path,
+                        help='TD .al used for this run; defaults to prj/VinylFPGA.al')
     args = parser.parse_args()
-    print(json.dumps(verify(args.snapshot), ensure_ascii=False, indent=2))
+    print(json.dumps(verify(args.snapshot, args.run_root, args.project_file),
+                     ensure_ascii=False, indent=2))

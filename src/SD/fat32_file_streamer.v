@@ -51,6 +51,7 @@ module fat32_file_streamer #(
     localparam ST_ADDR_SHIFT = 4'd8;
     localparam ST_ADDR_ADD   = 4'd9;
     localparam ST_FAT_CHECK  = 4'd10;
+    localparam ST_VALIDATE   = 4'd11;
 
     localparam integer CHAIN_COUNT_WIDTH = $clog2(MAX_VISITED_CLUSTERS + 1);
 
@@ -59,6 +60,7 @@ module fat32_file_streamer #(
     reg [31:0] next_cluster;
     reg [31:0] remaining_bytes;
     reg [7:0]  sector_in_cluster;
+    reg [7:0]  last_sector_in_cluster;
     reg [2:0]  spc_shift;
     reg [8:0]  fat_entry_offset;
     reg [7:0]  fat_byte0;
@@ -123,6 +125,7 @@ module fat32_file_streamer #(
             chain_count <= chain_count + 1'b1;
             current_cluster <= cluster_value;
             sector_in_cluster <= 8'd0;
+            last_sector_in_cluster <= 8'd0;
             cluster_delta <= cluster_value - 32'd2;
             state <= ST_ADDR_SHIFT;
         end
@@ -182,17 +185,23 @@ module fat32_file_streamer #(
                     remaining_bytes <= file_size;
                     sector_in_cluster <= 8'd0;
                     spc_shift <= cluster_shift(sectors_per_cluster);
+                    last_sector_in_cluster <= sectors_per_cluster - 1'b1;
                     chain_count <= 1;
                     final_chain_check <= 1'b0;
                     if (file_size == 0) begin
                         state <= ST_FINISH;
-                    end else if ((first_cluster < 2) ||
-                                 (first_cluster > max_cluster) ||
-                                 (sectors_per_cluster == 0)) begin
-                        finish_with_error(ERR_CLUSTER_RANGE);
                     end else begin
                         current_cluster <= first_cluster;
-                        cluster_delta <= first_cluster - 32'd2;
+                        state <= ST_VALIDATE;
+                    end
+                end
+                ST_VALIDATE: begin
+                    if ((current_cluster < 2) ||
+                        (current_cluster > max_cluster) ||
+                        (sectors_per_cluster == 0)) begin
+                        finish_with_error(ERR_CLUSTER_RANGE);
+                    end else begin
+                        cluster_delta <= current_cluster - 32'd2;
                         state <= ST_ADDR_SHIFT;
                     end
                 end
@@ -209,8 +218,7 @@ module fat32_file_streamer #(
                         fat_entry_offset <= {current_cluster[6:0], 2'b00};
                         sector_lba <= fat_start_lba + (current_cluster >> 7);
                         state <= ST_FAT_REQ;
-                    end else if ((sector_in_cluster + 1'b1) <
-                                 sectors_per_cluster) begin
+                    end else if (sector_in_cluster != last_sector_in_cluster) begin
                         sector_in_cluster <= sector_in_cluster + 1'b1;
                         sector_lba <= sector_lba + 1'b1;
                         state <= ST_DATA_REQ;

@@ -3,7 +3,7 @@ module tb_stage3b_shared_writer #(parameter SHORT_ART=0);
  reg sd_clk=0,mem_clk=0,rst_n=0,enable=0,mv_request=0;
  always #5 sd_clk=~sd_clk;
  always #4 mem_clk=~mem_clk;
- wire bg_active,bg_req,bg_pixel,bg_sec_req,bg_sec_busy,bg_sec_valid,bg_sec_done;
+wire bg_active,bg_req,bg_pixel,bg_sec_req,bg_sec_start,bg_sec_busy,bg_sec_grant,bg_sec_valid,bg_sec_done;
  wire mv_active,mv_req,mv_pixel,mv_sec_req,mv_sec_busy,mv_sec_valid,mv_sec_done,mv_done,mv_failed;
  wire [31:0] bg_data,mv_data,bg_lba,mv_lba;
  wire [20:0] bg_addr;
@@ -40,8 +40,8 @@ module tb_stage3b_shared_writer #(parameter SHORT_ART=0);
   .art2_supported(1'b0),.art_request_async(1'b0),.art2_request_async(1'b0),.mv_writer_active(mv_active),.invalidate_ack_async(1'b0),
   .write_ack(write_ack),.write_finish_toggle(finish_toggle),.ready_info(ready),
   .write_hold(bg_hold),.write_cancel(bg_cancel),.writer_active(bg_active),.write_req(bg_req),.write_address(bg_addr),
-  .pixel_valid(bg_pixel),.pixel_data(bg_data),.sector_req(bg_sec_req),.sector_lba(bg_lba),
-  .sector_busy(bg_sec_busy),.sector_valid(bg_sec_valid),.sector_byte(sec_byte),
+  .pixel_valid(bg_pixel),.pixel_data(bg_data),.sector_req(bg_sec_req),.sector_start(bg_sec_start),.sector_lba(bg_lba),
+  .sector_busy(bg_sec_busy),.sector_grant(bg_sec_grant),.sector_valid(bg_sec_valid),.sector_byte(sec_byte),
   .sector_byte_index(sec_index),.sector_done(bg_sec_done),.sector_error(8'd0));
  mv_stream_player #(.FRAME_SECTORS(1)) mv(
   .clk(sd_clk),.rst_n(rst_n),.abort_request(1'b0),.request_toggle(mv_request),
@@ -53,8 +53,10 @@ module tb_stage3b_shared_writer #(parameter SHORT_ART=0);
   .sector_done(mv_sec_done),.sector_error(8'd0));
  background_sector_mux arb(.clk(sd_clk),.rst_n(rst_n),.audio_req(1'b0),.audio_lba(32'd0),
   .video_req(mv_sec_req),.video_lba(mv_lba),.background_req(bg_sec_req),.background_lba(bg_lba),
+  .background_start(bg_sec_start),
   .allow_video(1'b1),.allow_background(1'b1),.video_busy(mv_sec_busy),.video_valid(mv_sec_valid),
-  .video_done(mv_sec_done),.background_busy(bg_sec_busy),.background_valid(bg_sec_valid),
+  .video_done(mv_sec_done),.background_busy(bg_sec_busy),.background_grant(bg_sec_grant),
+  .background_valid(bg_sec_valid),
   .background_done(bg_sec_done),.sector_req(sec_req),.sector_lba(sec_lba),
   .sector_busy(sec_busy),.sector_valid(sec_valid),.sector_done(sec_done));
  wire [20:0] selected_base=bg_mem ? bg_addr : 21'd1228800;

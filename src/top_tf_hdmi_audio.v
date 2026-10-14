@@ -173,7 +173,8 @@ reg [5:0] background_ready_previous = 6'd0;
 wire background_art2_supported;
 wire background_hold_sd, background_cancel_sd, background_hold_mem, background_cancel_mem;
 wire background_writer_active, background_writer_mem, background_write_req;
-wire background_pixel_valid, background_sector_req, background_sector_busy;
+wire background_pixel_valid, background_sector_req, background_sector_start, background_sector_busy;
+wire background_sector_grant;
 wire background_sector_valid, background_sector_done;
 wire [20:0] background_write_address;
 wire [31:0] background_pixel_data, background_sector_lba;
@@ -2128,8 +2129,10 @@ background_cache_loader u_background_cache_loader (
  .write_ack(sd_card_write_req_ack),
  .write_finish_toggle(frame_write_toggle_mem),.write_address(background_write_address),
  .pixel_valid(background_pixel_valid),.pixel_data(background_pixel_data),
- .sector_req(background_sector_req),.sector_lba(background_sector_lba),
- .sector_busy(background_sector_busy),.sector_valid(background_sector_valid),
+ .sector_req(background_sector_req),.sector_start(background_sector_start),
+ .sector_lba(background_sector_lba),
+ .sector_busy(background_sector_busy),.sector_grant(background_sector_grant),
+ .sector_valid(background_sector_valid),
  .sector_byte(wav_sec_byte),.sector_byte_index(wav_sec_byte_index),
  .sector_done(background_sector_done),.sector_error(wav_sec_error));
 background_frame_select u_background_frame_select (
@@ -2150,8 +2153,10 @@ background_sector_mux u_mv_sector_mux(
  .video_req(mv_sec_req),.video_lba(mv_sec_lba),
  .allow_video(!audio_play_enable_gated || !mv_audio_low_sync[1]),
  .background_req(background_sector_req),.background_lba(background_sector_lba),
+ .background_start(background_sector_start),
  .allow_background(!audio_play_enable_gated || !mv_audio_low_sync[1]),
- .background_busy(background_sector_busy),.background_valid(background_sector_valid),
+ .background_busy(background_sector_busy),.background_grant(background_sector_grant),
+ .background_valid(background_sector_valid),
  .background_done(background_sector_done),
  .audio_busy(wav_sec_busy),.video_busy(mv_sec_busy),
  .audio_valid(wav_sec_valid),.video_valid(mv_sec_valid),

@@ -7,7 +7,7 @@ module tb_background_cache_loader;
  reg [7:0] data=0,error=0;
  reg [8:0] idx=0;
  wire [5:0] info;
- wire inv,active,wr,pv,sr;
+ wire inv,active,wr,pv,sr,start;
  wire [20:0] address;
  wire [31:0] pd,lba;
  integer pixels=0,padded=0,i;
@@ -18,8 +18,8 @@ module tb_background_cache_loader;
   .art2_supported(1'b0),.art_request_async(1'b0),.art2_request_async(1'b0),.mv_writer_active(mv),.invalidate_ack_async(invack),.write_ack(ack),
   .write_finish_toggle(fin),.ready_info(info),.invalidate_toggle(inv),
   .writer_active(active),.write_req(wr),.write_address(address),
-  .pixel_valid(pv),.pixel_data(pd),.sector_req(sr),.sector_lba(lba),
-  .sector_busy(busy),.sector_valid(valid),.sector_byte(data),.sector_byte_index(idx),
+  .pixel_valid(pv),.pixel_data(pd),.sector_req(sr),.sector_start(start),.sector_lba(lba),
+  .sector_busy(busy),.sector_grant(busy),.sector_valid(valid),.sector_byte(data),.sector_byte_index(idx),
   .sector_done(done),.sector_error(error));
  always @(posedge clk) if(pv) begin
   if(!active) $fatal(1,"pixel outside writer ownership");
@@ -30,22 +30,30 @@ module tb_background_cache_loader;
  task handshake;
  input [20:0] expected;
  begin
+  wait(sr);
+  @(posedge clk); #1 busy=1;
   wait(wr); if(address!==expected) $fatal(1,"chunk address got %d expected %d",address,expected);
   repeat(4) @(negedge clk); ack=1;
-  wait(!wr); repeat(4) @(negedge clk); ack=0;
+  wait(!wr); repeat(4) @(negedge clk); ack=0; wait(dut.state==5);
  end endtask
  task sector;
  input integer size;
  input [31:0] expected_lba;
  input [7:0] error_value;
  begin
-  wait(sr); if(lba!==expected_lba) $fatal(1,"wrong sector LBA %d",lba);
-  @(posedge clk); #1 busy=1;
+  if(!busy || lba!==expected_lba) $fatal(1,"wrong sector LBA %d",lba);
+  wait(start);
   for(i=0;i<size;i=i+1) begin
    @(negedge clk); idx=i; data=i%2 ? 8'hf8 : 8'h00; valid=1;
   end
   @(negedge clk); valid=0; done=1; error=error_value;
   @(negedge clk); done=0;busy=0;error=0;
+  if(size!=512 || error_value!=0) begin
+   wait(dut.state==9);
+   if(dut.retry_pending) begin
+    repeat(8) @(negedge clk); fin=!fin; wait(dut.state==4);
+   end
+  end
  end endtask
  task finish_chunk;
  begin

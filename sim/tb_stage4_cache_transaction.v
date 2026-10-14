@@ -24,7 +24,7 @@ module tb_stage4_cache_transaction;
   .write_finish_toggle(fin_toggle),.ready_info(info),.invalidate_toggle(epoch),
   .writer_active(owner),.write_req(req),.write_hold(hold),.write_cancel(cancel),
   .write_address(address),.pixel_valid(pv),.pixel_data(pixel),
-  .sector_req(sr),.sector_lba(lba),.sector_busy(busy),.sector_valid(valid),
+  .sector_req(sr),.sector_lba(lba),.sector_busy(busy),.sector_grant(busy),.sector_valid(valid),
   .sector_byte(data),.sector_byte_index(index),.sector_done(done),.sector_error(error));
  sync_2ff h(.clk(mem),.rst_n(rst_n),.async_in(hold),.sync_out(hold_mem));
  sync_2ff c(.clk(mem),.rst_n(rst_n),.async_in(cancel),.sync_out(cancel_mem));
@@ -69,6 +69,8 @@ module tb_stage4_cache_transaction;
   wait(sr);
   if(lba!==expected_lba) $fatal(1,"retry changed LBA %d expected %d",lba,expected_lba);
   @(posedge sd); #1 busy=1;
+  wait(req); wait(!req);
+  wait(loader.state==5);
   for(i=0;i<bytes;i=i+1) begin
    @(negedge sd); valid=1;index=i;
    data=i%2 ? (good ? 8'hf8 : 8'h07) : (good ? 8'h00 : 8'he0);
@@ -109,7 +111,8 @@ module tb_stage4_cache_transaction;
   art2=0;repeat(15) @(negedge sd);invack=epoch;
   before_count=total;
   for(attempt=0;attempt<3;attempt=attempt+1) sector(512,5800,8'h20,0);
-  wait(cancel);wait(!owner);repeat(25) @(negedge sd);
+  if(loader.state!=0 && !cancel) wait(cancel || loader.state==0);
+  wait(!owner);repeat(25) @(negedge sd);
   if(total!=before_count || req || sr || info[3]) $fatal(1,"exhausted sector not safely cancelled");
   if(!loader.art_failed || writer.state!=0) $fatal(1,"cancel did not release memory writer");
   $display("TEST_PASS stage4 cache FIFO hold retry cancel ART2 epoch/coalescing, %d SDRAM words",total);

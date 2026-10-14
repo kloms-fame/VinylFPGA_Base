@@ -197,19 +197,27 @@ def pack_glyph_vector(text: str, char_index: dict) -> int:
 
 
 def emit_song_text_rom(tracks: list, chars: list) -> str:
-    char_index = {char: index for index, char in enumerate(chars)}
     flattened = []
     offsets = []
     for track in tracks:
         offsets.append(len(flattened))
+        char_index = track["char_index"]
         for time_ms, text in track["lines"]:
             flattened.append((time_ms, len(text), pack_glyph_vector(text, char_index)))
 
     depth = max(1, len(flattened))
     addr_width = max(1, (depth - 1).bit_length())
-    records = [0] * depth
+    rom_depth = 1 << addr_width
+    records = [0] * rom_depth
     for index, (time_ms, length, glyphs) in enumerate(flattened):
+        if time_ms >= (1 << 18):
+            raise LrcError(f"歌词时间 {time_ms} ms 超过 18 位 ROM 时间范围")
         records[index] = (time_ms << 133) | (length << 128) | glyphs
+
+    glyph_chunks = [[(record >> (chunk * 32)) & 0xFFFFFFFF
+                     for record in records] for chunk in range(4)]
+    time_lengths = [((record >> 133) << 5) | ((record >> 128) & 0x1F)
+                    for record in records]
 
     out = [
         "// 由 tools/gen_lrc_assets.py --songs-manifest 自动生成，请勿手改。",
@@ -221,9 +229,9 @@ def emit_song_text_rom(tracks: list, chars: list) -> str:
         "    input  wire [6:0]  line_index,",
         "    output reg  [7:0]  line_count,",
         "    output reg         line_valid,",
-        "    output reg  [31:0] line_time_ms,",
-        "    output reg  [4:0]  line_length,",
-        "    output reg  [127:0] line_glyphs,",
+        "    output wire [31:0] line_time_ms,",
+        "    output wire [4:0]  line_length,",
+        "    output wire [127:0] line_glyphs,",
         "    output reg         song_text_valid,",
         "    output reg  [4:0]  title_length,",
         "    output reg  [4:0]  artist_length,",
@@ -234,16 +242,28 @@ def emit_song_text_rom(tracks: list, chars: list) -> str:
         "    output reg  [7:0]  ui_glyph",
         ");",
         f"    localparam integer SONG_LINE_ADDR_W = {addr_width};",
-        f"    reg [164:0] line_mem [0:{depth - 1}];",
+        # Keep each synchronous ROM within a 32-bit port and power-of-two
+        # depth so TD maps the lyric table into BRAM rather than LUT fabric.
+        *[f"    reg [31:0] glyph_mem_{chunk} [0:{rom_depth - 1}];"
+          for chunk in range(4)],
+        f"    reg [22:0] time_length_mem [0:{rom_depth - 1}];",
         "    initial begin",
     ]
-    for index, record in enumerate(records):
-        out.append(f"        line_mem[{index}] = 165'h{record:042X};")
+    for chunk, values in enumerate(glyph_chunks):
+        for index, value in enumerate(values):
+            out.append(f"        glyph_mem_{chunk}[{index}] = 32'h{value:08X};")
+    for index, value in enumerate(time_lengths):
+        out.append(f"        time_length_mem[{index}] = 23'h{value:06X};")
     out += [
         "    end",
         "    reg [SONG_LINE_ADDR_W-1:0] line_base;",
         "    wire [SONG_LINE_ADDR_W-1:0] line_addr = line_base + line_index;",
-        f"    assign no_lyrics_glyphs = 128'h{pack_glyph_vector('NO LYRICS', char_index):032X};",
+        "    reg [31:0] line_glyph_word_0, line_glyph_word_1, line_glyph_word_2, line_glyph_word_3;",
+        "    reg [22:0] line_time_length_word;",
+        "    assign line_time_ms = line_valid ? {14'd0, line_time_length_word[22:5]} : 32'hFFFFFFFF;",
+        "    assign line_length = line_valid ? line_time_length_word[4:0] : 5'd0;",
+        "    assign line_glyphs = line_valid ? {line_glyph_word_3, line_glyph_word_2, line_glyph_word_1, line_glyph_word_0} : 128'd0;",
+        f"    assign no_lyrics_glyphs = 128'h{pack_glyph_vector('NO LYRICS', tracks[0]['char_index']):032X};",
         "    always @* begin",
         "        line_count = 8'd0;",
         "        line_base = {SONG_LINE_ADDR_W{1'b0}};",
@@ -255,6 +275,7 @@ def emit_song_text_rom(tracks: list, chars: list) -> str:
         "        case (song_id)",
     ]
     for song_id, track in enumerate(tracks):
+        char_index = track["char_index"]
         title = track["title"]
         artist = track["artist"]
         title_bus = pack_glyph_vector(title, char_index)
@@ -276,26 +297,21 @@ def emit_song_text_rom(tracks: list, chars: list) -> str:
         "        endcase",
         "    end",
         "    always @(posedge clk) begin",
-        "        if ((line_index < line_count) && (line_addr < " +
-        f"{addr_width}'d{depth}" + ")) begin",
-        "            line_time_ms <= line_mem[line_addr][164:133];",
-        "            line_length <= line_mem[line_addr][132:128];",
-        "            line_glyphs <= line_mem[line_addr][127:0];",
-        "            line_valid <= 1'b1;",
-        "        end else begin",
-            "            line_time_ms <= 32'hFFFFFFFF;",
-            "            line_length <= 5'd0;",
-            "            line_glyphs <= 128'd0;",
-        "            line_valid <= 1'b0;",
-        "        end",
+        "        line_glyph_word_0 <= glyph_mem_0[line_addr];",
+        "        line_glyph_word_1 <= glyph_mem_1[line_addr];",
+        "        line_glyph_word_2 <= glyph_mem_2[line_addr];",
+        "        line_glyph_word_3 <= glyph_mem_3[line_addr];",
+        "        line_time_length_word <= time_length_mem[line_addr];",
+        f"        line_valid <= (line_index < line_count) && (line_addr < {addr_width}'d{depth});",
         "    end",
         "    always @* begin",
         "        ui_glyph = 8'd0;",
         "        case (ui_ascii_code)",
     ]
+    ui_char_index = tracks[0]["char_index"]
     for char in chars:
-        if len(char) == 1 and ord(char) < 128:
-            out.append(f"            8'd{ord(char)}: ui_glyph = 8'd{char_index[char]};")
+        if len(char) == 1 and ord(char) < 128 and char in ui_char_index:
+            out.append(f"            8'd{ord(char)}: ui_glyph = 8'd{ui_char_index[char]};")
     out += [
         "            default: ui_glyph = 8'd0;",
         "        endcase",
@@ -321,10 +337,11 @@ def generate_song_text_assets(manifest_path: Path, out_dir: Path) -> dict:
         if not isinstance(song_id, int) or song_id < 0 or song_id > 3 or song_id in by_id:
             raise LrcError(f"song_id 必须是唯一的 0..3: {song_id!r}")
         title = item.get("title", "")
+        display_title = item.get("display_title", title)
         artist = item.get("artist", "")
-        if not isinstance(title, str) or not isinstance(artist, str):
+        if not isinstance(title, str) or not isinstance(display_title, str) or not isinstance(artist, str):
             raise LrcError(f"song_id {song_id} 的 title/artist 必须是 UTF-8 字符串")
-        if len(title) > 16 or len(artist) > 16:
+        if len(display_title) > 16 or len(artist) > 16:
             raise LrcError(f"song_id {song_id} 的 title/artist 均最多 16 个字形")
         lrc_value = item.get("lrc")
         if lrc_value is None or lrc_value == "":
@@ -336,37 +353,67 @@ def generate_song_text_assets(manifest_path: Path, out_dir: Path) -> dict:
             lines = parse_lrc_multisong(lrc_path)
         else:
             raise LrcError(f"song_id {song_id} 的 lrc 必须是相对路径或 null")
-        by_id[song_id] = {"title": title, "artist": artist, "lines": lines}
+        by_id[song_id] = {"song_id": song_id, "title": display_title,
+                          "artist": artist, "lines": lines}
     if set(by_id) != {0, 1, 2, 3}:
         raise LrcError("songs manifest 必须且只能包含 song_id 0..3")
 
     tracks = [by_id[index] for index in range(4)]
-    chars = {" ", "-", ":", "/"}
-    chars.update("TRACK 0123456789ARTISTNO LYRICS")
-    for track in tracks:
-        chars.update(track["title"])
-        chars.update(track["artist"])
-        for _, text in track["lines"]:
-            chars.update(text)
-    chars = sorted(chars)
-    if len(chars) > 256:
-        raise LrcError(f"去重字形 {len(chars)} 超过 8 bit glyph_id 可表示的 256")
-    glyphs = [render_glyph(char, ord(char) < 128) for char in chars]
+    common = {" ", "-", ":", "/"}
+    common.update("TRACK 0123456789ARTISTNO LYRICS")
+    banked = bool(manifest.get("glyph_banks", False))
+    bank_chars = []
+    if banked:
+        for bank in range(2):
+            bank_set = set(common)
+            for song_id in range(bank * 2, bank * 2 + 2):
+                track = tracks[song_id]
+                bank_set.update(track["title"])
+                bank_set.update(track["artist"])
+                for _, text in track["lines"]:
+                    bank_set.update(text)
+            ordered = sorted(bank_set)
+            if len(ordered) > 256:
+                raise LrcError(f"字库组 {bank} 去重字形 {len(ordered)} 超过 8 bit 的 256 上限")
+            bank_chars.append(ordered)
+        for track in tracks:
+            track["char_index"] = {
+                char: index for index, char in enumerate(bank_chars[track["song_id"] // 2])}
+        # The high address bit selects one of two fixed 256-glyph banks.
+        font_chars = (bank_chars[0] + [" "] * (256 - len(bank_chars[0])) +
+                      bank_chars[1] + [" "] * (256 - len(bank_chars[1])))
+        chars = sorted(set().union(*map(set, bank_chars)))
+        font_depth, font_addr_width = 8192, 13
+    else:
+        chars_set = set(common)
+        for track in tracks:
+            chars_set.update(track["title"])
+            chars_set.update(track["artist"])
+            for _, text in track["lines"]:
+                chars_set.update(text)
+        chars = sorted(chars_set)
+        if len(chars) > 256:
+            raise LrcError(f"去重字形 {len(chars)} 超过 8 bit glyph_id 可表示的 256")
+        for track in tracks:
+            track["char_index"] = {char: index for index, char in enumerate(chars)}
+        font_chars = chars
+        font_addr_width = max(1, (len(chars) * GLYPH_H - 1).bit_length())
+        font_depth = 1 << font_addr_width
+        bank_chars = [chars]
+    glyphs = [render_glyph(char, ord(char) < 128) for char in font_chars]
 
     display_dir = out_dir / "src/display"
     include_dir = out_dir / "src/include"
     display_dir.mkdir(parents=True, exist_ok=True)
     include_dir.mkdir(parents=True, exist_ok=True)
-    font_addr_width = max(1, (len(chars) * GLYPH_H - 1).bit_length())
-    font_depth = 1 << font_addr_width
     files = {
         "src/display/song_text_rom.v": emit_song_text_rom(tracks, chars),
         "src/display/song_font_rom.v": emit_font_rom(
-            chars, glyphs, "song_font_rom", "EXP_SONG_FONT_ROM_V"),
+            font_chars, glyphs, "song_font_rom", "EXP_SONG_FONT_ROM_V"),
         "src/include/song_text_geom.vh": "\n".join([
             "// 由 tools/gen_lrc_assets.py --songs-manifest 自动生成，请勿手改。",
             f"localparam integer SONG_TEXT_LINE_TOTAL = {sum(len(t['lines']) for t in tracks)};",
-            f"localparam integer SONG_TEXT_GLYPH_COUNT = {len(chars)};",
+            f"localparam integer SONG_TEXT_GLYPH_COUNT = {sum(map(len, bank_chars))};",
             f"localparam integer SONG_FONT_ADDR_W = {font_addr_width};",
             f"localparam integer SONG_FONT_DEPTH = {font_depth};",
             "localparam integer SONG_TEXT_MAX_LINES = 128;",
@@ -376,8 +423,8 @@ def generate_song_text_assets(manifest_path: Path, out_dir: Path) -> dict:
     }
     for relative, content in files.items():
         (out_dir / relative).write_text(content, encoding="utf-8", newline="\n")
-    return {"tracks": tracks, "chars": chars, "font_addr_width": font_addr_width,
-            "font_depth": font_depth}
+    return {"tracks": tracks, "chars": chars, "bank_chars": bank_chars,
+            "font_addr_width": font_addr_width, "font_depth": font_depth}
 
 
 def emit_lines_rom(lines_data: list) -> str:

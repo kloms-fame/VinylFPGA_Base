@@ -183,7 +183,10 @@ module playback_page #(
         (line_y >= `PLAYBACK_ARTIST_Y) && (line_y < (`PLAYBACK_ARTIST_Y + 10'd16)) &&
         (pixel_x >= `PLAYBACK_ARTIST_X) &&
         (pixel_x < (`PLAYBACK_ARTIST_X + 10'd256));
-    wire [11:0] font_addr_full = {direct_glyph, 4'b0000} + {8'd0, selected_row};
+    // S3 uses two compact glyph banks. Tracks 0/1 select bank 0; tracks 2/3
+    // select bank 1. Glyph IDs remain 8-bit, preserving the lyric row format.
+    wire [12:0] font_addr_full = {song_id[1], direct_glyph, 4'b0000} +
+                                 {9'd0, selected_row};
     wire [SONG_FONT_ADDR_W-1:0] font_addr = font_addr_full[SONG_FONT_ADDR_W-1:0];
     wire [15:0] font_row;
     assign ascii_font_addr = {selected_ascii[6:0], selected_row[3:1]};

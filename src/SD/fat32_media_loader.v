@@ -128,24 +128,38 @@ module fat32_media_loader #(
     wire        streamer_done;
     wire        streamer_valid;
     wire [7:0]  streamer_byte;
+    wire [7:0]  streamer_error;
     // Keep BMP byte, valid and completion aligned in one pipeline stage.
-    // Index parsing still consumes the original stream. This cuts the measured
-    // file-valid -> RGB byte-state path without changing bytes or ordering.
+    // Index parsing consumes a parallel one-cycle pipeline so its stream-valid
+    // fanout does not directly drive the index field decoder.
     reg         bmp_stream_valid;
     reg [7:0]   bmp_stream_byte;
     reg         bmp_stream_done;
+    reg         idx_stream_valid;
+    reg [7:0]   idx_stream_byte;
+    reg         idx_stream_done;
+    reg [7:0]   idx_stream_error;
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             bmp_stream_valid <= 1'b0;
             bmp_stream_byte <= 8'd0;
             bmp_stream_done <= 1'b0;
+            idx_stream_valid <= 1'b0;
+            idx_stream_byte <= 8'd0;
+            idx_stream_done <= 1'b0;
+            idx_stream_error <= 8'd0;
         end else begin
             bmp_stream_valid <= streamer_valid && sd_init_done;
             bmp_stream_byte <= streamer_byte;
             bmp_stream_done <= streamer_done && sd_init_done;
+            // Keep the index byte stream and terminal status aligned while
+            // adding a local register boundary after the shared FAT streamer.
+            idx_stream_valid <= streamer_valid;
+            idx_stream_byte <= streamer_byte;
+            idx_stream_done <= streamer_done;
+            idx_stream_error <= streamer_error;
         end
     end
-    wire [7:0]  streamer_error;
     wire        streamer_req;
     wire [31:0] streamer_lba;
     wire        streamer_sector_busy;
@@ -561,10 +575,10 @@ module fat32_media_loader #(
         .clk            (clk),
         .rst_n          (~rst),
         .start          (idx_start_pulse),
-        .in_valid       (streamer_valid),
-        .in_byte        (streamer_byte),
-        .in_done        (streamer_done),
-        .in_error       (streamer_error),
+        .in_valid       (idx_stream_valid),
+        .in_byte        (idx_stream_byte),
+        .in_done        (idx_stream_done),
+        .in_error       (idx_stream_error),
         .max_cluster    (scanner_max_cluster),
         .busy           (),
         .done           (idx_done),

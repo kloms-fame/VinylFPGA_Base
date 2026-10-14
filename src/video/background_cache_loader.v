@@ -18,8 +18,9 @@ module background_cache_loader #(
  output wire write_hold, write_cancel,
  output reg [20:0] write_address = 21'd0,
  output wire pixel_valid, output wire [31:0] pixel_data,
- output wire sector_req, output reg [31:0] sector_lba = 32'd0,
- input wire sector_busy, sector_valid,
+ output wire sector_req, output wire sector_start,
+ output reg [31:0] sector_lba = 32'd0,
+ input wire sector_busy, sector_grant, sector_valid,
  input wire [7:0] sector_byte,
  input wire [8:0] sector_byte_index,
  input wire sector_done,
@@ -46,6 +47,7 @@ module background_cache_loader #(
  reg [7:0] low_byte = 8'd0;
  reg failed = 1'b0, abandoned = 1'b0, finish_mark = 1'b0;
  reg [1:0] retry_count = 2'd0;
+ reg retry_pending = 1'b0;
  reg [31:0] source_base = 32'd0;
  reg source_base_valid = 1'b0, source_enabled = 1'b0;
  wire source_valid = source_enabled && source_base_valid;
@@ -66,12 +68,15 @@ module background_cache_loader #(
  wire [15:0] rgb565 = {sector_byte,low_byte};
  assign ready_info = {epoch,cached_art2,art_ready,song_ready,cached_song};
  assign invalidate_toggle = epoch;
- assign writer_active = state == ACK || state == CLEAR || state == REQ ||
-                        state == READ || state == DRAIN || state == ABORT;
+ // Never reserve SDRAM while waiting for the SD-sector arbiter. A writer
+ // token is requested only after the mux confirms ownership of this sector.
+ assign writer_active = state == ACK || state == CLEAR || state == READ ||
+                        state == DRAIN || state == ABORT;
  assign write_req = state == ACK;
  assign write_hold = state != DRAIN;
  assign write_cancel = state == ABORT;
  assign sector_req = state == REQ && !sector_busy && !job_obsolete && !abandoned;
+ assign sector_start = state == READ || (state == ABORT && sector_grant);
  assign pixel_valid = state == READ && sector_valid && sector_byte_index[0] &&
                       !failed && !byte_bad && !job_obsolete && !abandoned;
  assign pixel_data = {rgb565[15:11],rgb565[15:13],rgb565[10:5],rgb565[10:9],rgb565[4:0],rgb565[4:2],8'd0};
@@ -107,18 +112,20 @@ module background_cache_loader #(
   else case (state)
    IDLE: if (start_art || start_song) state<=WAIT_CHUNK;
    WAIT_CHUNK: if (job_obsolete || abandoned) state<=IDLE;
-               else if (!mv_writer_active && !invalidate_pending && !song_changed && !art_changed) state<=ACK;
+               else if (!mv_writer_active && !invalidate_pending && !song_changed && !art_changed) state<=REQ;
    ACK: if (write_ack_sync[1]) state<=CLEAR;
-   CLEAR: if (!write_ack_sync[1]) state<=REQ;
-   REQ: if (job_obsolete || abandoned) state<=ABORT;
-        else if (!sector_busy) state<=READ;
+   CLEAR: if (!write_ack_sync[1]) state<=READ;
+   REQ: if (sector_grant) state<=(job_obsolete || abandoned) ? ABORT : ACK;
+        else if (job_obsolete || abandoned) state<=IDLE;
    READ: if (sector_done) begin
     if (job_obsolete || abandoned) state<=ABORT;
-    else if (failed || sector_bad) state<=(retry_count < SECTOR_RETRIES) ? ACK : ABORT;
+    else if (failed || sector_bad) state<=ABORT;
     else state<=DRAIN;
    end
    DRAIN, ABORT: if (finish_sync[1] != finish_mark) state<=NEXT;
-   NEXT: if (failed || abandoned || job_obsolete || chunk == FRAME_SECTORS-1) state<=IDLE;
+   NEXT: if (abandoned || job_obsolete) state<=IDLE;
+         else if (failed) state<=retry_pending ? WAIT_CHUNK : IDLE;
+         else if (chunk == FRAME_SECTORS-1) state<=IDLE;
          else state<=WAIT_CHUNK;
    default: state<=IDLE;
   endcase
@@ -127,7 +134,7 @@ module background_cache_loader #(
   if (!rst_n) begin job_art<=0; job_art2<=0; job_song<=0; chunk<=0; end
   else if (start_art || start_song) begin
    job_art<=start_art; job_art2<=target_art2; job_song<=song_id; chunk<=0;
-  end else if (state == NEXT) chunk<=chunk+11'd1;
+ end else if (state == NEXT && !failed) chunk<=chunk+11'd1;
  end
  always @(posedge clk or negedge rst_n) begin
   if (!rst_n) begin sector_lba<=0; write_address<=0; end
@@ -142,7 +149,7 @@ module background_cache_loader #(
     3: sector_lba<=source_base+32'd3600;
    endcase
    write_address<=SONG_ADDRESS;
-  end else if (state == NEXT) begin
+ end else if (state == NEXT && !failed) begin
    sector_lba<=sector_lba+32'd1; write_address<=write_address+21'd256;
   end
  end
@@ -157,7 +164,8 @@ module background_cache_loader #(
  end
  always @(posedge clk or negedge rst_n) begin
   if (!rst_n) failed<=0;
-  else if (start_art || start_song || state == ACK) failed<=0;
+  else if (start_art || start_song || state == ACK ||
+           (state == NEXT && failed && retry_pending)) failed<=0;
   else if (state == READ && (byte_bad || (sector_done && sector_bad))) failed<=1;
  end
  always @(posedge clk or negedge rst_n) begin
@@ -167,9 +175,16 @@ module background_cache_loader #(
  end
  always @(posedge clk or negedge rst_n) begin
   if (!rst_n) retry_count<=0;
-  else if (start_art || start_song || state == NEXT) retry_count<=0;
+  else if (start_art || start_song || (state == NEXT && !failed)) retry_count<=0;
   else if (state == READ && sector_done && (failed || sector_bad) && retry_count < SECTOR_RETRIES)
    retry_count<=retry_count+2'd1;
+ end
+ always @(posedge clk or negedge rst_n) begin
+  if (!rst_n) retry_pending<=1'b0;
+  else if (start_art || start_song || state == NEXT) retry_pending<=1'b0;
+  else if (state == READ && sector_done)
+   retry_pending<=!job_obsolete && !abandoned && (failed || sector_bad) &&
+                  retry_count < SECTOR_RETRIES;
  end
  always @(posedge clk or negedge rst_n) begin
   if (!rst_n) finish_mark<=0;
