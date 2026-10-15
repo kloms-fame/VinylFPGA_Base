@@ -109,6 +109,7 @@ module expansion_integration #(
     wire [31:0] ir_code;
 
     wire        ev_valid;
+    wire        ev_bus_enable;
     wire [3:0]  ev_code;
     wire [15:0] ev_arg;
     wire [15:0] ev_aux;
@@ -186,6 +187,7 @@ module expansion_integration #(
     ) u_ui_event_bus (
         .clk                (clk),
         .rst_n              (rst_n),
+        .ev_enable          (ev_bus_enable),
         .key_fall_pulse     (key_fall_pulse),
         .key_rise_pulse     (key_rise_pulse),
         .dip_level          (dip_level),
@@ -247,7 +249,11 @@ module expansion_integration #(
                 present_count <= present_count + 1'b1;
         end
     end
-    wire action_valid = ev_valid && exp_actions_ready && dip_level[0];
+    // ui_event_bus only emits/clears an event when this readiness gate is open.
+    // Consume its registered event unconditionally so a concurrent hot-unplug
+    // cannot invalidate an event already accepted by the bus.
+    wire action_valid = ev_valid;
+    assign ev_bus_enable = exp_actions_ready && dip_level[0];
     assign ui_actions_ready = exp_actions_ready && dip_level[0];
     assign restart_confirm_active = router_restart_confirm_active;
 

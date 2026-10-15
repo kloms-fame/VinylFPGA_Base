@@ -49,6 +49,7 @@
 `include "audio/stream_session.v"
 `include "audio/seek_controller.v"
 `include "io/cover_navigation.v"
+`include "io/navigation_readiness.v"
 `include "io/slideshow_controller.v"
 `include "SD/media_probe.v"
 // Keep S4/S5 dependencies visible even if the GUI project list is stale.
@@ -419,6 +420,9 @@ wire        play_volume_intent_up_sd;
 wire        play_track_step_sd;
 wire        play_track_dir_sd;
 wire [2:0]  song_total_sd;
+wire [2:0]  browse_song_count_sd;
+wire        browse_ready_sd;
+wire        playback_ready_sd;
 wire        audio_play_enable_gated;
 // X2：Seek 目标与重启握手（sd 域）
 wire [31:0] play_seek_target_sd;
@@ -1121,6 +1125,20 @@ media_probe u_media_probe(
  .client_busy(media_sec_busy),.client_valid(media_sec_valid),.client_done(media_sec_done),
  .card_req(probe_card_req),.card_lba(probe_card_lba),
  .card_busy(probe_card_busy),.card_valid(probe_card_valid),.card_done(probe_card_done));
+
+// Browsing needs a valid completed directory scan, not completed image preload.
+// Playback additionally requires the full media mount and usable audio metadata.
+navigation_readiness u_navigation_readiness(
+    .scan_done          (media_status_sd[23]),
+    .source_valid       (media_status_sd[19:16]),
+    .scan_error         (media_status_sd[15:0]),
+    .media_mounted      (media_mount_ok_sd),
+    .audio_file_valid   (audio_file_valid),
+    .audio_total_sectors(audio_total_sectors),
+    .browse_ready       (browse_ready_sd),
+    .browse_count       (browse_song_count_sd),
+    .playback_ready     (playback_ready_sd)
+);
 // ===================== S7-02：媒体故障恢复监督器 =====================
 // Validated media lifecycle; every storage client participates in reset/recovery.
 media_supervisor #(
@@ -1153,7 +1171,7 @@ play_ctrl u_play_ctrl (
     .clk           (sd_card_clk),
     .rst_n         (sdcard_rst_n),
     .song_total    (song_total_sd),
-    .song_confirm  (brw_play_start && media_mount_ok_sd && !cover_busy),
+    .song_confirm  (brw_play_start && playback_ready_sd && !cover_busy),
     .focus_index   (disp_buf_idx),
     .enc_cw_tgl    (brw_ev_enc_cw_tgl),
     .enc_ccw_tgl   (brw_ev_enc_ccw_tgl),
@@ -1291,7 +1309,7 @@ wire play_fs_prev_sd = play_track_step_sd & ~play_track_dir_sd;
 // Restart transaction: drain clients and acknowledge read-side pointer reset.
 stream_session u_stream_session(
  .clk(sd_card_clk),.rst_n(sd_media_rst_n),
- .requested(audio_play_enable && play_active_sd && media_mount_ok_sd && !cover_busy),
+ .requested(audio_play_enable && play_active_sd && playback_ready_sd && !cover_busy),
  .restart(play_restart_request),.storage_busy(wav_sec_busy),
  .video_busy(mv_writer_active),.reader_idle(wav_reader_idle),
  .enable(stream_enable_sd),.start_toggle(play_track_tgl_sd));
@@ -1337,8 +1355,8 @@ slideshow_controller #(
  .auto_next(slideshow_auto_next_sd));
 
  cover_navigation u_cover_navigation(
- .clk(sd_card_clk),.rst_n(sd_media_rst_n),.ready(media_mount_ok_sd),
- .count(song_total_sd),.displayed(disp_buf_idx),
+ .clk(sd_card_clk),.rst_n(sd_media_rst_n),.ready(browse_ready_sd),
+ .count(browse_song_count_sd),.displayed(disp_buf_idx),
  .next_step(brw_fs_next),.prev_step(brw_fs_prev),.auto_next(slideshow_auto_next_sd),
  .choose(play_track_step_sd),
  .chosen(play_sel_song_sd),

@@ -30,6 +30,7 @@ module ui_event_bus #(
 )(
     input  wire                 clk,
     input  wire                 rst_n,
+    input  wire                 ev_enable, // 低时保留待处理事件，不推进仲裁
 
     input  wire [KEY_COUNT-1:0] key_fall_pulse,
     input  wire [KEY_COUNT-1:0] key_rise_pulse,
@@ -131,65 +132,69 @@ module ui_event_bus #(
         arb_enc2_sw_clr   = 1'b0;
         arb_ir_clr        = 1'b0;
 
-        // KEY_DOWN（优先级最高，pending 逐键保序）
-        if (|key_down_pending) begin
-            arb_valid = 1'b1;
-            arb_code  = EV_KEY_DOWN;
-            arb_arg   = {12'd0, key_down_idx};
-            arb_key_down_clr = 12'b1 << key_down_idx;
-        end
-        // KEY_UP（直接，无 pending）
-        else if (|key_rise_pulse) begin
-            arb_valid = 1'b1;
-            arb_code  = EV_KEY_UP;
-            arb_arg   = {12'd0, key_up_idx};
-        end
-        // DIP
-        for (i = 0; i < DIP_COUNT; i = i + 1) begin
-            if (!arb_valid && dip_pending[i]) begin
+        // Keep all pending events in place until the consumer is ready.
+        // Inputs continue accumulating below while output arbitration is held.
+        if (ev_enable) begin
+            // KEY_DOWN（优先级最高，pending 逐键保序）
+            if (|key_down_pending) begin
                 arb_valid = 1'b1;
-                arb_code  = EV_DIP_CHANGE;
-                arb_arg   = {12'd0, dip_pending_level[i], i[2:0]};
-                arb_dip_clr[i] = 1'b1;
+                arb_code  = EV_KEY_DOWN;
+                arb_arg   = {12'd0, key_down_idx};
+                arb_key_down_clr = 12'b1 << key_down_idx;
             end
-        end
-        // EC step（enc_id 在 aux[1]，direction 在 aux[0]）
-        if (!arb_valid && enc1_step_pending) begin
-            arb_valid = 1'b1;
-            arb_code  = EV_ENC_STEP;
-            arb_arg   = enc1_count;
-            arb_aux   = {14'd0, 1'b0, enc1_step_dir};
-            arb_enc1_step_clr = 1'b1;
-        end
-        if (!arb_valid && enc2_step_pending) begin
-            arb_valid = 1'b1;
-            arb_code  = EV_ENC_STEP;
-            arb_arg   = enc2_count;
-            arb_aux   = {14'd0, 1'b1, enc2_step_dir};
-            arb_enc2_step_clr = 1'b1;
-        end
-        // EC 按压（arg[0]=pressed，aux[1]=enc_id）
-        if (!arb_valid && enc1_sw_pending) begin
-            arb_valid = 1'b1;
-            arb_code  = EV_ENC_SW;
-            arb_arg   = {15'd0, enc1_sw_pressed};
-            arb_aux   = {14'd0, 1'b0, 1'b0};
-            arb_enc1_sw_clr = 1'b1;
-        end
-        if (!arb_valid && enc2_sw_pending) begin
-            arb_valid = 1'b1;
-            arb_code  = EV_ENC_SW;
-            arb_arg   = {15'd0, enc2_sw_pressed};
-            arb_aux   = {14'd0, 1'b1, 1'b0};
-            arb_enc2_sw_clr = 1'b1;
-        end
-        // IR（完整 32 位帧：arg=低16，aux=高16）
-        if (!arb_valid && ir_pending) begin
-            arb_valid = 1'b1;
-            arb_code  = ir_pending_repeat ? EV_IR_REPEAT : EV_IR_FRAME;
-            arb_arg   = ir_code[15:0];
-            arb_aux   = ir_code[31:16];
-            arb_ir_clr = 1'b1;
+            // KEY_UP（直接，无 pending）
+            else if (|key_rise_pulse) begin
+                arb_valid = 1'b1;
+                arb_code  = EV_KEY_UP;
+                arb_arg   = {12'd0, key_up_idx};
+            end
+            // DIP
+            for (i = 0; i < DIP_COUNT; i = i + 1) begin
+                if (!arb_valid && dip_pending[i]) begin
+                    arb_valid = 1'b1;
+                    arb_code  = EV_DIP_CHANGE;
+                    arb_arg   = {12'd0, dip_pending_level[i], i[2:0]};
+                    arb_dip_clr[i] = 1'b1;
+                end
+            end
+            // EC step（enc_id 在 aux[1]，direction 在 aux[0]）
+            if (!arb_valid && enc1_step_pending) begin
+                arb_valid = 1'b1;
+                arb_code  = EV_ENC_STEP;
+                arb_arg   = enc1_count;
+                arb_aux   = {14'd0, 1'b0, enc1_step_dir};
+                arb_enc1_step_clr = 1'b1;
+            end
+            if (!arb_valid && enc2_step_pending) begin
+                arb_valid = 1'b1;
+                arb_code  = EV_ENC_STEP;
+                arb_arg   = enc2_count;
+                arb_aux   = {14'd0, 1'b1, enc2_step_dir};
+                arb_enc2_step_clr = 1'b1;
+            end
+            // EC 按压（arg[0]=pressed，aux[1]=enc_id）
+            if (!arb_valid && enc1_sw_pending) begin
+                arb_valid = 1'b1;
+                arb_code  = EV_ENC_SW;
+                arb_arg   = {15'd0, enc1_sw_pressed};
+                arb_aux   = {14'd0, 1'b0, 1'b0};
+                arb_enc1_sw_clr = 1'b1;
+            end
+            if (!arb_valid && enc2_sw_pending) begin
+                arb_valid = 1'b1;
+                arb_code  = EV_ENC_SW;
+                arb_arg   = {15'd0, enc2_sw_pressed};
+                arb_aux   = {14'd0, 1'b1, 1'b0};
+                arb_enc2_sw_clr = 1'b1;
+            end
+            // IR（完整 32 位帧：arg=低16，aux=高16）
+            if (!arb_valid && ir_pending) begin
+                arb_valid = 1'b1;
+                arb_code  = ir_pending_repeat ? EV_IR_REPEAT : EV_IR_FRAME;
+                arb_arg   = ir_code[15:0];
+                arb_aux   = ir_code[31:16];
+                arb_ir_clr = 1'b1;
+            end
         end
     end
 
