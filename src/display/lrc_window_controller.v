@@ -69,16 +69,19 @@ module lrc_window_controller (
     wire [7:0] center_plus_one = {1'b0, window_center_index} + 8'd1;
     wire scan_is_normal_next = ({1'b0, scan_final_index} == center_plus_one);
     wire scan_holds_window = window_valid &&
-        ((scan_final_index == window_center_index) ||
-         (scroll_active && (scan_final_index == scroll_target_index)) ||
-         (!scroll_active && scan_is_normal_next));
+        ((!scan_final_valid && (window_center_index == 7'd0)) ||
+         (scan_final_valid && (scan_final_index == window_center_index)) ||
+         (scan_final_valid && scroll_active && (scan_final_index == scroll_target_index)) ||
+         (scan_final_valid && !scroll_active && scan_is_normal_next));
 
     wire [7:0] fill_index_base = {1'b0, window_center_index} + {5'd0, fill_slot};
     wire [7:0] fill_line_limit = {1'b0, song_line_count_frame} + 8'd2;
     wire [6:0] fill_index_value = fill_index_base[6:0] - 7'd2;
     wire fill_index_in_range = (fill_index_base >= 8'd2) &&
                                (fill_index_base < fill_line_limit);
-    wire [7:0] tail_index_value = {1'b0, window_center_index} + 8'd4;
+    // After commit the center advances by one and slot 5 must be new_center+3.
+    // The previous expression used +4 and skipped one lyric on every scroll.
+    wire [7:0] tail_index_value = {1'b0, window_center_index} + 8'd3;
     wire tail_index_in_range = tail_index_value < {1'b0, song_line_count_frame};
 
     always @* begin
@@ -134,12 +137,12 @@ module lrc_window_controller (
                 scan_issue_index <= 8'd0;
                 scan_pending_valid <= 1'b0;
                 scan_selected_valid <= 1'b0;
-                tail_pending <= 1'b0;
                 if (!enable || (song_id_async != song_id_frame) ||
                     (generation_async != generation_frame)) begin
                     target_valid <= 1'b0;
                     window_valid <= 1'b0;
                     window_ready <= 1'b0;
+                    tail_pending <= 1'b0;
                 end
             end else begin
                 if (scroll_commit && window_valid) begin
@@ -183,10 +186,21 @@ module lrc_window_controller (
                                 target_index <= scan_final_index;
 
                             if (!scan_final_valid) begin
-                                window_valid <= 1'b0;
-                                window_ready <= 1'b0;
+                                // Before the first lyric timestamp, keep a
+                                // neutral preview of line 0 in the center row.
+                                // target_valid remains low so scrolling stays idle.
+                                target_index <= 7'd0;
                                 tail_pending <= 1'b0;
-                                state <= ST_IDLE;
+                                if (scan_holds_window) begin
+                                    window_ready <= 1'b1;
+                                    state <= ST_IDLE;
+                                end else begin
+                                    window_center_index <= 7'd0;
+                                    window_valid <= 1'b0;
+                                    window_ready <= 1'b0;
+                                    fill_slot <= 3'd0;
+                                    state <= ST_FILL_ISSUE;
+                                end
                             end else if (scan_holds_window) begin
                                 if (tail_pending) begin
                                     state <= ST_TAIL_ISSUE;

@@ -2331,6 +2331,7 @@ playback_page #(.IMAGE_BACKGROUND(1)) u_playback_page (
     .artist_length(song_artist_length),.title_glyphs(song_title_glyphs),
     .artist_glyphs(song_artist_glyphs),.line_count(song_line_count_frame),
     .lyric_window_valid(lyric_window_valid),
+    .lyric_highlight_valid(lyric_target_valid),
     .lyric_scroll_active(lyric_scroll_active),
     .lyric_row_lengths(lyric_row_lengths),
     .lyric_row_glyphs(lyric_row_glyphs),

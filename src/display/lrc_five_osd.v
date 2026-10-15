@@ -12,6 +12,7 @@ module lrc_five_osd (
     input  wire [9:0]    pixel_x,
     input  wire [9:0]    pixel_y,
     input  wire          window_valid,
+    input  wire          highlight_valid,
     input  wire          scroll_active,
     input  wire [29:0]   row_lengths,
     input  wire [767:0]  row_glyphs,
@@ -116,8 +117,9 @@ module lrc_five_osd (
                         font_request = 1'b1;
                         font_glyph = selected_glyph;
                         font_row = selected_row_pixel;
-                        if ((scroll_active && (selected_slot == 3'd3)) ||
-                            (!scroll_active && (selected_slot == 3'd2)))
+                        if (highlight_valid &&
+                            ((scroll_active && (selected_slot == 3'd3)) ||
+                             (!scroll_active && (selected_slot == 3'd2))))
                             text_color = 24'hFFD700;
                         else if ((!scroll_active &&
                                   ((selected_slot == 3'd1) || (selected_slot == 3'd3))) ||

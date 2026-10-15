@@ -27,6 +27,7 @@ module playback_page #(
     input  wire [127:0] artist_glyphs,
     input  wire [7:0]   line_count,
     input  wire         lyric_window_valid,
+    input  wire         lyric_highlight_valid,
     input  wire         lyric_scroll_active,
     input  wire [29:0]  lyric_row_lengths,
     input  wire [767:0] lyric_row_glyphs,
@@ -219,6 +220,7 @@ module playback_page #(
     lrc_five_osd u_lrc_five_osd (
         .enable(enable),.de(de),.pixel_x(pixel_x),.pixel_y(line_y),
         .window_valid(lyric_window_valid),
+        .highlight_valid(lyric_highlight_valid),
         .scroll_active(lyric_scroll_active),.row_lengths(lyric_row_lengths),
         .row_glyphs(lyric_row_glyphs),
         .scroll_offset(lyric_scroll_offset),.line_count(line_count),
