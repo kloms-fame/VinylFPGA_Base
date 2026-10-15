@@ -52,8 +52,12 @@ module wav_stream_player #(
     input  wire [31:0] sample_base,     // X2：Seek 后读侧计数器起始值（video_clk 域）
     output reg         underrun_pulse   // S7-01B：流式播放中读侧欠载单拍脉冲（video_clk 域）
 );
-    localparam [ADDR_WIDTH:0] BUFFER_HIGH_WATER = (1 << (ADDR_WIDTH - 1));
-    localparam [ADDR_WIDTH:0] BUFFER_LOW_WATER  = (1 << (ADDR_WIDTH - 2));
+    // Use more of the existing BRAM ring as audio service reserve. Refill below
+    // 3/4 full and pause new video/background sectors below 1/2 full; the
+    // 1/4-buffer hysteresis remains while adding 21.3 ms of audio headroom.
+    localparam [ADDR_WIDTH:0] BUFFER_HIGH_WATER =
+        (1 << (ADDR_WIDTH - 1)) + (1 << (ADDR_WIDTH - 2));
+    localparam [ADDR_WIDTH:0] BUFFER_LOW_WATER  = (1 << (ADDR_WIDTH - 1));
 
     (* ram_style = "bram" *) reg [15:0] buffer [0:(1 << ADDR_WIDTH) - 1];
     reg [ADDR_WIDTH-1:0] wr_ptr;
