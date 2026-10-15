@@ -13,6 +13,7 @@ wire bg_active,bg_req,bg_pixel,bg_sec_req,bg_sec_start,bg_sec_busy,bg_sec_grant,
  wire [20:0] write_addr;
  wire bg_mem,mv_mem;
  reg finish_toggle=0;
+ reg [1:0] mv_bank=0;
  wire sec_req;
  wire [31:0] sec_lba;
  reg sec_busy=0,sec_valid=0,sec_done=0;
@@ -45,7 +46,7 @@ wire bg_active,bg_req,bg_pixel,bg_sec_req,bg_sec_start,bg_sec_busy,bg_sec_grant,
   .sector_byte_index(sec_index),.sector_done(bg_sec_done),.sector_error(8'd0));
  mv_stream_player #(.FRAME_SECTORS(1)) mv(
   .clk(sd_clk),.rst_n(rst_n),.abort_request(1'b0),.request_toggle(mv_request),
-  .request_lba(32'd10000),.request_bank(2'd0),.done_toggle(mv_done),.failed(mv_failed),
+  .request_lba(32'd10000),.request_bank(mv_bank),.done_toggle(mv_done),.failed(mv_failed),
   .writer_active(mv_active),.write_req(mv_req),.write_ack(write_ack && !bg_active),
   .write_finish_toggle(finish_toggle),.pixel_valid(mv_pixel),.pixel_data(mv_data),
   .sector_req(mv_sec_req),.sector_lba(mv_lba),.sector_busy(mv_sec_busy),
@@ -59,7 +60,7 @@ wire bg_active,bg_req,bg_pixel,bg_sec_req,bg_sec_start,bg_sec_busy,bg_sec_grant,
   .background_valid(bg_sec_valid),
   .background_done(bg_sec_done),.sector_req(sec_req),.sector_lba(sec_lba),
   .sector_busy(sec_busy),.sector_valid(sec_valid),.sector_done(sec_done));
- wire [20:0] selected_base=bg_mem ? bg_addr : 21'd1228800;
+ wire [20:0] selected_base=bg_mem ? bg_addr : 21'd1228800 + (mv_bank * 21'd256);
  frame_fifo_write #(.DYNAMIC_LINEAR(1),.BURST_SIZE(256)) writer(
   .write_hold(bg_mem && bg_hold_mem),.write_cancel(bg_mem && bg_cancel_mem),.linear_write(bg_active || mv_active),.rst(!rst_n),.mem_clk(mem_clk),
   .Sdr_init_done(1'b1),.Sdr_init_ref_vld(1'b0),.Sdr_busy(1'b0),.App_rd_busy(1'b0),
@@ -117,9 +118,18 @@ wire bg_active,bg_req,bg_pixel,bg_sec_req,bg_sec_start,bg_sec_busy,bg_sec_grant,
   @(negedge sd_clk);mv_request=1;
   wait(mv_active);
   check(bg_active,"MV request arrives during BG ownership");
-  wait(ready[2] && ((SHORT_ART) ? !ready[3] : ready[3]) && mv_done);
+  // Queue a second MV frame while the song-cache sector owns the shared
+  // writer. The background sector must finish its SDRAM drain first; then
+  // the next MV frame gets a clean FIFO lease with no cross-owner pixels.
+  wait(mv_done);
+  wait(bg.state==5 && !bg.job_art && bg.byte_count>100);
+  @(negedge sd_clk);mv_bank=2'd1;mv_request=~mv_request;
+  wait(mv_active);
+  check(bg_active,"back-to-back MV request arrives during song-cache ownership");
+  wait(mv_done==mv_request);
+  wait(ready[2] && ((SHORT_ART) ? !ready[3] : ready[3]));
   repeat(20) @(negedge sd_clk);
-  check(total==(SHORT_ART?512:768) && art_words==(SHORT_ART?0:256) && mv_words==256 && song_words==256 && used==0 && !mv_failed,"exact transactions and no lost FIFO data");
+  check(total==(SHORT_ART?768:1024) && art_words==(SHORT_ART?0:256) && mv_words==512 && song_words==256 && used==0 && !mv_failed,"back-to-back MV frames preserve shared FIFO ownership and data");
   $display("PASS stage3b shared writer: %0d checks, actual frame_fifo_write, BG/MV collision and FIFO data",checks);$finish;
  end
  initial begin #2000000;$display("FAIL shared writer timeout BG=%0d MV=%0d writer=%0d used=%0d",bg.state,mv.state,writer.state,used);$finish_and_return(1);end

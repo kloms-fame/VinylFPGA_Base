@@ -9,6 +9,9 @@ module tb_frame_fifo_write;
     reg         mem_clk = 1'b0;
     reg         rst = 1'b1;
     reg         write_req = 1'b0;
+    reg         sdr_init_done = 1'b0;
+    reg         sdr_init_ref_vld = 1'b0;
+    reg         sdr_busy = 1'b0;
     reg  [20:0] write_len = 21'd128;
     reg  [20:0] write_addr_0 = 21'd0;
     reg  [20:0] write_addr_1 = 21'd307200;
@@ -42,9 +45,9 @@ module tb_frame_fifo_write;
         .write_hold(1'b0),.write_cancel(1'b0),
         .rst                 (rst),
         .mem_clk             (mem_clk),
-        .Sdr_init_done       (1'b1),
-        .Sdr_init_ref_vld    (1'b0),
-        .Sdr_busy            (1'b0),
+        .Sdr_init_done       (sdr_init_done),
+        .Sdr_init_ref_vld    (sdr_init_ref_vld),
+        .Sdr_busy            (sdr_busy),
         .App_rd_busy         (1'b0),
         .O_wr_busy           (),
         .App_wr_en           (App_wr_en),
@@ -82,9 +85,29 @@ module tb_frame_fifo_write;
         repeat (4) @(posedge mem_clk);
         rst = 1'b0;
         write_req = 1'b1;
+        repeat (8) @(posedge mem_clk);
+        if (write_req_ack || App_wr_en) begin
+            $display("FAIL: write accepted before SDRAM initialization");
+            errors = errors + 1;
+        end
+        sdr_init_done = 1'b1;
         while (!write_req_ack) @(posedge mem_clk);
         @(negedge mem_clk);
         write_req = 1'b0;
+        sdr_busy = 1'b1;
+        repeat (8) @(posedge mem_clk);
+        if (App_wr_en || wr_count != 0) begin
+            $display("FAIL: FIFO dequeued while SDRAM controller busy");
+            errors = errors + 1;
+        end
+        sdr_busy = 1'b0;
+        sdr_init_ref_vld = 1'b1;
+        repeat (8) @(posedge mem_clk);
+        if (App_wr_en || wr_count != 0) begin
+            $display("FAIL: FIFO dequeued during SDRAM refresh window");
+            errors = errors + 1;
+        end
+        sdr_init_ref_vld = 1'b0;
         while (!saw_finish) @(posedge mem_clk);
         repeat (4) @(posedge mem_clk);
 
@@ -101,7 +124,7 @@ module tb_frame_fifo_write;
             errors = errors + 1;
         end
         if (errors == 0)
-            $display("PASS: frame_fifo_write registered-level burst");
+            $display("PASS: frame_fifo_write init/busy/refresh gating and exact dequeue");
         else
             $display("FAIL: frame_fifo_write errors=%0d", errors);
         $finish;

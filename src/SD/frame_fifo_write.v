@@ -98,12 +98,16 @@ reg fifo_ready = 1'b0;
 // Only this writer removes FIFO words, and the previous burst drains before
 // S_CHECK_FIFO. Stage the wide credit comparison; keep live read-busy/hold
 // arbitration outside the register so no simultaneous read/write is issued.
+// Match the read path's controller quiet-window rule at each burst boundary.
+// Once a burst starts it runs to completion; the SDRAM controller owns any
+// refresh that becomes due while servicing that in-flight burst.
 always @(posedge mem_clk or posedge rst) begin
     if (rst) fifo_ready <= 1'b0;
     else fifo_ready <= (write_len_latch <= (rdusedw_r + write_cnt)) ||
                        rdusedw_r > BURST_SIZE;
 end
-assign into_burst = fifo_ready && ~App_rd_busy && !write_hold;
+assign into_burst = fifo_ready && ~App_rd_busy && !write_hold &&
+                    !Sdr_busy && !Sdr_init_ref_vld;
 
 assign App_wr_addr = {App_wr_addr_r[ADDR_BITS - 1:0]};
 //assign O_wr_busy = (state != S_IDLE || (S_IDLE && write_req_d2));
