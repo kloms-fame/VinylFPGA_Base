@@ -79,6 +79,9 @@ set_pin_assignment	{ exp_led_n[1] }	{ LOCATION = H5; IOSTANDARD = LVCMOS33; DRIV
 set_pin_assignment	{ exp_led_n[2] }	{ LOCATION = F3; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
 set_pin_assignment	{ exp_led_n[3] }	{ LOCATION = E2; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
 set_pin_assignment	{ exp_ws2812_data }	{ LOCATION = J11; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
+set_pin_assignment	{ vinyl_ws2812_data }	{ LOCATION = D14; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
+set_pin_assignment	{ vinyl_motor_en }	{ LOCATION = G11; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
+set_pin_assignment	{ needle_sense_n }	{ LOCATION = G12; IOSTANDARD = LVCMOS33; PULLTYPE = NONE; }
 set_pin_assignment	{ exp_ext_o[0] }	{ LOCATION = M12; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
 set_pin_assignment	{ exp_ext_o[1] }	{ LOCATION = M11; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
 set_pin_assignment	{ exp_ext_o[2] }	{ LOCATION = N12; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }

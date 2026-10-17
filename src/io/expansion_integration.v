@@ -22,6 +22,9 @@ module expansion_integration #(
     input  wire        exp_enc2_b,
     input  wire        exp_enc2_sw_n,
     input  wire        exp_ir_rx,
+    input  wire        play_active_async,
+    input  wire        paused_async,
+    input  wire        needle_sense_n,
 
     // 母板输入：KEY2/KEY3 与 SW1–SW4；KEY3 当前预留给阶段 4 手动保存。
     // SW1-SW4 = 板载乒乓拨码（C8/C7/C6/C5），均按按键/拨码低有效消抖。
@@ -36,6 +39,8 @@ module expansion_integration #(
     output wire        exp_ws2812_data,
     output wire [5:0]  exp_ext_o,
     output wire        board_buzzer_n,
+    output wire        vinyl_motor_en,
+    output wire        vinyl_ws2812_data,
     output wire        uart_tx,
     output wire [3:0]  fault_flags, // [3:0] = overflow, video fail, low buffer, underrun
 
@@ -478,6 +483,22 @@ module expansion_integration #(
         .brightness_level(ws_brightness_level),
         .mute      (1'b0),          // X5 前恒 0
         .ws_data   (exp_ws2812_data)
+    );
+
+    // 独立 D14 灯带及 G11 电机控制；J11 原有灯效链路保持不变。
+    vinyl_playback_effects #(
+        .CLK_FREQ_HZ(CLK_FREQ_HZ),
+        .REFRESH_MS (20)
+    ) u_vinyl_playback_effects (
+        .clk               (clk),
+        .rst_n             (rst_n),
+        .play_active_async (play_active_async),
+        .paused_async      (paused_async),
+        .needle_sense_n    (needle_sense_n),
+        .ws_enable         (ws_enable),
+        .tick_1ms          (ui_tick_1ms),
+        .motor_enable      (vinyl_motor_en),
+        .ws_data           (vinyl_ws2812_data)
     );
 
     // ---- J2 其余输出安全态 / 硬件回显 ----

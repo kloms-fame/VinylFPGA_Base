@@ -22,6 +22,7 @@
 `include "io/expansion_integration.v"
 `include "io/ui_event_bridge.v"
 `include "io/ui_param_csr.v"
+`include "io/vinyl_playback_effects.v"
 `include "io/ec2_param_controller.v"
 `include "io/ec2_event_replay.v"
 `include "io/volume_intent_bridge.v"
@@ -88,12 +89,13 @@ module top(
     input                       clk,
     input                       rst_n,
     input                       key2,           // 母板参数复位键（B2）
-    input                       key3,           // 母板按键 3（B1），用于操作反馈音
+    input                       key3,           // 母板 KEY3（B1），阶段 4 手动保存预留
     input                       key4,           // 母板静音键（C1）
     input                       sw1,            // 母板拨码 SW1（C8），用于操作反馈音
     input                       sw2,            // 母板拨码 SW2（C7）
     input                       sw3,            // 母板拨码 SW3（C6）
     input                       sw4,            // 母板拨码 SW4（C5）
+    input                       needle_sense_n,  // 唱针开关，G12 外部上拉、闭合接地
 
     output [7:0]                seg_sel,
     output [7:0]                seg_data,
@@ -127,7 +129,7 @@ module top(
 
     // ===================== S1：J2 拓展板输出 =====================
     output [3:0]                exp_led_n,       // LED1..LED4，低有效点亮
-    output                      exp_ws2812_data, // WS2812 数据线（S1 静态全灭）
+    output                      exp_ws2812_data, // 原 J11 WS2812 灯带数据线
     output [5:0]                exp_ext_o,       // EXT1=反馈音波形，EXT2..EXT6=0
 
     // ===================== 母板蜂鸣器 =====================
@@ -135,6 +137,10 @@ module top(
 
     // ===================== 母板状态指示灯 =====================
     output [3:0]                led,             // LED1..LED4，高电平点亮
+
+    // 唱片转盘电机与新增 WS2812 灯带
+    output                      vinyl_motor_en,  // G11，仅驱动 AO3400A 栅极
+    output                      vinyl_ws2812_data, // D14，独立 8 灯数据线
 
     // ===================== S1：板载 USB 转串口 =====================
     output                      uart_tx          // 115200 8N1 回显输出
@@ -2642,6 +2648,9 @@ expansion_integration #(
     .exp_enc2_b       (exp_enc2_b),
     .exp_enc2_sw_n    (exp_enc2_sw_n),
     .exp_ir_rx        (exp_ir_rx),
+    .play_active_async(S5_PLAY_ENABLE && play_active_sd),
+    .paused_async     (paused_sd),
+    .needle_sense_n   (needle_sense_n),
     .key2             (key2),
     .key3             (key3),
     .sw1              (sw1),
@@ -2652,6 +2661,8 @@ expansion_integration #(
     .exp_ws2812_data  (exp_ws2812_data),
     .exp_ext_o        (exp_ext_o),
     .board_buzzer_n   (board_buzzer_n),
+    .vinyl_motor_en   (vinyl_motor_en),
+    .vinyl_ws2812_data(vinyl_ws2812_data),
     .uart_tx          (uart_tx),
     .fault_flags      (fault_flags_clk),
     .ui_ev_valid      (ui_ev_valid),
