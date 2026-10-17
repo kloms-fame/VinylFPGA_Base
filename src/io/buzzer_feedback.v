@@ -36,7 +36,7 @@ module buzzer_feedback #(
     input  wire       ir_event,
     input  wire [1:0] ir_action,
     input  wire       slideshow_event,
-    output reg        buzzer_n,
+    output wire       buzzer_n,
     output reg        busy
 );
     localparam [3:0] EV_NONE = 4'd0, EV_STEP = 4'd1, EV_KEY = 4'd2,
@@ -46,8 +46,27 @@ module buzzer_feedback #(
     reg key_d, dip_d, step_d, switch_d, ir_d, slideshow_d;
     reg [3:0] current_event;
     reg dip_target_latched, dip_second_phase;
+    // Store inclusive terminal counts (cycles - 1) so the timer does not
+    // synthesize a runtime subtractor into each expiry decision.
     reg [31:0] half_period_cycles, duration_cycles;
     reg [31:0] half_period_count, duration_count;
+    // Keep the tone phase as a local state bit. The board output is derived
+    // from busy and phase, so the high-fanout output pin is not fed back
+    // through the event/duration mux tree on every half-period toggle.
+    reg buzzer_phase;
+    assign buzzer_n = !busy || buzzer_phase;
+
+    function [31:0] terminal_count;
+        input integer requested_cycles;
+        reg [31:0] unsigned_cycles;
+        begin
+            // Match the old unsigned 32-bit register behavior, including
+            // zero/one-cycle parameters and values supplied as negative ints.
+            unsigned_cycles = requested_cycles;
+            terminal_count = (unsigned_cycles <= 32'd1) ? 32'd0 :
+                             (unsigned_cycles - 32'd1);
+        end
+    endfunction
 
     wire key_rise    = key_press && !key_d;
     wire dip_rise    = dip_change && !dip_d;
@@ -64,73 +83,73 @@ module buzzer_feedback #(
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            buzzer_n <= 1'b1; busy <= 1'b0; current_event <= EV_NONE;
+            buzzer_phase <= 1'b0; busy <= 1'b0; current_event <= EV_NONE;
             key_d <= 1'b0; dip_d <= 1'b0; step_d <= 1'b0; switch_d <= 1'b0;
             ir_d <= 1'b0; slideshow_d <= 1'b0;
             dip_target_latched <= 1'b0; dip_second_phase <= 1'b0;
-            half_period_cycles <= 32'd1; duration_cycles <= 32'd1;
+            half_period_cycles <= 32'd0; duration_cycles <= 32'd0;
             half_period_count <= 32'd0; duration_count <= 32'd0;
         end else if (!sound_enable) begin
             key_d <= key_press; dip_d <= dip_change; step_d <= encoder_step;
             switch_d <= encoder_switch; ir_d <= ir_event; slideshow_d <= slideshow_event;
-            buzzer_n <= 1'b1; busy <= 1'b0; current_event <= EV_NONE;
+            busy <= 1'b0; current_event <= EV_NONE;
             dip_second_phase <= 1'b0; half_period_count <= 32'd0; duration_count <= 32'd0;
         end else if ((requested_event != EV_NONE) && ((!busy) || (requested_event > current_event))) begin
             key_d <= key_press; dip_d <= dip_change; step_d <= encoder_step;
             switch_d <= encoder_switch; ir_d <= ir_event; slideshow_d <= slideshow_event;
-            buzzer_n <= 1'b0; busy <= 1'b1; current_event <= requested_event;
+            buzzer_phase <= 1'b0; busy <= 1'b1; current_event <= requested_event;
             dip_target_latched <= dip_target; dip_second_phase <= 1'b0;
             half_period_count <= 32'd0; duration_count <= 32'd0;
             case (requested_event)
                 EV_SWITCH: begin
-                    half_period_cycles <= encoder_switch_source ? EC2_SWITCH_HALF_PERIOD_CYCLES : EC1_SWITCH_HALF_PERIOD_CYCLES;
-                    duration_cycles <= ENCODER_SWITCH_DURATION_CYCLES;
+                    half_period_cycles <= terminal_count(encoder_switch_source ? EC2_SWITCH_HALF_PERIOD_CYCLES : EC1_SWITCH_HALF_PERIOD_CYCLES);
+                    duration_cycles <= terminal_count(ENCODER_SWITCH_DURATION_CYCLES);
                 end
                 EV_AUTO: begin
-                    half_period_cycles <= 6_250; // 50 MHz / (2 * 4 kHz)
-                    duration_cycles <= 600_000; // 12 ms at 50 MHz
+                    half_period_cycles <= terminal_count(6_250); // 50 MHz / (2 * 4 kHz)
+                    duration_cycles <= terminal_count(600_000); // 12 ms at 50 MHz
                 end
                 EV_IR: begin
                     case (ir_action)
-                        2'd0: half_period_cycles <= 31_250; // brightness down
-                        2'd1: half_period_cycles <= 9_615;  // brightness up
-                        2'd2: half_period_cycles <= 22_727; // speed down
-                        default: half_period_cycles <= 7_813; // speed up
+                        2'd0: half_period_cycles <= terminal_count(31_250); // brightness down
+                        2'd1: half_period_cycles <= terminal_count(9_615);  // brightness up
+                        2'd2: half_period_cycles <= terminal_count(22_727); // speed down
+                        default: half_period_cycles <= terminal_count(7_813); // speed up
                     endcase
-                    duration_cycles <= IR_DURATION_CYCLES;
+                    duration_cycles <= terminal_count(IR_DURATION_CYCLES);
                 end
                 EV_DIP: begin
-                    half_period_cycles <= dip_target ? DIP_HIGH_HALF_PERIOD_CYCLES : DIP_LOW_HALF_PERIOD_CYCLES;
-                    duration_cycles <= DIP_TONE_DURATION_CYCLES;
+                    half_period_cycles <= terminal_count(dip_target ? DIP_HIGH_HALF_PERIOD_CYCLES : DIP_LOW_HALF_PERIOD_CYCLES);
+                    duration_cycles <= terminal_count(DIP_TONE_DURATION_CYCLES);
                 end
                 EV_KEY: begin
-                    half_period_cycles <= KEY_HALF_PERIOD_CYCLES;
-                    duration_cycles <= KEY_DURATION_CYCLES;
+                    half_period_cycles <= terminal_count(KEY_HALF_PERIOD_CYCLES);
+                    duration_cycles <= terminal_count(KEY_DURATION_CYCLES);
                 end
                 default: begin
                     if (encoder_source)
-                        half_period_cycles <= encoder_direction ? EC2_NEG_HALF_PERIOD_CYCLES : EC2_POS_HALF_PERIOD_CYCLES;
+                        half_period_cycles <= terminal_count(encoder_direction ? EC2_NEG_HALF_PERIOD_CYCLES : EC2_POS_HALF_PERIOD_CYCLES);
                     else
-                        half_period_cycles <= encoder_direction ? EC1_NEG_HALF_PERIOD_CYCLES : EC1_POS_HALF_PERIOD_CYCLES;
-                    duration_cycles <= ENCODER_STEP_DURATION_CYCLES;
+                        half_period_cycles <= terminal_count(encoder_direction ? EC1_NEG_HALF_PERIOD_CYCLES : EC1_POS_HALF_PERIOD_CYCLES);
+                    duration_cycles <= terminal_count(ENCODER_STEP_DURATION_CYCLES);
                 end
             endcase
         end else if (busy) begin
             key_d <= key_press; dip_d <= dip_change; step_d <= encoder_step;
             switch_d <= encoder_switch; ir_d <= ir_event; slideshow_d <= slideshow_event;
-            if ((duration_cycles <= 1) || (duration_count >= duration_cycles - 1'b1)) begin
+            if ((duration_cycles == 0) || (duration_count >= duration_cycles)) begin
                 if ((current_event == EV_DIP) && !dip_second_phase) begin
-                    buzzer_n <= 1'b0; dip_second_phase <= 1'b1;
+                    buzzer_phase <= 1'b0; dip_second_phase <= 1'b1;
                     half_period_count <= 32'd0; duration_count <= 32'd0;
-                    half_period_cycles <= dip_target_latched ? DIP_LOW_HALF_PERIOD_CYCLES : DIP_HIGH_HALF_PERIOD_CYCLES;
+                    half_period_cycles <= terminal_count(dip_target_latched ? DIP_LOW_HALF_PERIOD_CYCLES : DIP_HIGH_HALF_PERIOD_CYCLES);
                 end else begin
-                    buzzer_n <= 1'b1; busy <= 1'b0; current_event <= EV_NONE;
+                    busy <= 1'b0; current_event <= EV_NONE;
                     half_period_count <= 32'd0; duration_count <= 32'd0;
                 end
             end else begin
                 duration_count <= duration_count + 1'b1;
-                if ((half_period_cycles <= 1) || (half_period_count >= half_period_cycles - 1'b1)) begin
-                    half_period_count <= 32'd0; buzzer_n <= ~buzzer_n;
+                if ((half_period_cycles == 0) || (half_period_count >= half_period_cycles)) begin
+                    half_period_count <= 32'd0; buzzer_phase <= ~buzzer_phase;
                 end else begin
                     half_period_count <= half_period_count + 1'b1;
                 end
@@ -138,7 +157,7 @@ module buzzer_feedback #(
         end else begin
             key_d <= key_press; dip_d <= dip_change; step_d <= encoder_step;
             switch_d <= encoder_switch; ir_d <= ir_event; slideshow_d <= slideshow_event;
-            buzzer_n <= 1'b1;
+            // busy=0 forces the active-low board output inactive.
         end
     end
 endmodule

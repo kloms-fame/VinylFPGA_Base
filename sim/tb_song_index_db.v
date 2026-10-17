@@ -145,6 +145,8 @@ module tb_song_index_db;
         restore; blob[0] = blob[0] ^ 8'hFF;
         feed(32'd25, 8'h00);
         check(valid === 1'b0 && err === 8'h30, "magic 错 -> 0x30 且 valid=0");
+        check(cov0 === 64'd0 && aud0 === 64'd0,
+              "默认模块接口在索引无效时继续屏蔽 payload");
 
         // 3) 条目区被改 -> CRC 错
         restore; blob[64 + 5] = blob[64 + 5] ^ 8'h01;

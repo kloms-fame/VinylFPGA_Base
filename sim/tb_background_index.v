@@ -15,6 +15,9 @@ module tb_background_index;
  task feed;
  begin
   @(negedge clk); start=1;
+  @(posedge clk); #1;
+  if(base!==32'd0 || art2_supported!==1'b0)
+   $fatal(1,"start/reload must immediately disable the previous background base base=%h art2=%d",base,art2_supported);
   @(negedge clk); start=0;
   for(i=0;i<512;i=i+1) begin @(negedge clk); iv=1;ib=blob[i];end
   @(negedge clk); iv=0;id=1;

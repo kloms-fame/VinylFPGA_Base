@@ -27,7 +27,10 @@
 // 工具写进 INDEX.json 并与卡上数据比对，属"PC 侧可追溯"，不在关键路径上重算。
 // =============================================================================
 module song_index_db #(
-    parameter integer MAX_SONGS = 4
+    parameter integer MAX_SONGS = 4,
+    // Product consumers may qualify these payloads with their committed
+    // index-mode state instead of placing a valid-controlled mask on every bit.
+    parameter integer RAW_PAYLOAD_OUTPUTS = 0
 )(
     input  wire        clk,
     input  wire        rst_n,
@@ -72,7 +75,11 @@ module song_index_db #(
     reg [2:0]  phase;
     reg [2:0]  chk_idx;
     reg        chk_ok;
-    reg [7:0]  fin_err;
+    // Keep the independent stream/header/CRC checks registered separately.
+    // P_CHK already provides several cycles before P_FIN consumes the result,
+    // so error priority can be encoded there instead of forming a wide
+    // priority tree in the P_FLUSH cycle.
+    reg [5:0]  fin_err_flags;
 
     // ---- 头部 ----
     reg        magic_ok;
@@ -245,14 +252,15 @@ module song_index_db #(
     // The loader clears index_mode before starting a reload. Invalid payloads
     // are zero; no second 512-bit output bank is needed. busy/song_flags keep
     // their module API and are already pruned when unconnected in the product.
-    assign song_cover0 = valid ? {e_cov_by[0], e_cov_cl[0]} : 64'd0;
-    assign song_cover1 = valid ? {e_cov_by[1], e_cov_cl[1]} : 64'd0;
-    assign song_cover2 = valid ? {e_cov_by[2], e_cov_cl[2]} : 64'd0;
-    assign song_cover3 = valid ? {e_cov_by[3], e_cov_cl[3]} : 64'd0;
-    assign song_audio0 = valid ? {e_aud_by[0], e_aud_cl[0]} : 64'd0;
-    assign song_audio1 = valid ? {e_aud_by[1], e_aud_cl[1]} : 64'd0;
-    assign song_audio2 = valid ? {e_aud_by[2], e_aud_cl[2]} : 64'd0;
-    assign song_audio3 = valid ? {e_aud_by[3], e_aud_cl[3]} : 64'd0;
+    wire payload_visible = RAW_PAYLOAD_OUTPUTS || valid;
+    assign song_cover0 = payload_visible ? {e_cov_by[0], e_cov_cl[0]} : 64'd0;
+    assign song_cover1 = payload_visible ? {e_cov_by[1], e_cov_cl[1]} : 64'd0;
+    assign song_cover2 = payload_visible ? {e_cov_by[2], e_cov_cl[2]} : 64'd0;
+    assign song_cover3 = payload_visible ? {e_cov_by[3], e_cov_cl[3]} : 64'd0;
+    assign song_audio0 = payload_visible ? {e_aud_by[0], e_aud_cl[0]} : 64'd0;
+    assign song_audio1 = payload_visible ? {e_aud_by[1], e_aud_cl[1]} : 64'd0;
+    assign song_audio2 = payload_visible ? {e_aud_by[2], e_aud_cl[2]} : 64'd0;
+    assign song_audio3 = payload_visible ? {e_aud_by[3], e_aud_cl[3]} : 64'd0;
 
     // Look one entry ahead; keep the original one-entry-per-clock P_CHK.
     // The final stream beat prepares entry zero, then each check prepares
@@ -313,7 +321,7 @@ module song_index_db #(
 
             chk_idx        <= 3'd0;
             chk_ok         <= 1'b0;
-            fin_err        <= SIDX_ERR_NONE;
+            fin_err_flags  <= 6'd0;
             magic_ok       <= 1'b0;
             hdr_version    <= 16'd0;
             hdr_entry_size <= 16'd0;
@@ -339,7 +347,7 @@ module song_index_db #(
                     song_flags     <= 16'd0;
                     chk_idx        <= 3'd0;
                     chk_ok         <= 1'b1;
-                    fin_err        <= SIDX_ERR_NONE;
+                    fin_err_flags  <= 6'd0;
                     magic_ok       <= 1'b1;
                     hdr_version    <= 16'd0;
                     hdr_entry_size <= 16'd0;
@@ -400,20 +408,14 @@ module song_index_db #(
             // Commit the last decoded byte before validation. CRC/header
             // checks also include a final in_valid coincident with in_done.
             P_FLUSH: begin
-                    if (stream_failed_q)
-                        fin_err <= SIDX_ERR_STREAM;
-                    else if (!magic_ok)
-                        fin_err <= SIDX_ERR_MAGIC;
-                    else if (hdr_version != SIDX_VERSION && hdr_version != 16'd2)
-                        fin_err <= SIDX_ERR_VERSION;
-                    else if (hdr_entry_size != SIDX_ENTRY_SIZE)
-                        fin_err <= SIDX_ERR_ENTRY_SIZE;
-                    else if ((hdr_count < 16'd1) || (hdr_count > SIDX_MAX_SONGS))
-                        fin_err <= SIDX_ERR_COUNT;
-                    else if (crc_final != hdr_crc_exp)
-                        fin_err <= SIDX_ERR_CRC;
-                    else
-                        fin_err <= SIDX_ERR_NONE;
+                    fin_err_flags <= {
+                        stream_failed_q,
+                        !magic_ok,
+                        (hdr_version != SIDX_VERSION && hdr_version != 16'd2),
+                        (hdr_entry_size != SIDX_ENTRY_SIZE),
+                        ((hdr_count < 16'd1) || (hdr_count > SIDX_MAX_SONGS)),
+                        (crc_final != hdr_crc_exp)
+                    };
                     phase   <= P_CHK;
             end
             // -------------------------------------------------------------
@@ -432,12 +434,27 @@ module song_index_db #(
                 busy  <= 1'b0;
                 done  <= 1'b1;
                 phase <= P_IDLE;
-                background_base_valid <= (fin_err == SIDX_ERR_NONE) && chk_ok &&
+                background_base_valid <= (fin_err_flags == 6'd0) && chk_ok &&
                     bg_magic_ok && bg_layout_ok && (bg_base_lba != 32'd0) &&
                     (bg_base_lba <= (bg_art2 ? 32'hFFFFE3DF : 32'hFFFFE88F));
-                if (fin_err != SIDX_ERR_NONE) begin
+                if (fin_err_flags[5]) begin
                     valid <= 1'b0;
-                    err   <= fin_err;
+                    err   <= SIDX_ERR_STREAM;
+                end else if (fin_err_flags[4]) begin
+                    valid <= 1'b0;
+                    err   <= SIDX_ERR_MAGIC;
+                end else if (fin_err_flags[3]) begin
+                    valid <= 1'b0;
+                    err   <= SIDX_ERR_VERSION;
+                end else if (fin_err_flags[2]) begin
+                    valid <= 1'b0;
+                    err   <= SIDX_ERR_ENTRY_SIZE;
+                end else if (fin_err_flags[1]) begin
+                    valid <= 1'b0;
+                    err   <= SIDX_ERR_COUNT;
+                end else if (fin_err_flags[0]) begin
+                    valid <= 1'b0;
+                    err   <= SIDX_ERR_CRC;
                 end else if (!chk_ok) begin
                     valid <= 1'b0;
                     err   <= SIDX_ERR_CLUSTER_RANGE;

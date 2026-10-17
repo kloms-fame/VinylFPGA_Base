@@ -78,7 +78,9 @@ module tb_stage4_sound_events;
             check(dut.u_buzzer_feedback.current_event===expected_event,"priority preserved with exactly one added cycle");
             check(dut.u_buzzer_feedback.busy===(expected_event!=0),"filtered events leave buzzer idle");
             if(expected_event!=0)
-                check(dut.u_buzzer_feedback.half_period_cycles===expected_period,"tone parameters stay aligned with event");
+                check(dut.u_buzzer_feedback.half_period_cycles===
+                      ((expected_period<=1) ? 32'd0 : expected_period-32'd1),
+                      "tone terminal count stays aligned with event");
             @(posedge clk);#1;check(dut.sound_events_q===10'd0,"no second register or replay");
         end
     endtask

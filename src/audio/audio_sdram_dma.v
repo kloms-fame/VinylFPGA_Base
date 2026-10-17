@@ -71,7 +71,12 @@ module audio_sdram_dma #(
     wire expired = &watchdog;
     wire recovering = state == S_RECOVER || (state == S_FAIL && operation_issued);
     wire received_word = read_owner && mem_read_valid && !read_complete;
-    wire stage_received_word = received_word && !recovering;
+    // Only normal read and read-drain states may publish payload into the
+    // staging BRAM. Spell out those states directly so the address/write
+    // enable cone does not pass through recovery ownership decode; late data
+    // during S_FAIL/S_RECOVER remains quarantined as before.
+    wire stage_received_word = (state == S_READ || state == S_READ_DRAIN) &&
+                               mem_read_valid && !read_complete;
 
     // Both outputs depend only on registered state, never on live busy inputs.
     // In S_LOCK old video returns still belong to the video reader.
@@ -90,7 +95,12 @@ module audio_sdram_dma #(
     assign mem_wr_mask = 4'b1110;
     assign stage_en = state == S_WRITE || stage_received_word;
     assign stage_we = stage_received_word;
-    assign stage_addr = stage_received_word ? {1'b1,received_offset} : {1'b0,sent_offset};
+    // The address is irrelevant when the staging RAM is disabled. During its
+    // write state select the sent offset; all enabled read-side accesses are
+    // in S_READ/S_READ_DRAIN and use the received offset. Keep the address
+    // mux independent of valid/complete/recovery qualifiers on stage_we.
+    assign stage_addr = (state == S_WRITE) ? {1'b0,sent_offset} :
+                                              {1'b1,received_offset};
     assign stage_din = mem_read_data[7:0];
 
     always @(posedge mem_clk or negedge rst_n) begin

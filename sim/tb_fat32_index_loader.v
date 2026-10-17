@@ -60,6 +60,8 @@ module tb_fat32_index_loader;
     integer fd;
     reg [8*80:1] hex_path;
     integer tmo;
+    reg [31:0] expected_cluster;
+    reg [31:0] expected_size;
 
     fat32_media_loader dut (
         .clk                    (clk),
@@ -182,12 +184,39 @@ module tb_fat32_index_loader;
         end
     endtask
 
+    // Restart a scan without resetting the loader after a valid index has
+    // already populated its payload registers. The live commit gate must hide
+    // those raw payloads until the replacement index is validated.
+    task rescan_live;
+        begin
+            found = 0;
+            pix = 0;
+            wait (ready);
+            @(negedge clk); scan_start = 1'b1;
+            @(posedge clk); #1;
+            check(dut.index_mode === 1'b0,
+                  "live rescan immediately clears index payload commit state");
+            check(audio_file_valid === 1'b0,
+                  "live rescan clears published audio metadata");
+            @(negedge clk); scan_start = 1'b0;
+            tmo = 0;
+            while (!scan_done && tmo < 200000) begin
+                @(posedge clk);
+                tmo = tmo + 1;
+            end
+            repeat (40) @(posedge clk);
+        end
+    endtask
+
     task do_load;
         input [1:0] idx;
         begin
+            wait (ready);
             pix = 0;
             @(negedge clk); load_index = idx; load_start = 1'b1;
-            @(negedge clk); load_start = 1'b0;
+            // The request must use the accepted index even if the caller moves
+            // its live selector immediately after the one-cycle request.
+            @(negedge clk); load_start = 1'b0; load_index = idx ^ 2'b11;
             tmo = 0;
             while ((pix < 256) && (tmo < 400000)) begin
                 @(posedge clk);
@@ -253,20 +282,46 @@ module tb_fat32_index_loader;
         check(audio_file_valid === 1'b1, "用例1 音频有效（来自索引）");
         check(audio_start_lba === 32'd44, "用例1 音频起始 LBA=44（索引条目）");
         check(audio_total_sectors === 32'd4, "用例1 音频扇区数=4");
-        do_load(2'd0);
-        check(pix == 256, "用例1 碎片封面取满 256 像素");
-        check(load_error === 1'b0 && bmp_error === 4'd0, "用例1 无加载错误");
+        check(dut.index_mode === 1'b1, "用例1 使用 INDEX.BIN 模式");
+        for (i = 0; i < 4; i = i + 1) begin
+            do_load(i[1:0]);
+            case (i)
+                0: begin expected_cluster=dut.idx_cover0[31:0]; expected_size=dut.idx_cover0[63:32]; end
+                1: begin expected_cluster=dut.idx_cover1[31:0]; expected_size=dut.idx_cover1[63:32]; end
+                2: begin expected_cluster=dut.idx_cover2[31:0]; expected_size=dut.idx_cover2[63:32]; end
+                default: begin expected_cluster=dut.idx_cover3[31:0]; expected_size=dut.idx_cover3[63:32]; end
+            endcase
+            check(dut.load_cluster === expected_cluster,
+                  "用例1 索引模式按锁存槽选择正确 cluster");
+            check(dut.load_size === expected_size,
+                  "用例1 索引模式按锁存槽选择正确 size");
+            check(pix == 256, "用例1 碎片封面取满 256 像素");
+            check(load_error === 1'b0 && bmp_error === 4'd0, "用例1 无加载错误");
+        end
 
         // ---- 用例 2：索引条目被改坏 -> 回退旧 PIC 路径 ----
         mem_pic[INDEX_LBA_PIC*512 + 64 + 5] = mem_pic[INDEX_LBA_PIC*512 + 64 + 5] ^ 8'h01;
         use_song = 1'b0;
-        rescan;
+        rescan_live;
         check(found == 4, "用例2 索引 CRC 错 -> 回退 PIC1~4 仍 4 张");
         check(audio_file_valid === 1'b1, "bad index must restore legacy AUDIO.PCM metadata");
         check(audio_start_lba === 32'd44, "legacy audio fallback LBA=44");
-        do_load(2'd0);
-        check(pix == 256, "用例2 回退后仍能取满 256 像素");
-        check(load_error === 1'b0, "用例2 回退后无加载错误");
+        check(dut.index_mode === 1'b0, "用例2 CRC 错误后回到旧目录模式");
+        for (i = 0; i < 4; i = i + 1) begin
+            do_load(i[1:0]);
+            case (i)
+                0: begin expected_cluster=dut.scanner_cluster0; expected_size=dut.scanner_size0; end
+                1: begin expected_cluster=dut.scanner_cluster1; expected_size=dut.scanner_size1; end
+                2: begin expected_cluster=dut.scanner_cluster2; expected_size=dut.scanner_size2; end
+                default: begin expected_cluster=dut.scanner_cluster3; expected_size=dut.scanner_size3; end
+            endcase
+            check(dut.load_cluster === expected_cluster,
+                  "用例2 回退模式按锁存槽选择正确 cluster");
+            check(dut.load_size === expected_size,
+                  "用例2 回退模式按锁存槽选择正确 size");
+            check(pix == 256, "用例2 回退后仍能取满 256 像素");
+            check(load_error === 1'b0, "用例2 回退后无加载错误");
+        end
         mem_pic[INDEX_LBA_PIC*512 + 64 + 5] = mem_pic[INDEX_LBA_PIC*512 + 64 + 5] ^ 8'h01;
 
         // ---- 用例 3：封面叫 SONG1~4（无 PIC），只有索引能供图 ----
@@ -274,9 +329,22 @@ module tb_fat32_index_loader;
         rescan;
         check(scan_done === 1'b1, "用例3 扫描完成");
         check(found == 4, "用例3 无 PIC 文件时索引仍提供 4 张");
-        do_load(2'd0);
-        check(pix == 256, "用例3 索引封面取满 256 像素");
-        check(load_error === 1'b0, "用例3 无加载错误");
+        check(dut.index_mode === 1'b1, "用例3 仍使用 INDEX.BIN 模式");
+        for (i = 0; i < 4; i = i + 1) begin
+            do_load(i[1:0]);
+            case (i)
+                0: begin expected_cluster=dut.idx_cover0[31:0]; expected_size=dut.idx_cover0[63:32]; end
+                1: begin expected_cluster=dut.idx_cover1[31:0]; expected_size=dut.idx_cover1[63:32]; end
+                2: begin expected_cluster=dut.idx_cover2[31:0]; expected_size=dut.idx_cover2[63:32]; end
+                default: begin expected_cluster=dut.idx_cover3[31:0]; expected_size=dut.idx_cover3[63:32]; end
+            endcase
+            check(dut.load_cluster === expected_cluster,
+                  "用例3 索引模式按锁存槽选择正确 cluster");
+            check(dut.load_size === expected_size,
+                  "用例3 索引模式按锁存槽选择正确 size");
+            check(pix == 256, "用例3 索引封面取满 256 像素");
+            check(load_error === 1'b0, "用例3 无加载错误");
+        end
 
         // ---- 用例 4：SONG 镜像索引也坏 -> 无路可退，须可见报错且不挂死 ----
         mem_song[INDEX_LBA_SONG*512 + 64 + 5] = mem_song[INDEX_LBA_SONG*512 + 64 + 5] ^ 8'h01;

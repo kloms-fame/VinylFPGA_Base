@@ -579,7 +579,10 @@ module fat32_media_loader #(
     // S4：曲目索引解析器（消费文件流器输出的字节流）
     // -------------------------------------------------------------------------
     song_index_db #(
-        .MAX_SONGS (4)
+        .MAX_SONGS (4),
+        // index_mode is committed only after idx_valid; it also gates all
+        // index payload consumption during reload and error fallback.
+        .RAW_PAYLOAD_OUTPUTS (1)
     ) u_song_index_db (
         .clk            (clk),
         .rst_n          (~rst),

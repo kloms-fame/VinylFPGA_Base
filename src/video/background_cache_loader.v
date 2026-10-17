@@ -59,9 +59,11 @@ module background_cache_loader #(
  wire job_obsolete = !source_valid || (job_art
      ? (job_art2 != target_art2 || art_changed)
      : (job_song != song_id || song_changed));
- wire start_art = state == IDLE && source_valid && !art_ready && !art_failed && !art_changed;
- wire start_song = state == IDLE && source_valid && (art_ready || art_failed) &&
+ wire start_art_request = source_valid && !art_ready && !art_failed && !art_changed;
+ wire start_song_request = source_valid && (art_ready || art_failed) &&
      !song_ready && !song_failed && !song_changed && !invalidate_pending;
+ wire start_art = state == IDLE && start_art_request;
+ wire start_song = state == IDLE && start_song_request;
  wire byte_bad = sector_valid && (byte_count >= 10'd512 || sector_byte_index != byte_count[8:0]);
  wire [10:0] byte_count_with_valid = {1'b0,byte_count} + (sector_valid ? 11'd1 : 11'd0);
  wire sector_bad = sector_error != 8'd0 || byte_count_with_valid != 11'd512 || byte_bad;
@@ -114,7 +116,10 @@ module background_cache_loader #(
  always @(posedge clk or negedge rst_n) begin
   if (!rst_n) state<=IDLE;
   else case (state)
-   IDLE: if (start_art || start_song) state<=WAIT_CHUNK;
+   // IDLE is already selected by this state branch. Use the request terms
+   // directly so the next-state cone does not decode state==IDLE twice via
+   // start_art/start_song before feeding the state register again.
+   IDLE: if (start_art_request || start_song_request) state<=WAIT_CHUNK;
    WAIT_CHUNK: if (job_obsolete || abandoned) state<=IDLE;
                else if (!mv_writer_active && !invalidate_pending && !song_changed && !art_changed) state<=REQ;
    ACK: if (write_ack_sync[1]) state<=CLEAR;

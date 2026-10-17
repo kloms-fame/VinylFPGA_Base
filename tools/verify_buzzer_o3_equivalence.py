@@ -1,4 +1,4 @@
-"""Cycle-compare buzzer RTL against the frozen O3 parent commit."""
+"""Cycle-compare buzzer RTL against the frozen pre-timing-change parent."""
 from pathlib import Path
 import re
 import shutil
@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-BASELINE = "24b680faf367e4e6f8a51b99aab38a86798f895d"
+BASELINE = "4c9664ed1f9fa7249344f60fd147a70b3e07ea82"
 IVERILOG = shutil.which("iverilog") or "D:/iverilog/bin/iverilog.exe"
 VVP = shutil.which("vvp") or "D:/iverilog/bin/vvp.exe"
 PARAMS = [
@@ -27,12 +27,12 @@ def bench(params):
         f".{key}({value})" for key, value in params.items()) + ")"
     inputs = ("clk,rst_n,sound_enable,key_press,dip_change,dip_target,"
               "encoder_step,encoder_direction,encoder_source,encoder_switch,"
-              "encoder_switch_source,ir_event,ir_action")
+              "encoder_switch_source,ir_event,ir_action,slideshow_event")
     return f'''`timescale 1ns/1ps
 module tb;
 reg clk=0, rst_n=0, sound_enable=1;
 reg key_press=0, dip_change=0, dip_target=0, encoder_step=0;
-reg encoder_direction=0, encoder_source=0, encoder_switch=0, encoder_switch_source=0, ir_event=0;
+reg encoder_direction=0, encoder_source=0, encoder_switch=0, encoder_switch_source=0, ir_event=0, slideshow_event=0;
 reg [1:0] ir_action=0;
 integer cycles=0, i, j, seed=32'h3cc157af, noise;
 wire buzzer_n, busy, ref_buzzer_n, ref_busy;
@@ -45,34 +45,34 @@ always @(posedge clk) begin
    $fatal(1,"FAIL output mismatch cycle=%0d buzzer=%b/%b busy=%b/%b",cycles,buzzer_n,ref_buzzer_n,busy,ref_busy);
 end
 task ticks; input integer n; begin repeat(n) @(negedge clk); end endtask
-task clear_inputs; begin key_press=0; dip_change=0; encoder_step=0; encoder_switch=0; ir_event=0; end endtask
+task clear_inputs; begin key_press=0; dip_change=0; encoder_step=0; encoder_switch=0; ir_event=0; slideshow_event=0; end endtask
 task reset_all; begin rst_n=0; clear_inputs; ticks(2); rst_n=1; sound_enable=1; ticks(2); end endtask
 task event_start; input integer kind; begin
  clear_inputs; ticks(1);
  case(kind)
- 1:encoder_step=1; 2:key_press=1; 3:dip_change=1; 4:ir_event=1; 5:encoder_switch=1;
+ 1:encoder_step=1; 2:key_press=1; 3:dip_change=1; 4:ir_event=1; 5:encoder_switch=1; 6:slideshow_event=1;
  endcase
  ticks(1); clear_inputs;
 end endtask
 task near_end; begin
  if(dut.duration_cycles>2) begin
-   dut.duration_count=dut.duration_cycles-2; refdut.duration_count=refdut.duration_cycles-2;
+   dut.duration_count=dut.duration_cycles-1; refdut.duration_count=refdut.duration_cycles-2;
  end
  if(dut.half_period_cycles>2) begin
-   dut.half_period_count=dut.half_period_cycles-2; refdut.half_period_count=refdut.half_period_cycles-2;
+   dut.half_period_count=dut.half_period_cycles-1; refdut.half_period_count=refdut.half_period_cycles-2;
  end
  ticks(4);
 end endtask
 initial begin
  reset_all;
- for(i=1;i<=5;i=i+1) for(j=0;j<4;j=j+1) begin
+ for(i=1;i<=6;i=i+1) for(j=0;j<4;j=j+1) begin
    reset_all; encoder_source=j&1; encoder_direction=(j>>1)&1;
    encoder_switch_source=j&1; ir_action=j; dip_target=j&1;
    event_start(i);
    if(!busy || dut.current_event!=i) $fatal(1,"FAIL event load i=%0d",i);
    ticks(3); near_end; if(i==3) near_end;
  end
- for(i=1;i<=5;i=i+1) for(j=1;j<=5;j=j+1) begin
+ for(i=1;i<=6;i=i+1) for(j=1;j<=6;j=j+1) begin
    reset_all; event_start(i); event_start(j); near_end; near_end;
  end
  reset_all;
@@ -87,7 +87,7 @@ initial begin
    key_press=noise&1; dip_change=(noise>>1)&1; dip_target=(noise>>2)&1;
    encoder_step=(noise>>3)&1; encoder_direction=(noise>>4)&1; encoder_source=(noise>>5)&1;
    encoder_switch=(noise>>6)&1; encoder_switch_source=(noise>>7)&1;
-   ir_event=(noise>>8)&1; ir_action=(noise>>9)&3; ticks(1);
+   ir_event=(noise>>8)&1; ir_action=(noise>>9)&3; slideshow_event=(noise>>11)&1; ticks(1);
  end
  if({int(not params)}) begin
    reset_all; encoder_switch=1; ticks(1); encoder_switch=0;

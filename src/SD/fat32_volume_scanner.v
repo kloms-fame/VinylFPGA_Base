@@ -67,7 +67,18 @@ module fat32_volume_scanner (
     localparam ST_BOOT_ROOT   = 4'd11;
 
     reg [3:0]  state;
-    reg [7:0]  sector_buffer [0:511];
+    // Only these MBR/BPB offsets are consumed below. Keeping a full 512-byte
+    // sector register bank made an unrelated audio-sector valid signal fan
+    // out to thousands of write enables and spent over 4k flip-flops.
+    reg [7:0] sec0;
+    reg [7:0] sec11, sec12, sec13, sec14, sec15, sec16, sec17, sec18;
+    reg [7:0] sec22, sec23;
+    reg [7:0] sec32, sec33, sec34, sec35, sec36, sec37, sec38, sec39;
+    reg [7:0] sec44, sec45, sec46, sec47;
+    reg [7:0] sec446, sec450;
+    reg [7:0] sec454, sec455, sec456, sec457;
+    reg [7:0] sec458, sec459, sec460, sec461;
+    reg [7:0] sec510, sec511;
     reg [31:0] root_cluster;
     reg [31:0] total_sectors;
     reg [31:0] fat_sectors;
@@ -100,15 +111,27 @@ module fat32_volume_scanner (
     function [15:0] le16;
         input integer offset;
         begin
-            le16 = {sector_buffer[offset+1], sector_buffer[offset]};
+            case (offset)
+                11: le16 = {sec12, sec11};
+                14: le16 = {sec15, sec14};
+                17: le16 = {sec18, sec17};
+                22: le16 = {sec23, sec22};
+                default: le16 = 16'd0;
+            endcase
         end
     endfunction
 
     function [31:0] le32;
         input integer offset;
         begin
-            le32 = {sector_buffer[offset+3], sector_buffer[offset+2],
-                    sector_buffer[offset+1], sector_buffer[offset]};
+            case (offset)
+                32:  le32 = {sec35, sec34, sec33, sec32};
+                36:  le32 = {sec39, sec38, sec37, sec36};
+                44:  le32 = {sec47, sec46, sec45, sec44};
+                454: le32 = {sec457, sec456, sec455, sec454};
+                458: le32 = {sec461, sec460, sec459, sec458};
+                default: le32 = 32'd0;
+            endcase
         end
     endfunction
 
@@ -201,9 +224,50 @@ module fat32_volume_scanner (
             scan_done <= 1'b0;
             sector_req <= 1'b0;
 
-            // 根目录扇区另行逐字节扫描；其他扇区供 MBR/BPB 解析。
-            if (sector_valid && state != ST_ROOT_WAIT)
-                sector_buffer[sector_byte_index] <= sector_byte;
+            // Capture only the fixed MBR/BPB fields used by this scanner,
+            // and only while one of its sector reads is active. In particular,
+            // audio/video sector traffic can no longer toggle this write bank.
+            if (sector_valid &&
+                ((state == ST_READ0_WAIT) || (state == ST_BOOT_WAIT))) begin
+                case (sector_byte_index)
+                    9'd0:   sec0   <= sector_byte;
+                    9'd11:  sec11  <= sector_byte;
+                    9'd12:  sec12  <= sector_byte;
+                    9'd13:  sec13  <= sector_byte;
+                    9'd14:  sec14  <= sector_byte;
+                    9'd15:  sec15  <= sector_byte;
+                    9'd16:  sec16  <= sector_byte;
+                    9'd17:  sec17  <= sector_byte;
+                    9'd18:  sec18  <= sector_byte;
+                    9'd22:  sec22  <= sector_byte;
+                    9'd23:  sec23  <= sector_byte;
+                    9'd32:  sec32  <= sector_byte;
+                    9'd33:  sec33  <= sector_byte;
+                    9'd34:  sec34  <= sector_byte;
+                    9'd35:  sec35  <= sector_byte;
+                    9'd36:  sec36  <= sector_byte;
+                    9'd37:  sec37  <= sector_byte;
+                    9'd38:  sec38  <= sector_byte;
+                    9'd39:  sec39  <= sector_byte;
+                    9'd44:  sec44  <= sector_byte;
+                    9'd45:  sec45  <= sector_byte;
+                    9'd46:  sec46  <= sector_byte;
+                    9'd47:  sec47  <= sector_byte;
+                    9'd446: sec446 <= sector_byte;
+                    9'd450: sec450 <= sector_byte;
+                    9'd454: sec454 <= sector_byte;
+                    9'd455: sec455 <= sector_byte;
+                    9'd456: sec456 <= sector_byte;
+                    9'd457: sec457 <= sector_byte;
+                    9'd458: sec458 <= sector_byte;
+                    9'd459: sec459 <= sector_byte;
+                    9'd460: sec460 <= sector_byte;
+                    9'd461: sec461 <= sector_byte;
+                    9'd510: sec510 <= sector_byte;
+                    9'd511: sec511 <= sector_byte;
+                    default: ;
+                endcase
+            end
 
             if (sector_valid && state == ST_ROOT_WAIT) begin
                 case (sector_byte_index[4:0])
@@ -324,19 +388,17 @@ module fat32_volume_scanner (
                 ST_READ0_WAIT: if (sector_done) begin
                     if (sector_error != 0)
                         finish_with_error(ERR_SECTOR);
-                    else if (sector_buffer[510] != 8'h55 ||
-                             sector_buffer[511] != 8'haa)
+                    else if (sec510 != 8'h55 || sec511 != 8'haa)
                         finish_with_error(ERR_BOOT_SIGNATURE);
-                    else if (((sector_buffer[446] == 8'h00) ||
-                              (sector_buffer[446] == 8'h80)) &&
-                             ((sector_buffer[450] == 8'h0b) ||
-                              (sector_buffer[450] == 8'h0c)) &&
+                    else if (((sec446 == 8'h00) ||
+                              (sec446 == 8'h80)) &&
+                             ((sec450 == 8'h0b) ||
+                              (sec450 == 8'h0c)) &&
                              (le32(454) != 0) && (le32(458) != 0)) begin
                         partition_lba <= le32(454);
                         sector_lba <= le32(454);
                         state <= ST_BOOT_REQ;
-                    end else if (sector_buffer[0] == 8'heb ||
-                                 sector_buffer[0] == 8'he9) begin
+                    end else if (sec0 == 8'heb || sec0 == 8'he9) begin
                         partition_lba <= 32'd0;
                         state <= ST_BOOT_PARSE;
                     end else begin
@@ -350,29 +412,28 @@ module fat32_volume_scanner (
                 ST_BOOT_WAIT: if (sector_done) begin
                     if (sector_error != 0)
                         finish_with_error(ERR_SECTOR);
-                    else if (sector_buffer[510] != 8'h55 ||
-                             sector_buffer[511] != 8'haa)
+                    else if (sec510 != 8'h55 || sec511 != 8'haa)
                         finish_with_error(ERR_BOOT_SIGNATURE);
                     else
                         state <= ST_BOOT_PARSE;
                 end
                 ST_BOOT_PARSE: begin
-                    if ((le16(11) != 16'd512) || !valid_spc(sector_buffer[13]) ||
+                    if ((le16(11) != 16'd512) || !valid_spc(sec13) ||
                         (le16(14) == 0) ||
-                        ((sector_buffer[16] != 1) && (sector_buffer[16] != 2)) ||
+                        ((sec16 != 1) && (sec16 != 2)) ||
                         (le16(17) != 0) || (le16(22) != 0) ||
                         (le32(32) == 0) || (le32(36) == 0) ||
                         (le32(44) < 2)) begin
                         finish_with_error(ERR_UNSUPPORTED_BPB);
                     end else begin
-                        sectors_per_cluster <= sector_buffer[13];
+                        sectors_per_cluster <= sec13;
                         reserved_sectors <= le16(14);
-                        fat_count <= sector_buffer[16];
+                        fat_count <= sec16;
                         total_sectors <= le32(32);
                         fat_sectors <= le32(36);
                         root_cluster <= le32(44);
-                        sectors_per_cluster_shift <= spc_shift(sector_buffer[13]);
-                        fat_span <= (sector_buffer[16] == 2) ?
+                        sectors_per_cluster_shift <= spc_shift(sec13);
+                        fat_span <= (sec16 == 2) ?
                                     (le32(36) << 1) : le32(36);
                         fat_start_lba <= partition_lba + le16(14);
                         state <= ST_BOOT_LAYOUT;
