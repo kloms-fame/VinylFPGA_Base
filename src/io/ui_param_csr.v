@@ -11,6 +11,7 @@ module ui_param_csr #(
 )(
     input  wire       clk,
     input  wire       rst_n,
+    input  wire       defaults_req,
     input  wire       wr_valid,
     input  wire [2:0] wr_id,       // 0=VOL, 1=BRI, 2=CON, 3=ROT
     input  wire       wr_up,
@@ -42,7 +43,14 @@ module ui_param_csr #(
             param_update     <= 1'b0;
         end else begin
             param_update <= 1'b0;
-            if (wr_valid) begin
+            if (defaults_req) begin
+                volume           <= DEFAULT_VOLUME;
+                brightness_level <= DEFAULT_BRIGHTNESS;
+                contrast_level   <= DEFAULT_CONTRAST;
+                rotation_level   <= DEFAULT_ROTATION;
+                ws_level         <= DEFAULT_WS_LEVEL;
+                param_update     <= 1'b1;
+            end else if (wr_valid) begin
                 case (wr_id)
                     PARAM_VOL: begin
                         if (wr_up && volume_up_next != volume) begin

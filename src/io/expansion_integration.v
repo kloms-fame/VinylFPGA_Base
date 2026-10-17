@@ -23,8 +23,9 @@ module expansion_integration #(
     input  wire        exp_enc2_sw_n,
     input  wire        exp_ir_rx,
 
-    // 母板输入：KEY3 与 SW1–SW4；
+    // 母板输入：KEY2/KEY3 与 SW1–SW4；KEY3 当前预留给阶段 4 手动保存。
     // SW1-SW4 = 板载乒乓拨码（C8/C7/C6/C5），均按按键/拨码低有效消抖。
+    input  wire        key2,
     input  wire        key3,
     input  wire        sw1,
     input  wire        sw2,
@@ -42,6 +43,8 @@ module expansion_integration #(
     // ui_ev_valid：任一"已确认"J2 用户操作的单拍脉冲（clk 域）。
     //              S2 顶层用它翻转出一根电平，跨到 video 域作为 Boot 跳过源。
     output wire        ui_ev_valid,
+    // 母板 KEY2 消抖按下脉冲，供唯一参数 CSR 恢复运行默认值。
+    output wire        key2_reset_pulse,
     // 启动保护窗结束时锁存 SW2 状态，供 video 域安全同步并旁路 Boot。
     output reg         boot_startup_skip,
     // ===================== S7-01B：遥测输入（顶层已同步到 clk 域）=====================
@@ -300,11 +303,11 @@ module expansion_integration #(
     // ---- 硬件回显上报器 ----
     
 
-    // ---- 母板按键 KEY3 / 拨码 SW1-4：复用 J2 移植的消抖驱动 ----
-    // 母板按键低有效、拨码上拨=1，与 J2 标定的输入语义一致，故直接复用 key_dip_monitor。
-    wire [0:0] board_key_level;
-    wire [0:0] board_key_fall_pulse;
-    wire [0:0] board_key_rise_pulse;
+    // ---- 母板按键 KEY2 / 拨码 SW1-4：复用既有 J2 消抖驱动 ----
+    // KEY2 低有效；KEY3 不接入当前通用事件，完整保存功能留待阶段 4。
+    wire [0:0] key2_level;
+    wire [0:0] key2_fall_pulse;
+    wire [0:0] key2_rise_pulse;
     wire [3:0] board_sw_change_pulse;
     wire [2:0] board_sw_change_index;
 
@@ -320,11 +323,11 @@ module expansion_integration #(
         .debounce_ce     (debounce_ce),
         .clk             (clk),
         .rst_n           (rst_n),
-        .key_async       (key3),
+        .key_async       (key2),
         .dip_async       ({sw4, sw3, sw2, sw1}),
-        .key_level       (board_key_level),
-        .key_fall_pulse  (board_key_fall_pulse),
-        .key_rise_pulse  (board_key_rise_pulse),
+        .key_level       (key2_level),
+        .key_fall_pulse  (key2_fall_pulse),
+        .key_rise_pulse  (key2_rise_pulse),
         .dip_level       (board_sw_level),
         .dip_change_pulse(board_sw_change_pulse),
         .dip_change_index(board_sw_change_index)
@@ -375,6 +378,9 @@ module expansion_integration #(
             end
         end
     end
+
+    // KEY2 只在启动输入收敛后接受；按键保持不会重复发出默认值请求。
+    assign key2_reset_pulse = key2_fall_pulse[0] & skip_guard_done;
 
     // S7-03：DIP5 关闭时红外既不执行业务、也不作为 Boot 跳过源（红外业务使能门控）。
     wire ir_boot_ok = !ev_is_ir || dip_level[4];

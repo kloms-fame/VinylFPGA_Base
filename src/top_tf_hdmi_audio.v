@@ -336,6 +336,7 @@ wire [23:0] view_rgb;               // 播放 MV 遮罩后的像素源
 // 事件握手：ui_ev_valid（clk 域单拍）-> 翻转电平 -> video 域同步/边沿检测。
 // 状态回读：boot_active（video 域电平）-> 两级同步到 clk 域。
 wire        ui_ev_valid;
+wire        key2_reset_pulse;
 wire        board_sw2_boot_skip;
 reg         boot_skip_toggle_clk;
 wire        boot_active;
@@ -785,6 +786,7 @@ assign param_csr_wr_up = volume_bridge_dst_valid ? volume_bridge_dst_up
 
 ui_param_csr u_ui_param_csr(
     .clk(clk), .rst_n(exp_rst_n),
+    .defaults_req(key2_reset_pulse),
     .wr_valid(param_csr_wr_valid), .wr_id(param_csr_wr_id), .wr_up(param_csr_wr_up),
     .volume(play_volume_csr), .brightness_level(brightness_level_csr),
     .contrast_level(contrast_level_csr), .rotation_level(rotation_level_csr),
@@ -2640,6 +2642,7 @@ expansion_integration #(
     .exp_enc2_b       (exp_enc2_b),
     .exp_enc2_sw_n    (exp_enc2_sw_n),
     .exp_ir_rx        (exp_ir_rx),
+    .key2             (key2),
     .key3             (key3),
     .sw1              (sw1),
     .sw2              (sw2),
@@ -2652,6 +2655,7 @@ expansion_integration #(
     .uart_tx          (uart_tx),
     .fault_flags      (fault_flags_clk),
     .ui_ev_valid      (ui_ev_valid),
+    .key2_reset_pulse (key2_reset_pulse),
     .boot_startup_skip (board_sw2_boot_skip),
     .underrun_pulse   (underrun_pulse_clk),
     .wav_buffer_low   (wav_buffer_low_c2),
