@@ -499,7 +499,7 @@ module expansion_integration #(
         .ws_data   (exp_ws2812_data)
     );
 
-    // 独立 D14 灯带及 G11 电机控制；J11 原有灯效链路保持不变。
+    // 独立 D14 灯带及 G11 电机控制；两路灯带共用 OSD WSL 亮度档位。
     vinyl_playback_effects #(
         .CLK_FREQ_HZ(CLK_FREQ_HZ),
         .REFRESH_MS (20)
@@ -510,6 +510,7 @@ module expansion_integration #(
         .paused_async      (paused_async),
         .needle_sense_n    (needle_sense_n),
         .ws_enable         (ws_enable),
+        .brightness_level  (ws_brightness_level),
         .tick_1ms          (ui_tick_1ms),
         .motor_enable      (vinyl_motor_en),
         .ws_data           (vinyl_ws2812_data)

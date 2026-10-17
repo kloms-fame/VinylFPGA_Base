@@ -12,6 +12,7 @@ module vinyl_playback_effects #(
     input  wire paused_async,
     input  wire needle_sense_n,
     input  wire ws_enable,
+    input  wire [2:0] brightness_level, // Shared OSD WSL: 0/25/50/75/100%.
     input  wire tick_1ms,
     output wire motor_enable,
     output wire ws_data
@@ -89,6 +90,7 @@ module vinyl_playback_effects #(
 
     reg frame_active;
     reg [2:0] frame_phase;
+    reg [2:0] brightness_frame = 3'd4;
     reg black_sent;
     reg load_req;
     wire busy;
@@ -103,6 +105,10 @@ module vinyl_playback_effects #(
         else if (accept_frame) frame_phase <= color_phase;
     end
     always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) brightness_frame <= 3'd4;
+        else if (accept_frame) brightness_frame <= brightness_level;
+    end
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) black_sent <= 1'b0;
         else if (strip_run) black_sent <= 1'b0;
         else if (accept_frame) black_sent <= 1'b1;
@@ -114,6 +120,20 @@ module vinyl_playback_effects #(
 
     wire [4:0] pixel_index;
     wire [2:0] color_index = pixel_index[2:0] + frame_phase;
+    // Scale the two constant palette amplitudes before color selection.
+    // floor(115 * WSL / 4) equals floor(floor(230 * WSL / 4) / 2),
+    // so a single small decode and wiring replace three RGB arithmetic paths.
+    reg [7:0] full_level;
+    wire [7:0] half_level = {1'b0, full_level[7:1]};
+    always @* begin
+        case (brightness_frame)
+            3'd1: full_level = 8'd57;
+            3'd2: full_level = 8'd115;
+            3'd3: full_level = 8'd172;
+            3'd4: full_level = 8'd230;
+            default: full_level = 8'd0;
+        endcase
+    end
     reg [7:0] red;
     reg [7:0] green;
     reg [7:0] blue;
@@ -123,14 +143,14 @@ module vinyl_playback_effects #(
         blue  = 8'd0;
         if (frame_active) begin
             case (color_index)
-                3'd0: red   = 8'd230;                         // red
-                3'd1: begin red=8'd230; green=8'd115; end    // orange
-                3'd2: begin red=8'd230; green=8'd230; end    // yellow
-                3'd3: green = 8'd230;                         // green
-                3'd4: begin green=8'd230; blue=8'd230; end   // cyan
-                3'd5: blue  = 8'd230;                         // blue
-                3'd6: begin red=8'd115; blue=8'd230; end     // purple
-                3'd7: begin red=8'd230; blue=8'd230; end     // magenta
+                3'd0: red   = full_level;                            // red
+                3'd1: begin red=full_level; green=half_level; end     // orange
+                3'd2: begin red=full_level; green=full_level; end     // yellow
+                3'd3: green = full_level;                            // green
+                3'd4: begin green=full_level; blue=full_level; end    // cyan
+                3'd5: blue  = full_level;                            // blue
+                3'd6: begin red=half_level; blue=full_level; end      // purple
+                3'd7: begin red=full_level; blue=full_level; end      // magenta
                 default: ;
             endcase
         end
