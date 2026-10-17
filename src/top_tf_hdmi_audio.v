@@ -48,6 +48,10 @@
 `include "audio/play_ctrl.v"
 `include "audio/stream_session.v"
 `include "audio/seek_controller.v"
+`include "audio/audio_prefetch_stage.v"
+`include "audio/audio_sdram_dma.v"
+`include "audio/audio_prefetch_sdram.v"
+`include "audio/audio_sdram_arbiter.v"
 `include "io/cover_navigation.v"
 `include "io/navigation_readiness.v"
 `include "io/slideshow_controller.v"
@@ -301,6 +305,15 @@ wire App_wr_en;
 wire [ADDR_BITS-1:0] App_wr_addr;
 wire [MEM_DATA_BITS-1:0] App_wr_din;
 wire [3:0] App_wr_dm;
+wire frw_rd_en,frw_wr_en,frw_read_busy;
+wire [20:0] frw_rd_addr,frw_wr_addr;
+wire [31:0] frw_wr_data;
+wire [3:0] frw_wr_mask;
+wire audio_mem_lock,audio_mem_read_owner,audio_mem_wr_en,audio_mem_rd_en;
+wire [20:0] audio_mem_wr_addr,audio_mem_rd_addr;
+wire [31:0] audio_mem_wr_data;
+wire [3:0] audio_mem_wr_mask;
+wire graphics_mem_stall,audio_write_tail_busy,graphics_mem_read_valid;
 
 wire        fade_start_event_sd;    // 送 video_fade_transition 的淡出请求
 
@@ -565,8 +578,15 @@ wire [7:0]  wav_sec_byte;
 wire [8:0]  wav_sec_byte_index;
 wire        wav_sec_done;
 wire [7:0]  wav_sec_error;
+wire [7:0]  media_raw_byte,media_raw_error;
+wire [8:0]  media_raw_byte_index;
+wire prefetch_sd_req,prefetch_sd_busy,prefetch_sd_valid,prefetch_sd_done;
+wire [31:0] prefetch_sd_lba;
+wire cache_playback_ready,cache_playback_ready_video,cache_prefetch_low,cache_session_busy;
+wire cache_memory_ready_sd;
 wire        wav_sample_valid;
 wire        wav_sample_ready;
+wire        wav_startup_ready;
 wire signed [15:0] wav_sample_left;
 wire signed [15:0] wav_sample_right;
 wire        wav_stream_active;
@@ -1113,10 +1133,10 @@ sd_card_bmp #(
     .audio_sec_lba     (probe_card_lba),
     .audio_sec_busy    (probe_card_busy),
     .audio_sec_valid   (probe_card_valid),
-    .audio_sec_byte    (wav_sec_byte),
-    .audio_sec_byte_index(wav_sec_byte_index),
+    .audio_sec_byte    (media_raw_byte),
+    .audio_sec_byte_index(media_raw_byte_index),
     .audio_sec_done    (probe_card_done),
-    .audio_sec_error   (wav_sec_error)
+    .audio_sec_error   (media_raw_error)
 );
 
 media_probe u_media_probe(
@@ -1310,7 +1330,7 @@ wire play_fs_prev_sd = play_track_step_sd & ~play_track_dir_sd;
 stream_session u_stream_session(
  .clk(sd_card_clk),.rst_n(sd_media_rst_n),
  .requested(audio_play_enable && play_active_sd && playback_ready_sd && !cover_busy),
- .restart(play_restart_request),.storage_busy(wav_sec_busy),
+ .restart(play_restart_request),.storage_busy(prefetch_sd_busy || cache_session_busy),
  .video_busy(mv_writer_active),.reader_idle(wav_reader_idle),
  .enable(stream_enable_sd),.start_toggle(play_track_tgl_sd));
 assign audio_play_enable_gated = S5_PLAY_ENABLE ? stream_enable_sd : audio_play_enable;
@@ -1625,7 +1645,8 @@ media_write_pipeline u_media_write_pipeline (
 frame_read_write #(
     .DYNAMIC_LINEAR   (1),
     .COMPOSITE_READ   (1),
-    .EXTERNAL_READ_BUSY(0),
+    .EXTERNAL_READ_BUSY(1),
+    .PRESERVE_LOW_BYTE (1),
     .WRITE_V_FLIP     (1),
     .FRAME_WIDTH      (640),
     .FRAME_HEIGHT     (480)
@@ -1637,18 +1658,19 @@ frame_read_write #(
     .background_media_mv(mv_read_active),.background_epoch(background_epoch),
     .background_media_base(background_media_base),.background_base(background_read_base),
     .background_epoch_ack(background_epoch_ack),
-    .external_read_busy(1'b0),
+    .external_read_busy(graphics_mem_stall),
     .app_write_busy    (frw_write_busy),
+    .app_read_busy     (frw_read_busy),
     .mem_clk           (ext_mem_clk),
     .rst               (~mem_rst_n),
     .Sdr_init_done     (Sdr_init_done),
     .Sdr_init_ref_vld  (Sdr_init_ref_vld),
     .Sdr_busy          (Sdr_busy),
 
-    // 中央封面/MV 共用 frame_read_write 顺序读口，直接连接 SDRAM。
-    .App_rd_en         (App_rd_en),
-    .App_rd_addr       (App_rd_addr),
-    .Sdr_rd_en         (Sdr_rd_en),
+    // Audio returns must never enter the graphics FIFO or cover decimator.
+    .App_rd_en         (frw_rd_en),
+    .App_rd_addr       (frw_rd_addr),
+    .Sdr_rd_en         (graphics_mem_read_valid),
     .Sdr_rd_dout       (Sdr_rd_dout),
 
     .read_clk          (video_clk),
@@ -1664,10 +1686,10 @@ frame_read_write #(
     .read_en           (frw_read_en_gated),
     .read_data         (video_read_data),
 
-    .App_wr_en         (App_wr_en),
-    .App_wr_addr       (App_wr_addr),
-    .App_wr_din        (App_wr_din),
-    .App_wr_dm         (App_wr_dm),
+    .App_wr_en         (frw_wr_en),
+    .App_wr_addr       (frw_wr_addr),
+    .App_wr_din        (frw_wr_data),
+    .App_wr_dm         (frw_wr_mask),
 
     .write_clk         (sd_card_clk),
     .write_req         (background_writer_active ? background_write_req : (mv_writer_active ? mv_write_req : sd_write_req_eff)),
@@ -1681,6 +1703,23 @@ frame_read_write #(
     .write_len         (background_writer_active ? 24'd256 : (mv_writer_active ? 24'd76800 : FRAME_PIXELS)),
     .write_en          (shared_write_valid),
     .write_data        (shared_write_data)
+);
+
+audio_sdram_arbiter u_audio_sdram_arbiter (
+    .mem_clk(ext_mem_clk),.rst_n(mem_rst_n),.controller_busy(Sdr_busy),
+    .refresh_active(Sdr_init_ref_vld),.mem_read_valid(Sdr_rd_en),
+    .audio_lock(audio_mem_lock),.audio_read_owner(audio_mem_read_owner),
+    .graphics_wr_en(frw_wr_en),.graphics_rd_en(frw_rd_en),
+    .graphics_wr_addr(frw_wr_addr),.graphics_rd_addr(frw_rd_addr),
+    .graphics_wr_data(frw_wr_data),
+    .audio_wr_en(audio_mem_wr_en),.audio_rd_en(audio_mem_rd_en),
+    .audio_wr_addr(audio_mem_wr_addr),.audio_rd_addr(audio_mem_rd_addr),
+    .audio_wr_data(audio_mem_wr_data),.audio_wr_mask(audio_mem_wr_mask),
+    .graphics_stall(graphics_mem_stall),.write_tail_busy(audio_write_tail_busy),
+    .graphics_read_valid(graphics_mem_read_valid),
+    .mem_wr_en(App_wr_en),.mem_rd_en(App_rd_en),
+    .mem_wr_addr(App_wr_addr),.mem_rd_addr(App_rd_addr),
+    .mem_wr_data(App_wr_din),.mem_wr_mask(App_wr_dm)
 );
 
 sdram U3(
@@ -1930,7 +1969,42 @@ always @(posedge sd_card_clk or negedge sd_media_rst_n) begin
     end
 end
 
-// 第十一讲核心：从 AUDIO.PCM 的连续扇区流式播放。
+sync_2ff u_cache_memory_ready_sync (
+    .clk(sd_card_clk),.rst_n(sdcard_rst_n),
+    .async_in(Sdr_init_done),.sync_out(cache_memory_ready_sd)
+);
+sync_2ff u_cache_playback_ready_sync (
+    .clk(video_clk),.rst_n(media_video_rst_n),
+    .async_in(cache_playback_ready),.sync_out(cache_playback_ready_video)
+);
+// This module survives a media-only reset until old memory mailboxes drain.
+audio_prefetch_sdram u_audio_prefetch_sdram (
+    .sd_clk(sd_card_clk),.sd_rst_n(sdcard_rst_n),
+    .mem_clk(ext_mem_clk),.mem_rst_n(mem_rst_n),
+    .source_ready(sd_media_rst_n && cache_memory_ready_sd),
+    .enable(audio_play_enable_gated),.start_lba(wav_start_lba_eff),
+    .total_sectors(wav_total_sectors_eff),
+    .client_req(wav_sec_req),.client_busy(wav_sec_busy),
+    .client_valid(wav_sec_valid),.client_byte(wav_sec_byte),
+    .client_byte_index(wav_sec_byte_index),.client_done(wav_sec_done),
+    .client_error(wav_sec_error),
+    .raw_req(prefetch_sd_req),.raw_lba(prefetch_sd_lba),
+    .raw_busy(prefetch_sd_busy),.raw_valid(prefetch_sd_valid),
+    .raw_byte(media_raw_byte),.raw_byte_index(media_raw_byte_index),
+    .raw_done(prefetch_sd_done),.raw_error(media_raw_error),
+    .playback_ready(cache_playback_ready),.prefetch_low(cache_prefetch_low),
+    .session_busy(cache_session_busy),
+    .video_read_busy(frw_read_busy),
+    .video_write_busy(frw_write_busy || audio_write_tail_busy),
+    .controller_busy(Sdr_busy || !Sdr_init_done),.refresh_active(Sdr_init_ref_vld),
+    .mem_read_valid(Sdr_rd_en),.mem_read_data(Sdr_rd_dout),
+    .access_lock(audio_mem_lock),.read_owner(audio_mem_read_owner),
+    .mem_wr_en(audio_mem_wr_en),.mem_wr_addr(audio_mem_wr_addr),
+    .mem_wr_data(audio_mem_wr_data),.mem_wr_mask(audio_mem_wr_mask),
+    .mem_rd_en(audio_mem_rd_en),.mem_rd_addr(audio_mem_rd_addr)
+);
+
+// Existing PCM decoder/output FIFO consumes cached sectors unchanged.
 wav_stream_player #(
     .ADDR_WIDTH        (12),
     .SAMPLES_PER_SECTOR(256)
@@ -1956,12 +2030,13 @@ wav_stream_player #(
     .sample_tick       (wav_sample_tick_eff),
     .sample_out        (wav_sample_left),
     .sample_valid      (wav_sample_valid),
-    .sample_ready      (wav_sample_ready),
+    .sample_ready      (wav_sample_ready && cache_playback_ready_video && wav_startup_ready),
     .sample_counter    (wav_sample_counter),
     .stream_active     (wav_stream_active),
     .stream_end        (wav_stream_end),
     .reader_idle       (wav_reader_idle),
     .sample_consumed   (wav_sample_consumed),
+    .startup_ready     (wav_startup_ready),
     .buffer_low        (wav_buffer_low),
     .sample_base       (play_seek_target_v2),
     .underrun_pulse    (wav_underrun_pulse)
@@ -2151,8 +2226,8 @@ background_cache_loader u_background_cache_loader (
  .sector_lba(background_sector_lba),
  .sector_busy(background_sector_busy),.sector_grant(background_sector_grant),
  .sector_valid(background_sector_valid),
- .sector_byte(wav_sec_byte),.sector_byte_index(wav_sec_byte_index),
- .sector_done(background_sector_done),.sector_error(wav_sec_error));
+ .sector_byte(media_raw_byte),.sector_byte_index(media_raw_byte_index),
+ .sector_done(background_sector_done),.sector_error(media_raw_error));
 background_frame_select u_background_frame_select (
  .clk(video_clk),.rst_n(video_rst_n),.frame_start(frame_start),
  .enable(playback_page_mode_frame && !pat_mode),.mode(background_mode),
@@ -2167,18 +2242,18 @@ always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
  else mv_audio_low_sync<={mv_audio_low_sync[0],wav_buffer_low};
 end
 background_sector_mux u_mv_sector_mux(
- .clk(sd_card_clk),.rst_n(sd_media_rst_n),.audio_req(wav_sec_req),.audio_lba(wav_sec_lba),
+ .clk(sd_card_clk),.rst_n(sd_media_rst_n),.audio_req(prefetch_sd_req),.audio_lba(prefetch_sd_lba),
  .video_req(mv_sec_req),.video_lba(mv_sec_lba),
- .allow_video(!audio_play_enable_gated || !mv_audio_low_sync[1]),
+ .allow_video(!audio_play_enable_gated || (!mv_audio_low_sync[1] && !cache_prefetch_low)),
  .background_req(background_sector_req),.background_lba(background_sector_lba),
  .background_start(background_sector_start),
- .allow_background(!audio_play_enable_gated || !mv_audio_low_sync[1]),
+ .allow_background(!audio_play_enable_gated || (!mv_audio_low_sync[1] && !cache_prefetch_low)),
  .background_busy(background_sector_busy),.background_grant(background_sector_grant),
  .background_valid(background_sector_valid),
  .background_done(background_sector_done),
- .audio_busy(wav_sec_busy),.video_busy(mv_sec_busy),
- .audio_valid(wav_sec_valid),.video_valid(mv_sec_valid),
- .audio_done(wav_sec_done),.video_done(mv_sec_done),
+ .audio_busy(prefetch_sd_busy),.video_busy(mv_sec_busy),
+ .audio_valid(prefetch_sd_valid),.video_valid(mv_sec_valid),
+ .audio_done(prefetch_sd_done),.video_done(mv_sec_done),
  .sector_req(media_sec_req),.sector_lba(media_sec_lba),.sector_busy(media_sec_busy),
  .sector_valid(media_sec_valid),.sector_done(media_sec_done));
 mv_stream_player u_mv_stream_player(
@@ -2189,8 +2264,8 @@ mv_stream_player u_mv_stream_player(
  .write_finish_toggle(frame_write_toggle_mem),.write_bank(mv_write_bank),
  .pixel_valid(mv_pixel_valid),.pixel_data(mv_pixel_data),
  .sector_req(mv_sec_req),.sector_lba(mv_sec_lba),.sector_busy(mv_sec_busy),
- .sector_valid(mv_sec_valid),.sector_byte(wav_sec_byte),.sector_byte_index(wav_sec_byte_index),
- .sector_done(mv_sec_done),.sector_error(wav_sec_error));
+ .sector_valid(mv_sec_valid),.sector_byte(media_raw_byte),.sector_byte_index(media_raw_byte_index),
+ .sector_done(mv_sec_done),.sector_error(media_raw_error));
 // Original timing issues read_req before delayed vs/frame_start. In PLAY wait
 // 32 pixels (1.28 us of vertical blank) for committed MV base and length.
 // Keep the same blanking budget on every page so leaving an image background

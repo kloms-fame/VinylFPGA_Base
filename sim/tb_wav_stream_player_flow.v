@@ -2,16 +2,20 @@
 // Multi-sector flow-control regression for wav_stream_player.
 //
 // The original single-sector test proves byte assembly, prefill, drain, and
-// end handshake. This test adds 12 back-to-back sectors so the write side is
+// end handshake. This test adds 15 back-to-back sectors so the write side is
 // forced into WS_WAIT by the BRAM high-water mark. It verifies that:
 //   1. the player really pauses sector requests at high water;
-//   2. all 3072 samples are emitted in the correct order;
+//   2. all samples are emitted in the correct order;
 //   3. no sample is overwritten when the circular pointer wraps;
 //   4. stream_active falls only after the final sample drains.
 module tb_wav_stream_player_flow;
-    localparam integer SECTORS = 12;
+    localparam integer SECTORS = 15;
     localparam integer SAMPLES = SECTORS * 256;
     localparam integer ADDR_WIDTH = 12;
+    // The specified baseline uses a 3/4-full refill threshold (3072 samples
+    // for ADDR_WIDTH=12). The handoff's 3584 oracle predates that baseline.
+    // Keep an exact threshold check alongside the byte/order/drain checks.
+    localparam integer EXPECTED_HIGH_WATER = (1 << (ADDR_WIDTH-1)) + (1 << (ADDR_WIDTH-2));
 
     reg wr_clk = 0;
     reg rd_clk = 0;
@@ -50,6 +54,7 @@ module tb_wav_stream_player_flow;
     integer samples_seen = 0;
     integer wait_cycles = 0;
     integer max_wait_cycles = 0;
+    integer wait_level_first = 0;
     reg feeding = 0;
     reg signed [15:0] tx_sample;
     reg wait_seen = 0;
@@ -139,14 +144,14 @@ module tb_wav_stream_player_flow;
         end
     end
 
-    // Faster than the real 48 kHz tick, but still 256x slower than a
-    // sector burst. This guarantees the write side hits the high-water mark.
+    // Hold the consumer until the producer reaches the selected high-water
+    // threshold, then drain quickly enough to finish in bounded simulation.
     always @(posedge rd_clk or negedge rd_rst_n) begin
         if (!rd_rst_n) begin
             rd_cycle    <= 0;
             sample_tick <= 0;
         end else begin
-            sample_tick <= (rd_cycle == 0);
+            sample_tick <= (rd_cycle == 0) && wait_seen;
             rd_cycle    <= (rd_cycle == 7) ? 0 : rd_cycle + 1;
         end
     end
@@ -156,6 +161,8 @@ module tb_wav_stream_player_flow;
     always @(posedge wr_clk) begin
         if (wr_rst_n) begin
             if (dut.wstate == 3'd5) begin
+                if (!wait_seen)
+                    wait_level_first <= dut.level_wr;
                 wait_seen   <= 1;
                 wait_cycles <= wait_cycles + 1;
                 if ((wait_cycles + 1) > max_wait_cycles)
@@ -207,6 +214,11 @@ module tb_wav_stream_player_flow;
         end
         if (!wait_seen) begin
             $display("FAIL high-water WS_WAIT was never observed");
+            errors = errors + 1;
+        end
+        if (wait_level_first != EXPECTED_HIGH_WATER) begin
+            $display("FAIL high-water=%0d expected=%0d",
+                     wait_level_first, EXPECTED_HIGH_WATER);
             errors = errors + 1;
         end
         if (!end_seen || stream_active) begin

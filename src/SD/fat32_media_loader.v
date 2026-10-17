@@ -319,6 +319,7 @@ module fat32_media_loader #(
     reg header_offset_ok = 1'b0;
     reg header_payload_ok = 1'b0;
     reg [3:0] header_offset_parts = 4'd0;
+    reg [2:0] header_payload_parts = 3'd0;
 
     assign expected_pixel_count = expected_pixel_count_q;
     assign required_pixel_bytes = required_pixel_bytes_q;
@@ -341,7 +342,9 @@ module fat32_media_loader #(
     end
     always @(posedge clk or posedge rst) begin
         if (rst) header_offset_parts <= 4'd0;
-        else if (bmp_stream_valid && load_state == LD_HEADER && header_byte_cnt == 6'd49)
+        // Fields settle by byte 33 and are consumed only at byte 53.
+        // Precompute continuously instead of merging byte/state decode into CE.
+        else
             header_offset_parts <= {data_offset >= 32'd54,
                                     data_offset[31:16] < file_len[31:16],
                                     data_offset[31:16] == file_len[31:16],
@@ -349,14 +352,20 @@ module fat32_media_loader #(
     end
     always @(posedge clk or posedge rst) begin
         if (rst) header_offset_ok <= 1'b0;
-        else if (bmp_stream_valid && load_state == LD_HEADER && header_byte_cnt == 6'd51)
+        else
             header_offset_ok <= header_offset_parts[3] &&
                 (header_offset_parts[2] || (header_offset_parts[1] && header_offset_parts[0]));
     end
     always @(posedge clk or posedge rst) begin
+        if (rst) header_payload_parts <= 3'd0;
+        else header_payload_parts <= {file_len[31:16] > pixel_end[31:16],
+                                      file_len[31:16] == pixel_end[31:16],
+                                      file_len[15:0] >= pixel_end[15:0]};
+    end
+    always @(posedge clk or posedge rst) begin
         if (rst) header_payload_ok <= 1'b0;
-        else if (bmp_stream_valid && load_state == LD_HEADER && header_byte_cnt == 6'd52)
-            header_payload_ok <= file_len >= pixel_end;
+        else header_payload_ok <= header_payload_parts[2] ||
+                                  (header_payload_parts[1] && header_payload_parts[0]);
     end
 
     function [2:0] spc_shift;
@@ -426,8 +435,9 @@ module fat32_media_loader #(
             // S5：索引有效时音频定位由"当前选中曲目"的条目给出（裸 PCM 语义）；
             // 切曲时 song_sel_changed 会重新走一遍这条两级流水（约 2 拍）。
             song_sel_d            <= song_sel;
-            audio_cluster_m2_d    <= idx_aud_valid ?
-                                     (idx_aud_cluster - 32'd2) : 32'd0;
+            // Invalid intermediate arithmetic is never published: the next
+            // commit already gates every derived address with *_valid_d.
+            audio_cluster_m2_d    <= idx_aud_cluster - 32'd2;
             audio_spc_shift_d     <= spc_shift(scanner_spc);
             audio_data_start_d    <= scanner_data_start;
             audio_size_d          <= idx_aud_bytes;
@@ -435,8 +445,7 @@ module fat32_media_loader #(
             audio_meta_pending    <= 1'b1;
         end else if ((scanner_done && !idx_take) || (idx_done && !idx_valid)) begin
             // A rejected index must restore legacy audio as well as PIC covers.
-            audio_cluster_m2_d    <= audio_cluster_valid ?
-                                     (scanner_audio_cluster - 32'd2) : 32'd0;
+            audio_cluster_m2_d    <= scanner_audio_cluster - 32'd2;
             audio_spc_shift_d     <= spc_shift(scanner_spc);
             audio_data_start_d    <= scanner_data_start;
             audio_size_d          <= scanner_audio_size;
@@ -868,9 +877,9 @@ module fat32_media_loader #(
                 endcase
 
                 // All header fields are complete by byte 33. Prepare the
-                // existing end register two bytes before validation, including
+                // existing end register four bytes before validation, including
                 // the original modulo-2^32 wrap. No output or handshake moves.
-                if (header_byte_cnt == 6'd51)
+                if (header_byte_cnt == 6'd49)
                     pixel_end <= data_offset + required_pixel_bytes;
 
                 if (header_byte_cnt == 6'd53) begin

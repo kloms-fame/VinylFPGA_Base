@@ -50,9 +50,10 @@ module background_cache_loader #(
  reg retry_pending = 1'b0;
  reg [31:0] source_base = 32'd0;
  reg source_base_valid = 1'b0, source_enabled = 1'b0;
+ reg source_art2_supported = 1'b0;
  wire source_valid = source_enabled && source_base_valid;
  wire song_changed = song_id != target_song;
- wire requested_art2 = art2_supported && art2_request_sync[1];
+ wire requested_art2 = source_art2_supported && art2_request_sync[1];
  wire art_changed = art_request_sync[1] && requested_art2 != target_art2;
  wire invalidate_pending = invalidation_ack_sync[1] != epoch;
  wire job_obsolete = !source_valid || (job_art
@@ -93,9 +94,12 @@ module background_cache_loader #(
   end
  end
  always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) begin source_enabled<=0; source_base<=0; source_base_valid<=0; end
+  if (!rst_n) begin source_enabled<=0; source_base<=0; source_base_valid<=0; source_art2_supported<=0; end
   else begin
    source_enabled<=enable; source_base<=base_lba;
+   // Capture capability before local job/CE decode. Index valid
+   // otherwise travels through requested_art2 -> art_changed -> start_art.
+   source_art2_supported<=art2_supported;
    source_base_valid<=source_base != 0 && source_base <= (art2_supported ? 32'hFFFFE3DF : 32'hFFFFE88F);
   end
  end

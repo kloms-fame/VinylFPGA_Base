@@ -52,6 +52,7 @@ module fat32_file_streamer #(
     localparam ST_ADDR_ADD   = 4'd9;
     localparam ST_FAT_CHECK  = 4'd10;
     localparam ST_VALIDATE   = 4'd11;
+    localparam ST_CLUSTER_DELTA = 4'd12;
 
     localparam integer CHAIN_COUNT_WIDTH = $clog2(MAX_VISITED_CLUSTERS + 1);
 
@@ -75,6 +76,12 @@ module fat32_file_streamer #(
     // separate cycles. Byte order/FAT semantics and sector arbitration stay put.
     reg [31:0] cluster_delta, cluster_offset;
     reg fat_eoc_q, fat_range_q, fat_self_q;
+    // Both accepted-cluster paths share a local arithmetic/enable boundary.
+    // Range/FAT validation controls state, never the 32-bit delta register CE.
+    always @(posedge clk or negedge rst_n) begin
+        if(!rst_n) cluster_delta<=0;
+        else if(state==ST_CLUSTER_DELTA) cluster_delta<=current_cluster-32'd2;
+    end
     always @(posedge clk or negedge rst_n) begin
         if(!rst_n) cluster_offset<=0;
         else if(state==ST_ADDR_SHIFT) cluster_offset<=cluster_delta << spc_shift;
@@ -126,8 +133,7 @@ module fat32_file_streamer #(
             current_cluster <= cluster_value;
             sector_in_cluster <= 8'd0;
             last_sector_in_cluster <= 8'd0;
-            cluster_delta <= cluster_value - 32'd2;
-            state <= ST_ADDR_SHIFT;
+            state <= ST_CLUSTER_DELTA;
         end
     endtask
 
@@ -153,7 +159,6 @@ module fat32_file_streamer #(
             fat_byte3 <= 8'd0;
             chain_count <= 0;
             final_chain_check <= 1'b0;
-            cluster_delta <= 32'd0;
         end else begin
             file_done <= 1'b0;
             file_valid <= 1'b0;
@@ -201,8 +206,7 @@ module fat32_file_streamer #(
                         (sectors_per_cluster == 0)) begin
                         finish_with_error(ERR_CLUSTER_RANGE);
                     end else begin
-                        cluster_delta <= current_cluster - 32'd2;
-                        state <= ST_ADDR_SHIFT;
+                        state <= ST_CLUSTER_DELTA;
                     end
                 end
                 ST_DATA_REQ: if (!sector_busy) begin
@@ -266,6 +270,7 @@ module fat32_file_streamer #(
                 ST_FAT_COMMIT: begin
                     advance_to_next_cluster(next_cluster);
                 end
+                ST_CLUSTER_DELTA: state <= ST_ADDR_SHIFT;
                 ST_ADDR_SHIFT: state <= ST_ADDR_ADD;
                 ST_ADDR_ADD: begin
                     sector_lba <= data_start_lba + cluster_offset;

@@ -48,6 +48,7 @@ module wav_stream_player #(
     output wire        stream_end,
     output wire        reader_idle,
     output wire        sample_consumed,
+    output reg         startup_ready = 1'b0,
     output wire        buffer_low,
     input  wire [31:0] sample_base,     // X2：Seek 后读侧计数器起始值（video_clk 域）
     output reg         underrun_pulse   // S7-01B：流式播放中读侧欠载单拍脉冲（video_clk 域）
@@ -131,6 +132,14 @@ module wav_stream_player #(
     wire buffer_available = play_enable_sync2 && !fault_sync[1] &&
                             ((level_rd >= SAMPLES_PER_SECTOR) ||
                             (finished_sync[1] && (level_rd > 0)));
+    // A seek may discard up to 255 samples from its first sector. Arm once
+    // enough valid samples (or the final short tail) have crossed the FIFO.
+    // Stay armed afterwards so genuine in-stream underruns remain observable.
+    always @(posedge rd_clk or negedge rd_rst_n) begin
+        if (!rd_rst_n) startup_ready <= 1'b0;
+        else if (!play_enable_sync2) startup_ready <= 1'b0;
+        else if (buffer_available || finished_sync[1]) startup_ready <= 1'b1;
+    end
     wire buffer_read = rd_rst_n && sample_tick && sample_ready && buffer_available;
     reg [15:0] buffer_data;
     reg sample_has_data;

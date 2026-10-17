@@ -63,12 +63,13 @@ module song_index_db #(
     localparam integer ENTRY_BYTES = 64;
     localparam [31:0]  PAY_END     = 32'd64 + (MAX_SONGS * ENTRY_BYTES);
 
-    localparam [1:0] P_IDLE   = 2'd0;
-    localparam [1:0] P_STREAM = 2'd1;
-    localparam [1:0] P_CHK    = 2'd2;
-    localparam [1:0] P_FIN    = 2'd3;
+    localparam [2:0] P_IDLE   = 3'd0;
+    localparam [2:0] P_STREAM = 3'd1;
+    localparam [2:0] P_CHK    = 3'd2;
+    localparam [2:0] P_FIN    = 3'd3;
+    localparam [2:0] P_FLUSH  = 3'd4;
 
-    reg [1:0]  phase;
+    reg [2:0]  phase;
     reg [2:0]  chk_idx;
     reg        chk_ok;
     reg [7:0]  fin_err;
@@ -86,14 +87,14 @@ module song_index_db #(
     // backgrounds: entry CRC and all legacy cover/audio/MV validation stay intact.
     reg bg_magic_ok;
     reg bg_layout_ok;
+    reg background_base_valid;
     reg [31:0] bg_base_lba;
     reg bg_art2 = 1'b0;
     initial bg_magic_ok = 1'b0;
     initial bg_layout_ok = 1'b0;
     initial bg_base_lba = 32'd0;
-    assign background_base_lba = valid && bg_magic_ok && bg_layout_ok &&
-        bg_base_lba != 32'd0 && bg_base_lba <= (bg_art2 ? 32'hFFFFE3DF : 32'hFFFFE88F) ? bg_base_lba : 32'd0;
-    assign background_art2_supported = background_base_lba != 0 && bg_art2;
+    assign background_base_lba = valid && background_base_valid ? bg_base_lba : 32'd0;
+    assign background_art2_supported = valid && background_base_valid && bg_art2;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) bg_art2 <= 1'b0;
         else if (start && phase == P_IDLE) bg_art2 <= 1'b0;
@@ -160,6 +161,45 @@ module song_index_db #(
     wire [5:0]  entry_off  = pay_off[5:0];
     wire        in_entries = (off >= 32'd64) && (off < PAY_END);
 
+    // Register local field/entry decode together with its byte and lane.
+    // The following bank CEs no longer span the live byte-index/phase tree.
+    reg [3:0] entry_write_q, field_write_q;
+    reg [1:0] lane_q;
+    reg [7:0] entry_byte_q;
+    reg stream_failed_q;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            entry_write_q<=0;field_write_q<=0;lane_q<=0;entry_byte_q<=0;stream_failed_q<=0;
+        end else begin
+            entry_write_q <= (phase==P_STREAM && in_valid && in_entries)
+                             ? (4'b0001 << entry_sel) : 4'b0000;
+            field_write_q <= {entry_off[5:2]==4'd5,entry_off[5:2]==4'd4,
+                              entry_off[5:2]==4'd2,entry_off[5:2]==4'd1};
+            lane_q <= entry_off[1:0];
+            entry_byte_q <= in_byte;
+            if(phase==P_STREAM && in_done) stream_failed_q <= in_error!=0;
+        end
+    end
+    genvar entry_n,lane_n;
+    generate for(entry_n=0;entry_n<MAX_SONGS;entry_n=entry_n+1) begin: entry_bank
+        for(lane_n=0;lane_n<4;lane_n=lane_n+1) begin: byte_lane
+            always @(posedge clk or negedge rst_n) begin
+                if(!rst_n) begin
+                    e_cov_cl[entry_n][lane_n*8+:8]<=0;e_cov_by[entry_n][lane_n*8+:8]<=0;
+                    e_aud_cl[entry_n][lane_n*8+:8]<=0;e_aud_by[entry_n][lane_n*8+:8]<=0;
+                end else if(start && phase==P_IDLE) begin
+                    e_cov_cl[entry_n][lane_n*8+:8]<=0;e_cov_by[entry_n][lane_n*8+:8]<=0;
+                    e_aud_cl[entry_n][lane_n*8+:8]<=0;e_aud_by[entry_n][lane_n*8+:8]<=0;
+                end else if(entry_write_q[entry_n] && lane_q==lane_n) begin
+                    if(field_write_q[0]) e_cov_cl[entry_n][lane_n*8+:8]<=entry_byte_q;
+                    if(field_write_q[1]) e_cov_by[entry_n][lane_n*8+:8]<=entry_byte_q;
+                    if(field_write_q[2]) e_aud_cl[entry_n][lane_n*8+:8]<=entry_byte_q;
+                    if(field_write_q[3]) e_aud_by[entry_n][lane_n*8+:8]<=entry_byte_q;
+                end
+            end
+        end
+    end endgenerate
+
     wire [31:0] crc_end     = 32'd64 + ({16'd0, hdr_count} << 6);
     wire        crc_span_ok = (hdr_count >= 16'd1) && (hdr_count <= SIDX_MAX_SONGS);
     wire        crc_in_span = crc_span_ok && (off >= 32'd64) && (off < crc_end);
@@ -225,12 +265,16 @@ module song_index_db #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) check_read_index <= 3'd0;
         else if (start && phase == P_IDLE) check_read_index <= 3'd0;
-        else if (phase == P_STREAM && in_done) check_read_index <= 3'd1;
+        else if (phase == P_STREAM && in_done) check_read_index <= 3'd0;
+        else if (phase == P_FLUSH) check_read_index <= 3'd1;
         else if (phase == P_CHK) check_read_index <= check_read_index + 3'd1;
     end
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) entry_checks <= 6'd0;
-        else if ((phase == P_STREAM && in_done) || phase == P_CHK)
+        // Only P_CHK consumes these flags. Computing also in inactive phases
+        // removes the shared enable/mux from the selected-entry comparison;
+        // P_FLUSH still establishes entry zero before the first check.
+        else
             entry_checks <= {check_cluster[15:0] > max_cluster[15:0],
                              check_cluster[31:16] == max_cluster[31:16],
                              check_cluster[31:16] > max_cluster[31:16],
@@ -262,6 +306,7 @@ module song_index_db #(
             busy           <= 1'b0;
             done           <= 1'b0;
             valid          <= 1'b0;
+            background_base_valid <= 1'b0;
             err            <= SIDX_ERR_NONE;
             song_count     <= 3'd0;
             song_flags     <= 16'd0;
@@ -278,12 +323,6 @@ module song_index_db #(
             byte_idx       <= 9'd0;
             e_has_cover    <= 4'd0;
             e_has_audio    <= 4'd0;
-            for (k = 0; k < MAX_SONGS; k = k + 1) begin
-                e_cov_cl[k] <= 32'd0;
-                e_cov_by[k] <= 32'd0;
-                e_aud_cl[k] <= 32'd0;
-                e_aud_by[k] <= 32'd0;
-            end
         end else begin
             done <= 1'b0;
 
@@ -294,6 +333,7 @@ module song_index_db #(
                 if (start) begin
                     busy           <= 1'b1;
                     valid          <= 1'b0;
+                    background_base_valid <= 1'b0;
                     err            <= SIDX_ERR_NONE;
                     song_count     <= 3'd0;
                     song_flags     <= 16'd0;
@@ -309,12 +349,6 @@ module song_index_db #(
                     byte_idx       <= 9'd0;
                     e_has_cover    <= 4'd0;
                     e_has_audio    <= 4'd0;
-                    for (k = 0; k < MAX_SONGS; k = k + 1) begin
-                        e_cov_cl[k] <= 32'd0;
-                        e_cov_by[k] <= 32'd0;
-                        e_aud_cl[k] <= 32'd0;
-                        e_aud_by[k] <= 32'd0;
-                    end
                     phase <= P_STREAM;
                 end
             end
@@ -350,40 +384,23 @@ module song_index_db #(
                         if (crc_in_span)
                             crc_calc <= crc32_byte(crc_calc, in_byte);
 
-                        // Store each field byte in its final little-endian lane.
-                        // These words are read only after P_STREAM completes, so
-                        // shifting the whole 32-bit field on every byte is wasteful.
-                        // Store the field bytes in their final little-endian lanes.
-                        // The entries are consumed only after P_STREAM completes.
-                        case (entry_off)
-                            6'd0: begin
-                                e_has_cover[entry_sel] <= in_byte[SIDX_FLAG_COVER];
-                                e_has_audio[entry_sel] <= in_byte[SIDX_FLAG_AUDIO];
-                            end
-                            // The cover cluster occupies bytes 4..7; 1..3 are reserved.
-                            6'd4:  e_cov_cl[entry_sel][7:0]   <= in_byte;
-                            6'd5:  e_cov_cl[entry_sel][15:8]  <= in_byte;
-                            6'd6:  e_cov_cl[entry_sel][23:16] <= in_byte;
-                            6'd7:  e_cov_cl[entry_sel][31:24] <= in_byte;
-                            6'd8:  e_cov_by[entry_sel][7:0]   <= in_byte;
-                            6'd9:  e_cov_by[entry_sel][15:8]  <= in_byte;
-                            6'd10: e_cov_by[entry_sel][23:16] <= in_byte;
-                            6'd11: e_cov_by[entry_sel][31:24] <= in_byte;
-                            6'd16: e_aud_cl[entry_sel][7:0]   <= in_byte;
-                            6'd17: e_aud_cl[entry_sel][15:8]  <= in_byte;
-                            6'd18: e_aud_cl[entry_sel][23:16] <= in_byte;
-                            6'd19: e_aud_cl[entry_sel][31:24] <= in_byte;
-                            6'd20: e_aud_by[entry_sel][7:0]   <= in_byte;
-                            6'd21: e_aud_by[entry_sel][15:8]  <= in_byte;
-                            6'd22: e_aud_by[entry_sel][23:16] <= in_byte;
-                            6'd23: e_aud_by[entry_sel][31:24] <= in_byte;
-                            default: ;
-                        endcase
+                        if(entry_off==0) begin
+                            e_has_cover[entry_sel] <= in_byte[SIDX_FLAG_COVER];
+                            e_has_audio[entry_sel] <= in_byte[SIDX_FLAG_AUDIO];
+                        end
                     end
                 end
 
                 if (in_done) begin
-                    if (in_error != 8'h00)
+                    chk_idx <= 3'd0;
+                    chk_ok  <= 1'b1;
+                    phase   <= P_FLUSH;
+                end
+            end
+            // Commit the last decoded byte before validation. CRC/header
+            // checks also include a final in_valid coincident with in_done.
+            P_FLUSH: begin
+                    if (stream_failed_q)
                         fin_err <= SIDX_ERR_STREAM;
                     else if (!magic_ok)
                         fin_err <= SIDX_ERR_MAGIC;
@@ -397,10 +414,7 @@ module song_index_db #(
                         fin_err <= SIDX_ERR_CRC;
                     else
                         fin_err <= SIDX_ERR_NONE;
-                    chk_idx <= 3'd0;
-                    chk_ok  <= 1'b1;
                     phase   <= P_CHK;
-                end
             end
             // -------------------------------------------------------------
             P_CHK: begin
@@ -418,6 +432,9 @@ module song_index_db #(
                 busy  <= 1'b0;
                 done  <= 1'b1;
                 phase <= P_IDLE;
+                background_base_valid <= (fin_err == SIDX_ERR_NONE) && chk_ok &&
+                    bg_magic_ok && bg_layout_ok && (bg_base_lba != 32'd0) &&
+                    (bg_base_lba <= (bg_art2 ? 32'hFFFFE3DF : 32'hFFFFE88F));
                 if (fin_err != SIDX_ERR_NONE) begin
                     valid <= 1'b0;
                     err   <= fin_err;

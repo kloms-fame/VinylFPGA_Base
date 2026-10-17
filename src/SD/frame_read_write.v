@@ -5,6 +5,7 @@ module frame_read_write
 	parameter DYNAMIC_LINEAR         = 0,
     parameter COMPOSITE_READ        = 0,
 	parameter EXTERNAL_READ_BUSY     = 0,
+	parameter PRESERVE_LOW_BYTE      = 0,
 	parameter MEM_DATA_BITS          = 32,
 	parameter READ_DATA_BITS         = 32,
 	parameter WRITE_DATA_BITS        = 32,
@@ -23,6 +24,7 @@ module frame_read_write
     output wire background_epoch_ack,
 	input                            external_read_busy,
 	output                           app_write_busy,
+	output                           app_read_busy,
 	input                            rst,                  
 	input                            mem_clk,                    // external memory controller user interface clock
 	input							 Sdr_init_done,
@@ -95,10 +97,11 @@ wire O_wr_busy;
 wire O_rd_busy;
 wire read_data_keep;
 
-assign App_wr_busy = O_wr_busy;//下个时钟写指令拉高
+assign App_wr_busy = O_wr_busy | (EXTERNAL_READ_BUSY ? external_read_busy : 1'b0);
 assign app_write_busy = O_wr_busy;
+assign app_read_busy = O_rd_busy;
 assign App_rd_busy = O_rd_busy | (EXTERNAL_READ_BUSY ? external_read_busy : 1'b0);//读指令还没有过去十个时钟;因为写指令优先，不需要在意下个时钟是否是读指令
-assign App_wr_dm = 4'b0000;
+assign App_wr_dm = PRESERVE_LOW_BYTE ? 4'b0001 : 4'b0000;
 
 //instantiate an asynchronous FIFO 
 wfifo_32_32_512 write_buf
