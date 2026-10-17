@@ -30,6 +30,7 @@ module expansion_integration #(
     // SW1-SW4 = 板载乒乓拨码（C8/C7/C6/C5），均按按键/拨码低有效消抖。
     input  wire        key2,
     input  wire        key3,
+    input  wire        key4,
     input  wire        sw1,
     input  wire        sw2,
     input  wire        sw3,
@@ -50,6 +51,7 @@ module expansion_integration #(
     output wire        ui_ev_valid,
     // 母板 KEY2 消抖按下脉冲，供唯一参数 CSR 恢复运行默认值。
     output wire        key2_reset_pulse,
+    output reg         board_audio_mute,
     // 启动保护窗结束时锁存 SW2 状态，供 video 域安全同步并旁路 Boot。
     output reg         boot_startup_skip,
     // ===================== S7-01B：遥测输入（顶层已同步到 clk 域）=====================
@@ -128,6 +130,7 @@ module expansion_integration #(
     wire [15:0] cmd_arg;
     wire [15:0] cmd_aux;
     wire        router_restart_confirm_active;
+    wire        router_mute_toggle;
 
     // X1A：router 给出的"已接受"单拍脉冲（LED1/LED2 业务化输入）
     wire        ir_accepted;
@@ -285,6 +288,7 @@ module expansion_integration #(
         .ws_enable          (ws_enable),
         .restart_req        (restart_req),
         .restart_confirm_active(router_restart_confirm_active),
+        .mute_toggle        (router_mute_toggle),
         .ir_accepted        (ir_accepted),
         .biz_accepted       (biz_accepted)
     );
@@ -310,9 +314,9 @@ module expansion_integration #(
 
     // ---- 母板按键 KEY2 / 拨码 SW1-4：复用既有 J2 消抖驱动 ----
     // KEY2 低有效；KEY3 不接入当前通用事件，完整保存功能留待阶段 4。
-    wire [0:0] key2_level;
-    wire [0:0] key2_fall_pulse;
-    wire [0:0] key2_rise_pulse;
+    wire [1:0] board_key_level;
+    wire [1:0] board_key_fall_pulse;
+    wire [1:0] board_key_rise_pulse;
     wire [3:0] board_sw_change_pulse;
     wire [2:0] board_sw_change_index;
 
@@ -321,18 +325,18 @@ module expansion_integration #(
     key_dip_monitor #(
         .USE_EXTERNAL_TICK(1),
         .DEBOUNCE_TICK_CYCLES(DEBOUNCE_TICK_CYCLES),
-        .KEY_COUNT      (1),
+        .KEY_COUNT      (2),
         .DIP_COUNT      (4),
         .DEBOUNCE_CYCLES(DEBOUNCE_CYCLES)
     ) u_board_key_sw_monitor (
         .debounce_ce     (debounce_ce),
         .clk             (clk),
         .rst_n           (rst_n),
-        .key_async       (key2),
+        .key_async       ({key4, key2}),
         .dip_async       ({sw4, sw3, sw2, sw1}),
-        .key_level       (key2_level),
-        .key_fall_pulse  (key2_fall_pulse),
-        .key_rise_pulse  (key2_rise_pulse),
+        .key_level       (board_key_level),
+        .key_fall_pulse  (board_key_fall_pulse),
+        .key_rise_pulse  (board_key_rise_pulse),
         .dip_level       (board_sw_level),
         .dip_change_pulse(board_sw_change_pulse),
         .dip_change_index(board_sw_change_index)
@@ -385,7 +389,15 @@ module expansion_integration #(
     end
 
     // KEY2 只在启动输入收敛后接受；按键保持不会重复发出默认值请求。
-    assign key2_reset_pulse = key2_fall_pulse[0] & skip_guard_done;
+    assign key2_reset_pulse = board_key_fall_pulse[0] & skip_guard_done;
+    // KEY4 与红外静音键翻转音频静音状态；静音只作用于最终音量增益，
+    // 音源 valid/ready 握手仍继续运行，避免静音导致 WAV 播放进度暂停。
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            board_audio_mute <= 1'b0;
+        else if (skip_guard_done && (board_key_fall_pulse[1] || router_mute_toggle))
+            board_audio_mute <= ~board_audio_mute;
+    end
 
     // S7-03：DIP5 关闭时红外既不执行业务、也不作为 Boot 跳过源（红外业务使能门控）。
     wire ir_boot_ok = !ev_is_ir || dip_level[4];
@@ -406,7 +418,7 @@ module expansion_integration #(
 
     // 拓展板按键与母板拨码事件并入反馈音混合器；母板 KEY3 不参与通用操作音。
     assign board_sw_change_any       = |board_sw_change_pulse;
-    assign key_press_any             = |key_fall_pulse;
+    assign key_press_any             = (|key_fall_pulse) | board_key_fall_pulse[1];
     assign dip_change_any            = (|dip_change_pulse) | board_sw_change_any;
     assign dip_target                = board_sw_change_any ? board_sw_level[board_sw_change_index]
                                                            : dip_level[dip_change_index];

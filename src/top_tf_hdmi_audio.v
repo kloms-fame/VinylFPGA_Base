@@ -343,6 +343,9 @@ wire [23:0] view_rgb;               // 播放 MV 遮罩后的像素源
 // 状态回读：boot_active（video 域电平）-> 两级同步到 clk 域。
 wire        ui_ev_valid;
 wire        key2_reset_pulse;
+wire        board_audio_mute;
+reg         board_audio_mute_v1;
+reg         board_audio_mute_v2;
 wire        board_sw2_boot_skip;
 reg         boot_skip_toggle_clk;
 wire        boot_active;
@@ -1938,7 +1941,8 @@ wire audio_silent = boot_active || (S5_PLAY_ENABLE &&
 
 // 16点正弦 LUT 峰值约 12000，200/255 缩放后仍保留足够余量，避免削波爆音。
 // EC2、KEY/IR 与音频增益均只读写同一份 VOL CSR；暂停/启动静音仍沿用原门控。
-wire [7:0] audio_volume_eff = audio_silent ? 8'd0 : play_volume_video;
+wire audio_gain_silent = audio_silent || board_audio_mute_v2;
+wire [7:0] audio_volume_eff = audio_gain_silent ? 8'd0 : play_volume_video;
 assign audio_volume = audio_volume_eff;
 
 // S5：暂停时冻结播放器采样节拍（音频位置与歌词时基同时停住），
@@ -2123,6 +2127,17 @@ audio_source_mux u_audio_source_mux (
     .out_left       (mix_sample_left),
     .out_right      (mix_sample_right)
 );
+
+// Synchronize the KEY4/IR mute level into the audio/video clock domain.
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n) begin
+        board_audio_mute_v1 <= 1'b0;
+        board_audio_mute_v2 <= 1'b0;
+    end else begin
+        board_audio_mute_v1 <= board_audio_mute;
+        board_audio_mute_v2 <= board_audio_mute_v1;
+    end
+end
 
 hdmi_pcm_source_bridge u_hdmi_pcm_source_bridge (
     .clk            (video_clk),
@@ -2653,6 +2668,7 @@ expansion_integration #(
     .needle_sense_n   (needle_sense_n),
     .key2             (key2),
     .key3             (key3),
+    .key4             (key4),
     .sw1              (sw1),
     .sw2              (sw2),
     .sw3              (sw3),
@@ -2667,6 +2683,7 @@ expansion_integration #(
     .fault_flags      (fault_flags_clk),
     .ui_ev_valid      (ui_ev_valid),
     .key2_reset_pulse (key2_reset_pulse),
+    .board_audio_mute (board_audio_mute),
     .boot_startup_skip (board_sw2_boot_skip),
     .underrun_pulse   (underrun_pulse_clk),
     .wav_buffer_low   (wav_buffer_low_c2),
