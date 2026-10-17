@@ -6,7 +6,7 @@
 //
 // Runs in sd_card_clk, alongside browse_fsm. UI toggle inputs cross from clk.
 // browse_fsm routes KEY7 into stop_request; KEY11 selects the background. song_confirm
-// starts the displayed/focused bank. End policy defaults to pause in PLAY.
+// starts the displayed/focused bank. End policy defaults to list-next in PLAY.
 // Normal pause retains buffered data; EOF replay and every track step request a
 // drained stream_session restart. Storage failures are not successful EOF.
 // =============================================================================
@@ -100,7 +100,7 @@ module play_ctrl (
             volume_intent_up    <= 1'b0;
             track_step  <= 1'b0;
             track_dir   <= 1'b1;
-            end_mode <= 2'd0;
+            end_mode <= 2'd2;
             restart_request_int <= 1'b0;
             seek_clear <= 1'b0;
             eof_seen <= 1'b0;

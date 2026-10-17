@@ -4,8 +4,8 @@
 // ws2812_effects —— X1B：WS2812 灯效层（全灭 / 音频律动）
 //
 // 运行在板级 clk(50 MHz) 域。KEY10 每按一次在两种模式间切换：
-//   mode 0 = 全灭（上电默认）
-//   mode 1 = VU 电平条：LED[0] 向右连续展开，绿/黄/红分段，快升慢降
+//   mode 0 = 全灭
+//   mode 1 = VU 电平条（上电默认）：LED[0] 向右连续展开，绿/黄/红分段，快升慢降
 //
 // 音频只读旁路：level 是 pcm_tap 送来的包络，本模块不反压、不访问 SD/音频 FIFO。
 // DIP6(enable) 关闭时：先补发一整帧全黑（否则灯珠会保持最后颜色），
@@ -44,7 +44,7 @@ module ws2812_effects #(
     end
     wire mode_event = mode_sync[2] ^ mode_sync[1];
     always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) mode <= 1'b0;
+        if (!rst_n) mode <= 1'b1;
         else if (mode_event) mode <= ~mode;
     end
 
