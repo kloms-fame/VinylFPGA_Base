@@ -22,6 +22,9 @@
 `include "io/expansion_integration.v"
 `include "io/ui_event_bridge.v"
 `include "io/ui_param_csr.v"
+`include "io/nvm_spi_transaction.v"
+`include "io/w25q64_param_store.v"
+`include "io/ui_param_persistence.v"
 `include "io/vinyl_playback_effects.v"
 `include "io/ec2_param_controller.v"
 `include "io/ec2_event_replay.v"
@@ -116,6 +119,14 @@ module top(
     output                      sd_mosi,
     input                       sd_miso,
 
+    // Dedicated U33 W25Q64 user Flash (separate from boot configuration Flash).
+    output                      flash_cs_n,
+    output                      flash_sclk,
+    output                      flash_mosi,
+    input                       flash_miso,
+    output                      flash_wp_n,
+    output                      flash_hold_n,
+
     // ===================== S1：J2 拓展板（IDC40）输入 =====================
     input  [11:0]               exp_key_n,       // KEY1..KEY12，低有效
     input  [5:0]                exp_dip_n,       // DIP1..DIP6
@@ -155,8 +166,8 @@ parameter BUF1_ADDR     = FRAME_PIXELS;
 parameter BUF2_ADDR     = FRAME_PIXELS * 24'd2;
 parameter BUF3_ADDR     = FRAME_PIXELS * 24'd3;
 
-// 阶段 2 先接入母板 LED 引脚；状态语义在后续验收小阶段实现。当前安全熄灭。
-assign led = 4'b0000;
+// 阶段 4：LED1=上电恢复，LED2=参数已保存，LED3=Flash忙，LED4=Flash故障。
+assign led = nvm_led_status;
 
 // 按键/拨码/编码器/红外 操作反馈音总开关：1=开启（母板蜂鸣器 + 拓展板 EXT1），0=静音。
 // 母板蜂鸣器还需硬件 SW5 拨至接通档才会发声。
@@ -343,6 +354,10 @@ wire [23:0] view_rgb;               // 播放 MV 遮罩后的像素源
 // 状态回读：boot_active（video 域电平）-> 两级同步到 clk 域。
 wire        ui_ev_valid;
 wire        key2_reset_pulse;
+wire        key3_save_pulse;
+wire [3:0]  nvm_led_status;
+wire        nvm_restore_valid;
+wire [19:0] nvm_restore_data;
 wire        board_audio_mute;
 reg         board_audio_mute_v1;
 reg         board_audio_mute_v2;
@@ -796,11 +811,24 @@ assign param_csr_wr_up = volume_bridge_dst_valid ? volume_bridge_dst_up
 ui_param_csr u_ui_param_csr(
     .clk(clk), .rst_n(exp_rst_n),
     .defaults_req(key2_reset_pulse),
+    .restore_valid(nvm_restore_valid), .restore_data(nvm_restore_data),
     .wr_valid(param_csr_wr_valid), .wr_id(param_csr_wr_id), .wr_up(param_csr_wr_up),
     .volume(play_volume_csr), .brightness_level(brightness_level_csr),
     .contrast_level(contrast_level_csr), .rotation_level(rotation_level_csr),
     .ws_level(ws_brightness_level_csr),
     .param_update(param_update_csr));
+
+ui_param_persistence u_ui_param_persistence(
+    .clk(clk), .rst_n(exp_rst_n), .tick_1ms(ui_tick_1ms),
+    .current_params({ws_brightness_level_csr,rotation_level_csr,contrast_level_csr,
+                     brightness_level_csr,play_volume_csr}),
+    .param_update(param_update_csr), .user_write(param_csr_wr_valid),
+    .defaults_req(key2_reset_pulse), .manual_save(key3_save_pulse),
+    .auto_enable(board_sw_level_clk[2]),
+    .restore_valid(nvm_restore_valid), .restore_data(nvm_restore_data),
+    .led_status(nvm_led_status),
+    .flash_cs_n(flash_cs_n), .flash_sclk(flash_sclk), .flash_mosi(flash_mosi),
+    .flash_miso(flash_miso), .flash_wp_n(flash_wp_n), .flash_hold_n(flash_hold_n));
 
 // Atomic video snapshot: {ui_state, selection, WSL, ROT, CON, BRI, VOL}.
 assign params_bundle_csr = {ec2_ui_state, ec2_selected_param, ws_brightness_level_csr,
@@ -2683,6 +2711,7 @@ expansion_integration #(
     .fault_flags      (fault_flags_clk),
     .ui_ev_valid      (ui_ev_valid),
     .key2_reset_pulse (key2_reset_pulse),
+    .key3_save_pulse  (key3_save_pulse),
     .board_audio_mute (board_audio_mute),
     .boot_startup_skip (board_sw2_boot_skip),
     .underrun_pulse   (underrun_pulse_clk),

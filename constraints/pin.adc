@@ -104,6 +104,13 @@ set_pin_assignment	{ sw3 }	{ LOCATION = C6; IOSTANDARD = LVCMOS33; PULLTYPE = PU
 set_pin_assignment	{ sw4 }	{ LOCATION = C5; IOSTANDARD = LVCMOS33; PULLTYPE = PULLUP; }
 
 # 母板状态 LED，高电平点亮。
+# Dedicated U33 W25Q64, board manual p17. U39 boot W25Q16 is NOT used here.
+set_pin_assignment { flash_cs_n }   { LOCATION = P8; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 4; PULLTYPE = PULLUP; }
+set_pin_assignment { flash_sclk }   { LOCATION = M9; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 4; PULLTYPE = PULLDOWN; }
+set_pin_assignment { flash_mosi }   { LOCATION = P7; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 4; PULLTYPE = NONE; }
+set_pin_assignment { flash_miso }   { LOCATION = N8; IOSTANDARD = LVCMOS33; PULLTYPE = PULLUP; }
+set_pin_assignment { flash_wp_n }   { LOCATION = P9; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 4; PULLTYPE = PULLUP; }
+set_pin_assignment { flash_hold_n } { LOCATION = R9; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 4; PULLTYPE = PULLUP; }
 set_pin_assignment	{ led[0] }	{ LOCATION = A4; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
 set_pin_assignment	{ led[1] }	{ LOCATION = A3; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
 set_pin_assignment	{ led[2] }	{ LOCATION = C10; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }

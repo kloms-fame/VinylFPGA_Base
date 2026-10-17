@@ -12,6 +12,8 @@ module ui_param_csr #(
     input  wire       clk,
     input  wire       rst_n,
     input  wire       defaults_req,
+    input  wire       restore_valid,
+    input  wire [19:0] restore_data, // {WSL,ROT,CON,BRI,VOL}, atomic UI-domain load
     input  wire       wr_valid,
     input  wire [2:0] wr_id,       // 0=VOL, 1=BRI, 2=CON, 3=ROT
     input  wire       wr_up,
@@ -99,6 +101,15 @@ module ui_param_csr #(
                     end
                     default: ;
                 endcase
+            end else if (restore_valid && restore_data[10:8]<=3'd4 &&
+                         restore_data[13:11]<=3'd4 && restore_data[16:14]<=3'd5 &&
+                         restore_data[19:17]<=3'd4) begin
+                volume           <= restore_data[7:0];
+                brightness_level <= restore_data[10:8];
+                contrast_level   <= restore_data[13:11];
+                rotation_level   <= restore_data[16:14];
+                ws_level         <= restore_data[19:17];
+                param_update     <= 1'b1;
             end
         end
     end

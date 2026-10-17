@@ -51,6 +51,7 @@ module expansion_integration #(
     output wire        ui_ev_valid,
     // 母板 KEY2 消抖按下脉冲，供唯一参数 CSR 恢复运行默认值。
     output wire        key2_reset_pulse,
+    output wire        key3_save_pulse,
     output reg         board_audio_mute,
     // 启动保护窗结束时锁存 SW2 状态，供 video 域安全同步并旁路 Boot。
     output reg         boot_startup_skip,
@@ -314,9 +315,9 @@ module expansion_integration #(
 
     // ---- 母板按键 KEY2 / 拨码 SW1-4：复用既有 J2 消抖驱动 ----
     // KEY2 低有效；KEY3 不接入当前通用事件，完整保存功能留待阶段 4。
-    wire [1:0] board_key_level;
-    wire [1:0] board_key_fall_pulse;
-    wire [1:0] board_key_rise_pulse;
+    wire [2:0] board_key_level;
+    wire [2:0] board_key_fall_pulse;
+    wire [2:0] board_key_rise_pulse;
     wire [3:0] board_sw_change_pulse;
     wire [2:0] board_sw_change_index;
 
@@ -325,14 +326,14 @@ module expansion_integration #(
     key_dip_monitor #(
         .USE_EXTERNAL_TICK(1),
         .DEBOUNCE_TICK_CYCLES(DEBOUNCE_TICK_CYCLES),
-        .KEY_COUNT      (2),
+        .KEY_COUNT      (3),
         .DIP_COUNT      (4),
         .DEBOUNCE_CYCLES(DEBOUNCE_CYCLES)
     ) u_board_key_sw_monitor (
         .debounce_ce     (debounce_ce),
         .clk             (clk),
         .rst_n           (rst_n),
-        .key_async       ({key4, key2}),
+        .key_async       ({key3, key4, key2}),
         .dip_async       ({sw4, sw3, sw2, sw1}),
         .key_level       (board_key_level),
         .key_fall_pulse  (board_key_fall_pulse),
@@ -390,6 +391,7 @@ module expansion_integration #(
 
     // KEY2 只在启动输入收敛后接受；按键保持不会重复发出默认值请求。
     assign key2_reset_pulse = board_key_fall_pulse[0] & skip_guard_done;
+    assign key3_save_pulse = board_key_fall_pulse[2] & skip_guard_done;
     // KEY4 与红外静音键翻转音频静音状态；静音只作用于最终音量增益，
     // 音源 valid/ready 握手仍继续运行，避免静音导致 WAV 播放进度暂停。
     always @(posedge clk or negedge rst_n) begin
