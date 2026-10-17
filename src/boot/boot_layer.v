@@ -12,14 +12,14 @@
 //   STATE_BOOT  ：上电默认态，显示片内 Logo + 固定周期呼吸（只调像素，
 //                 不动任何时钟）；
 //   STATE_BROWSE：boot_active=0，交给既有主链路显示。
-//   离开 STATE_BOOT 的三种条件（都在帧边界 vs 下降沿提交）：
-//     1) 收到任一已确认 J2/母板事件（由顶层做 clk -> video 的翻转同步）；
-//     2) 首图已就绪（display_valid）且已显示满 HOLD_MS；
-//     3) 兜底超时 TIMEOUT_MS（无卡 / 不接 J2 时也不会卡死在 Boot）。
+//   离开 STATE_BOOT 的条件（都在帧边界 vs 下降沿提交）：
+//     1) 启动时 SW2 为高，经两级同步后直接旁路 Boot；
+//     2) 收到已确认 J2 事件并达到 SKIP_MIN_MS；
+//     3) 首图已就绪且已显示满 HOLD_MS；4) 兜底超时 TIMEOUT_MS。
 //
 // 时钟域：video_clk（25 MHz），复位 video_rst_n，与像素链同域。
-// 跨域只接收一根"翻转电平"skip_toggle（clk 域单拍事件打包而来），
-// 模块内两级同步 + 边沿检测，保证一次事件只消费一次。
+// 跨域接收 J2 事件翻转电平（两级同步 + 边沿检测）和 SW2 启动状态
+// （两级电平同步）；SW2 状态只在启动采样一次。
 //
 // Logo 数据来自 boot_logo_rom（片内调色板 ROM，几何见 boot_logo_geom.vh），
 // 由 tools/gen_boot_logo.py 从 doc/资源/VinylFPGA_640x480.jpg 生成。
@@ -40,6 +40,7 @@ module boot_layer #(
     input  wire        de,                // adjusted_de：有效像素使能
     input  wire [9:0]  pixel_x,           // adjusted_pixel_x：行内像素计数
     input  wire        skip_toggle,       // clk 域事件翻转电平（异步输入）
+    input  wire        startup_skip,      // clk 域启动时锁存的 SW2 状态（异步输入）
     input  wire        first_image_ready, // display_valid_sync2
     output reg         boot_active,       // 1=STATE_BOOT，0=STATE_BROWSE
     output wire [23:0] rgb                // 启动画面像素（boot_active=1 时有效）
@@ -84,6 +85,7 @@ module boot_layer #(
     // ---- 跨域事件：两级同步 + 边沿检测（一次事件一个单拍）----
     reg skip_s1, skip_s2, skip_s3;
     wire skip_pulse = skip_s2 ^ skip_s3;
+    reg startup_skip_s1, startup_skip_s2;
 
     // ---- 场边界 ----
     reg  vs_q;
@@ -106,6 +108,8 @@ module boot_layer #(
             skip_s1      <= 1'b0;
             skip_s2      <= 1'b0;
             skip_s3      <= 1'b0;
+            startup_skip_s1 <= 1'b0;
+            startup_skip_s2 <= 1'b0;
             vs_q         <= 1'b0;
             de_q         <= 1'b0;
             pixel_y      <= 10'd0;
@@ -117,6 +121,8 @@ module boot_layer #(
             skip_s1 <= skip_toggle;
             skip_s2 <= skip_s1;
             skip_s3 <= skip_s2;
+            startup_skip_s1 <= startup_skip;
+            startup_skip_s2 <= startup_skip_s1;
 
             vs_q <= vs;
             de_q <= de;
@@ -144,7 +150,8 @@ module boot_layer #(
 
             // 只在帧边界提交状态跳转，避免半帧切换造成撕裂
             if (frame_start && boot_active) begin
-                if ((skip_latched && boot_ms >= SKIP_MIN_MS) || hold_ok || timeout_ok) begin
+                if (startup_skip_s2 || (skip_latched && boot_ms >= SKIP_MIN_MS) ||
+                    hold_ok || timeout_ok) begin
                     boot_active  <= 1'b0;   // -> STATE_BROWSE
                     skip_latched <= 1'b0;
                 end

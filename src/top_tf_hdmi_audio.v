@@ -336,6 +336,7 @@ wire [23:0] view_rgb;               // 播放 MV 遮罩后的像素源
 // 事件握手：ui_ev_valid（clk 域单拍）-> 翻转电平 -> video 域同步/边沿检测。
 // 状态回读：boot_active（video 域电平）-> 两级同步到 clk 域。
 wire        ui_ev_valid;
+wire        board_sw2_boot_skip;
 reg         boot_skip_toggle_clk;
 wire        boot_active;
 reg  [1:0]  boot_active_clk_sync;
@@ -2192,6 +2193,7 @@ boot_layer #(
     .de                (ec2_panel_de),
     .pixel_x           (ec2_panel_x),
     .skip_toggle       (boot_skip_toggle_clk),
+    .startup_skip      (board_sw2_boot_skip),
     .first_image_ready (display_valid_sync2),
     .boot_active       (boot_active),
     .rgb               (boot_rgb)
@@ -2650,6 +2652,7 @@ expansion_integration #(
     .uart_tx          (uart_tx),
     .fault_flags      (fault_flags_clk),
     .ui_ev_valid      (ui_ev_valid),
+    .boot_startup_skip (board_sw2_boot_skip),
     .underrun_pulse   (underrun_pulse_clk),
     .wav_buffer_low   (wav_buffer_low_c2),
     .wav_stream_active(wav_stream_active_c2),

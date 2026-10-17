@@ -23,7 +23,7 @@ module expansion_integration #(
     input  wire        exp_enc2_sw_n,
     input  wire        exp_ir_rx,
 
-    // 母板输入：仅保留 KEY3 与 SW1–SW4；
+    // 母板输入：KEY3 与 SW1–SW4；
     // SW1-SW4 = 板载乒乓拨码（C8/C7/C6/C5），均按按键/拨码低有效消抖。
     input  wire        key3,
     input  wire        sw1,
@@ -39,10 +39,11 @@ module expansion_integration #(
     output wire [3:0]  fault_flags, // [3:0] = overflow, video fail, low buffer, underrun
 
     // ===================== S2：开机状态接口（最小新增）=====================
-    // ui_ev_valid：任一"已确认"用户输入的单拍脉冲（clk 域），
-    //              = J2 统一事件(含按键/拨码/编码器/红外) + 母板 KEY3 按下。
+    // ui_ev_valid：任一"已确认"J2 用户操作的单拍脉冲（clk 域）。
     //              S2 顶层用它翻转出一根电平，跨到 video 域作为 Boot 跳过源。
     output wire        ui_ev_valid,
+    // 启动保护窗结束时锁存 SW2 状态，供 video 域安全同步并旁路 Boot。
+    output reg         boot_startup_skip,
     // ===================== S7-01B：遥测输入（顶层已同步到 clk 域）=====================
     input  wire        underrun_pulse,     // 音频欠载单拍脉冲
     input  wire        wav_buffer_low,     // WAV 缓冲低水位电平
@@ -330,12 +331,12 @@ module expansion_integration #(
     );
 
     // ---- S2：Boot 跳过源（含电源启动保护）----
-    // 只把"用户主动动作"当作跳过请求：按键按下/抬起、编码器步进/按压、红外帧。
+    // J2 用户操作可跳过 Boot；母板 KEY3 不参与此路径，SW2 只在启动时采样一次。
     //
     // 为什么不能直接用 ev_valid：
     //   sync_bit / debounce_filter 的上电初值都是 1，若某路输入真实电平时为 0
-    //   （J2 拨码拨在 "0" 位、编码器静止相位为低、按键被按住、母板 KEY3
-    //   无内部上拉），消抖时间到后消抖器会判定为一次"变化"并输出脉冲。
+    //   （J2 拨码拨在 "0" 位、编码器静止相位为低、按键被按住），
+    //   消抖时间到后消抖器会判定为一次"变化"并输出脉冲。
     //   若把它当成用户操作，boot_layer 会在上电瞬间被"跳过"，表现为开机黑屏、
     //   直接显示图片 —— 这正是 S2 上板首测失败的原因。
     //
@@ -347,6 +348,7 @@ module expansion_integration #(
     localparam integer SKIP_GUARD_CYCLES = CLK_FREQ_HZ / 2;   // 500 ms
     reg [26:0] skip_guard_cnt;
     reg        skip_guard_done;
+    reg        boot_switch_sampled;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -360,10 +362,23 @@ module expansion_integration #(
         end
     end
 
+    // SW2 已经经过 key_dip_monitor 消抖。等现有 500 ms 启动保护窗结束后
+    // 锁存一次；之后拨动 SW2 不会影响当前启动周期。
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            boot_switch_sampled   <= 1'b0;
+            boot_startup_skip     <= 1'b0;
+        end else begin
+            if (skip_guard_done && !boot_switch_sampled) begin
+                boot_switch_sampled <= 1'b1;
+                boot_startup_skip   <= board_sw_level[1];
+            end
+        end
+    end
+
     // S7-03：DIP5 关闭时红外既不执行业务、也不作为 Boot 跳过源（红外业务使能门控）。
     wire ir_boot_ok = !ev_is_ir || dip_level[4];
-    assign ui_ev_valid = ((action_valid & ~ev_is_dip & ir_boot_ok) | (|board_key_fall_pulse))
-                         & skip_guard_done;
+    assign ui_ev_valid = (action_valid & ~ev_is_dip & ir_boot_ok) & skip_guard_done;
 
     // ---- 操作反馈音：复用 J2 标定工程 buzzer_feedback ----
     // 事件源与校验过的互动展示固件一致（KEY / DIP / EC1 / EC2 / 编码器按压 / 红外新帧）。
@@ -378,9 +393,9 @@ module expansion_integration #(
     wire encoder_switch_source_any;
     wire board_sw_change_any;
 
-    // 母板与拓展板事件并入同一反馈音混合器：任意一侧按键/拨码都发声
+    // 拓展板按键与母板拨码事件并入反馈音混合器；母板 KEY3 不参与通用操作音。
     assign board_sw_change_any       = |board_sw_change_pulse;
-    assign key_press_any             = (|key_fall_pulse) | (|board_key_fall_pulse);
+    assign key_press_any             = |key_fall_pulse;
     assign dip_change_any            = (|dip_change_pulse) | board_sw_change_any;
     assign dip_target                = board_sw_change_any ? board_sw_level[board_sw_change_index]
                                                            : dip_level[dip_change_index];
