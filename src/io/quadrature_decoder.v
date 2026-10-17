@@ -20,8 +20,15 @@ module quadrature_decoder #(
     reg  [1:0]  stable_state;
     reg  [31:0] stable_count;
     reg signed [3:0] quarter_steps;
+    wire        count_step_down;
+    wire [15:0] count_delta;
 
     assign raw_state = {a_sync, b_sync};
+    // Legal positive transitions have old A != new B; legal negative
+    // transitions have old A == new B. Reuse one modulo-16-bit adder for
+    // both count directions by adding +1 or two's-complement -1.
+    assign count_step_down = ~(stable_state[1] ^ candidate_state[0]);
+    assign count_delta = count_step_down ? 16'hffff : 16'h0001;
 
     sync_bit u_sync_a (
         .clk      (clk),
@@ -67,7 +74,7 @@ module quadrature_decoder #(
                                 quarter_steps <= 4'sd0;
                                 step_pulse    <= 1'b1;
                                 direction     <= 1'b0;
-                                count         <= count + 1'b1;
+                                count         <= count + count_delta;
                             end else
                                 quarter_steps <= quarter_steps + 1'b1;
                         end
@@ -80,7 +87,7 @@ module quadrature_decoder #(
                                 quarter_steps <= 4'sd0;
                                 step_pulse    <= 1'b1;
                                 direction     <= 1'b1;
-                                count         <= count - 1'b1;
+                                count         <= count + count_delta;
                             end else
                                 quarter_steps <= quarter_steps - 1'b1;
                         end
