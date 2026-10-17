@@ -41,6 +41,8 @@ CASES = {
     "tb_background_capability": ["src/video/background_cache_loader.v", "sim/tb_background_capability.v"],
     "tb_x2_seek": ["src/audio/seek_controller.v", "sim/tb_x2_seek.v"],
     "tb_x2_seek_wav": ["src/audio/wav_stream_player.v", "src/audio/timebase_48k.v", "sim/tb_x2_seek_wav.v"],
+    "tb_playback_progress": ["src/display/playback_progress.v", "sim/tb_playback_progress.v"],
+    "tb_playback_page_glyph_select": ["src/display/playback_page.v", "sim/tb_playback_page_glyph_select.v"],
 }
 
 LOADER_SOURCES = ['src/SD/fat32_volume_scanner.v','src/SD/fat32_file_streamer.v',
@@ -54,7 +56,8 @@ results = []
 for name, files in CASES.items():
     image, log = OUT / f"{name}.vvp", OUT / f"{name}.log"
     compile_flags = ["-DVINYL_AUDIO_CACHE_SIM"] if name in ["tb_audio_prefetch_sdram", "tb_audio_prefetch_reserve"] else []
-    compile_result = subprocess.run(["iverilog", "-g2012", "-Isrc/include", *compile_flags, "-s", name, "-o", str(image), *files],
+    language = "-g2005" if name == "tb_playback_page_glyph_select" else "-g2012"
+    compile_result = subprocess.run(["iverilog", language, "-Isrc/include", *compile_flags, "-s", name, "-o", str(image), *files],
                                     cwd=ROOT, text=True, capture_output=True)
     transcript = compile_result.stdout + compile_result.stderr
     status = compile_result.returncode

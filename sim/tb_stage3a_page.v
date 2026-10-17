@@ -32,7 +32,7 @@ module tb_stage3a_page #(parameter IMAGE_BACKGROUND=0);
         .background_image_active(background_image_active),
         .rgb_in(rgb),.song_id(2'd0),.title_length(5'd1),.artist_length(5'd1),
         .title_glyphs(128'd1),.artist_glyphs(128'd1),.line_count(8'd6),
-        .lyric_window_valid(1'b1),.lyric_scroll_active(1'b0),
+        .lyric_window_valid(1'b1),.lyric_highlight_valid(1'b1),.lyric_scroll_active(1'b0),
         .lyric_row_lengths({6{5'd1}}),.lyric_row_glyphs({6{128'd1}}),
         .lyric_scroll_offset(6'd0),.no_lyrics_glyphs(128'd1),
         .progress_fill(9'd100),.elapsed_time_ascii("00:34"),
