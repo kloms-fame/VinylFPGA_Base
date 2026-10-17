@@ -16,6 +16,9 @@ module tb_fat32_volume_scanner;
     wire audio_valid;
     wire [31:0] audio_cluster;
     wire [31:0] audio_size;
+    wire index_valid;
+    wire [31:0] index_cluster;
+    wire [31:0] index_size;
     wire sector_req;
     wire [31:0] sector_lba;
     wire sector_busy;
@@ -45,6 +48,8 @@ module tb_fat32_volume_scanner;
         .resource2_size(s2), .resource3_size(s3),
         .audio_valid(audio_valid), .audio_cluster(audio_cluster),
         .audio_size(audio_size),
+        .index_valid(index_valid), .index_cluster(index_cluster),
+        .index_size(index_size),
         .sector_req(sector_req), .sector_lba(sector_lba),
         .sector_busy(sector_busy), .sector_valid(sector_valid),
         .sector_byte(sector_byte), .sector_byte_index(sector_byte_index),
@@ -81,6 +86,30 @@ module tb_fat32_volume_scanner;
                 $display("FAIL: %0s", name);
                 errors = errors + 1;
             end
+        end
+    endtask
+
+    task write_directory_entry;
+        input integer slot;
+        input [87:0] short_name;
+        input [7:0] attributes;
+        input [31:0] first_cluster;
+        input [31:0] file_bytes;
+        integer base;
+        integer n;
+        begin
+            base = 42*512 + slot*32;
+            for (n = 0; n < 11; n = n + 1)
+                mem[base+n] = short_name[87-(n*8) -: 8];
+            mem[base+11] = attributes;
+            mem[base+20] = first_cluster[16 +: 8];
+            mem[base+21] = first_cluster[24 +: 8];
+            mem[base+26] = first_cluster[0 +: 8];
+            mem[base+27] = first_cluster[8 +: 8];
+            mem[base+28] = file_bytes[0 +: 8];
+            mem[base+29] = file_bytes[8 +: 8];
+            mem[base+30] = file_bytes[16 +: 8];
+            mem[base+31] = file_bytes[24 +: 8];
         end
     endtask
 
@@ -203,6 +232,33 @@ module tb_fat32_volume_scanner;
         check(resource_valid == 4'hf && audio_valid,
               "MBR scan should find image and audio directory entries");
         if (errors == 0) $display("PASS: FAT32 volume scanner, MBR partition");
+        else $display("FAIL: %0d errors", errors);
+
+        // Look-alike names must not pass when deleted, long-name, directory,
+        // or a one-byte filename mismatch is present. A valid INDEX.BIN lets
+        // the scan finish while proving none of those entries set resources.
+        for (i = 0; i < 512; i = i + 1) mem[42*512 + i] = 8'h00;
+        write_directory_entry(0, "PIC1    BMP", 8'h20, 32'd11, 32'd111);
+        mem[42*512 + 0] = 8'he5;
+        write_directory_entry(1, "PIC2    BMP", 8'h0f, 32'd12, 32'd112);
+        write_directory_entry(2, "PIC3    BMP", 8'h10, 32'd13, 32'd113);
+        write_directory_entry(3, "AUDIO   PCM", 8'h0f, 32'd14, 32'd114);
+        write_directory_entry(4, "INDEX   BIN", 8'h10, 32'd15, 32'd115);
+        write_directory_entry(5, "PIC1    BMZ", 8'h20, 32'd16, 32'd116);
+        write_directory_entry(6, "AUDIO   PCN", 8'h20, 32'd17, 32'd117);
+        write_directory_entry(7, "INDEX   BIQ", 8'h20, 32'd18, 32'd118);
+        write_directory_entry(8, "INDEX   BIN", 8'h20, 32'd20, 32'd1234);
+
+        @(negedge clk); scan_start = 1;
+        @(negedge clk); scan_start = 0;
+        wait (scan_done == 1'b1);
+        repeat (3) @(posedge clk);
+        check(fs_error == 8'h00, "look-alike directory entries should not fail scan");
+        check(resource_valid == 0 && !audio_valid,
+              "deleted, wrong-attribute, and near-match files must stay invalid");
+        check(index_valid && index_cluster == 20 && index_size == 1234,
+              "only the exact INDEX.BIN entry should be accepted");
+        if (errors == 0) $display("PASS: FAT32 volume scanner, directory match boundaries");
         else $display("FAIL: %0d errors", errors);
 
         // Early failure on a new scan must not expose results from the last scan.

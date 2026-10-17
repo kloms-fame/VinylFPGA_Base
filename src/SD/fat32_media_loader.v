@@ -611,15 +611,31 @@ module fat32_media_loader #(
         .background_art2_supported(idx_background_art2_supported)
     );
 
-    // 索引条目与旧扫描结果的取数选择（index_mode=0 时严格等于旧路径）
-    wire [31:0] sel_cluster0 = index_mode ? idx_cover0[31:0] : scanner_cluster0;
-    wire [31:0] sel_cluster1 = index_mode ? idx_cover1[31:0] : scanner_cluster1;
-    wire [31:0] sel_cluster2 = index_mode ? idx_cover2[31:0] : scanner_cluster2;
-    wire [31:0] sel_cluster3 = index_mode ? idx_cover3[31:0] : scanner_cluster3;
-    wire [31:0] sel_size0    = index_mode ? idx_cover0[63:32] : scanner_size0;
-    wire [31:0] sel_size1    = index_mode ? idx_cover1[63:32] : scanner_size1;
-    wire [31:0] sel_size2    = index_mode ? idx_cover2[63:32] : scanner_size2;
-    wire [31:0] sel_size3    = index_mode ? idx_cover3[63:32] : scanner_size3;
+    // Select a slot within each source first, then choose the source once.
+    // This keeps index_mode off the four parallel 64-bit slot buses.
+    reg [63:0] legacy_meta_sel;
+    reg [63:0] index_meta_sel;
+    always @* begin
+        case (load_index_latched)
+            2'd0: begin
+                legacy_meta_sel = {scanner_size0, scanner_cluster0};
+                index_meta_sel  = idx_cover0;
+            end
+            2'd1: begin
+                legacy_meta_sel = {scanner_size1, scanner_cluster1};
+                index_meta_sel  = idx_cover1;
+            end
+            2'd2: begin
+                legacy_meta_sel = {scanner_size2, scanner_cluster2};
+                index_meta_sel  = idx_cover2;
+            end
+            default: begin
+                legacy_meta_sel = {scanner_size3, scanner_cluster3};
+                index_meta_sel  = idx_cover3;
+            end
+        endcase
+    end
+    wire [63:0] selected_meta = index_mode ? index_meta_sel : legacy_meta_sel;
 
     // -------------------------------------------------------------------------
     // 两路扇区读分时复用
@@ -818,12 +834,8 @@ module fat32_media_loader #(
             // 1. 接受加载请求：先申请 SDRAM 写区。
             if (load_launch_pending && use_streamer &&
                 !streamer_busy && (load_state == LD_IDLE)) begin
-                case (load_index_latched)
-                    2'd0: begin load_cluster <= sel_cluster0; load_size <= sel_size0; end
-                    2'd1: begin load_cluster <= sel_cluster1; load_size <= sel_size1; end
-                    2'd2: begin load_cluster <= sel_cluster2; load_size <= sel_size2; end
-                    default: begin load_cluster <= sel_cluster3; load_size <= sel_size3; end
-                endcase
+                load_cluster <= selected_meta[31:0];
+                load_size <= selected_meta[63:32];
 
                 if (!eff_valid[load_index_latched]) begin
                     bmp_error <= ERR_NO_RESOURCE;
