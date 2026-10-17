@@ -30,6 +30,9 @@
 `define PLAYBACK_ELAPSED_W        10'd40
 `define PLAYBACK_REMAINING_X      10'd288
 `define PLAYBACK_REMAINING_W      10'd48
+`define PLAYBACK_END_MODE_X       10'd168
+`define PLAYBACK_END_MODE_Y       10'd350
+`define PLAYBACK_END_MODE_SIZE    10'd16
 `define PLAYBACK_PROGRESS_X       10'd16
 `define PLAYBACK_PROGRESS_Y       10'd342
 `define PLAYBACK_PROGRESS_H       10'd4

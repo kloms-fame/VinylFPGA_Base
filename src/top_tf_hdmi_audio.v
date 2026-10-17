@@ -557,10 +557,10 @@ wire [1:0] display_song_sd = play_active_sd ? play_sel_song_sd : disp_buf_idx;
 // extra metadata cycle settles before either WAV or MV consumes the result.
 reg [1:0] metadata_song_sd;
 reg [1:0] metadata_song_update_d;
-wire [2:0] song_metadata_src = {play_track_tgl_sd, metadata_song_sd};
-reg  [2:0] song_metadata_src_d;
+wire [4:0] song_metadata_src = {play_end_mode, play_track_tgl_sd, metadata_song_sd};
+reg  [4:0] song_metadata_src_d;
 wire       song_metadata_update_sd = (song_metadata_src != song_metadata_src_d);
-wire [2:0] song_metadata_video;
+wire [4:0] song_metadata_video;
 reg media_scan_done_update_d, media_preloaded_update_d;
 wire mv_metadata_update_sd =
     (metadata_song_sd != metadata_song_update_d) ||
@@ -763,15 +763,15 @@ cdc_bundle_latest #(.WIDTH(64)) u_mv_metadata_cdc(
     .src_clk(sd_card_clk),.src_rst_n(sd_media_rst_n),.src_data(mv_metadata_sd),.src_update(mv_metadata_update_sd),
     .dst_clk(video_clk),.dst_rst_n(media_video_rst_n),.dst_data(mv_metadata_video));
 
-// D9: atomically transfer the selected song and playback generation. The
+// D9: atomically transfer the selected song, generation and EOF policy. The
 // video domain samples the bundle at frame start alongside its local audio time.
 always @(posedge sd_card_clk or negedge sd_media_rst_n) begin
     if (!sd_media_rst_n)
-        song_metadata_src_d <= 3'd0;
+        song_metadata_src_d <= 5'd0;
     else
         song_metadata_src_d <= song_metadata_src;
 end
-cdc_bundle_latest #(.WIDTH(3)) u_song_metadata_cdc(
+cdc_bundle_latest #(.WIDTH(5)) u_song_metadata_cdc(
     .src_clk(sd_card_clk),.src_rst_n(sd_media_rst_n),.src_data(song_metadata_src),
     .src_update(song_metadata_update_sd),.dst_clk(video_clk),
     .dst_rst_n(media_video_rst_n),.dst_data(song_metadata_video));
@@ -2478,6 +2478,7 @@ playback_page #(.IMAGE_BACKGROUND(1)) u_playback_page (
     .clk(video_clk),.rst_n(video_rst_n),.vs(vs),.de(adjusted_de),
     .pixel_x(adjusted_pixel_x),
     .enable(playback_page_mode_frame),
+    .end_mode(song_metadata_video[4:3]),
     .bg_cycle_toggle_async(brw_ev_home_tgl),
     .background_image_active(background_image_active),.background_mode(background_mode),
     .browse_mode(browse_page_mode_frame),.rgb_in(lrc_rgb),

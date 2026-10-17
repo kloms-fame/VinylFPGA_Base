@@ -16,6 +16,7 @@ module playback_page #(
     input  wire [9:0]   pixel_x,
     input  wire         enable,
     input  wire         browse_mode,
+    input  wire [1:0]   end_mode, // Acknowledged video-domain play_ctrl policy.
     input  wire         bg_cycle_toggle_async,
     input  wire         background_image_active,
     output wire [1:0]   background_mode,
@@ -69,6 +70,7 @@ module playback_page #(
     localparam [2:0] BROWSE_TRACK      = 3'd4;
     localparam [2:0] BROWSE_DURATION   = 3'd5;
     localparam [2:0] BROWSE_SEPARATOR  = 3'd6;
+    localparam [2:0] TEXT_END_MODE     = 3'd7;
 
     function [7:0] packed_glyph_at;
         input [127:0] packed;
@@ -125,6 +127,13 @@ module playback_page #(
     reg [23:0] text_color_q;
     reg [9:0] pixel_y_q;
     reg [8:0] progress_fill_q;
+    reg [1:0] end_mode_frame = 2'd2;
+    wire [1:0] end_mode_glyph_bank = end_mode_frame + 2'd1;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) end_mode_frame <= 2'd2;
+        else if (vs_q && !vs)
+            end_mode_frame <= (end_mode <= 2'd2) ? end_mode : 2'd2;
+    end
 
     reg text_request;
     reg ascii_mode;
@@ -145,6 +154,7 @@ module playback_page #(
     wire [9:0] artist_dx = pixel_x - `PLAYBACK_ARTIST_X;
     wire [9:0] elapsed_time_dx = pixel_x - `PLAYBACK_ELAPSED_X;
     wire [9:0] remaining_time_dx = pixel_x - `PLAYBACK_REMAINING_X;
+    wire [9:0] end_mode_dx = pixel_x - `PLAYBACK_END_MODE_X;
     wire [9:0] browse_track_dx = pixel_x - 10'd48;
     wire [8:0] browse_text_dx = pixel_x - 10'd164;
     wire [9:0] browse_time_dx = pixel_x - 10'd544;
@@ -171,6 +181,11 @@ module playback_page #(
         (line_y >= `PLAYBACK_TIME_Y) && (line_y < (`PLAYBACK_TIME_Y + 10'd16)) &&
         (pixel_x >= `PLAYBACK_REMAINING_X) &&
         (pixel_x < (`PLAYBACK_REMAINING_X + `PLAYBACK_REMAINING_W));
+    wire end_mode_region = enable && !browse_mode && de &&
+        (line_y >= `PLAYBACK_END_MODE_Y) &&
+        (line_y < (`PLAYBACK_END_MODE_Y + `PLAYBACK_END_MODE_SIZE)) &&
+        (pixel_x >= `PLAYBACK_END_MODE_X) &&
+        (pixel_x < (`PLAYBACK_END_MODE_X + `PLAYBACK_END_MODE_SIZE));
     wire browse_divider_region = browse_mode && de &&
         (line_y >= 10'd422) && (line_y < 10'd444) &&
         ((pixel_x == 10'd148) || (pixel_x == 10'd528));
@@ -190,7 +205,9 @@ module playback_page #(
                                  {9'd0, selected_row};
     wire [SONG_FONT_ADDR_W-1:0] font_addr = font_addr_full[SONG_FONT_ADDR_W-1:0];
     wire [15:0] font_row;
-    assign ascii_font_addr = {selected_ascii[6:0], selected_row[3:1]};
+    wire [2:0] ascii_font_scan_row = (selected_kind == TEXT_END_MODE)
+                                   ? selected_row[2:0] : selected_row[3:1];
+    assign ascii_font_addr = {selected_ascii[6:0], ascii_font_scan_row};
     assign ascii_font_request = text_request && ascii_mode;
     wire lyric_font_request;
     wire [7:0] lyric_font_glyph;
@@ -331,6 +348,14 @@ module playback_page #(
                 selected_ascii = packed_ascii_at(
                     remaining_time_ascii, remaining_time_column[2:0]);
             end
+        end else if (end_mode_region) begin
+            selected_kind = TEXT_END_MODE;
+            selected_pixel_col = end_mode_dx[3:0];
+            selected_row = line_y - `PLAYBACK_END_MODE_Y;
+            text_request = 1'b1;
+            ascii_mode = 1'b1;
+            selected_ascii = {4'd0, end_mode_glyph_bank,
+                              selected_row[3], selected_pixel_col[3]};
         end else if (title_region) begin
             selected_kind = TEXT_TITLE;
             selected_column = title_dx[7:4];
@@ -443,7 +468,8 @@ module playback_page #(
             font_px_col_q <= selected_pixel_col;
             text_kind_q <= selected_kind;
             text_color_q <= ((selected_kind == TEXT_ARTIST) ||
-                             (selected_kind == TEXT_TIME))
+                             (selected_kind == TEXT_TIME) ||
+                             (selected_kind == TEXT_END_MODE))
                             ? readable_subtext_color : readable_lyric_color;
             pixel_y_q <= line_y;
             progress_fill_q <= progress_fill;
@@ -502,6 +528,7 @@ module playback_page #(
                     TEXT_ARTIST:
                         out_rgb = browse_mode_q ? BROWSE_ARTIST_COLOR : text_color_q;
                     TEXT_TIME: out_rgb = text_color_q;
+                    TEXT_END_MODE: out_rgb = text_color_q;
                     TEXT_LYRIC: out_rgb = text_color_q;
                     BROWSE_TRACK: out_rgb = BROWSE_TRACK_COLOR;
                     BROWSE_DURATION: out_rgb = BROWSE_TIME_COLOR;

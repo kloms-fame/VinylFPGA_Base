@@ -13,6 +13,60 @@ module ascii_font_rom (
         for (i = 0; i < 1024; i = i + 1)
             row_mem[i] = 8'h00;
 
+        // Reserved control glyphs 4..15: four 8x8 tiles per 16x16 icon.
+        // Each mode uses {bank[1:0], tile_y, tile_x} on the existing ROM port.
+        // EOF pause: codes 4..7.
+        row_mem[32] = 8'h00; row_mem[33] = 8'h00;
+        row_mem[34] = 8'h00; row_mem[35] = 8'h0c;
+        row_mem[36] = 8'h0c; row_mem[37] = 8'h0c;
+        row_mem[38] = 8'h0c; row_mem[39] = 8'h0c;
+        row_mem[40] = 8'h00; row_mem[41] = 8'h00;
+        row_mem[42] = 8'h00; row_mem[43] = 8'h30;
+        row_mem[44] = 8'h30; row_mem[45] = 8'h30;
+        row_mem[46] = 8'h30; row_mem[47] = 8'h30;
+        row_mem[48] = 8'h0c; row_mem[49] = 8'h0c;
+        row_mem[50] = 8'h0c; row_mem[51] = 8'h0c;
+        row_mem[52] = 8'h0c; row_mem[53] = 8'h00;
+        row_mem[54] = 8'h00; row_mem[55] = 8'h00;
+        row_mem[56] = 8'h30; row_mem[57] = 8'h30;
+        row_mem[58] = 8'h30; row_mem[59] = 8'h30;
+        row_mem[60] = 8'h30; row_mem[61] = 8'h00;
+        row_mem[62] = 8'h00; row_mem[63] = 8'h00;
+        // repeat-one: codes 8..11.
+        row_mem[64] = 8'h00; row_mem[65] = 8'h00;
+        row_mem[66] = 8'h1f; row_mem[67] = 8'h3f;
+        row_mem[68] = 8'h30; row_mem[69] = 8'h31;
+        row_mem[70] = 8'h33; row_mem[71] = 8'h31;
+        row_mem[72] = 8'h00; row_mem[73] = 8'h30;
+        row_mem[74] = 8'hf8; row_mem[75] = 8'hfc;
+        row_mem[76] = 8'h38; row_mem[77] = 8'hb0;
+        row_mem[78] = 8'h80; row_mem[79] = 8'h8c;
+        row_mem[80] = 8'h31; row_mem[81] = 8'h01;
+        row_mem[82] = 8'h0f; row_mem[83] = 8'h1c;
+        row_mem[84] = 8'h3f; row_mem[85] = 8'h1f;
+        row_mem[86] = 8'h0c; row_mem[87] = 8'h00;
+        row_mem[88] = 8'h8c; row_mem[89] = 8'h8c;
+        row_mem[90] = 8'hcc; row_mem[91] = 8'h0c;
+        row_mem[92] = 8'hfc; row_mem[93] = 8'hf8;
+        row_mem[94] = 8'h00; row_mem[95] = 8'h00;
+        // repeat-list: codes 12..15.
+        row_mem[96] = 8'h00; row_mem[97] = 8'h00;
+        row_mem[98] = 8'h1f; row_mem[99] = 8'h3f;
+        row_mem[100] = 8'h30; row_mem[101] = 8'h30;
+        row_mem[102] = 8'h30; row_mem[103] = 8'h30;
+        row_mem[104] = 8'h00; row_mem[105] = 8'h30;
+        row_mem[106] = 8'hf8; row_mem[107] = 8'hfc;
+        row_mem[108] = 8'h38; row_mem[109] = 8'h30;
+        row_mem[110] = 8'h00; row_mem[111] = 8'h0c;
+        row_mem[112] = 8'h30; row_mem[113] = 8'h00;
+        row_mem[114] = 8'h0c; row_mem[115] = 8'h1c;
+        row_mem[116] = 8'h3f; row_mem[117] = 8'h1f;
+        row_mem[118] = 8'h0c; row_mem[119] = 8'h00;
+        row_mem[120] = 8'h0c; row_mem[121] = 8'h0c;
+        row_mem[122] = 8'h0c; row_mem[123] = 8'h0c;
+        row_mem[124] = 8'hfc; row_mem[125] = 8'hf8;
+        row_mem[126] = 8'h00; row_mem[127] = 8'h00;
+
         // Digits
         row_mem[384] = 8'h3c; row_mem[385] = 8'h66; row_mem[386] = 8'h6e; row_mem[387] = 8'h76;
         row_mem[388] = 8'h66; row_mem[389] = 8'h66; row_mem[390] = 8'h3c;
