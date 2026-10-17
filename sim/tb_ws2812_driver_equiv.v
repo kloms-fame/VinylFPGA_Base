@@ -2,26 +2,31 @@
 module tb_ws2812_driver_equiv;
     parameter integer PIXELS=8;
     parameter integer REAL_TIMING=0;
-    localparam integer LIMIT=REAL_TIMING ? 160000 : 40000;
+    parameter integer BIT_CYCLES=REAL_TIMING ? 63 : 7;
+    parameter integer T0H_CYCLES=REAL_TIMING ? 18 : 2;
+    parameter integer T1H_CYCLES=REAL_TIMING ? 35 : 4;
+    parameter integer RESET_CYCLES=REAL_TIMING ? 3000 : 5;
+    parameter integer LIMIT=REAL_TIMING ? 160000 : 40000;
+    parameter integer REQUIRE_ACTIVITY=1;
     reg clk=0,rst_n=0,load=0;
     reg [PIXELS*24-1:0] payload=0, frozen=0;
     wire frame_pin,stream_pin,ref_pin,frame_busy,stream_busy,ref_busy;
     wire [4:0] pixel;
     wire [23:0] stream_color=frozen[pixel*24+:24];
     always #10 clk=~clk;
-    ws2812_driver #(.PIXEL_COUNT(PIXELS),.BIT_CYCLES(REAL_TIMING ? 63 : 7),
-        .T0H_CYCLES(REAL_TIMING ? 18 : 2),.T1H_CYCLES(REAL_TIMING ? 35 : 4),
-        .RESET_CYCLES(REAL_TIMING ? 3000 : 5)) full_frame
+    ws2812_driver #(.PIXEL_COUNT(PIXELS),.BIT_CYCLES(BIT_CYCLES),
+        .T0H_CYCLES(T0H_CYCLES),.T1H_CYCLES(T1H_CYCLES),
+        .RESET_CYCLES(RESET_CYCLES)) full_frame
         (.clk(clk),.rst_n(rst_n),.load(load),.grb_in(payload),.busy(frame_busy),.dout(frame_pin),
          .stream_grb(24'd0),.stream_pixel_index());
-    ws2812_driver #(.PIXEL_COUNT(PIXELS),.BIT_CYCLES(REAL_TIMING ? 63 : 7),
-        .T0H_CYCLES(REAL_TIMING ? 18 : 2),.T1H_CYCLES(REAL_TIMING ? 35 : 4),
-        .RESET_CYCLES(REAL_TIMING ? 3000 : 5),.STREAMING(1)) stream
+    ws2812_driver #(.PIXEL_COUNT(PIXELS),.BIT_CYCLES(BIT_CYCLES),
+        .T0H_CYCLES(T0H_CYCLES),.T1H_CYCLES(T1H_CYCLES),
+        .RESET_CYCLES(RESET_CYCLES),.STREAMING(1)) stream
         (.clk(clk),.rst_n(rst_n),.load(load),.grb_in({PIXELS*24{1'b0}}),.busy(stream_busy),.dout(stream_pin),
          .stream_grb(stream_color),.stream_pixel_index(pixel));
-    ws2812_driver_o4 #(.PIXEL_COUNT(PIXELS),.BIT_CYCLES(REAL_TIMING ? 63 : 7),
-        .T0H_CYCLES(REAL_TIMING ? 18 : 2),.T1H_CYCLES(REAL_TIMING ? 35 : 4),
-        .RESET_CYCLES(REAL_TIMING ? 3000 : 5)) golden
+    ws2812_driver_o4 #(.PIXEL_COUNT(PIXELS),.BIT_CYCLES(BIT_CYCLES),
+        .T0H_CYCLES(T0H_CYCLES),.T1H_CYCLES(T1H_CYCLES),
+        .RESET_CYCLES(RESET_CYCLES)) golden
         (.clk(clk),.rst_n(rst_n),.load(load),.grb_in(payload),.busy(ref_busy),.dout(ref_pin));
     always @(posedge clk or negedge rst_n) begin
         if(!rst_n) frozen<=0;
@@ -47,7 +52,8 @@ module tb_ws2812_driver_equiv;
             end
             if(ref_pin)high_samples=high_samples+1;
         end
-        if(accepted<3 || ignored<100 || high_samples<100)$fatal(1,"FAIL WS_DRIVER coverage");
+        if(REQUIRE_ACTIVITY && (accepted<3 || ignored<100 || high_samples<100))
+            $fatal(1,"FAIL WS_DRIVER coverage");
         $display("PASS WS_DRIVER pixels=%0d real=%0d clocks=%0d accepted=%0d ignored=%0d",PIXELS,REAL_TIMING,LIMIT,accepted,ignored);
         $finish;
     end
