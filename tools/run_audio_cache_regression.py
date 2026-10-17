@@ -46,6 +46,7 @@ CASES = {
 LOADER_SOURCES = ['src/SD/fat32_volume_scanner.v','src/SD/fat32_file_streamer.v',
                   'src/SD/sd_sector_adapter.v','src/SD/song_index_db.v','src/SD/fat32_media_loader.v']
 for loader_test in ['tb_fat32_media_loader','tb_fat32_index_loader','tb_closure_header_compare',
+                    'tb_fat32_volume_scanner',
                     'tb_header_payload_bounds','tb_audio_metadata_valid']:
     CASES[loader_test] = [*LOADER_SOURCES, 'sim/'+loader_test+'.v']
 

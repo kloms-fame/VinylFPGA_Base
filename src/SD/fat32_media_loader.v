@@ -709,6 +709,10 @@ module fat32_media_loader #(
                 idx_started <= 1'b0;
                 index_mode <= 1'b0;
                 src_valid <= 4'd0;
+                // A rescan must return sector ownership to the scanner. The
+                // caller asserts scan_start only while ready, so no active
+                // streamer transaction is interrupted by this mux change.
+                use_streamer <= 1'b0;
             end else if (scan_phase == SP_SCAN) begin
                 if (scanner_done) begin
                     use_streamer <= 1'b1;

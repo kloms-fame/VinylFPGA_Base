@@ -126,8 +126,12 @@ module wav_stream_player #(
 
     // TD 的块 RAM 推断需要独立、无数组复位的同步读写端口。
     // 仍为 4096 x 16bit，读数据在消费沿更新，不增加 sample_valid 延迟。
-    wire buffer_write = wr_rst_n && play_enable &&
-                        (wstate == WS_FILL) && sd_valid && lo_pending &&
+    // wstate is asynchronously forced to WS_IDLE by wr_rst_n. Use that state
+    // as the RAM write interlock instead of routing the high-fanout reset net
+    // into the wide write-enable cone; the write remains disabled throughout
+    // reset and becomes eligible only after a new play transaction reaches fill.
+    wire buffer_write = play_enable && (wstate == WS_FILL) &&
+                        sd_valid && lo_pending &&
                         (skip_cnt == 8'd0) && (remaining != 32'd0);
     wire buffer_available = play_enable_sync2 && !fault_sync[1] &&
                             ((level_rd >= SAMPLES_PER_SECTOR) ||

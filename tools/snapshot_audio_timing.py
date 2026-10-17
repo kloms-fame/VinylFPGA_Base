@@ -22,12 +22,28 @@ for name in ['src','constraints']:
 raw=a.template.read_text(encoding='utf-8')
 old=re.search(r'<Project[^>]*Path="([^"]+)"',raw)[1]
 raw=raw.replace(old,dest.as_posix())
+# The checked-in project is rooted at prj/ and names sources as ../src and
+# ../constraints. A self-contained snapshot puts those trees beside the .al,
+# so rewrite only those relative source/constraint references in the copy.
+def snapshot_relative_path(match):
+    prefix, value, suffix = match.group(1), match.group(2), match.group(3)
+    normalized=value.replace('\\','/')
+    for source_root in ('../src/', '../constraints/'):
+        if normalized.startswith(source_root):
+            return prefix + normalized[3:] + suffix
+    return match.group(0)
+
+raw=re.sub(r'(Path=")(.*?)(")', snapshot_relative_path, raw)
+raw=re.sub(r'(Val=")(\.\./(?:src|constraints)/[^"]+)(")',
+           snapshot_relative_path, raw)
 (dest/'VinylFPGA.al').write_text(raw,encoding='utf-8')
 # TD's project format has the literal UsedInP&R attribute name. Normalize
 # the ampersand only for validation, preserving the vendor project bytes.
 x=ET.fromstring(re.sub(r'&(?!amp;|lt;|gt;|quot;|apos;|#)','&amp;',raw))
 for n in x.findall('.//File'):
     f=Path(n.attrib['Path'])
+    if not f.is_absolute():
+        f=dest/f
     assert f.is_file() and f.resolve().is_relative_to(dest), str(f)
 inputs={f.relative_to(dest).as_posix():hashlib.sha256(f.read_bytes()).hexdigest()
         for f in dest.rglob('*') if f.is_file()}

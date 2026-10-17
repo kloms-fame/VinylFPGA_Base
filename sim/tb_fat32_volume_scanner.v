@@ -175,7 +175,49 @@ module tb_fat32_volume_scanner;
         check(fat_start_lba == 32 && data_start_lba == 34,
               "FAT/data layout should match");
 
-        if (errors == 0) $display("PASS: FAT32 volume scanner");
+        if (errors == 0) $display("PASS: FAT32 volume scanner, direct boot sector");
+        else $display("FAIL: %0d errors", errors);
+
+        // 第二轮扫描覆盖 MBR 分区偏移，BPB 与根目录布局沿用同一份介质。
+        for (i = 0; i < 512; i = i + 1) begin
+            mem[8*512 + i] = mem[i];
+            mem[42*512 + i] = mem[34*512 + i];
+            mem[i] = 8'h00;
+        end
+        mem[0] = 8'hEB; // MBR boot code may also begin with a jump opcode.
+        mem[446] = 8'h80; // bootable partition entry
+        mem[450] = 8'h0B;
+        mem[454] = 8'd8; mem[455] = 0; mem[456] = 0; mem[457] = 0;
+        mem[458] = 0; mem[459] = 8'h10; mem[460] = 0; mem[461] = 0;
+        mem[510] = 8'h55; mem[511] = 8'hAA;
+
+        @(negedge clk); scan_start = 1;
+        @(negedge clk); scan_start = 0;
+        wait (scan_done == 1'b1);
+        repeat (3) @(posedge clk);
+
+        check(fs_error == 8'h00, "MBR scan should succeed");
+        check(partition_lba == 8, "MBR partition start should be decoded");
+        check(fat_start_lba == 40 && data_start_lba == 42,
+              "partition-relative FAT/data layout should match");
+        check(resource_valid == 4'hf && audio_valid,
+              "MBR scan should find image and audio directory entries");
+        if (errors == 0) $display("PASS: FAT32 volume scanner, MBR partition");
+        else $display("FAIL: %0d errors", errors);
+
+        // Early failure on a new scan must not expose results from the last scan.
+        mem[510] = 8'h00; mem[511] = 8'h00;
+        @(negedge clk); scan_start = 1;
+        @(negedge clk); scan_start = 0;
+        wait (scan_done == 1'b1);
+        repeat (3) @(posedge clk);
+        check(fs_error == 8'h20, "bad signature should fail the new scan");
+        check(resource_valid == 0 && !audio_valid && !dut.index_valid,
+              "early scan failure must clear previous valid flags");
+        check(audio_cluster == 9 && audio_size == 32'h00000400 &&
+              c0 == 5 && s0 == 32'h000E1016,
+              "invalid result payload may retain prior values behind low valid flags");
+        if (errors == 0) $display("PASS: FAT32 volume scanner, failure clears prior result");
         else $display("FAIL: %0d errors", errors);
         $finish;
     end

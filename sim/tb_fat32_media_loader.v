@@ -249,21 +249,10 @@ module tb_fat32_media_loader;
             $display("FAIL scan found_count=%0d fs_error=%02x scan_valid=%b",
                      found_count, dut.u_volume_scanner.fs_error,
                      dut.u_volume_scanner.resource_valid);
-            $display("      root_lba=%0d buf0=%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x",
+            $display("      root_lba=%0d partition_lba=%0d data_lba=%0d",
                      dut.u_volume_scanner.sector_lba,
-                     dut.u_volume_scanner.sector_buffer[0],
-                     dut.u_volume_scanner.sector_buffer[1],
-                     dut.u_volume_scanner.sector_buffer[2],
-                     dut.u_volume_scanner.sector_buffer[3],
-                     dut.u_volume_scanner.sector_buffer[4],
-                     dut.u_volume_scanner.sector_buffer[8],
-                     dut.u_volume_scanner.sector_buffer[9],
-                     dut.u_volume_scanner.sector_buffer[10],
-                     dut.u_volume_scanner.sector_buffer[11],
-                     dut.u_volume_scanner.sector_buffer[26],
-                     dut.u_volume_scanner.sector_buffer[27],
-                     dut.u_volume_scanner.sector_buffer[28],
-                     dut.u_volume_scanner.sector_buffer[31]);
+                     dut.u_volume_scanner.partition_lba,
+                     dut.u_volume_scanner.data_start_lba);
             errors = errors + 1;
         end
 
@@ -311,6 +300,24 @@ module tb_fat32_media_loader;
         end
         if (pixel_count != 4) begin
             $display("FAIL replay pixel_count=%0d", pixel_count);
+            errors = errors + 1;
+        end
+
+        // A failed rescan may leave the scanner's old payload behind its low
+        // valid flags, but the media-loader outputs must not publish that data.
+        mem[510] = 8'h00;
+        mem[511] = 8'h00;
+        wait (ready);
+        @(negedge clk); scan_start = 1;
+        @(negedge clk); scan_start = 0;
+        wait (scan_done == 1'b1);
+        repeat (3) @(posedge clk);
+        if (dut.u_volume_scanner.fs_error != 8'h20 || audio_file_valid ||
+            audio_start_lba != 0 || audio_total_sectors != 0 ||
+            audio_size_bytes != 0) begin
+            $display("FAIL failed rescan published stale audio metadata: error=%02x valid=%b lba=%0d sectors=%0d size=%0d",
+                     dut.u_volume_scanner.fs_error, audio_file_valid,
+                     audio_start_lba, audio_total_sectors, audio_size_bytes);
             errors = errors + 1;
         end
 

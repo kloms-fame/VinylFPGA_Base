@@ -76,6 +76,10 @@ module fat32_volume_scanner (
     reg [31:0] data_sector_count;
     reg [31:0] fat_span;
     reg [2:0]  sectors_per_cluster_shift;
+    reg        dir_entry_match;
+    reg        dir_audio_match;
+    reg        dir_index_match;
+    reg [1:0]  dir_resource_index;
     reg [7:0]  dir_name0;
     reg [7:0]  dir_name1;
     reg [7:0]  dir_name2;
@@ -87,10 +91,6 @@ module fat32_volume_scanner (
     reg [7:0]  dir_name8;
     reg [7:0]  dir_name9;
     reg [7:0]  dir_name10;
-    reg        dir_entry_match;
-    reg        dir_audio_match;
-    reg        dir_index_match;
-    reg [1:0]  dir_resource_index;
     reg [15:0] dir_cluster_high;
     reg [15:0] dir_cluster_low;
     reg [31:0] dir_file_size;
@@ -179,6 +179,10 @@ module fat32_volume_scanner (
             data_sector_count <= 32'd0;
             fat_span <= 32'd0;
             sectors_per_cluster_shift <= 3'd0;
+            dir_entry_match <= 1'b0;
+            dir_audio_match <= 1'b0;
+            dir_index_match <= 1'b0;
+            dir_resource_index <= 2'd3;
             dir_name0 <= 8'd0;
             dir_name1 <= 8'd0;
             dir_name2 <= 8'd0;
@@ -190,10 +194,6 @@ module fat32_volume_scanner (
             dir_name8 <= 8'd0;
             dir_name9 <= 8'd0;
             dir_name10 <= 8'd0;
-            dir_entry_match <= 1'b0;
-            dir_audio_match <= 1'b0;
-            dir_index_match <= 1'b0;
-            dir_resource_index <= 2'd3;
             dir_cluster_high <= 16'd0;
             dir_cluster_low <= 16'd0;
             dir_file_size <= 32'd0;
@@ -201,18 +201,13 @@ module fat32_volume_scanner (
             scan_done <= 1'b0;
             sector_req <= 1'b0;
 
-            // 引导扇区/根目录扇区先缓存；根目录同时按字节扫描目录项。
+            // 根目录扇区另行逐字节扫描；其他扇区供 MBR/BPB 解析。
             if (sector_valid && state != ST_ROOT_WAIT)
                 sector_buffer[sector_byte_index] <= sector_byte;
 
             if (sector_valid && state == ST_ROOT_WAIT) begin
                 case (sector_byte_index[4:0])
-                    5'd0: begin
-                        dir_name0 <= sector_byte;
-                        dir_entry_match <= 1'b0;
-                        dir_audio_match <= 1'b0;
-                        dir_index_match <= 1'b0;
-                    end
+                    5'd0:  dir_name0 <= sector_byte;
                     5'd1:  dir_name1 <= sector_byte;
                     5'd2:  dir_name2 <= sector_byte;
                     5'd3:  dir_name3 <= sector_byte;
@@ -233,6 +228,8 @@ module fat32_volume_scanner (
                             (dir_name9 == "M") && (dir_name10 == "P")) begin
                             dir_entry_match <= 1'b1;
                             dir_resource_index <= dir_name3 - "1";
+                        end else begin
+                            dir_entry_match <= 1'b0;
                         end
                         if ((sector_byte == 8'h20) &&
                             (dir_name0 == "A") && (dir_name1 == "U") &&
@@ -242,8 +239,9 @@ module fat32_volume_scanner (
                             (dir_name8 == "P") && (dir_name9 == "C") &&
                             (dir_name10 == "M")) begin
                             dir_audio_match <= 1'b1;
+                        end else begin
+                            dir_audio_match <= 1'b0;
                         end
-                        // S4：INDEX.BIN —— 曲目索引（"INDEX" + 3 空格 + "BIN"）
                         if ((sector_byte == 8'h20) &&
                             (dir_name0 == "I") && (dir_name1 == "N") &&
                             (dir_name2 == "D") && (dir_name3 == "E") &&
@@ -252,6 +250,8 @@ module fat32_volume_scanner (
                             (dir_name8 == "B") && (dir_name9 == "I") &&
                             (dir_name10 == "N")) begin
                             dir_index_match <= 1'b1;
+                        end else begin
+                            dir_index_match <= 1'b0;
                         end
                     end
                     5'd20: dir_cluster_high[7:0] <= sector_byte;
@@ -306,7 +306,14 @@ module fat32_volume_scanner (
                 ST_IDLE: if (scan_start) begin
                     fs_error <= ERR_NONE;
                     partition_lba <= 32'd0;
+                    // Result payloads are meaningful only while their valid
+                    // flags are set. Clear the flags here; retaining the old
+                    // payload avoids a wide synchronous clear mux on every
+                    // metadata bit and is safe for consumers using the valid
+                    // contract.
                     resource_valid <= 4'd0;
+                    audio_valid <= 1'b0;
+                    index_valid <= 1'b0;
                     state <= ST_READ0_REQ;
                 end
                 ST_READ0_REQ: if (!sector_busy) begin
@@ -320,15 +327,18 @@ module fat32_volume_scanner (
                     else if (sector_buffer[510] != 8'h55 ||
                              sector_buffer[511] != 8'haa)
                         finish_with_error(ERR_BOOT_SIGNATURE);
-                    else if (sector_buffer[0] == 8'heb ||
-                             sector_buffer[0] == 8'he9) begin
-                        partition_lba <= 32'd0;
-                        state <= ST_BOOT_PARSE;
-                    end else if (sector_buffer[450] == 8'h0b ||
-                                 sector_buffer[450] == 8'h0c) begin
+                    else if (((sector_buffer[446] == 8'h00) ||
+                              (sector_buffer[446] == 8'h80)) &&
+                             ((sector_buffer[450] == 8'h0b) ||
+                              (sector_buffer[450] == 8'h0c)) &&
+                             (le32(454) != 0) && (le32(458) != 0)) begin
                         partition_lba <= le32(454);
                         sector_lba <= le32(454);
                         state <= ST_BOOT_REQ;
+                    end else if (sector_buffer[0] == 8'heb ||
+                                 sector_buffer[0] == 8'he9) begin
+                        partition_lba <= 32'd0;
+                        state <= ST_BOOT_PARSE;
                     end else begin
                         finish_with_error(ERR_UNSUPPORTED_BPB);
                     end
@@ -384,11 +394,7 @@ module fat32_volume_scanner (
                 ST_ROOT_REQ: if (!sector_busy) begin
                     resource_valid <= 4'd0;
                     audio_valid <= 1'b0;
-                    audio_cluster <= 32'd0;
-                    audio_size <= 32'd0;
                     index_valid <= 1'b0;
-                    index_cluster <= 32'd0;
-                    index_size <= 32'd0;
                     dir_entry_match <= 1'b0;
                     dir_audio_match <= 1'b0;
                     dir_index_match <= 1'b0;
