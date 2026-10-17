@@ -1,0 +1,62 @@
+[
+  {
+    "test": "tb_audio_sdram_dma",
+    "pass": true,
+    "exit": 0
+  },
+  {
+    "test": "tb_audio_sdram_arbiter",
+    "pass": true,
+    "exit": 0
+  },
+  {
+    "test": "tb_audio_prefetch_sdram",
+    "pass": true,
+    "exit": 0
+  },
+  {
+    "test": "tb_wav_startup_ready",
+    "pass": true,
+    "exit": 0
+  },
+  {
+    "test": "tb_wav_stream_player",
+    "pass": true,
+    "exit": 0
+  },
+  {
+    "test": "tb_wav_underrun",
+    "pass": true,
+    "exit": 0
+  },
+  {
+    "test": "tb_s7_session",
+    "pass": true,
+    "exit": 0
+  },
+  {
+    "test": "tb_background_sector_mux",
+    "pass": true,
+    "exit": 0
+  },
+  {
+    "test": "tb_media_write_pipeline",
+    "pass": true,
+    "exit": 0
+  },
+  {
+    "test": "tb_mv_linear_write",
+    "pass": true,
+    "exit": 0
+  },
+  {
+    "test": "tb_mv_frame_scheduler",
+    "pass": true,
+    "exit": 0
+  },
+  {
+    "test": "tb_frame_fifo_read_pace",
+    "pass": true,
+    "exit": 0
+  }
+]

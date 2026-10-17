@@ -1,0 +1,7 @@
+# vsim -c -lib C:\Users\Renni\AppData\Local\Temp/vinyl_vendor_mask_probe_20261016/work sdr_as_ram glbl -do "run 0; quit -f" 
+# Start time: 20:01:52 on Oct 16,2026
+# ** Note: (vsim-3812) Design is being optimized...
+# ** Error: (vopt-2253) No module name found in command-line argument "C:\Users\Renni\AppData\Local\Temp/vinyl_vendor_mask_probe_20261016/work.sdr_as_ram"
+# Error loading design
+# End time: 20:01:53 on Oct 16,2026, Elapsed time: 0:00:01
+# Errors: 1, Warnings: 0

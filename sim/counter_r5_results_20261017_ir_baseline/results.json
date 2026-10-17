@@ -1,0 +1,50 @@
+[
+  {
+    "test": "ir_50000000",
+    "pass": true,
+    "elapsed_s": 52.251,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results_20261017_ir_baseline\\ir_50000000.log"
+  },
+  {
+    "test": "ir_123457",
+    "pass": true,
+    "elapsed_s": 0.267,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results_20261017_ir_baseline\\ir_123457.log"
+  },
+  {
+    "test": "ir_10000",
+    "pass": true,
+    "elapsed_s": 0.148,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results_20261017_ir_baseline\\ir_10000.log"
+  },
+  {
+    "test": "ir_23273",
+    "pass": true,
+    "elapsed_s": 0.167,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results_20261017_ir_baseline\\ir_23273.log"
+  },
+  {
+    "test": "ir_42667",
+    "pass": true,
+    "elapsed_s": 0.185,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results_20261017_ir_baseline\\ir_42667.log"
+  },
+  {
+    "test": "ir_1000",
+    "pass": true,
+    "elapsed_s": 0.132,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results_20261017_ir_baseline\\ir_1000.log"
+  },
+  {
+    "test": "ir_1",
+    "pass": true,
+    "elapsed_s": 0.135,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results_20261017_ir_baseline\\ir_1.log"
+  },
+  {
+    "test": "ir_0",
+    "pass": true,
+    "elapsed_s": 0.159,
+    "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\counter_r5_results_20261017_ir_baseline\\ir_0.log"
+  }
+]

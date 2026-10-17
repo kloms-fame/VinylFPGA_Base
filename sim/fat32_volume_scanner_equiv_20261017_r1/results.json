@@ -1,0 +1,23 @@
+{
+  "baseline_commit": "dcaccbb6bf67162c84c02a38fd13de979645bb62",
+  "baseline_source_sha256": "5376d3e91aaa29f214014ffc6916f48f0a418c9bb07d00cc473d2ed6f2e879ed",
+  "candidate_source_sha256": "1867770ff38bc6a77d5c30f7f881f34d61fb2ea6dcf47a7731edd7ab6992e3b8",
+  "testbench_sha256": "30265fdb20597d0dd467623f8b5d9ffca6d58a5cbf124f86b7613200785b6f88",
+  "compile_command": [
+    "D:\\iverilog\\bin\\iverilog.EXE",
+    "-g2005",
+    "-Isrc",
+    "-Isrc/include",
+    "-Isrc/SD",
+    "-s",
+    "tb_fat32_volume_scanner_equiv",
+    "-o",
+    "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\fat32_volume_scanner_equiv_20261017_r1\\tb_fat32_volume_scanner_equiv.vvp",
+    "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\tb_fat32_volume_scanner_equiv.v",
+    "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\fat32_volume_scanner_equiv_20261017_r1\\fat32_volume_scanner_ref.v",
+    "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\src\\SD\\fat32_volume_scanner.v"
+  ],
+  "simulation_exit": 0,
+  "passed": true,
+  "log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\sim\\fat32_volume_scanner_equiv_20261017_r1\\simulation.log"
+}

@@ -1,7 +1,0 @@
-{
-  "build": "BUILD SUCCEEDED through opt_gate (64292ms)\n- import_device: 46ms, state=device_ready\n- open_project: 358ms, state=project_single\n- elaborate: 1250ms, state=elaborated\n- read_adc: 219ms, state=elaborated\n- read_sdc: 15ms, state=elaborated\n- optimize_rtl: 30764ms, state=rtl_optimized\n- optimize_gate: 31547ms, state=gate_optimized\n- legalize_phy_inst: 93ms, state=legalized\n- read_sdc_post_gate: 0ms, state=legalized",
-  "al": "D:/Data_Backup/VinylFPGA_Workspace_Base/VinylFPGA/prj/VinylFPGA.al",
-  "adc": "D:/Data_Backup/VinylFPGA_Workspace_Base/VinylFPGA/constraints/pin.adc",
-  "sdc": "D:/Data_Backup/VinylFPGA_Workspace_Base/VinylFPGA/constraints/timing.sdc",
-  "end_step": "opt_gate"
-}

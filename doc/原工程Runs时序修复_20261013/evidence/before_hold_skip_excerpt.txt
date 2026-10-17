@@ -1,3 +1,0 @@
-RUN-1001 :    fix_hold   |     on     |        on        |        
-RUN-1001 : Slice utilization of current design is higher than 90%, hold fixing is skipped.
-   -2022 [      0 ]  -56255 [      0 ]      54 [      0 ]     -25 [      0 ]       -40 [        0 ]         3 [        0 ]    9431 [      0 ]  2059024 [       0 ]      85 [      4 ]      1221 [       56 ] : fix_hold_opt

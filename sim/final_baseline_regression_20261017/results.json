@@ -1,0 +1,8 @@
+{
+  "tb_song_index_db": true,
+  "tb_fat32_volume_scanner": true,
+  "tb_fat32_index_loader": true,
+  "tb_fat32_media_loader": true,
+  "tb_audio_metadata_valid": true,
+  "tb_s7_media_lifecycle": true
+}

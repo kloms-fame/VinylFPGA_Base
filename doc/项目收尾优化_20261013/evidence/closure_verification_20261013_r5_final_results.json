@@ -1,9 +1,0 @@
-{
-  "tb_song_index_db": true,
-  "tb_background_index": true,
-  "tb_fat32_index_loader": true,
-  "tb_fat32_file_streamer": true,
-  "tb_closure_header_compare": true,
-  "loader_cycle_equivalence": true,
-  "index_cycle_equivalence": true
-}
