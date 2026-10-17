@@ -1,12 +1,19 @@
 """Compare R5 timer narrowing cycle-by-cycle against immutable commit 6ffce23 RTL."""
 from pathlib import Path
+import argparse
 import json
 import shutil
 import subprocess
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'sim/counter_r5_results'
+parser = argparse.ArgumentParser()
+parser.add_argument('--out', type=Path, default=ROOT / 'sim/counter_r5_results')
+parser.add_argument('--ir-only', action='store_true', help='run only the IR decoder equivalence matrix')
+ARGS = parser.parse_args()
+OUT = (ARGS.out if ARGS.out.is_absolute() else ROOT / ARGS.out).resolve()
+if OUT.exists() and any(OUT.iterdir()):
+    raise SystemExit(f'Refusing to overwrite existing test evidence: {OUT}')
 IR_SIGNALS = ['event_valid', 'code', 'command', 'repeat_event', 'state', 'low_cnt', 'high_cnt', 'low_width', 'bit_count', 'shift_reg', 'frame_active', 'last_code', 'last_command', 'last_valid', 'event_next', 'repeat_next']
 BUZZ_SIGNALS = ['buzzer_n', 'busy', 'current_event', 'dip_target_latched', 'dip_second_phase', 'half_period_cycles', 'duration_cycles', 'half_period_count', 'duration_count', 'key_d', 'dip_d', 'step_d', 'switch_d', 'ir_d']
 
@@ -162,19 +169,20 @@ def main():
     durations = ['KEY_DURATION_CYCLES', 'DIP_TONE_DURATION_CYCLES', 'ENCODER_STEP_DURATION_CYCLES', 'ENCODER_SWITCH_DURATION_CYCLES', 'IR_DURATION_CYCLES']
     halves = ['KEY_HALF_PERIOD_CYCLES', 'DIP_LOW_HALF_PERIOD_CYCLES', 'DIP_HIGH_HALF_PERIOD_CYCLES', 'EC1_POS_HALF_PERIOD_CYCLES', 'EC1_NEG_HALF_PERIOD_CYCLES', 'EC2_POS_HALF_PERIOD_CYCLES', 'EC2_NEG_HALF_PERIOD_CYCLES', 'EC1_SWITCH_HALF_PERIOD_CYCLES', 'EC2_SWITCH_HALF_PERIOD_CYCLES']
     jobs = [(f'ir_{freq}', ir_bench(freq), 'ir_nec_decoder') for freq in (50_000_000, 123_457, 10_000, 23_273, 42_667, 1000, 1, 0)]
-    jobs.append(('buzz_default', buzzer_bench({}, 1), 'buzzer_feedback'))
-    for limit in (0, 1, 2, 8, 257, 65_536, -1):
-        params = {p: limit for p in durations+halves}
-        jobs.append((f'buzz_bound_{limit}', buzzer_bench(params, 2 if 0 <= limit <= 257 else 0), 'buzzer_feedback'))
-    # Individually make each configurable load the maximum, so omissions cannot hide.
-    for index, param in enumerate(halves + durations):
-        params = {p: 7 for p in durations+halves}
-        params[param] = 131_072
-        jobs.append((f'buzz_max_{index}_{param.lower()}', buzzer_bench(params, 0), 'buzzer_feedback'))
-    for alias in ('ENCODER_POS_HALF_PERIOD_CYCLES', 'ENCODER_NEG_HALF_PERIOD_CYCLES', 'ENCODER_SWITCH_HALF_PERIOD_CYCLES'):
-        params = {p: 7 for p in durations}
-        params[alias] = 131_072
-        jobs.append(('buzz_alias_'+alias.lower(), buzzer_bench(params, 0), 'buzzer_feedback'))
+    if not ARGS.ir_only:
+        jobs.append(('buzz_default', buzzer_bench({}, 1), 'buzzer_feedback'))
+        for limit in (0, 1, 2, 8, 257, 65_536, -1):
+            params = {p: limit for p in durations+halves}
+            jobs.append((f'buzz_bound_{limit}', buzzer_bench(params, 2 if 0 <= limit <= 257 else 0), 'buzzer_feedback'))
+        # Individually make each configurable load the maximum, so omissions cannot hide.
+        for index, param in enumerate(halves + durations):
+            params = {p: 7 for p in durations+halves}
+            params[param] = 131_072
+            jobs.append((f'buzz_max_{index}_{param.lower()}', buzzer_bench(params, 0), 'buzzer_feedback'))
+        for alias in ('ENCODER_POS_HALF_PERIOD_CYCLES', 'ENCODER_NEG_HALF_PERIOD_CYCLES', 'ENCODER_SWITCH_HALF_PERIOD_CYCLES'):
+            params = {p: 7 for p in durations}
+            params[alias] = 131_072
+            jobs.append(('buzz_alias_'+alias.lower(), buzzer_bench(params, 0), 'buzzer_feedback'))
     results = []
     for name, bench, module in jobs:
         source = OUT / (name + '.v'); binary = OUT / (name + '.vvp')

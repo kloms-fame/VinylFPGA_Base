@@ -34,6 +34,7 @@ module tb_song_index_db;
     reg [7:0] blob0 [0:511];
     integer errors = 0;
     integer i;
+    integer count_case;
     integer fd;
     reg [8*80:1] hex_path;
 
@@ -101,6 +102,28 @@ module tb_song_index_db;
         end
     endtask
 
+    task update_entries_crc;
+        input integer count;
+        integer n;
+        integer bit_no;
+        reg [31:0] crc;
+        begin
+            crc = 32'hFFFFFFFF;
+            for (n = 0; n < count * 64; n = n + 1) begin
+                crc = crc ^ {24'd0, blob[64+n]};
+                for (bit_no = 0; bit_no < 8; bit_no = bit_no + 1) begin
+                    if (crc[0]) crc = (crc >> 1) ^ 32'hEDB88320;
+                    else         crc = crc >> 1;
+                end
+            end
+            crc = crc ^ 32'hFFFFFFFF;
+            blob[16] = crc[7:0];
+            blob[17] = crc[15:8];
+            blob[18] = crc[23:16];
+            blob[19] = crc[31:24];
+        end
+    endtask
+
     initial begin
         hex_path = "sim/s4_fixture/index_only.hex";
         fd = $fopen(hex_path, "r");
@@ -141,6 +164,17 @@ module tb_song_index_db;
         check(cov3 === {32'd822, 32'd10}, "song3 封面 cluster=10");
         check(aud0 === {32'd2048, 32'd12}, "song0 音频 {bytes=2048,cluster=12}");
 
+        // Valid entry counts exercise each exclusive CRC end (128/192/256).
+        for (count_case = 1; count_case < 4; count_case = count_case + 1) begin
+            restore;
+            blob[12] = count_case[7:0];
+            blob[13] = 8'd0;
+            update_entries_crc(count_case);
+            feed(32'd25, 8'h00);
+            check(valid === 1'b1 && song_count === count_case[2:0],
+                  "valid song_count 1..3 and matching CRC span");
+        end
+
         // 2) magic 错
         restore; blob[0] = blob[0] ^ 8'hFF;
         feed(32'd25, 8'h00);
@@ -157,6 +191,25 @@ module tb_song_index_db;
         restore; blob[12] = 8'd5; blob[13] = 8'd0;
         feed(32'd25, 8'h00);
         check(valid === 1'b0 && err === 8'h33, "song_count=5 -> 0x33 超限拒绝");
+
+        // Invalid 16-bit counts must not alias through the low three bits of
+        // the narrowed CRC end calculation.
+        restore; blob[12] = 8'd0; blob[13] = 8'd0;
+        feed(32'd25, 8'h00);
+        check(valid === 1'b0 && err === 8'h33 && dut.crc_calc === 32'hFFFFFFFF,
+              "song_count=0 rejected without CRC alias");
+        restore; blob[12] = 8'd8; blob[13] = 8'd0;
+        feed(32'd25, 8'h00);
+        check(valid === 1'b0 && err === 8'h33 && dut.crc_calc === 32'hFFFFFFFF,
+              "song_count=8 rejected without CRC alias");
+        restore; blob[12] = 8'd1; blob[13] = 8'd1;
+        feed(32'd25, 8'h00);
+        check(valid === 1'b0 && err === 8'h33 && dut.crc_calc === 32'hFFFFFFFF,
+              "song_count=0x0101 rejected without low-bit alias");
+        restore; blob[12] = 8'hFF; blob[13] = 8'hFF;
+        feed(32'd25, 8'h00);
+        check(valid === 1'b0 && err === 8'h33 && dut.crc_calc === 32'hFFFFFFFF,
+              "song_count=0xFFFF rejected without low-bit alias");
 
         // 5) 簇号越界（收紧 max_cluster）
         restore;
