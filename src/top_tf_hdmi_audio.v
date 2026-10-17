@@ -87,7 +87,9 @@
 module top(
     input                       clk,
     input                       rst_n,
+    input                       key2,           // 母板参数复位键（B2）
     input                       key3,           // 母板按键 3（B1），用于操作反馈音
+    input                       key4,           // 母板静音键（C1）
     input                       sw1,            // 母板拨码 SW1（C8），用于操作反馈音
     input                       sw2,            // 母板拨码 SW2（C7）
     input                       sw3,            // 母板拨码 SW3（C6）
@@ -131,6 +133,9 @@ module top(
     // ===================== 母板蜂鸣器 =====================
     output                      board_buzzer_n,  // H11，PNP 驱动，低电平鸣叫（SW5 硬件通断）
 
+    // ===================== 母板状态指示灯 =====================
+    output [3:0]                led,             // LED1..LED4，高电平点亮
+
     // ===================== S1：板载 USB 转串口 =====================
     output                      uart_tx          // 115200 8N1 回显输出
 );
@@ -143,6 +148,9 @@ parameter BUF0_ADDR     = 24'd0;
 parameter BUF1_ADDR     = FRAME_PIXELS;
 parameter BUF2_ADDR     = FRAME_PIXELS * 24'd2;
 parameter BUF3_ADDR     = FRAME_PIXELS * 24'd3;
+
+// 阶段 2 先接入母板 LED 引脚；状态语义在后续验收小阶段实现。当前安全熄灭。
+assign led = 4'b0000;
 
 // 按键/拨码/编码器/红外 操作反馈音总开关：1=开启（母板蜂鸣器 + 拓展板 EXT1），0=静音。
 // 母板蜂鸣器还需硬件 SW5 拨至接通档才会发声。
