@@ -47,6 +47,11 @@ module mv_frame_scheduler (
  wire show_ready = !invalidating && !discard && !clear_pending &&
                    (!paused || first_frame) &&
                    (pending_due || completed_due);
+ // The completed writer is the third occupied bank. Keep its mailbox parked
+ // while an older future frame is pending; it may be retired only when there
+ // is queue room or the newer completion is already due on the audio clock.
+ wire retire_complete = completed && (discard || invalidating || fail_sync[1] ||
+                         !pending_valid || completed_due || (frame_start && show_ready));
  wire can_issue = enable && (!paused || first_frame) && !restart && settle==4'd15 &&
                   !busy && !(first_frame && pending_valid) &&
                   frame_count!=0 && next_frame<frame_count &&
@@ -79,7 +84,7 @@ module mv_frame_scheduler (
  end
  always @(posedge clk or negedge rst_n) begin
   if(!rst_n) busy<=0;
-  else if(completed) busy<=0;
+  else if(retire_complete) busy<=0;
   else if(can_issue) busy<=1;
  end
  always @(posedge clk or negedge rst_n) begin
@@ -118,7 +123,7 @@ module mv_frame_scheduler (
  always @(posedge clk or negedge rst_n) begin
   if(!rst_n) begin pending_valid<=0;pending_bank<=0;pending_frame<=0;end
   else if(invalidating) pending_valid<=0;
-  else if(completed && !discard && !fail_sync[1]) begin
+  else if(retire_complete && !discard && !fail_sync[1]) begin
    if(frame_start && show_ready && completed_due && !show_pending)
     pending_valid<=0;
    else begin

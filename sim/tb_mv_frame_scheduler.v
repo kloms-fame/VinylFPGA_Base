@@ -43,9 +43,12 @@ initial begin
   if(frame!=n) $fatal(1,"timeline drift at %0d got %0d",n,frame);
  end
  // X2: non-zero seek target must position the first requested/displayed frame.
- if(busy) ack_frame;
  en=0; seek_frame=16'd1234; base=20000; ms=0;
  tick_frame;
+ // Read-ahead may already have launched another frame. Disable first, then
+ // drain its mailbox before checking the first command of the new session.
+ if(busy) ack_frame;
+ repeat(8) @(negedge clk);
  restart=1; @(negedge clk); restart=0; en=1;
  repeat(20) @(negedge clk);
  tick_frame; wait(busy);
