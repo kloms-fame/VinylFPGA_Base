@@ -12,27 +12,56 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def verify_project_strategy(al):
+    """Reject a GUI save that drops the settings used by the released build."""
+    expected = (
+        ('syn_1', 'GateProperty', 'map_mode', 'area_prior'),
+        ('syn_1', 'GateProperty', 'pack_effort', 'high'),
+        ('phy_1', 'PlaceProperty', 'opt_timing', 'high'),
+        ('phy_1', 'RouteProperty', 'effort', 'routability'),
+    )
+    actual = {}
+    for run_name, group, tag, value in expected:
+        run = re.search(r'<Run\b(?=[^>]*\bName="' + run_name +
+                        r'")[^>]*>(.*?)</Run>', al, re.S)
+        properties = re.search(r'<' + group + r'>(.*?)</' + group + r'>',
+                               run[1], re.S) if run else None
+        setting = re.search(r'<' + tag + r'>\s*([^<]*?)\s*</' + tag + r'>',
+                            properties[1]) if properties else None
+        found = setting[1].strip() if setting else None
+        if found != value:
+            raise RuntimeError(f'Project strategy {run_name}/{tag}: '
+                               f'expected {value}, got {found!r}')
+        actual[f'{run_name}/{tag}'] = found
+    return actual
+
+
 def verify(snapshot=None, run_root=None, project_file=None):
     project = Path(project_file).resolve() if project_file else ROOT / 'prj/VinylFPGA.al'
     al = project.read_text(encoding='utf-8')
+    strategy = verify_project_strategy(al)
     # TD project files contain unescaped UsedInP&R; inspect native tags without
     # rewriting the file as generic XML.
     multi = re.search(r'<MultiSeed>(.*?)</MultiSeed>', al, re.S)
     if not multi:
         raise RuntimeError('MultiSeed is disabled in the original AL')
     properties = dict(re.findall(r'(\w+)="([^"]*)"', multi[1].split('<Filter')[0]))
-    for key, value in {'Enable': 'true', 'Init': '5', 'Num': '1', 'Random': 'false',
+    for key, value in {'Enable': 'true', 'Num': '1', 'Random': 'false',
                        'GenBit': 'true', 'EndStep': 'bitgen'}.items():
         if properties.get(key) != value:
             raise RuntimeError(f'Unexpected MultiSeed property: {key}')
-    if not re.search(r'<Seeds\b[^>]*select="5"', multi[1]):
-        raise RuntimeError('Seed 5 has not been selected as the GUI result')
+    seed_value = properties.get('Init', '')
+    if not re.fullmatch(r'\d+', seed_value):
+        raise RuntimeError('Invalid MultiSeed Init')
+    seed_number = int(seed_value)
+    if not re.search(r'<Seeds\b[^>]*select="' + str(seed_number) + '"', multi[1]):
+        raise RuntimeError(f'Seed {seed_number} has not been selected as the GUI result')
     private_seeds = re.findall(r'<seed>(.*?)</seed>', al)
     if any(value.strip() != '0' for value in private_seeds):
         raise RuntimeError('Private seed would trigger the GUI Revert dialog')
     runs = Path(run_root).resolve() if run_root else ROOT / 'prj/VinylFPGA_Runs'
     phy = runs / 'phy_1'
-    seed = phy / 'seed_5'
+    seed = phy / f'seed_{seed_number}'
     required = [phy / '.multiSeed.begin.f', phy / '.multiSeed.end.f',
                 seed / '.opt_route.end.f', seed / '.bitgen.end.f',
                 seed / 'VinylFPGA_pr.db', seed / 'VinylFPGA_phy.ts',
@@ -68,7 +97,8 @@ def verify(snapshot=None, run_root=None, project_file=None):
         selected_copy = phy / name
         if not selected_copy.is_file() or sha(selected_copy) != sha(seed / name):
             raise RuntimeError(f'GUI selected-result mismatch: {name}')
-    return {'project': str(project), 'flow': 'TD GUI MultiSeed, one fixed seed 5',
+    return {'project': str(project), 'flow': f'TD GUI MultiSeed, one fixed seed {seed_number}',
+            'project_strategy': strategy,
             'timing_ns': numbers, 'bit': str(bit), 'bit_sha256': sha(bit),
             'bit_bytes': bit.stat().st_size, 'snapshot_checked': bool(snapshot)}
 

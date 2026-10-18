@@ -166,8 +166,8 @@ parameter BUF1_ADDR     = FRAME_PIXELS;
 parameter BUF2_ADDR     = FRAME_PIXELS * 24'd2;
 parameter BUF3_ADDR     = FRAME_PIXELS * 24'd3;
 
-// 阶段 4：LED1=上电恢复，LED2=参数已保存，LED3=Flash忙，LED4=Flash故障。
-assign led = nvm_led_status;
+// LED1=上电恢复，LED2=参数已保存，LED3=Flash忙，LED4=NVM/SD媒体故障。
+assign led = nvm_led_status | { (media_err_code_clk != 8'd0), 3'b000 };
 
 // 按键/拨码/编码器/红外 操作反馈音总开关：1=开启（母板蜂鸣器 + 拓展板 EXT1），0=静音。
 // 母板蜂鸣器还需硬件 SW5 拨至接通档才会发声。

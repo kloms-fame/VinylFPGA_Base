@@ -15,6 +15,7 @@ endmodule
 module lrc_five_osd (
     input wire enable, input wire de, input wire [9:0] pixel_x, input wire [9:0] pixel_y,
     input wire window_valid, input wire highlight_valid, input wire scroll_active,
+    input wire [2:0] row_base_slot,
     input wire [29:0] row_lengths, input wire [767:0] row_glyphs,
     input wire [5:0] scroll_offset, input wire [7:0] line_count,
     input wire [127:0] no_lyrics_glyphs,
@@ -75,7 +76,7 @@ module tb_playback_page_glyph_select;
         .artist_length(artist_length), .title_glyphs(title_glyphs),
         .artist_glyphs(artist_glyphs), .line_count(8'd0),
         .lyric_window_valid(1'b0), .lyric_highlight_valid(1'b0),
-        .lyric_scroll_active(1'b0), .lyric_row_lengths(30'd0),
+        .lyric_scroll_active(1'b0), .lyric_row_base_slot(3'd0), .lyric_row_lengths(30'd0),
         .lyric_row_glyphs(768'd0), .lyric_scroll_offset(6'd0),
         .no_lyrics_glyphs(128'd0), .progress_fill(9'd0),
         .elapsed_time_ascii(elapsed_time_ascii),

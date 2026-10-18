@@ -17,10 +17,13 @@ try {
     if ($LASTEXITCODE -ne 0 -or $configuration -notmatch 'OPTIMIZED_PROJECT_CONFIGURED' -or $configuration -match '\b(?:ERROR|FATAL)\b') {
         throw ('PROJECT_CONFIGURATION_FAILED ' + $configuration)
     }
+    & $Python '-B' '-c' 'import sys; from pathlib import Path; sys.path.insert(0,"tools"); from verify_gui_runs import verify_project_strategy; verify_project_strategy(Path("prj/VinylFPGA.al").read_text(encoding="utf-8")); print("PROJECT_STRATEGY_VERIFIED")'
+    if ($LASTEXITCODE -ne 0) { throw 'PROJECT_STRATEGY_NOT_PERSISTED' }
     # Archive current inputs, then use the original GUI run manager directly.
     & $Python 'tools/resource_opt_round.py' $RoundName
     if ($LASTEXITCODE -ne 0) { throw 'SNAPSHOT_FAILED' }
     $roundRoot = Join-Path $projectRoot ('prj/resource_opt_verified_20261005/' + $RoundName)
+    $configuration | Out-File -LiteralPath (Join-Path $roundRoot 'configuration.log') -Encoding utf8
     $pipelineLog = Join-Path $roundRoot 'pipeline.log'
     ('START ' + (Get-Date -Format o)) | Out-File -LiteralPath $pipelineLog -Encoding utf8
     Write-Output ('PROJECT ' + $projectFile)
@@ -40,5 +43,5 @@ try {
     }
     ('NATIVE_BITGEN_COMPLETE ' + (Get-Date -Format o)) | Out-File -LiteralPath $pipelineLog -Append -Encoding utf8
     ('BITGEN_COMPLETE ' + (Get-Date -Format o)) | Out-File -LiteralPath $pipelineLog -Append -Encoding utf8
-    Write-Output ('GUI_BITSTREAM ' + (Join-Path $projectRoot 'prj/VinylFPGA_Runs/phy_1/seed_5/VinylFPGA.bit'))
+    Write-Output ('GUI_BITSTREAM ' + (Join-Path $projectRoot 'prj/VinylFPGA_Runs/phy_1/VinylFPGA.bit'))
 } finally { Pop-Location }

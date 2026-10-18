@@ -1,0 +1,5 @@
+{
+  "tb_s7_ir_encoder": true,
+  "tb_ir_maintenance": true,
+  "tb_io_startup_dip": true
+}

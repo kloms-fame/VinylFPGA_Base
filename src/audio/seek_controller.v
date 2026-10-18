@@ -90,8 +90,16 @@ module seek_controller #(
 
     wire signed [36:0] sum_next = $signed({1'b0, work_base}) + work_delta;
     wire signed [36:0] lim_ext  = $signed({5'b0, lim_reg});
-    wire signed [36:0] clamped  = (sum_reg < 0)       ? 37'sd0 :
-                                  (sum_reg > lim_ext) ? lim_ext : sum_reg;
+    // Compare the two halves in parallel. Positive values above 32 bits
+    // always exceed the unsigned sample limit; bit 36 handles negatives.
+    // Bound the shared select's fanout so TD can place local copies beside
+    // the target/work-base banks, without adding a cycle to the seek pipeline.
+    wire exceeds_limit = (|sum_reg[35:32]) ||
+                         (sum_reg[31:16] > lim_reg[31:16]) ||
+                         ((sum_reg[31:16] == lim_reg[31:16]) &&
+                          (sum_reg[15:0] > lim_reg[15:0])); /* synthesis max_fanout=8 */
+    wire signed [36:0] clamped  = sum_reg[36] ? 37'sd0 :
+                                  exceeds_limit ? lim_ext : sum_reg;
 
     wire start_pending = (state == S_IDLE) && pend_v;
     wire start_event   = (state == S_IDLE) && !pend_v && accept;

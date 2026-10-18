@@ -516,6 +516,7 @@
             <Strategy Name="Default_Synthesis_Strategy">
                 <GateProperty>
                     <map_mode>area_prior</map_mode>
+                    <pack_effort>high</pack_effort>
                 </GateProperty>
             </Strategy>
             <UserParams>
@@ -523,20 +524,26 @@
         </Run>
         <Run Name="phy_1" Type="PhysicalDesign" ConstraintSet="constraint_1" Description="" SynRun="syn_1" Active="true">
             <Strategy Name="Default_PhysicalDesign_Strategy">
+                <PlaceProperty>
+                    <opt_timing>high</opt_timing>
+                </PlaceProperty>
+                <RouteProperty>
+                    <effort>routability</effort>
+                </RouteProperty>
             </Strategy>
             <UserParams>
             </UserParams>
         </Run>
     </Runs>
     <MultiSeed>
-        <Property Enable="true" GenBit="true" EndStep="bitgen" Random="false" Num="1" Init="6" Jobs="1" Save="1" Step="1">
+        <Property Enable="true" GenBit="true" EndStep="bitgen" Random="false" Num="1" Init="3" Jobs="1" Save="1" Step="1">
             <Filter enabled="false">
                 <congestion>100</congestion>
                 <place_swns>0</place_swns>
                 <route_swns>0</route_swns>
             </Filter>
         </Property>
-        <Seeds>6 </Seeds>
+        <Seeds select="3">3 </Seeds>
     </MultiSeed>
     <Project_Settings>
     </Project_Settings>
