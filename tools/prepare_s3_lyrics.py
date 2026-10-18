@@ -43,6 +43,7 @@ class Cue:
     start_ms: int
     end_ms: int
     text: str
+    character_wrap: bool = False
 
 
 def parse_timecode(value: str) -> int:
@@ -102,14 +103,18 @@ def parse_srt_text(text: str) -> list[Cue]:
     return merged
 
 
-def wrap_text(text: str, width: int = MAX_CHARS_PER_ROW) -> list[str]:
-    # Preserve all source characters and split at the exact 16-glyph cells the
-    # renderer has available. This keeps the per-track BRAM row budget fixed.
+def wrap_text(text: str, width: int = MAX_CHARS_PER_ROW,
+              prefer_words: bool = True) -> list[str]:
+    # Prefer word boundaries when space-delimited lyrics exceed the 16-glyph
+    # line. CJK text without spaces still uses the exact hardware cell limit.
     rows: list[str] = []
     remaining = text
     while len(remaining) > width:
-        rows.append(remaining[:width])
-        remaining = remaining[width:]
+        split_at = remaining.rfind(" ", 0, width + 1) if prefer_words else -1
+        if split_at <= 0:
+            split_at = width
+        rows.append(remaining[:split_at].rstrip())
+        remaining = remaining[split_at:].lstrip()
     if remaining:
         rows.append(remaining)
     return rows
@@ -118,19 +123,76 @@ def wrap_text(text: str, width: int = MAX_CHARS_PER_ROW) -> list[str]:
 def make_display_rows(cues: list[Cue]) -> list[tuple[int, str]]:
     result: list[tuple[int, str]] = []
     for index, cue in enumerate(cues):
-        parts = wrap_text(cue.text)
+        parts = wrap_text(cue.text, prefer_words=not cue.character_wrap)
         next_start = cues[index + 1].start_ms if index + 1 < len(cues) else cue.end_ms
         display_end = max(cue.start_ms + 1, min(cue.end_ms, next_start))
         duration = display_end - cue.start_ms
-        for part_index, part in enumerate(parts):
-            row_time = cue.start_ms + (duration * part_index // len(parts))
+        part_weights = [max(1, len(part)) for part in parts]
+        total_weight = sum(part_weights)
+        elapsed_weight = 0
+        for part, part_weight in zip(parts, part_weights):
+            row_time = cue.start_ms + (duration * elapsed_weight // total_weight)
             if result and row_time <= result[-1][0]:
                 row_time = result[-1][0] + 1
             result.append((row_time, part))
+            elapsed_weight += part_weight
     if len(result) > MAX_ROWS_PER_TRACK:
         raise LyricError(f"处理后共 {len(result)} 行，超过每曲 {MAX_ROWS_PER_TRACK} 行上限")
     if any(len(row) > MAX_CHARS_PER_ROW for _, row in result):
         raise LyricError("处理后存在超过16字形的歌词行")
+    return result
+
+
+def apply_manual_calibration(cues: list[Cue], song_number: int,
+                             calibration: dict) -> list[Cue]:
+    """Apply reviewed, one-based source-cue corrections without editing SRTs."""
+    track = calibration.get("tracks", {}).get(str(song_number), {})
+    offset_ms = int(track.get("timeline_offset_ms", 0))
+    corrected = []
+    for cue in cues:
+        start_ms = max(0, cue.start_ms + offset_ms)
+        end_ms = cue.end_ms + offset_ms
+        if end_ms <= start_ms:
+            raise LyricError(f"歌曲{song_number} 校准后字幕时段无效：{cue}")
+        corrected.append(Cue(start_ms, end_ms, cue.text))
+    replacements = {int(index): str(text)
+                    for index, text in track.get("replace_text", {}).items()}
+    merges = sorted(track.get("merge_cues", []), key=lambda item: int(item["first"]))
+    merged_ranges: dict[int, tuple[int, str]] = {}
+    consumed: set[int] = set()
+    prior_end = 0
+    for item in merges:
+        first, last = int(item["first"]), int(item["last"])
+        if first < 1 or last < first or last > len(corrected) or first <= prior_end:
+            raise LyricError(f"歌曲{song_number} 人工合并字幕范围无效：{item}")
+        if any(index in replacements for index in range(first, last + 1)):
+            raise LyricError(f"歌曲{song_number} 合并字幕与文本修正重复：{item}")
+        merged_ranges[first] = (last, str(item["text"]))
+        consumed.update(range(first + 1, last + 1))
+        prior_end = last
+    unknown = [index for index in replacements if not 1 <= index <= len(corrected)]
+    if unknown:
+        raise LyricError(f"歌曲{song_number} 人工文本修正序号越界：{unknown}")
+    character_wrap = {int(index) for index in track.get("character_wrap_cues", [])}
+    if any(not 1 <= index <= len(corrected) for index in character_wrap):
+        raise LyricError(f"歌曲{song_number} 强制字格换行序号越界")
+    result: list[Cue] = []
+    index = 1
+    while index <= len(corrected):
+        if index in consumed:
+            index += 1
+            continue
+        if index in merged_ranges:
+            last, text = merged_ranges[index]
+            result.append(Cue(corrected[index - 1].start_ms,
+                              corrected[last - 1].end_ms, text))
+            index = last + 1
+        else:
+            cue = corrected[index - 1]
+            result.append(Cue(cue.start_ms, cue.end_ms,
+                              replacements.get(index, cue.text),
+                              index in character_wrap))
+            index += 1
     return result
 
 
@@ -214,19 +276,26 @@ def decode_lyr2(blob: bytes) -> list[dict]:
 
 def build_tracks(project: Path, assets_dir: Path) -> tuple[list[dict], dict]:
     discovered = s1.discover_sources(project / s1.SOURCE_DIR)
+    calibration_path = project / s1.SOURCE_DIR / "lyrics_manual_calibration.json"
+    calibration = json.loads(calibration_path.read_text(encoding="utf-8")) if calibration_path.exists() else {}
     tracks = []
     for song in discovered:
         subtitles = sorted(song["folder"].glob("*.srt"))
         if len(subtitles) != 1:
             raise LyricError(f"歌曲{song['number']} 必须恰有1个SRT字幕文件")
-        cues = parse_srt_text(subtitles[0].read_text(encoding="utf-8-sig"))
+        source_cues = parse_srt_text(subtitles[0].read_text(encoding="utf-8-sig"))
+        cues = apply_manual_calibration(source_cues, song["number"], calibration)
         rows = make_display_rows(cues)
         track = {"song_id": song["number"] - 1, "title": song["title"],
                  "display_title": song["title"][:16],
                  "artist": song["artist"], "rows": rows,
                  "source_srt": str(subtitles[0]),
                  "source_srt_sha256": hashlib.sha256(subtitles[0].read_bytes()).hexdigest(),
-                 "cue_count": len(cues)}
+                 "source_cue_count": len(source_cues), "cue_count": len(cues),
+                 "timeline_offset_ms": int(calibration.get("tracks", {}).get(
+                     str(song["number"]), {}).get("timeline_offset_ms", 0)),
+                 "manual_calibration_sha256": (hashlib.sha256(calibration_path.read_bytes()).hexdigest()
+                                                if calibration_path.exists() else None)}
         lrc_path = assets_dir / f"track{song['number']}.lrc"
         lrc_path.write_text("".join(f"[{ms // 60000:02d}:{(ms % 60000) / 1000:06.3f}]{line}\n"
                                       for ms, line in rows), encoding="utf-8", newline="\n")
@@ -349,7 +418,10 @@ def prepare(args) -> dict:
         songs.append({"song_id": track["song_id"], "title": track["title"],
                       "artist": track["artist"], "srt": track["source_srt"],
                       "srt_sha256": track["source_srt_sha256"],
+                      "source_cue_count": track["source_cue_count"],
                       "cue_count": track["cue_count"], "display_row_count": len(track["rows"]),
+                      "timeline_offset_ms": track["timeline_offset_ms"],
+                      "manual_calibration_sha256": track["manual_calibration_sha256"],
                       "first_lyric_ms": track["rows"][0][0],
                       "last_lyric_ms": track["rows"][-1][0],
                       "duration_seconds": source["source_duration_seconds"]})
@@ -369,7 +441,8 @@ def prepare(args) -> dict:
                 "songs": songs,
                 "verified": {"lyr2_decode_crc": True, "rom_generated_from_same_rows": True,
                              "fat_chain_contiguous": True, "lyr2_full_readback_sha256": True,
-                             "all_index_lrc_flags": True}}
+                             "all_index_lrc_flags": True,
+                             "manual_calibration_applied": calibration_path.exists()}}
     (output / "S3_lyrics_manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return manifest
