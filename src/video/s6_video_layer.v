@@ -14,7 +14,6 @@ module s6_video_layer #(
  input wire [23:0] rgb_in, output wire [23:0] rgb_out,
  output reg mv_read_active, output wire [1:0] mv_read_bank,
  output wire fifo_read_allowed, output wire mv_window_visible,
- output reg mv_preloading = 1'b0,
  output wire request_toggle, output wire [31:0] request_lba,
  output wire [1:0] request_bank, input wire done_toggle,failed
 );
@@ -66,14 +65,6 @@ module s6_video_layer #(
   if(!rst_n) mv_read_active<=0;
   else if(frame_start) mv_read_active<=display_enable && display_valid &&
        !track_changed && !entering_play &&
-       !(prefer_vinyl ^ (play_active && (visual_pending^visual_event)));
- end
- // Do not black out the user's deliberate cover preference. Commit the
- // placeholder on the same frame edge as the actual video/cover choice.
- always @(posedge clk or negedge rst_n) begin
-  if(!rst_n) mv_preloading<=0;
-  else if(frame_start) mv_preloading<=ENABLE && play_active && covers_ready && !diagnostic &&
-       (entering_play || track_changed || (mv_meta_valid && !display_valid)) &&
        !(prefer_vinyl ^ (play_active && (visual_pending^visual_event)));
  end
  mv_frame_scheduler scheduler(

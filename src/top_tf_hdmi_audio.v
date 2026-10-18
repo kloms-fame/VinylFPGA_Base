@@ -232,7 +232,7 @@ wire mv_sec_req,mv_sec_busy,mv_sec_valid,mv_sec_done;
 wire [31:0] mv_sec_lba;
 wire media_sec_req,media_sec_busy,media_sec_valid,media_sec_done;
 wire [31:0] media_sec_lba;
-wire mv_read_active,mv_fifo_read_allowed,mv_window_visible,mv_preloading;
+wire mv_read_active,mv_fifo_read_allowed,mv_window_visible;
 wire [23:0] s6_rgb;
 reg [1:0] mv_audio_low_sync;
 reg [5:0] s6_read_wait;
@@ -2368,7 +2368,6 @@ s6_video_layer #(.ENABLE(S6_VIDEO_ENABLE)) u_s6_video_layer(
  .adjusted_de(adjusted_de),.adjusted_x(adjusted_pixel_x),.rgb_in(wave_rgb_eff),.rgb_out(s6_rgb),
  .mv_read_active(mv_read_active),.mv_read_bank(mv_read_bank),
  .fifo_read_allowed(mv_fifo_read_allowed),.mv_window_visible(mv_window_visible),
- .mv_preloading(mv_preloading),
  .request_toggle(mv_req_tgl),.request_lba(mv_request_lba),.request_bank(mv_request_bank),
  .done_toggle(mv_done_tgl),.failed(mv_failed));
 
