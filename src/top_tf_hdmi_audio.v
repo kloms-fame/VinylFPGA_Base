@@ -1636,8 +1636,10 @@ assign vout_data = (`DIAG_LOCAL_PATTERN) ? local_pattern_rgb
                             : (display_ok ? vout_data_raw : 24'd0));
 
 // MV 未覆盖的像素显示中央封面；保持像素和 HDMI 时序链不变。
-assign view_rgb = (mv_preloading && mv_window_visible) ? 24'd0 :
-    (mv_read_active && !background_image_active && !mv_window_visible) ? 24'd0 : vout_data;
+// The selected cover/current frame remains the MV-window fallback until a
+// completed video bank is committed at frame_start. Never blank during preload.
+assign view_rgb = (mv_read_active && !background_image_active && !mv_window_visible)
+                ? 24'd0 : vout_data;
 
 // ===================== 第九讲：OSD状态字幕叠加 =====================
 // OSD 紧跟在黑屏屏蔽之后、video_rgb_to_axis 之前，纯组合替换像素，

@@ -36,9 +36,9 @@ initial begin
  #45 rst_n=1;boundary;
  if(rgb!==24'h123456) $fatal(1,"browse pass through");
  play=1;meta={8'd1,8'd10,16'd100,32'd2000};boundary;
- wait(req);boundary;if(!preloading || mv) $fatal(1,"MV first-frame black placeholder");
+ wait(req);boundary;if(!preloading || mv) $fatal(1,"MV should remain on the cover while first frame loads");
  event_key(1,7);boundary;if(preloading || mv) $fatal(1,"explicit cover preference must remain visible during loading");
- event_key(1,7);boundary;if(!preloading || mv) $fatal(1,"video preference restores preload black placeholder");
+ event_key(1,7);boundary;if(!preloading || mv) $fatal(1,"video preference should retain cover while loading");
  repeat(8) @(negedge clk);done=req;repeat(8) @(negedge clk);boundary;boundary;boundary;
  if(!mv) $fatal(1,"ready MV must become visible");
  if(preloading) $fatal(1,"ready MV still masked black");
