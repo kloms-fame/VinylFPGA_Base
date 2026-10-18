@@ -398,6 +398,7 @@ wire        brw_ev_mode_tgl;
 // Legacy home_tgl port now carries KEY11 to the video-domain background only.
 wire brw_ev_home_tgl,brw_ev_effect_tgl,brw_ev_end_mode_tgl;
 wire brw_play_start,brw_play_stop;
+reg play_start_pending_sd;
 wire [1:0] play_end_mode;
 wire play_restart_request,cover_busy,cover_direction;
 wire wav_reader_idle,wav_sample_consumed;
@@ -471,6 +472,21 @@ wire [2:0]  browse_song_count_sd;
 wire        browse_ready_sd;
 wire        playback_ready_sd;
 wire        audio_play_enable_gated;
+wire        play_start_accept = (brw_play_start || play_start_pending_sd) &&
+                                 playback_ready_sd && !cover_busy;
+
+// Retain an early browse confirmation while storage/audio preparation finishes.
+// The event is consumed once the selected media is actually playable.
+always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
+    if (!sdcard_rst_n)
+        play_start_pending_sd <= 1'b0;
+    else if (play_active_sd || brw_play_stop)
+        play_start_pending_sd <= 1'b0;
+    else if (play_start_accept)
+        play_start_pending_sd <= 1'b0;
+    else if (brw_play_start)
+        play_start_pending_sd <= 1'b1;
+end
 // X2：Seek 目标与重启握手（sd 域）
 wire [31:0] play_seek_target_sd;
 wire        play_seek_restart_sd;
@@ -1239,7 +1255,7 @@ play_ctrl u_play_ctrl (
     .clk           (sd_card_clk),
     .rst_n         (sdcard_rst_n),
     .song_total    (song_total_sd),
-    .song_confirm  (brw_play_start && playback_ready_sd && !cover_busy),
+    .song_confirm  (play_start_accept),
     .focus_index   (disp_buf_idx),
     .enc_cw_tgl    (brw_ev_enc_cw_tgl),
     .enc_ccw_tgl   (brw_ev_enc_ccw_tgl),
