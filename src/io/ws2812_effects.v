@@ -22,7 +22,8 @@ module ws2812_effects #(
     parameter integer BIT_CYCLES  = (CLK_FREQ_HZ >= 50_000_000) ? 63 : 31,
     parameter integer T0H_CYCLES  = (CLK_FREQ_HZ >= 50_000_000) ? 18 : 10,
     parameter integer T1H_CYCLES  = (CLK_FREQ_HZ >= 50_000_000) ? 35 : 19,
-    parameter integer RESET_CYCLES= (CLK_FREQ_HZ >= 50_000_000) ? 3000 : 1250
+    parameter integer RESET_CYCLES= (CLK_FREQ_HZ >= 50_000_000) ? 3000 : 1250,
+    parameter integer USE_EXTERNAL_MS_TICK = 0
 )(
     input  wire       clk,
     input  wire       rst_n,
@@ -33,7 +34,8 @@ module ws2812_effects #(
     input  wire [2:0] brightness_level, // D8: 0/25/50/75/100% of safe palette
     input  wire       mute,          // X5 前恒 0
 
-    output wire       ws_data
+    output wire       ws_data,
+    input  wire       tick_1ms       // Optional same-clock tick, phase-aligned to rst_n
 );
     // ---- KEY10 -> 模式循环 ----
     reg [2:0] mode_sync;
@@ -54,15 +56,24 @@ module ws2812_effects #(
     localparam integer MS_W = (MS_CYCLES < 2) ? 1 : $clog2(MS_CYCLES);
     localparam integer RF_W = (REFRESH_MS < 2) ? 1 : $clog2(REFRESH_MS);
 
-    reg [MS_W-1:0] ms_div;
     reg [RF_W-1:0] rf_ms;
-    wire ms_tick = (ms_div == MS_CYCLES-1);
+    wire ms_tick;
     wire refresh_pulse = ms_tick && (rf_ms == REFRESH_MS-1);
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) ms_div <= 0;
-        else if (ms_tick) ms_div <= 0;
-        else ms_div <= ms_div + 1'b1;
-    end
+    // The integrated design already has this divider. Standalone users keep
+    // the original local timing unless they explicitly select the shared tick.
+    generate
+        if (USE_EXTERNAL_MS_TICK) begin : g_shared_ms
+            assign ms_tick = tick_1ms;
+        end else begin : g_local_ms
+            reg [MS_W-1:0] ms_div = 0;
+            assign ms_tick = (ms_div == MS_CYCLES-1);
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) ms_div <= 0;
+                else if (ms_tick) ms_div <= 0;
+                else ms_div <= ms_div + 1'b1;
+            end
+        end
+    endgenerate
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) rf_ms <= 0;
         else if (ms_tick) rf_ms <= refresh_pulse ? 0 : rf_ms + 1'b1;

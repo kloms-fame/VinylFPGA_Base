@@ -358,21 +358,30 @@ module expansion_integration #(
     wire ev_is_dip = (ev_code == EV_DIP_CHANGE);
     wire ev_is_ir  = (ev_code == EV_IR_FRAME) || (ev_code == EV_IR_REPEAT);
 
+    // ui_ms_tick uses a 16-bit divider. Share it only within its valid range;
+    // for the guard, require exact milliseconds to retain the original edge.
+    localparam integer SHARED_MS_VALID = (CLK_FREQ_HZ >= 1000) &&
+                                         ((CLK_FREQ_HZ / 1000) <= 65536);
+    localparam integer SKIP_GUARD_USE_MS = SHARED_MS_VALID &&
+                                          ((CLK_FREQ_HZ % 1000) == 0);
     localparam integer SKIP_GUARD_CYCLES = CLK_FREQ_HZ / 2;   // 500 ms
-    reg [26:0] skip_guard_cnt;
-    reg        skip_guard_done;
+    localparam integer SKIP_GUARD_W = SKIP_GUARD_USE_MS ? 9 : 27;
+    localparam integer SKIP_GUARD_LAST = SKIP_GUARD_USE_MS ? 499 :
+                                        (SKIP_GUARD_CYCLES - 1);
+    reg [SKIP_GUARD_W-1:0] skip_guard_cnt = 0;
+    reg        skip_guard_done = 1'b0;
     reg        boot_switch_sampled;
+    wire skip_guard_step = SKIP_GUARD_USE_MS ? ui_tick_1ms : 1'b1;
+    wire skip_guard_last = (skip_guard_cnt >= SKIP_GUARD_LAST);
 
     always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            skip_guard_cnt  <= 27'd0;
-            skip_guard_done <= 1'b0;
-        end else if (!skip_guard_done) begin
-            if (skip_guard_cnt >= (SKIP_GUARD_CYCLES - 1))
-                skip_guard_done <= 1'b1;
-            else
-                skip_guard_cnt <= skip_guard_cnt + 27'd1;
-        end
+        if (!rst_n) skip_guard_cnt <= 0;
+        else if (!skip_guard_done && skip_guard_step && !skip_guard_last)
+            skip_guard_cnt <= skip_guard_cnt + 1'b1;
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) skip_guard_done <= 1'b0;
+        else if (skip_guard_step && skip_guard_last) skip_guard_done <= 1'b1;
     end
 
     // SW2 已经经过 key_dip_monitor 消抖。等现有 500 ms 启动保护窗结束后
@@ -487,10 +496,12 @@ module expansion_integration #(
     ws2812_effects #(
         .PIXEL_COUNT  (8),
         .CLK_FREQ_HZ  (CLK_FREQ_HZ),
-        .REFRESH_MS   (20)
+        .REFRESH_MS   (20),
+        .USE_EXTERNAL_MS_TICK(SHARED_MS_VALID)
     ) u_ws2812_effects (
         .clk       (clk),
         .rst_n     (rst_n),
+        .tick_1ms  (ui_tick_1ms),
         .enable    (ws_enable),
         .mode_tgl  (ws_mode_tgl),
         .level     (pcm_level),
