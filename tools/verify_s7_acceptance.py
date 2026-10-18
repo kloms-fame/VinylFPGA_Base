@@ -10,7 +10,7 @@ PRODUCTION_TESTS = (
     'tb_fat32_index_loader','tb_fat32_file_streamer','tb_fat32_volume_scanner',
     'tb_thumbnail_view_reader','tb_sdram_rd_arbiter','tb_s5_play','tb_expansion_s1','tb_io_startup_dip',
     'tb_x2_seek','tb_x2_seek_wav','tb_opt_no_uart','tb_opt_osd_bypass','tb_debounce_bank','tb_debounce_monitors','tb_lrc_font_sync','tb_lrc_osd_equiv','tb_x1x2_display','tb_opt_metadata','tb_cdc_bundle_latest','tb_frame_read_ack_cdc','tb_ui_encoder_gap','tb_x1x2_lights','tb_ws_vu_only','tb_visual_feedback_top')
-TOP_LEVEL_TESTS = frozenset(('tb_s7_top','tb_opt_osd_bypass','tb_opt_metadata','tb_visual_feedback_top'))
+TOP_LEVEL_TESTS = frozenset(('tb_s7_top','tb_opt_osd_bypass','tb_opt_metadata','tb_visual_feedback_top','tb_closure_top_handoff'))
 
 def is_archived_accepted(output):
     return any((output / marker).exists() for marker in ('ACCEPTED', 'accepted.json', 'accepted.md'))
@@ -21,8 +21,10 @@ def run(name, output, path=None):
     for d in ['src','sim',*[str(p.relative_to(R)) for p in (R/'src').iterdir() if p.is_dir() and p.name != 'IP']]:
         cmd+=['-y',d]
     if name in ('tb_lrc_font_sync','tb_lrc_osd_equiv'): cmd+=['-y','sim/legacy']
+    if name in TOP_LEVEL_TESTS: cmd+=['-DVINYL_AUDIO_CACHE_SIM']
     cmd+=['-s',name,'-o',str(output/f'{name}.vvp'),str(src)]
-    if name in TOP_LEVEL_TESTS: cmd+=['src/top_tf_hdmi_audio.v','sim/integration/vendor_control_stubs.v']
+    if name in TOP_LEVEL_TESTS:
+        cmd+=['src/top_tf_hdmi_audio.v','sim/integration/vendor_control_stubs.v']
     c=subprocess.run(cmd,cwd=R,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=90)
     log=c.stdout+c.stderr
     if c.returncode==0:

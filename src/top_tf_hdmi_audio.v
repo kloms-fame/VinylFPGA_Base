@@ -166,6 +166,14 @@ parameter BUF1_ADDR     = FRAME_PIXELS;
 parameter BUF2_ADDR     = FRAME_PIXELS * 24'd2;
 parameter BUF3_ADDR     = FRAME_PIXELS * 24'd3;
 
+// Declare shared nets before their first expression use (Verilog-2005 tools).
+wire [3:0] nvm_led_status;
+reg [7:0] media_err_code_clk;
+wire mv_read_active;
+wire [1:0] mv_read_bank;
+wire [1:0] disp_buf_idx_eff;
+wire sdcard_rst_n;
+
 // LED1=上电恢复，LED2=参数已保存，LED3=Flash忙，LED4=NVM/SD媒体故障。
 assign led = nvm_led_status | { (media_err_code_clk != 8'd0), 3'b000 };
 
@@ -223,7 +231,7 @@ wire [63:0] mv_metadata_video;
 wire media_preloaded_sd, media_preloaded_vid;
 wire mv_visual_tgl, mv_req_tgl, mv_done_tgl, mv_failed;
 wire [31:0] mv_request_lba;
-wire [1:0] mv_request_bank, mv_write_bank, mv_read_bank;
+wire [1:0] mv_request_bank, mv_write_bank;
 wire mv_writer_active,mv_write_req,mv_pixel_valid;
 wire mv_writer_mem;
 wire frw_write_busy;
@@ -232,7 +240,7 @@ wire mv_sec_req,mv_sec_busy,mv_sec_valid,mv_sec_done;
 wire [31:0] mv_sec_lba;
 wire media_sec_req,media_sec_busy,media_sec_valid,media_sec_done;
 wire [31:0] media_sec_lba;
-wire mv_read_active,mv_fifo_read_allowed,mv_window_visible;
+wire mv_fifo_read_allowed,mv_window_visible;
 wire [23:0] s6_rgb;
 reg [1:0] mv_audio_low_sync;
 reg [5:0] s6_read_wait;
@@ -355,7 +363,6 @@ wire [23:0] view_rgb;               // 播放 MV 遮罩后的像素源
 wire        ui_ev_valid;
 wire        key2_reset_pulse;
 wire        key3_save_pulse;
-wire [3:0]  nvm_led_status;
 wire        nvm_restore_valid;
 wire [19:0] nvm_restore_data;
 wire        board_audio_mute;
@@ -689,7 +696,6 @@ reg         media_err_toggle_c1;
 reg         media_err_toggle_c2;
 reg         media_err_toggle_cseen;
 reg         media_err_valid_clk;
-reg [7:0]   media_err_code_clk;
 reg         underrun_tgl;          // video_clk 域：欠载脉冲转电平翻转
 reg         underrun_tgl_c1;
 reg         underrun_tgl_c2;
@@ -726,7 +732,6 @@ wire [9:0]  tmds_clk_data;
 wire sys_pll_lock;
 wire video_pll_lock;
 wire ext_rst_n;
-wire sdcard_rst_n;
 wire mem_rst_n;
 wire video_rst_n;
 wire Sdr_init_done_sd;
@@ -994,7 +999,7 @@ wire [23:0] pat_expect = {osd_pixel_x[7:0], ~osd_pixel_x[7:0], 8'h80};
 wire        pat_bad    = pat_mode && pat_chk_en && de && (vout_data_raw != pat_expect);
 
 // 诊断模式下：显示固定 bank0、切断 SD 装载器写端口、用自检图案驱动写端口
-wire [1:0]  disp_buf_idx_eff  = pat_mode ? 2'd0 : disp_buf_idx;
+assign disp_buf_idx_eff = pat_mode ? 2'd0 : disp_buf_idx;
 wire [1:0]  write_buf_idx_eff = pat_mode ? 2'd0 : write_buf_idx;
 wire        sd_write_req_eff  = pat_mode ? pat_wr_req  : sd_card_write_req;
 wire        sd_write_en_eff   = pat_mode ? pat_wr_en   : sd_card_write_en;
@@ -1661,6 +1666,7 @@ video_transition_apply #(
     .rgb_in      (view_rgb),
     .alpha       (fade_alpha),
     .brightness  (brightness_frame),
+    .preserve_media(playback_page_mode_frame),
     .wipe_active (wipe_active),
     .wipe_reverse(transition_kind[0]),
     .wipe_ramp   (wipe_ramp),

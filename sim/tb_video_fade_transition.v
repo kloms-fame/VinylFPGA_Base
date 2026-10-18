@@ -95,6 +95,7 @@ module tb_video_fade_transition;
         .rgb_in(apply_rgb_in),
         .alpha(apply_alpha),
         .brightness(apply_brightness),
+        .preserve_media(1'b0),
         .wipe_active(apply_wipe_active),
         .wipe_reverse(apply_reverse),
         .wipe_ramp(apply_wipe_ramp),
