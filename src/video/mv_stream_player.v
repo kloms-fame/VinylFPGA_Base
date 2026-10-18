@@ -34,7 +34,9 @@ module mv_stream_player #(
                       rgb565[4:0],rgb565[4:2],8'd0};
  assign writer_active = (state != IDLE);
  assign write_req = (state == ACK);
- assign sector_req = (state == REQ) && !sector_busy && !abort_request;
+ // Hold demand until the arbiter accepts it via !sector_busy. Gating demand
+ // with busy hides it from weighted arbitration and can starve video forever.
+ assign sector_req = (state == REQ) && !abort_request;
  assign pixel_valid = (state == READ) && sector_valid && sector_byte_index[0] && !failed;
  always @(posedge clk or negedge rst_n) begin
   if(!rst_n) req_sync<=0; else req_sync<={req_sync[1:0],request_toggle};

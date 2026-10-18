@@ -18,7 +18,7 @@ module tb_audio_prefetch_reserve;
     integer raw_cursor=0,raw_tick=0,raw_issued=0;
     reg short_source=0,error_source=0;
     wire raw_busy=raw_active || hold_source;
-    wire ready,low,busy,lock,owner,mwe,mre;
+    wire ready,low,critical,busy,lock,owner,mwe,mre;
     wire [20:0] mwa,mra;
     wire [31:0] mwd;
     wire [3:0] mask;
@@ -38,6 +38,7 @@ module tb_audio_prefetch_reserve;
         .client_error(client_error),.raw_req(raw_req),.raw_lba(raw_lba),.raw_busy(raw_busy),
         .raw_valid(raw_valid),.raw_byte(raw_byte),.raw_byte_index(raw_index),
         .raw_done(raw_done),.raw_error(raw_error),.playback_ready(ready),.prefetch_low(low),
+        .prefetch_critical(critical),
         .session_busy(busy),.video_read_busy(1'b0),.video_write_busy(1'b0),
         .controller_busy(1'b0),.refresh_active(1'b0),.mem_read_valid(return_valid[11]),
         .mem_read_data(return_data[11]),.access_lock(lock),.read_owner(owner),
@@ -139,6 +140,7 @@ module tb_audio_prefetch_reserve;
         sd_rst_n=1;mem_rst_n=1;enable=1;
         request_sector;
         if(!ready || dut.occupied<950) $fatal(1,"production prefill not established");
+        if(critical) $fatal(1,"healthy prefill unnecessarily excludes MV service");
         hold_source=1;
         wait(!raw_active);
         repeat(4000) @(negedge sd_clk);
@@ -148,12 +150,14 @@ module tb_audio_prefetch_reserve;
             for(i=0;i<919;i=i+1) request_sector;
             if(raw_issued!=raw_before || !ready || dut.occupied==0)
                 $fatal(1,"zero-input reserve exhausted or SD request escaped hold");
+            if(!critical) $fatal(1,"depleted PCM reserve did not restore urgent SD priority");
             $display("PASS production 960/1008 prefill: 919 ordered sectors = 4.901333 seconds at 96000 B/s with zero new SD reads; remaining=%0d",dut.occupied);
         end
         hold_source=0;
         for(i=0;i<180;i=i+1) request_sector;
         if(received_sectors!=1100 || dut.occupied!=0 || dut.read_pointer!=1100 || dut.write_pointer!=1100)
             $fatal(1,"refill/physical-wrap/EOF accounting");
+        if(critical) $fatal(1,"EOF reserves SD priority after source is fully cached");
         for(i=0;i<524288;i=i+1)
             if(memory[i][31:8]!==24'h123456) $fatal(1,"RGB plane modified");
         $display("PASS tb_audio_prefetch_reserve: service resumes, physical slot rollover, 1100 sectors exact and RGB preserved");

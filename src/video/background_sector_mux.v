@@ -24,8 +24,8 @@ module background_sector_mux (
  // Audio normally needs only a small fraction of SD bandwidth. During a
  // healthy-cache refill, grant up to fifteen waiting MV sectors between audio
  // sectors; below the critical watermark audio regains strict priority.
- wire video_eligible = allow_video && video_req &&
-                       (!audio_req || (!audio_urgent && video_quota!=4'd15));
+ wire prefer_video = allow_video && video_req && !audio_urgent && video_quota!=4'd15;
+ wire video_eligible = allow_video && video_req && (!audio_req || prefer_video);
  wire take_audio = !owner_valid && !sector_busy && audio_req &&
                    (!video_eligible || audio_urgent || video_quota==4'd15);
  wire take_video = !owner_valid && !sector_busy && video_eligible &&
@@ -41,8 +41,12 @@ module background_sector_mux (
  assign sector_req = owner_valid && !issued && !sector_busy &&
                      (owner != 2'd2 || background_start);
  assign sector_lba = owner == 2'd2 ? background_lba : owner == 2'd1 ? video_lba : audio_lba;
- assign audio_busy = owner_valid || sector_busy;
- assign video_busy = owner_valid || sector_busy || audio_req || !allow_video;
+ // A client treats !busy as acceptance on this edge. Denial must follow the
+ // same weighted choice as take_*, otherwise a losing client starts waiting
+ // for another owner's response. MV holds its demand independently of busy.
+ assign audio_busy = owner_valid || sector_busy || prefer_video;
+ assign video_busy = owner_valid || sector_busy ||
+                     (audio_req && !prefer_video) || !allow_video;
  assign background_busy = owner_valid || sector_busy || audio_req ||
      (allow_video && video_req) || !allow_background;
  assign audio_valid = owner_valid && issued && owner == 2'd0 && sector_valid;
