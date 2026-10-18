@@ -7,23 +7,22 @@
 // （valid + code + arg + aux，DIP1 在场/动作就绪已由 expansion_integration 门控）
 // 路由成下游可直接消费的业务命令流，并实现 S7-03 的运行时语义：
 //
-//   1. 红外白名单 + repeat 策略（《产品交互》）：只认 19 个已定义地址字节，先验证
+//   1. 红外白名单 + repeat 策略（《产品交互》）：只认已定义地址字节，先验证
 //      两组反码（Addr/~Addr、Cmd/~Cmd），再翻译成等价业务命令；无先导 repeat、
 //      反码错、未知帧一律不执行；仅进度 +/- 允许约 150 ms 节流连发，250 ms 无新帧
 //      结束连发。新帧建立最近有效键。
 //   2. 运行时 DIP（《方案》2.3）：DIP5 关闭红外业务、DIP4 60 s 无人操作自动消隐、
 //      DIP3/DIP6 冻结输出使能状态（LED/WS 执行器留 S7-05）。DIP1 已在上一层。
 //   3. 消隐唤醒：消隐期间第一个有效操作只唤醒、不兼做业务（吞首键）。
-//   4. 系统确认框（重启）：红外重启键打开确认框，3 s 内 OK/KEY02 才输出
-//      restart_req；其它有效操作取消。
+//   4. 红外重启键直接请求顶层软复位；参数保存/恢复复用已有参数流程。
 //
-// 消费优先级固定为：系统确认框 -> 消隐唤醒 -> 业务透传（菜单在 S7-04 接入）。
+// 消费优先级固定为：消隐唤醒 -> 业务透传（菜单在 S7-04 接入）。
 //
 // 资源策略：本模块是 S7-03 新增逻辑中唯一带运行时计时的部分，尽量做成
 //   - cmd_* 与 led/ws/blank 使能全部组合输出，不额外打拍寄存 37 位命令字；
 //   - 红外翻译用"紧凑动作码 + 少量标志"而不是 32 位 arg/aux 全宽多路选择；
 //   - 最近键只保留"是否进度键 + 方向"2 位，不存完整 8 位地址；
-//   - 空闲/重启/连发三个计数器共用同一 1 ms 预分频，饱和计数。
+//   - 空闲/连发两个计数器共用同一 1 ms 预分频，饱和计数。
 // 物理事件编码见 src/include/exp_event_defs.vh；本模块输出的 cmd_* 沿用 EV_* 编码
 // 作为"翻译后的业务命令"，以便 ui_event_bridge 无缝消费，不破坏既有选曲/播控语义。
 // 红外原始帧经 ui_event_bus 送入本模块解码；生产 UART 保持静默。
@@ -33,7 +32,6 @@ module ui_command_router #(
     parameter integer IR_REPEAT_MIN_MS    = 150,    // 进度 repeat 节流下限
     parameter integer IR_REPEAT_TIMEOUT_MS= 250,    // 连发超时（清最近键）
     parameter integer BLANK_TIMEOUT_MS    = 60000,  // DIP4 自动消隐空闲期限
-    parameter integer RESTART_CONFIRM_MS  = 3000,   // 重启确认窗口
     parameter integer USE_EXTERNAL_MS_TICK= 0
 )(
     input  wire        clk,
@@ -59,9 +57,11 @@ module ui_command_router #(
     output wire        blank_active,       // 消隐激活（DIP4 自动 + 遥控息屏手动）
     output wire        led_enable,         // DIP3 LED 总使能（S7-05 接入执行器）
     output wire        ws_enable,          // DIP6 WS 总使能（S7-05 接入执行器）
-    output reg         restart_req,        // 重启确认后的一拍脉冲
+    output reg         restart_req,        // 有效重启帧后的一拍软复位请求
     output wire        restart_confirm_active,
     output reg         mute_toggle,        // 已校验并使能的红外静音键单拍脉冲
+    output reg         manual_save_req,    // 手动保存参数单拍脉冲
+    output reg         defaults_req,       // 恢复默认参数单拍脉冲
 
     // ===================== X1A：给 LED 执行器的"已接受"单拍脉冲 =====================
     // ir_accepted：通过白名单 + 双反码校验、且 DIP5 开启的有效红外帧（每帧一拍）。
@@ -79,11 +79,13 @@ module ui_command_router #(
     localparam [7:0] IR_SEEKP   = 8'hBB;
     localparam [7:0] IR_SEEKM   = 8'hBF;
     localparam [7:0] IR_PLAY    = 8'hBC;
-    localparam [7:0] IR_VOLUP   = 8'hF8;
-    localparam [7:0] IR_VOLDN   = 8'hEA;
+    localparam [7:0] IR_VOL_MINUS = 8'hF8;
+    localparam [7:0] IR_VOL_PLUS  = 8'hEA;
     localparam [7:0] IR_BLANK   = 8'hF6;
     localparam [7:0] IR_RESTART = 8'hE9;
     localparam [7:0] IR_MUTE    = 8'hF3;
+    localparam [7:0] IR_SAVE    = 8'hE6;
+    localparam [7:0] IR_DEFAULTS= 8'hF2;
     localparam [7:0] IR_UP      = 8'hE7;
     localparam [7:0] IR_HOME    = 8'hA1;
     localparam [7:0] IR_EFFECT  = 8'hBD;
@@ -96,7 +98,6 @@ module ui_command_router #(
     localparam integer MS_CYCLES = CLK_FREQ_HZ / 1000;   // 1 ms 预分频
     localparam integer MS_W      = $clog2(MS_CYCLES + 1);
     localparam integer IDLE_W    = $clog2(BLANK_TIMEOUT_MS + 2);
-    localparam integer RST_W     = $clog2(RESTART_CONFIRM_MS + 2);
     localparam integer IRT_W     = $clog2(IR_REPEAT_TIMEOUT_MS + 2);
     localparam integer RGT_W     = $clog2(IR_REPEAT_MIN_MS + 2);
 
@@ -127,8 +128,10 @@ module ui_command_router #(
     reg [3:0]  ir_x_key;
     reg        ir_x_dir;
     reg        ir_x_blank;    // 息屏切换（内部）
-    reg        ir_x_restart;  // 重启（内部，打开确认框）
+    reg        ir_x_restart;  // 重启（内部，触发系统软复位）
     reg        ir_x_mute;     // 静音切换（内部，不送入按键事件桥）
+    reg        ir_x_manual_save;
+    reg        ir_x_defaults;
     reg        ir_x_seek;     // 进度键（SEEK+/SEEK-）
     reg        ir_x_seek_fwd; // 进度 +（区别于进度 -）
 
@@ -140,6 +143,8 @@ module ui_command_router #(
         ir_x_blank   = 1'b0;
         ir_x_restart = 1'b0;
         ir_x_mute    = 1'b0;
+        ir_x_manual_save = 1'b0;
+        ir_x_defaults = 1'b0;
         ir_x_seek    = 1'b0;
         ir_x_seek_fwd= 1'b0;
         if (is_ir_frame && ir_frame_ok) begin
@@ -152,12 +157,14 @@ module ui_command_router #(
                 IR_SEEKP  : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=4'd13; ir_x_seek=1'b1; ir_x_seek_fwd=1'b0; end
                 IR_SEEKM  : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=4'd12; ir_x_seek=1'b1; ir_x_seek_fwd=1'b1; end
                 IR_PLAY   : begin ir_x_valid=1'b1; ir_x_evcode=EV_ENC_SW;   end
-                IR_VOLUP  : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=3'd3; end
-                IR_VOLDN  : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=3'd4; end
+                IR_VOL_MINUS : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=3'd4; end
+                IR_VOL_PLUS  : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=3'd3; end
                 IR_BLANK  : begin ir_x_valid=1'b1; ir_x_blank=1'b1; end
-                // X2：Seek/重播翻译成"虚拟按键"，由 ui_event_bridge 解成 Seek 事件
+                // Restart and parameter controls reuse the existing top-level paths.
                 IR_RESTART: begin ir_x_valid=1'b1; ir_x_restart=1'b1; end
                 IR_MUTE   : begin ir_x_valid=1'b1; ir_x_mute=1'b1; end
+                IR_SAVE     : begin ir_x_valid=1'b1; ir_x_manual_save=1'b1; end
+                IR_DEFAULTS : begin ir_x_valid=1'b1; ir_x_defaults=1'b1; end
                 IR_UP     : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=3'd3; end
                 IR_HOME   : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=4'd6; end
                 IR_DOWN   : begin ir_x_valid=1'b1; ir_x_evcode=EV_KEY_DOWN; ir_x_key=3'd4; end
@@ -171,9 +178,6 @@ module ui_command_router #(
         end
     end
 
-    wire ir_x_ok = ir_x_valid && (ir_x_evcode == EV_KEY_DOWN) && (ir_x_key == 4'd1);
-    wire key02_down = is_key_down && (ev_arg == 16'd1);
-    wire is_ir_ok   = is_ir_frame && ir_x_ok;
     // 有效操作：用于空闲清零与消隐唤醒（不含纯松开、DIP、IR repeat）
     wire ev_action  = ev_valid && (is_key_down || is_enc_step || is_enc_sw_dn ||
                                    (is_ir_frame && ir_x_valid));
@@ -189,17 +193,15 @@ module ui_command_router #(
     wire auto_blank   = (idle_cnt >= BLANK_TIMEOUT_MS);
     assign blank_active = (dip_level[3] && auto_blank) || manual_blank;
 
-    // ---- 业务命令路由 + 红外 repeat 状态 + 重启确认 ----
+    // ---- 业务命令路由 + 红外 repeat 状态 ----
     // 最近键只保留"是否进度键 + 方向"，满足 repeat 节流即可，不存 8 位完整地址。
     reg [1:0]         last_ir_kind;   // 0=none, 1=SEEK+, 2=SEEK-
     reg [IRT_W-1:0]   last_ir_timer;
     reg [RGT_W-1:0]   repeat_gate_cnt;
-    reg               restart_armed;
-    reg [RST_W-1:0]   restart_timer;
 
-    // 消隐唤醒吞首键：消隐期间第一个有效操作只唤醒（未处于重启确认框）
-    wire wake_only = blank_active && ev_action && !restart_armed;
-    assign restart_confirm_active = restart_armed;
+    // 消隐期间普通业务操作只唤醒；系统维护动作仍直接执行。
+    wire wake_only = blank_active && ev_action;
+    assign restart_confirm_active = 1'b0;
     // 遥控息屏切换触发（DIP5 关闭时不生效）
     wire ir_blank_toggle = ev_valid && ir_x_blank && dip_level[4];
 
@@ -221,8 +223,8 @@ module ui_command_router #(
         cmd_arg_c   = 16'd0;
         cmd_aux_c   = 16'd0;
         if (ev_valid) begin
-            if (restart_armed || wake_only) begin
-                // 系统确认框 / 消隐唤醒吞掉本拍，不输出业务命令
+            if (wake_only) begin
+                // 消隐唤醒吞掉本拍普通业务命令
             end else if (ir_x_valid && dip_level[4] && (ir_x_evcode != EV_NONE)) begin
                 cmd_valid_c = 1'b1;
                 cmd_code_c  = ir_x_evcode;
@@ -260,15 +262,17 @@ module ui_command_router #(
             last_ir_kind    <= 2'd0;
             last_ir_timer   <= {IRT_W{1'b0}};
             repeat_gate_cnt <= {RGT_W{1'b0}};
-            restart_armed   <= 1'b0;
-            restart_timer   <= {RST_W{1'b0}};
             restart_req     <= 1'b0;
             mute_toggle     <= 1'b0;
+            manual_save_req <= 1'b0;
+            defaults_req    <= 1'b0;
             ir_accepted     <= 1'b0;
             biz_accepted    <= 1'b0;
         end else begin
             restart_req <= 1'b0;
             mute_toggle <= 1'b0;
+            manual_save_req <= 1'b0;
+            defaults_req <= 1'b0;
             // X1A：有效红外（反码+白名单+DIP5）与已接受业务动作，各一拍
             ir_accepted  <= ev_valid && is_ir_frame && ir_x_valid && dip_level[4];
             biz_accepted <= biz_action_c;
@@ -312,25 +316,9 @@ module ui_command_router #(
                     repeat_gate_cnt <= repeat_gate_cnt + 1'b1;
             end
 
-            // 重启确认窗口计时
-            if (restart_armed && ms_tick) begin
-                if (restart_timer >= (RESTART_CONFIRM_MS - 1))
-                    restart_armed <= 1'b0;
-                else
-                    restart_timer <= restart_timer + 1'b1;
-            end
-
             // 事件消费（只更新状态；业务命令由上面的组合逻辑同拍给出）
             if (ev_valid) begin
-                if (restart_armed) begin
-                    // 确认框打开：OK/KEY02 确认，其它有效操作取消，全部吞掉
-                    if (is_ir_ok || key02_down) begin
-                        restart_req  <= 1'b1;
-                        restart_armed <= 1'b0;
-                    end else if (ev_action) begin
-                        restart_armed <= 1'b0;
-                    end
-                end else if (ir_x_valid && dip_level[4]) begin
+                if (ir_x_valid && dip_level[4]) begin
                     // 红外新帧：建立最近进度键；内部动作/命令分开处理
                     last_ir_timer   <= {IRT_W{1'b0}};
                     repeat_gate_cnt <= {RGT_W{1'b0}};
@@ -341,11 +329,12 @@ module ui_command_router #(
                     if (ir_x_blank) begin
                         // 手动息屏：由消隐管理块切 manual_blank，此处无业务命令
                     end else if (ir_x_restart) begin
-                        restart_armed <= 1'b1;
-                        restart_timer <= {RST_W{1'b0}};
+                        restart_req <= 1'b1;
                     end else if (ir_x_mute) begin
                         mute_toggle <= 1'b1;
                     end
+                    if (ir_x_manual_save) manual_save_req <= 1'b1;
+                    if (ir_x_defaults) defaults_req <= 1'b1;
                 end else if (is_ir_repeat && dip_level[4] && repeat_allow && repeat_gate_ok) begin
                     // repeat：仅进度键节流连发，无先导/超时/其它键一律不执行
                     repeat_gate_cnt <= {RGT_W{1'b0}};

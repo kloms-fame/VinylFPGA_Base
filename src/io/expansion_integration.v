@@ -49,8 +49,9 @@ module expansion_integration #(
     // ui_ev_valid：任一"已确认"J2 用户操作的单拍脉冲（clk 域）。
     //              S2 顶层用它翻转出一根电平，跨到 video 域作为 Boot 跳过源。
     output wire        ui_ev_valid,
-    // 母板 KEY2 消抖按下脉冲，供唯一参数 CSR 恢复运行默认值。
+    // KEY2 / 红外 F2 参数恢复请求，供唯一参数 CSR 恢复运行默认值。
     output wire        key2_reset_pulse,
+    // KEY3 / 红外 E6 手动保存请求。
     output wire        key3_save_pulse,
     output reg         board_audio_mute,
     // 启动保护窗结束时锁存 SW2 状态，供 video 域安全同步并旁路 Boot。
@@ -89,7 +90,7 @@ module expansion_integration #(
     output wire        ui_tick_1ms,          // D3：共享50MHz毫秒使能
     output wire [15:0] enc2_count_raw,        // D3：EC2 当前累计计数，用于禁用期基线
     output wire        ui_actions_ready,      // D3：DIP1在场且输入稳定
-    output wire        restart_confirm_active // D3：重启确认期间不消费EC2
+    output wire        restart_confirm_active // 兼容旧状态接口；直接重启实现中恒为0
 );
 
     // 事件编码常量（与 ui_event_bus 共用，module 作用域）
@@ -132,6 +133,8 @@ module expansion_integration #(
     wire [15:0] cmd_aux;
     wire        router_restart_confirm_active;
     wire        router_mute_toggle;
+    wire        router_manual_save_req;
+    wire        router_defaults_req;
 
     // X1A：router 给出的"已接受"单拍脉冲（LED1/LED2 业务化输入）
     wire        ir_accepted;
@@ -290,6 +293,8 @@ module expansion_integration #(
         .restart_req        (restart_req),
         .restart_confirm_active(router_restart_confirm_active),
         .mute_toggle        (router_mute_toggle),
+        .manual_save_req    (router_manual_save_req),
+        .defaults_req       (router_defaults_req),
         .ir_accepted        (ir_accepted),
         .biz_accepted       (biz_accepted)
     );
@@ -399,8 +404,8 @@ module expansion_integration #(
     end
 
     // KEY2 只在启动输入收敛后接受；按键保持不会重复发出默认值请求。
-    assign key2_reset_pulse = board_key_fall_pulse[0] & skip_guard_done;
-    assign key3_save_pulse = board_key_fall_pulse[2] & skip_guard_done;
+    assign key2_reset_pulse = (board_key_fall_pulse[0] | router_defaults_req) & skip_guard_done;
+    assign key3_save_pulse = (board_key_fall_pulse[2] | router_manual_save_req) & skip_guard_done;
     // KEY4 与红外静音键翻转音频静音状态；静音只作用于最终音量增益，
     // 音源 valid/ready 握手仍继续运行，避免静音导致 WAV 播放进度暂停。
     always @(posedge clk or negedge rst_n) begin

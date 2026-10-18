@@ -18,18 +18,18 @@ module tb_s7_ir_encoder;
  end endtask
  initial begin
   repeat(4)@(negedge clk);rst=1;
-  send(6,16'h00ff,16'hb946);send(6,16'h00ff,16'hb946);
+  send(6,16'hff00,16'hb847);send(6,16'hff00,16'hb847);
   if(net!=2)$fatal(1,"FAIL repeated IR next");
   send(4,1,0);send(4,5,0);
   if(net!=7)$fatal(1,"FAIL encoder count after IR");
-  send(6,16'h00ff,16'hb946);
+  send(6,16'hff00,16'hb847);
   if(net!=8)$fatal(1,"FAIL IR next reversed encoder");
-  send(6,16'h00ff,16'hba45);send(6,16'h00ff,16'hba45);
+  send(6,16'hff00,16'hba45);send(6,16'hff00,16'hba45);
   if(net!=6)$fatal(1,"FAIL repeated IR previous");
   send(4,4,1);if(net!=5)$fatal(1,"FAIL IR modified encoder origin");
-  dip[4]=0;send(6,16'h00ff,16'hb946);
+  dip[4]=0;send(6,16'hff00,16'hb847);
   if(net!=5)$fatal(1,"FAIL DIP5 off");
-  dip[4]=1;send(6,16'h00fe,16'hb946);
+  dip[4]=1;send(6,16'hfe00,16'hb847);
   if(net!=5)$fatal(1,"FAIL invalid IR complement accepted");
   $display("PASS repeated IR/encoder mixing, DIP5 and complement filtering");$finish;
  end
