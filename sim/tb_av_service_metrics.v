@@ -113,6 +113,7 @@ module tb_av_service_metrics;
     background_sector_mux sector_mux (
         .clk(clk), .rst_n(rst_n),
         .audio_req(wav_req), .audio_lba(wav_lba),
+        .audio_urgent(1'b0),
         .video_req(video_req), .video_lba(video_lba),
         .background_req(1'b0), .background_lba(32'd0),
         .background_start(1'b0),

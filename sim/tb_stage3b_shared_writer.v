@@ -52,7 +52,7 @@ wire bg_active,bg_req,bg_pixel,bg_sec_req,bg_sec_start,bg_sec_busy,bg_sec_grant,
   .sector_req(mv_sec_req),.sector_lba(mv_lba),.sector_busy(mv_sec_busy),
   .sector_valid(mv_sec_valid),.sector_byte(sec_byte),.sector_byte_index(sec_index),
   .sector_done(mv_sec_done),.sector_error(8'd0));
- background_sector_mux arb(.clk(sd_clk),.rst_n(rst_n),.audio_req(1'b0),.audio_lba(32'd0),
+ background_sector_mux arb(.clk(sd_clk),.rst_n(rst_n),.audio_req(1'b0),.audio_lba(32'd0),.audio_urgent(1'b0),
   .video_req(mv_sec_req),.video_lba(mv_lba),.background_req(bg_sec_req),.background_lba(bg_lba),
   .background_start(bg_sec_start),
   .allow_video(1'b1),.allow_background(1'b1),.video_busy(mv_sec_busy),.video_valid(mv_sec_valid),

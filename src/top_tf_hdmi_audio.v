@@ -632,7 +632,7 @@ wire [7:0]  media_raw_byte,media_raw_error;
 wire [8:0]  media_raw_byte_index;
 wire prefetch_sd_req,prefetch_sd_busy,prefetch_sd_valid,prefetch_sd_done;
 wire [31:0] prefetch_sd_lba;
-wire cache_playback_ready,cache_playback_ready_video,cache_prefetch_low,cache_session_busy;
+wire cache_playback_ready,cache_playback_ready_video,cache_prefetch_low,cache_prefetch_critical,cache_session_busy;
 wire cache_memory_ready_sd;
 wire        wav_sample_valid;
 wire        wav_sample_ready;
@@ -2058,6 +2058,7 @@ audio_prefetch_sdram u_audio_prefetch_sdram (
     .raw_byte(media_raw_byte),.raw_byte_index(media_raw_byte_index),
     .raw_done(prefetch_sd_done),.raw_error(media_raw_error),
     .playback_ready(cache_playback_ready),.prefetch_low(cache_prefetch_low),
+    .prefetch_critical(cache_prefetch_critical),
     .session_busy(cache_session_busy),
     .video_read_busy(frw_read_busy),
     .video_write_busy(frw_write_busy || audio_write_tail_busy),
@@ -2320,8 +2321,9 @@ always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
 end
 background_sector_mux u_mv_sector_mux(
  .clk(sd_card_clk),.rst_n(sd_media_rst_n),.audio_req(prefetch_sd_req),.audio_lba(prefetch_sd_lba),
+ .audio_urgent(cache_prefetch_critical || mv_audio_low_sync[1]),
  .video_req(mv_sec_req),.video_lba(mv_sec_lba),
- .allow_video(!audio_play_enable_gated || (!mv_audio_low_sync[1] && !cache_prefetch_low)),
+ .allow_video(!audio_play_enable_gated || !mv_audio_low_sync[1]),
  .background_req(background_sector_req),.background_lba(background_sector_lba),
  .background_start(background_sector_start),
  .allow_background(!audio_play_enable_gated || (!mv_audio_low_sync[1] && !cache_prefetch_low)),

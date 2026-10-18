@@ -5,6 +5,7 @@
 module background_sector_mux (
  input wire clk, rst_n,
  input wire audio_req, input wire [31:0] audio_lba,
+ input wire audio_urgent,
  input wire video_req, input wire [31:0] video_lba,
  input wire background_req, input wire [31:0] background_lba,
  input wire background_start,
@@ -19,13 +20,22 @@ module background_sector_mux (
  reg owner_valid;
  reg [1:0] owner;
  reg issued;
- wire take_audio = !owner_valid && !sector_busy && audio_req;
- wire take_video = !owner_valid && !sector_busy && !audio_req && allow_video && video_req;
+ reg [3:0] video_quota;
+ // Audio normally needs only a small fraction of SD bandwidth. During a
+ // healthy-cache refill, grant up to fifteen waiting MV sectors between audio
+ // sectors; below the critical watermark audio regains strict priority.
+ wire video_eligible = allow_video && video_req &&
+                       (!audio_req || (!audio_urgent && video_quota!=4'd15));
+ wire take_audio = !owner_valid && !sector_busy && audio_req &&
+                   (!video_eligible || audio_urgent || video_quota==4'd15);
+ wire take_video = !owner_valid && !sector_busy && video_eligible &&
+                   (!audio_urgent || !audio_req);
  wire take_background = !owner_valid && !sector_busy && !audio_req &&
-     !(allow_video && video_req) && allow_background && background_req;
+     !video_eligible && allow_background && background_req;
  initial owner_valid = 1'b0;
  initial owner = 2'd0;
  initial issued = 1'b0;
+ initial video_quota = 4'd0;
  // Background ownership is reserved first. The client starts the raw SD read
  // only after its downstream SDRAM writer is ready to accept the sector.
  assign sector_req = owner_valid && !issued && !sector_busy &&
@@ -57,6 +67,11 @@ module background_sector_mux (
   if (!rst_n) issued <= 1'b0;
   else if (!owner_valid || sector_done) issued <= 1'b0;
   else if (sector_req) issued <= 1'b1;
+ end
+ always @(posedge clk or negedge rst_n) begin
+  if (!rst_n) video_quota <= 4'd0;
+  else if (take_audio) video_quota <= 4'd0;
+  else if (take_video && video_quota!=4'd15) video_quota <= video_quota+1'b1;
  end
 endmodule
 `endif

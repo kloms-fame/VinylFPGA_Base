@@ -5,7 +5,7 @@ module tb_background_sector_mux;
  wire req,ab,vb,bb,av,vv,bv,ad,vd,bd,bg_grant;
  wire [31:0] lba;
  background_sector_mux dut(.clk(clk),.rst_n(rst_n),
-  .audio_req(a),.audio_lba(32'd11),.video_req(v),.video_lba(32'd22),
+  .audio_req(a),.audio_lba(32'd11),.audio_urgent(1'b0),.video_req(v),.video_lba(32'd22),
   .background_req(b),.background_lba(32'd33),.background_start(1'b1),
   .allow_video(av_allow),.allow_background(bg_allow),
   .audio_busy(ab),.video_busy(vb),.background_busy(bb),.background_grant(bg_grant),
