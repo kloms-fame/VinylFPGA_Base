@@ -44,7 +44,8 @@ module mv_frame_scheduler (
  wire completed_due = completed && !discard && !invalidating && !fail_sync[1] &&
                       requested_frame<=target_frame;
  wire show_pending = pending_due && !completed_due;
- wire show_ready = !clear_pending && (!paused || first_frame) &&
+ wire show_ready = !invalidating && !discard && !clear_pending &&
+                   (!paused || first_frame) &&
                    (pending_due || completed_due);
  wire can_issue = enable && (!paused || first_frame) && !restart && settle==4'd15 &&
                   !busy && !(first_frame && pending_valid) &&
