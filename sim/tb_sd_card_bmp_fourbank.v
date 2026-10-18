@@ -326,6 +326,8 @@ module fat32_media_loader (
     output reg         bmp_data_wr_en,
     output reg  [23:0] bmp_data,
     output wire [63:0] mv_metadata,
+    output wire [31:0] background_base_lba,
+    output wire        background_art2_supported,
     output wire        audio_file_valid,
     output wire [31:0] audio_start_lba,
     output wire [31:0] audio_total_sectors,
@@ -350,6 +352,8 @@ module fat32_media_loader (
     assign state_code = 4'd1;
     assign sd_sec_read = 1'b0;
     assign sd_sec_read_addr = 32'd0;
+    assign background_base_lba = 32'd0;
+    assign background_art2_supported = 1'b0;
     assign audio_file_valid = 1'b1;
     assign audio_start_lba = 32'd100;
     assign audio_total_sectors = 32'd2;
