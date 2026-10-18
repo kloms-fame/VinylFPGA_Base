@@ -30,6 +30,7 @@ module lrc_window_controller (
     output reg           window_valid,
     output reg           window_ready,
     output reg  [6:0]    window_center_index,
+    output reg  [2:0]    row_base_slot,
     output wire [29:0]   row_lengths,
     output wire [767:0]  row_glyphs
 );
@@ -56,6 +57,7 @@ module lrc_window_controller (
     reg [127:0] row_glyph_0, row_glyph_1, row_glyph_2;
     reg [127:0] row_glyph_3, row_glyph_4, row_glyph_5;
 
+    // Cache outputs expose physical slots; row_base_slot maps logical row 0.
     assign row_lengths = {row_length_5, row_length_4, row_length_3,
                           row_length_2, row_length_1, row_length_0};
     assign row_glyphs = {row_glyph_5, row_glyph_4, row_glyph_3,
@@ -121,6 +123,7 @@ module lrc_window_controller (
             window_valid <= 1'b0;
             window_ready <= 1'b0;
             window_center_index <= 7'd0;
+            row_base_slot <= 3'd0;
             fill_slot <= 3'd0;
             tail_pending <= 1'b0;
         end else begin
@@ -147,6 +150,8 @@ module lrc_window_controller (
             end else begin
                 if (scroll_commit && window_valid) begin
                     window_center_index <= window_center_index + 7'd1;
+                    row_base_slot <= (row_base_slot == 3'd5)
+                                   ? 3'd0 : row_base_slot + 3'd1;
                     window_ready <= 1'b0;
                     tail_pending <= 1'b1;
                 end
@@ -196,6 +201,7 @@ module lrc_window_controller (
                                     state <= ST_IDLE;
                                 end else begin
                                     window_center_index <= 7'd0;
+                                    row_base_slot <= 3'd0;
                                     window_valid <= 1'b0;
                                     window_ready <= 1'b0;
                                     fill_slot <= 3'd0;
@@ -209,6 +215,7 @@ module lrc_window_controller (
                                 end
                             end else begin
                                 window_center_index <= scan_final_index;
+                                row_base_slot <= 3'd0;
                                 window_valid <= 1'b0;
                                 window_ready <= 1'b0;
                                 fill_slot <= 3'd0;
@@ -269,7 +276,6 @@ module lrc_window_controller (
     // overwritten before publication. It therefore does not need reset or a
     // clear-on-refill pass; only the active slot and scroll-tail writes remain.
     wire cache_cycle = rst_n && !frame_start;
-    wire cache_shift = scroll_commit && window_valid;
     wire fill_clear = (state == ST_FILL_ISSUE) && !fill_index_in_range;
     wire fill_read = state == ST_FILL_WAIT;
     wire tail_clear = (state == ST_TAIL_ISSUE) && !tail_index_in_range;
@@ -279,59 +285,63 @@ module lrc_window_controller (
     wire load_valid = (fill_read || tail_read) && rom_line_valid;
     wire [127:0] load_glyphs = load_valid ? rom_line_glyphs : 128'd0;
     wire [4:0] load_length = load_valid ? rom_line_length : 5'd0;
-    wire load_slot_0 = !cache_shift && ((fill_clear || fill_read) && (fill_slot == 3'd0));
-    wire load_slot_1 = !cache_shift && ((fill_clear || fill_read) && (fill_slot == 3'd1));
-    wire load_slot_2 = !cache_shift && ((fill_clear || fill_read) && (fill_slot == 3'd2));
-    wire load_slot_3 = !cache_shift && ((fill_clear || fill_read) && (fill_slot == 3'd3));
-    wire load_slot_4 = !cache_shift && ((fill_clear || fill_read) && (fill_slot == 3'd4));
-    wire load_slot_5 = !cache_shift && (((fill_clear || fill_read) && (fill_slot == 3'd5)) || tail_clear || tail_read);
+    // Keep the six rows in fixed physical registers. A committed scroll only
+    // advances the logical base; the incoming row overwrites the recycled slot.
+    wire [3:0] fill_slot_sum = {1'b0, row_base_slot} + {2'b0, fill_slot};
+    wire [2:0] fill_physical_slot = (fill_slot_sum >= 4'd6)
+                                  ? fill_slot_sum - 4'd6 : fill_slot_sum[2:0];
+    wire [3:0] tail_slot_sum = {1'b0, row_base_slot} + 4'd5;
+    wire [2:0] tail_physical_slot = (tail_slot_sum >= 4'd6)
+                                  ? tail_slot_sum - 4'd6 : tail_slot_sum[2:0];
+    wire fill_load = fill_clear || fill_read;
+    wire tail_load = tail_clear || tail_read;
+    wire load_slot_0 = (fill_load && (fill_physical_slot == 3'd0)) ||
+                       (tail_load && (tail_physical_slot == 3'd0));
+    wire load_slot_1 = (fill_load && (fill_physical_slot == 3'd1)) ||
+                       (tail_load && (tail_physical_slot == 3'd1));
+    wire load_slot_2 = (fill_load && (fill_physical_slot == 3'd2)) ||
+                       (tail_load && (tail_physical_slot == 3'd2));
+    wire load_slot_3 = (fill_load && (fill_physical_slot == 3'd3)) ||
+                       (tail_load && (tail_physical_slot == 3'd3));
+    wire load_slot_4 = (fill_load && (fill_physical_slot == 3'd4)) ||
+                       (tail_load && (tail_physical_slot == 3'd4));
+    wire load_slot_5 = (fill_load && (fill_physical_slot == 3'd5)) ||
+                       (tail_load && (tail_physical_slot == 3'd5));
     always @(posedge clk) begin
-        if (cache_cycle && (cache_shift || load_slot_0))
-            row_glyph_0 <= cache_shift ? row_glyph_1 : load_glyphs;
+        if (cache_cycle && load_slot_0) begin
+            row_glyph_0 <= load_glyphs;
+            row_length_0 <= load_length;
+        end
     end
     always @(posedge clk) begin
-        if (cache_cycle && (cache_shift || load_slot_0))
-            row_length_0 <= cache_shift ? row_length_1 : load_length;
+        if (cache_cycle && load_slot_1) begin
+            row_glyph_1 <= load_glyphs;
+            row_length_1 <= load_length;
+        end
     end
     always @(posedge clk) begin
-        if (cache_cycle && (cache_shift || load_slot_1))
-            row_glyph_1 <= cache_shift ? row_glyph_2 : load_glyphs;
+        if (cache_cycle && load_slot_2) begin
+            row_glyph_2 <= load_glyphs;
+            row_length_2 <= load_length;
+        end
     end
     always @(posedge clk) begin
-        if (cache_cycle && (cache_shift || load_slot_1))
-            row_length_1 <= cache_shift ? row_length_2 : load_length;
+        if (cache_cycle && load_slot_3) begin
+            row_glyph_3 <= load_glyphs;
+            row_length_3 <= load_length;
+        end
     end
     always @(posedge clk) begin
-        if (cache_cycle && (cache_shift || load_slot_2))
-            row_glyph_2 <= cache_shift ? row_glyph_3 : load_glyphs;
+        if (cache_cycle && load_slot_4) begin
+            row_glyph_4 <= load_glyphs;
+            row_length_4 <= load_length;
+        end
     end
     always @(posedge clk) begin
-        if (cache_cycle && (cache_shift || load_slot_2))
-            row_length_2 <= cache_shift ? row_length_3 : load_length;
-    end
-    always @(posedge clk) begin
-        if (cache_cycle && (cache_shift || load_slot_3))
-            row_glyph_3 <= cache_shift ? row_glyph_4 : load_glyphs;
-    end
-    always @(posedge clk) begin
-        if (cache_cycle && (cache_shift || load_slot_3))
-            row_length_3 <= cache_shift ? row_length_4 : load_length;
-    end
-    always @(posedge clk) begin
-        if (cache_cycle && (cache_shift || load_slot_4))
-            row_glyph_4 <= cache_shift ? row_glyph_5 : load_glyphs;
-    end
-    always @(posedge clk) begin
-        if (cache_cycle && (cache_shift || load_slot_4))
-            row_length_4 <= cache_shift ? row_length_5 : load_length;
-    end
-    always @(posedge clk) begin
-        if (cache_cycle && (cache_shift || load_slot_5))
-            row_glyph_5 <= cache_shift ? 128'd0 : load_glyphs;
-    end
-    always @(posedge clk) begin
-        if (cache_cycle && (cache_shift || load_slot_5))
-            row_length_5 <= cache_shift ? 5'd0 : load_length;
+        if (cache_cycle && load_slot_5) begin
+            row_glyph_5 <= load_glyphs;
+            row_length_5 <= load_length;
+        end
     end
 endmodule
 `endif

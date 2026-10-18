@@ -14,6 +14,7 @@ module lrc_five_osd (
     input  wire          window_valid,
     input  wire          highlight_valid,
     input  wire          scroll_active,
+    input  wire [2:0]    row_base_slot,
     input  wire [29:0]   row_lengths,
     input  wire [767:0]  row_glyphs,
     input  wire [5:0]    scroll_offset,
@@ -35,6 +36,8 @@ module lrc_five_osd (
     wire [10:0] lyric_y_sum = {1'b0, pixel_y} + {5'd0, scroll_offset};
     wire [5:0] lyric_row_phase = lyric_y_sum[9:4] - 6'd8;
     reg [2:0] selected_slot;
+    reg [2:0] selected_physical_slot;
+    reg [3:0] selected_slot_sum;
     reg selected_row_found;
     reg [3:0] selected_row_pixel;
     reg [4:0] selected_length;
@@ -73,6 +76,8 @@ module lrc_five_osd (
         font_row = 4'd0;
         text_color = 24'hFFFFFF;
         selected_slot = 3'd0;
+        selected_physical_slot = 3'd0;
+        selected_slot_sum = 4'd0;
         selected_row_found = 1'b0;
         selected_row_pixel = 4'd0;
         selected_length = 5'd0;
@@ -105,7 +110,11 @@ module lrc_five_osd (
                 end
 
                 if (selected_row_found) begin
-                    case (selected_slot)
+                    selected_slot_sum = {1'b0, selected_slot} + {1'b0, row_base_slot};
+                    selected_physical_slot = (selected_slot_sum >= 4'd6)
+                                           ? selected_slot_sum - 4'd6
+                                           : selected_slot_sum[2:0];
+                    case (selected_physical_slot)
                         3'd0: begin selected_length = row_lengths[4:0];   selected_glyph = glyph_byte_at(row_glyphs[127:0], font_column); end
                         3'd1: begin selected_length = row_lengths[9:5];   selected_glyph = glyph_byte_at(row_glyphs[255:128], font_column); end
                         3'd2: begin selected_length = row_lengths[14:10]; selected_glyph = glyph_byte_at(row_glyphs[383:256], font_column); end

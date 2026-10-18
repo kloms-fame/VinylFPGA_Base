@@ -2377,6 +2377,7 @@ wire [6:0] lyric_target_index;
 wire lyric_window_valid;
 wire lyric_window_ready;
 wire [6:0] lyric_window_center;
+wire [2:0] lyric_row_base_slot;
 wire [29:0] lyric_row_lengths;
 wire [767:0] lyric_row_glyphs;
 wire lyric_scroll_active;
@@ -2424,6 +2425,7 @@ lrc_window_controller u_lrc_window_controller (
     .target_valid(lyric_target_valid),.target_index(lyric_target_index),
     .window_valid(lyric_window_valid),.window_ready(lyric_window_ready),
     .window_center_index(lyric_window_center),
+    .row_base_slot(lyric_row_base_slot),
     .row_lengths(lyric_row_lengths),
     .row_glyphs(lyric_row_glyphs)
 );
@@ -2488,6 +2490,7 @@ playback_page #(.IMAGE_BACKGROUND(1)) u_playback_page (
     .lyric_window_valid(lyric_window_valid),
     .lyric_highlight_valid(lyric_target_valid),
     .lyric_scroll_active(lyric_scroll_active),
+    .lyric_row_base_slot(lyric_row_base_slot),
     .lyric_row_lengths(lyric_row_lengths),
     .lyric_row_glyphs(lyric_row_glyphs),
     .lyric_scroll_offset(lyric_scroll_offset),

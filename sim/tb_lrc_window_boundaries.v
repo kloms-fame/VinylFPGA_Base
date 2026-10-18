@@ -24,10 +24,13 @@ module tb_lrc_window_boundaries;
     wire [6:0] target_index;
     wire window_valid, window_ready;
     wire [6:0] window_center_index;
+    wire [2:0] row_base_slot;
     wire [29:0] row_lengths;
     wire [767:0] row_glyphs;
     wire preview_font_request;
+    wire [7:0] preview_glyph;
     wire [23:0] preview_color;
+    reg [9:0] preview_y = `PLAYBACK_LYRIC_Y;
     reg [31:0] timestamps [0:7];
     integer tail_requests = 0;
     integer last_tail_index = -1;
@@ -46,17 +49,19 @@ module tb_lrc_window_boundaries;
         .target_valid(target_valid), .target_index(target_index),
         .window_valid(window_valid), .window_ready(window_ready),
         .window_center_index(window_center_index),
+        .row_base_slot(row_base_slot),
         .row_lengths(row_lengths), .row_glyphs(row_glyphs)
     );
 
     lrc_five_osd preview_osd (
         .enable(1'b1), .de(1'b1), .pixel_x(`PLAYBACK_LYRIC_X),
-        .pixel_y(`PLAYBACK_LYRIC_Y), .window_valid(window_valid),
+        .pixel_y(preview_y), .window_valid(window_valid),
         .highlight_valid(target_valid), .scroll_active(1'b0),
+        .row_base_slot(row_base_slot),
         .row_lengths(row_lengths), .row_glyphs(row_glyphs),
         .scroll_offset(6'd0), .line_count(song_line_count_frame),
         .no_lyrics_glyphs(128'd0), .font_request(preview_font_request),
-        .font_glyph(), .font_column(), .font_pixel_column(), .font_row(),
+        .font_glyph(preview_glyph), .font_column(), .font_pixel_column(), .font_row(),
         .text_color(preview_color)
     );
 
@@ -130,8 +135,11 @@ module tb_lrc_window_boundaries;
         frame_scan(2000);
         require(window_center_index == 1 && last_tail_index == 4,
                 "first scroll tail skipped or repeated a lyric row");
-        require(row_glyphs[767:760] == 8'h44,
+        require(row_base_slot == 1 && row_glyphs[7:0] == 8'h44,
                 "first scroll incoming row is not deterministic line 4");
+        preview_y = `PLAYBACK_LYRIC_Y + 10'd96; #1;
+        require(preview_font_request && preview_glyph == 8'h43,
+                "first ring rotation changed the visible logical row order");
 
         // Continuous scrolling must request the next sequential tail index.
         frame_scan(3000);
@@ -139,8 +147,12 @@ module tb_lrc_window_boundaries;
         scroll_target_index = 2;
         do_scroll_commit();
         frame_scan(3000);
-        require(window_center_index == 2 && last_tail_index == 5,
+        require(window_center_index == 2 && row_base_slot == 2 &&
+                row_glyphs[135:128] == 8'h45 && last_tail_index == 5,
                 "continuous scroll tail index did not advance sequentially to line 5");
+        preview_y = `PLAYBACK_LYRIC_Y + 10'd96; #1;
+        require(preview_font_request && preview_glyph == 8'h44,
+                "second ring rotation changed the visible logical row order");
 
         // Seek generation changes invalidate the old window and refill around
         // the selected line in both directions.
