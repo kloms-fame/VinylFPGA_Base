@@ -4,6 +4,8 @@ from pathlib import Path
 import tempfile
 import time
 import unittest
+import subprocess
+import sys
 
 from verify_gui_runs import verify
 
@@ -56,6 +58,24 @@ class GuiResultTests(unittest.TestCase):
     def test_seed_three(self):
         self.fixture(3)
         self.assertIn('seed_3', self.check()['bit'])
+
+    def test_strategy_cli_does_not_require_old_run_outputs(self):
+        self.fixture(3)
+        result = subprocess.run([sys.executable, str(Path(__file__).with_name('verify_gui_runs.py')),
+                                 '--project-file', str(self.project), '--strategy-only'],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('PROJECT_STRATEGY_VERIFIED', result.stdout)
+
+    def test_strategy_cli_rejects_missing_area_mapping(self):
+        self.fixture(3)
+        self.project.write_text(self.project.read_text(encoding='utf-8').replace(
+            '<map_mode>area_prior</map_mode>', ''), encoding='utf-8')
+        result = subprocess.run([sys.executable, str(Path(__file__).with_name('verify_gui_runs.py')),
+                                 '--project-file', str(self.project), '--strategy-only'],
+                                capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn('PROJECT_STRATEGY_VERIFIED', result.stdout)
 
     def test_missing_strategy_rejected(self):
         self.fixture(3)

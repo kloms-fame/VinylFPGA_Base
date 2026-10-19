@@ -17,7 +17,7 @@ try {
     if ($LASTEXITCODE -ne 0 -or $configuration -notmatch 'OPTIMIZED_PROJECT_CONFIGURED' -or $configuration -match '\b(?:ERROR|FATAL)\b') {
         throw ('PROJECT_CONFIGURATION_FAILED ' + $configuration)
     }
-    & $Python '-B' '-c' 'import sys; from pathlib import Path; sys.path.insert(0,"tools"); from verify_gui_runs import verify_project_strategy; verify_project_strategy(Path("prj/VinylFPGA.al").read_text(encoding="utf-8")); print("PROJECT_STRATEGY_VERIFIED")'
+    & $Python '-B' (Join-Path $PSScriptRoot 'verify_gui_runs.py') '--project-file' $projectFile '--strategy-only'
     if ($LASTEXITCODE -ne 0) { throw 'PROJECT_STRATEGY_NOT_PERSISTED' }
     # Archive current inputs, then use the original GUI run manager directly.
     & $Python 'tools/resource_opt_round.py' $RoundName
@@ -29,14 +29,14 @@ try {
     Write-Output ('PROJECT ' + $projectFile)
     Write-Output ('BUILD_LOG ' + $pipelineLog)
     $guiFlowScript = (Join-Path $PSScriptRoot 'run_optimized_project.tcl').Replace('\','/')
-    & $TD $guiFlowScript *>> $pipelineLog
+    & $TD $guiFlowScript 2>&1 | Out-File -LiteralPath $pipelineLog -Append -Encoding utf8
     if ($LASTEXITCODE -ne 0) {
         ('BUILD_FAILED exit=' + $LASTEXITCODE) | Out-File -LiteralPath $pipelineLog -Append -Encoding utf8
         throw 'BUILD_FAILED: inspect pipeline.log; no bitstream released'
     }
     ('BUILD_COMPLETE ' + (Get-Date -Format o)) | Out-File -LiteralPath $pipelineLog -Append -Encoding utf8
     # Verify actual MultiSeed reports and inputs; do not import other run DBs.
-    & $Python 'tools/verify_gui_runs.py' --snapshot $roundRoot *>> $pipelineLog
+    & $Python 'tools/verify_gui_runs.py' --snapshot $roundRoot 2>&1 | Out-File -LiteralPath $pipelineLog -Append -Encoding utf8
     if ($LASTEXITCODE -ne 0) {
         ('BITGEN_FAILED exit=' + $LASTEXITCODE) | Out-File -LiteralPath $pipelineLog -Append -Encoding utf8
         throw 'GUI_RESULT_NOT_RELEASED: inspect pipeline.log'

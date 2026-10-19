@@ -110,6 +110,14 @@ if __name__ == '__main__':
                         help='TD GUI run-output directory; defaults to prj/VinylFPGA_Runs')
     parser.add_argument('--project-file', type=Path,
                         help='TD .al used for this run; defaults to prj/VinylFPGA.al')
+    parser.add_argument('--strategy-only', action='store_true',
+                        help='Validate persisted project settings before starting a fresh build')
     args = parser.parse_args()
-    print(json.dumps(verify(args.snapshot, args.run_root, args.project_file),
-                     ensure_ascii=False, indent=2))
+    if args.strategy_only:
+        project = args.project_file or ROOT / 'prj/VinylFPGA.al'
+        print(json.dumps(verify_project_strategy(project.read_text(encoding='utf-8')),
+                         ensure_ascii=False, indent=2))
+        print('PROJECT_STRATEGY_VERIFIED')
+    else:
+        print(json.dumps(verify(args.snapshot, args.run_root, args.project_file),
+                         ensure_ascii=False, indent=2))
