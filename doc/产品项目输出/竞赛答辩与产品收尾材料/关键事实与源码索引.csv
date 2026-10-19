@@ -1,0 +1,30 @@
+﻿id,topic,source,line,claim,boundary
+F01,目标器件,prj/VinylFPGA.al,9,工程配置为EG4系列EG4S20BG256。,实物开发板商品型号另由板卡标识/照片确认。
+F02,活动顶层,src/top_tf_hdmi_audio.v,91,顶层module为top，工程登记该源文件。,沿顶层实例说明实现，生成资产/旧模块的存在不等于产品已接入。
+F03,计划采样节拍,src/top_tf_hdmi_audio.v,2013,25MHz像素域用累加器组织48kHz计划节拍。,平均采样目标与单周期间隔、实测时钟误差分别说明。
+F04,真正消费样本,src/audio/wav_stream_player.v,147,读复位释放、sample_tick、sample_ready与buffer_available共同决定取样。,有计划tick不必然意味着取到了有效样本。
+F05,统一时间接线,src/top_tf_hdmi_audio.v,2879,timebase_48k输入实际连接wav_sample_consumed。,这是当前连接证据；以模块文件头旧说明推断输入容易失真。
+F06,样本到毫秒,src/audio/timebase_48k.v,63,正常计数每48个有效样本推进1ms，Seek另有load路径。,1000ms换算依据48kHz；Seek转换含串行除48逻辑。
+F07,当前音频格式,src/audio/wav_stream_player.v,18,播放器默认4096x16样本缓存，输入是预处理的48k/16bit/单声道PCM。,文件名wav不表示当前播放核心解析WAV头或解码MP3。
+F08,PCM缓存水位,src/audio/wav_stream_player.v,59,请求等待阈值约3/4，低储备标志约1/2。,按实际状态转换解释，不能凭两个阈值名称推断回填恢复规则。
+F09,扇区缓存参数,src/audio/audio_prefetch_sdram.v,9,SDRAM扇区缓存另有HIGH1008、LOW960等控制。,这组扇区水位与PCM样本水位是两层缓存。
+F10,音频byte lane,src/audio/audio_sdram_dma.v,95,DMA写入低8位音频byte，读回mem_read_data[7:0]。,地址是缓存slot与偏移的映射，不直接等于卡上LBA。
+F11,图像byte lane,src/audio/audio_sdram_arbiter.v,40,图像写掩码保护低8位；音频写保护高24位，排空期保持必要掩码。,读前掩码清理与控制器实际行为相关。
+F12,在途事务边界,src/audio/audio_sdram_dma.v,87,正常访问及恢复隔离期间保持ownership相关控制。,watchdog报告失败不等于已接受的SDRAM命令被撤销。
+F13,当前SD仲裁实例,src/top_tf_hdmi_audio.v,2330,实例名保留u_mv_sector_mux，实际模块类型是background_sector_mux。,旧mv_sector_mux文件不作为当前调度策略证据。
+F14,视频配额与紧急音频,src/video/background_sector_mux.v,27,音频不紧急且视频准入时，video_quota约束连续视频选择；完整扇区间重新仲裁。,15是配额条件，不是实测FPS/毫秒/系统吞吐。
+F15,MV原始帧大小,src/video/mv_stream_player.v,7,当前每帧300扇区，RGB565LE解包为RGB888写入。,320x240x2=153600B，与解包后32bit字跨度区分。
+F16,整帧写完成,src/video/mv_stream_player.v,66,正常成功完成链等待SDRAM写完成标记；退出另含abort/failed分支。,最后SD字节到达和成功显示不是同一事件。
+F17,三bank分配,src/video/mv_frame_scheduler.v,40,排除当前显示bank与待显bank，再分配可写bank。,三缓冲与四曲上限、四封面槽是不同维度。
+F18,显示提交时刻,src/video/mv_frame_scheduler.v,114,visible bank/帧号在frame_start及相应条件下提交。,该机制支持帧边界一致性，现场撕裂/误差还需对应观察记录。
+F19,多位参数CDC,src/cdc_bundle_latest.v,46,源侧保持bundle稳定，目的侧同步请求后整体采样并确认；更新可合并。,latest语义适合状态快照，不承诺交付每个中间事件。
+F20,目的域复位重发,src/cdc_bundle_latest.v,22,目的域就绪通知触发源侧重新发布当前bundle。,时序约束与CDC协议结构分别审查。
+F21,五参数CSR,src/io/ui_param_persistence.v,8,20bit参数包对应WSL、ROT、CON、BRI、VOL。,未保存当前曲目、播放位置、背景、转场或EOF策略。
+F22,自动保存条件,src/io/ui_param_persistence.v,6,变化后稳定计时与store_ready/busy/dirty等共同决定自动提交。,五秒是条件计时阈值，不等于任意状态下五秒已写完Flash。
+F23,保存状态显示,src/io/ui_param_persistence.v,34,LED1接受恢复，LED2当前已保存且不脏，LED3忙，LED4故障。,以实际完整事务及参数值核对判断保存与恢复。
+F24,NVM提交机制,src/io/w25q64_param_store.v,6,双槽记录、CRC16、payload回读与独立commit阶段组织保存。,正常重启演示不穷尽保存中失电位置与寿命场景。
+F25,软重启无确认,src/io/ui_command_router.v,204,E9解码为立即软重启；没有等待二次确认的交互状态。,软重启与真实断电自启分别命名和拍摄。
+F26,软复位分发,src/top_tf_hdmi_audio.v,778,soft_rst_n与外部复位、PLL锁定共同组成域复位输入。,640ns复位脉冲本身不是整机启动耗时T。
+F27,当前曲目上限,src/SD/song_index_db.v,30,索引解析器及当前消费接口按最多四曲组织。,增加曲库需要综合检查接口、ROM、索引与UI。
+F28,主时钟约束,constraints/timing.sdc,17,主输入时钟20ns，并推导PLL时钟；像素与HDMI5x关系保留分析。,异步时钟组与例外存在，正WNS不能代表所有接口均完成数值建模。
+F29,IO建模边界,constraints/timing.sdc,81,当前SD MISO及HDMI板级延迟所需外部参数尚不齐全。,正式材料将内部STA归档结果与板级接口测量分列。
