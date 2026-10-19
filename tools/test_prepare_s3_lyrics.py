@@ -2,6 +2,9 @@ import importlib.util
 import sys
 import struct
 import unittest
+import tempfile
+from types import SimpleNamespace
+from unittest.mock import patch
 from pathlib import Path
 
 
@@ -30,9 +33,66 @@ class SrtConversionTests(unittest.TestCase):
         cues = [S3.Cue(0, 2000, "Never gonna tell a lie and hurt you")]
         rows = S3.make_display_rows(cues)
         self.assertEqual([row[1] for row in rows], [
-            "Never gonna tell", " a lie and hurt ", "you"])
+            "Never gonna tell", "a lie and hurt", "you"])
+        self.assertEqual([time for time, _ in rows], [0, 969, 1818])
         self.assertTrue(all(len(text) <= 16 for _, text in rows))
         self.assertEqual([time for time, _ in rows], sorted(set(time for time, _ in rows)))
+
+    def test_music_annotations_do_not_become_standalone_lyric_rows(self):
+        cue = S3.parse_srt_text("1\n00:00:01,000 --> 00:00:04,000\n♪ 一边走来的你让我如此蠢蠢欲动时 ♪\n")
+        self.assertEqual(cue[0].text, "一边走来的你让我如此蠢蠢欲动时")
+        self.assertFalse(any(text in {"♪", "♫"} for _, text in S3.make_display_rows(cue)))
+
+    def test_rejects_timestamp_spill_outside_short_source_cue(self):
+        with self.assertRaises(S3.LyricError):
+            S3.make_display_rows([S3.Cue(0, 1, "Never gonna tell a lie and hurt you")])
+
+    def test_manual_merge_and_offset_preserve_source_intervals(self):
+        cues = [S3.Cue(0, 100, "a"), S3.Cue(100, 200, "b"), S3.Cue(200, 300, "c")]
+        cal = {"tracks": {"1": {"timeline_offset_ms": 50, "replace_text": {"1": "x"},
+                               "merge_cues": [{"first": 2, "last": 3, "text": "bc"}]}}}
+        result = S3.apply_manual_calibration(cues, 1, cal)
+        self.assertEqual([(c.start_ms, c.end_ms, c.text) for c in result],
+                         [(50, 150, "x"), (150, 350, "bc")])
+
+    def test_manual_merge_rejects_overlapping_source_ranges(self):
+        cues = [S3.Cue(0, 100, "a"), S3.Cue(100, 200, "b"), S3.Cue(200, 300, "c")]
+        cal = {"tracks": {"1": {"merge_cues": [
+            {"first": 1, "last": 2, "text": "ab"}, {"first": 2, "last": 3, "text": "bc"}]}}}
+        with self.assertRaises(S3.LyricError):
+            S3.apply_manual_calibration(cues, 1, cal)
+
+    def test_prepare_finishes_manifest_after_applying_calibration(self):
+        # Exercise the orchestration through manifest completion without a GB
+        # image or physical media; encoding, CRC and manifest code remain real.
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            for rel in ("src/display", "src/include"):
+                (root / rel).mkdir(parents=True)
+            s2 = root / "s2.img"
+            s2.write_bytes(b"S2")
+            tracks = [{"song_id": i, "title": "T", "display_title": "T", "artist": "A",
+                       "rows": [(100, "a")], "lrc": f"track{i+1}.lrc", "source_srt": "source.srt",
+                       "source_srt_sha256": "digest", "source_cue_count": 1, "cue_count": 1,
+                       "timeline_offset_ms": 0, "manual_calibration_sha256": "calibrated"}
+                      for i in range(4)]
+            def pack(_s2, target, lyr):
+                target.write_bytes(b"S3")
+                return {"sha256": S3.sha256_file(lyr), "lba": 1, "index_entries_crc32": "0x1"}
+            def generate(_manifest, out):
+                for rel in ("src/display/song_text_rom.v", "src/display/song_font_rom.v", "src/include/song_text_geom.vh"):
+                    path = out / rel
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text("generated", encoding="utf-8")
+                return {"bank_chars": [["a"], ["b"]], "font_depth": 8192}
+            args = SimpleNamespace(project=root, output=root / "out", s2_image=s2,
+                                   expected_s2_sha256=S3.sha256_file(s2))
+            with patch.object(S3, "build_tracks", return_value=(tracks, {i: {"source_duration_seconds": 1} for i in range(1, 5)})), \
+                 patch.object(S3, "add_lyr2_to_s2", side_effect=pack), \
+                 patch.object(S3.assets, "generate_song_text_assets", side_effect=generate):
+                manifest = S3.prepare(args)
+            self.assertTrue(manifest["verified"]["manual_calibration_applied"])
+            self.assertTrue((root / "out/S3_lyrics_manifest.json").is_file())
 
     def test_lyr2_round_trip_and_crc_rejects_corruption(self):
         tracks = [{"song_id": 0, "title": "歌曲", "artist": "歌手",

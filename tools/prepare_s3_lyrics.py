@@ -62,7 +62,10 @@ def clean_subtitle_text(lines: list[str]) -> str:
     text = text.replace(r"\N", " ").replace(r"\n", " ")
     text = re.sub(r"<[^>]*>", "", text)
     text = html.unescape(text)
-    return re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"\s+", " ", text).strip()
+    # Caption music markers are decoration, not separately timed lyrics. They
+    # otherwise consume a row by themselves beside long unspaced CJK text.
+    return text.strip(" \t♪♫")
 
 
 def sha256_file(path: Path) -> str:
@@ -127,6 +130,8 @@ def make_display_rows(cues: list[Cue]) -> list[tuple[int, str]]:
         next_start = cues[index + 1].start_ms if index + 1 < len(cues) else cue.end_ms
         display_end = max(cue.start_ms + 1, min(cue.end_ms, next_start))
         duration = display_end - cue.start_ms
+        if duration < len(parts):
+            raise LyricError(f"字幕时段不足以容纳 {len(parts)} 行：{cue}")
         part_weights = [max(1, len(part)) for part in parts]
         total_weight = sum(part_weights)
         elapsed_weight = 0
@@ -442,7 +447,8 @@ def prepare(args) -> dict:
                 "verified": {"lyr2_decode_crc": True, "rom_generated_from_same_rows": True,
                              "fat_chain_contiguous": True, "lyr2_full_readback_sha256": True,
                              "all_index_lrc_flags": True,
-                             "manual_calibration_applied": calibration_path.exists()}}
+                             "manual_calibration_applied": any(
+                                 t["manual_calibration_sha256"] for t in tracks)}}
     (output / "S3_lyrics_manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return manifest
