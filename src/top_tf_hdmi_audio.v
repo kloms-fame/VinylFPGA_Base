@@ -2329,9 +2329,12 @@ always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
 end
 background_sector_mux u_mv_sector_mux(
  .clk(sd_card_clk),.rst_n(sd_media_rst_n),.audio_req(prefetch_sd_req),.audio_lba(prefetch_sd_lba),
- .audio_urgent(cache_prefetch_critical || mv_audio_low_sync[1]),
+ // Restore the board-proven audio-first policy. The ring must recover its
+ // five-second reserve before optional MV traffic uses the shared SD service.
+ // A 15:1 sector quota is not a bandwidth guarantee on a slow physical card.
+ .audio_urgent(1'b1),
  .video_req(mv_sec_req),.video_lba(mv_sec_lba),
- .allow_video(!audio_play_enable_gated || !mv_audio_low_sync[1]),
+ .allow_video(!audio_play_enable_gated || (!mv_audio_low_sync[1] && !cache_prefetch_low)),
  .background_req(background_sector_req),.background_lba(background_sector_lba),
  .background_start(background_sector_start),
  .allow_background(!audio_play_enable_gated || (!mv_audio_low_sync[1] && !cache_prefetch_low)),

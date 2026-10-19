@@ -5,7 +5,7 @@ import re
 import subprocess
 from pathlib import Path
 
-from verify_finish_rtl import CASES, ROOT, input_hashes
+from verify_finish_rtl import CASES, ROOT, TOP_CASES, input_hashes
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
@@ -15,14 +15,14 @@ def main():
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     results = []
-    for name in [*list(CASES)[:4], 'tb_closure_top_handoff']:
+    for name in [*list(CASES)[:4], *[n for n in CASES if n in TOP_CASES]]:
         folder = output / name
         folder.mkdir()
         sources = [*CASES[name], 'sim/' + name + '.v']
         (folder / 'compile.f').write_text('\n'.join((ROOT / f).as_posix() for f in sources) + '\n', encoding='utf-8')
         (folder / 'wave.do').write_text('log -r /*\nadd wave -r /*\n', encoding='utf-8')
         options = ['-sv']
-        if name == 'tb_closure_top_handoff':
+        if name in TOP_CASES:
             options = ['+define+VINYL_AUDIO_CACHE_SIM', '+libext+.v']
             options += ['+incdir+' + (ROOT / p).as_posix() for p in ('src', 'src/include', 'src/SD')]
             directories = [ROOT / 'src', ROOT / 'sim',

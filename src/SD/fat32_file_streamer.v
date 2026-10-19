@@ -60,6 +60,10 @@ module fat32_file_streamer #(
     reg [31:0] current_cluster;
     reg [31:0] next_cluster;
     reg [31:0] remaining_bytes;
+    // Local byte-accept predicate. Keep the 32-bit zero reduction out of the
+    // wide counter's load/decrement selection and its high-fanout enable cone.
+    // This is exactly (remaining_bytes != 0), updated on the same commit edge.
+    reg remaining_nonzero;
     reg [7:0]  sector_in_cluster;
     reg [7:0]  last_sector_in_cluster;
     reg [2:0]  spc_shift;
@@ -150,6 +154,7 @@ module fat32_file_streamer #(
             current_cluster <= 32'd0;
             next_cluster <= 32'd0;
             remaining_bytes <= 32'd0;
+            remaining_nonzero <= 1'b0;
             sector_in_cluster <= 8'd0;
             spc_shift <= 3'd0;
             fat_entry_offset <= 9'd0;
@@ -165,11 +170,12 @@ module fat32_file_streamer #(
             sector_req <= 1'b0;
 
             if ((state == ST_DATA_WAIT) && sector_valid &&
-                (remaining_bytes != 0)) begin
+                remaining_nonzero) begin
                 file_valid <= 1'b1;
                 file_byte <= sector_byte;
                 file_byte_offset <= file_size - remaining_bytes;
                 remaining_bytes <= remaining_bytes - 1'b1;
+                remaining_nonzero <= (remaining_bytes != 32'd1);
             end
 
             if ((state == ST_FAT_WAIT) && sector_valid) begin
@@ -188,6 +194,7 @@ module fat32_file_streamer #(
                     fs_error <= ERR_NONE;
                     file_byte_offset <= 32'd0;
                     remaining_bytes <= file_size;
+                    remaining_nonzero <= (file_size != 32'd0);
                     sector_in_cluster <= 8'd0;
                     spc_shift <= cluster_shift(sectors_per_cluster);
                     last_sector_in_cluster <= sectors_per_cluster - 1'b1;

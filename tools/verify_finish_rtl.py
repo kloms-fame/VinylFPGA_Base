@@ -17,7 +17,9 @@ CASES = {
     'tb_mv_audio_shared': ['src/video/mv_stream_player.v', 'src/video/mv_sector_mux.v', 'src/audio/wav_stream_player.v'],
     'tb_mv_stream_player': ['src/video/mv_stream_player.v'],
     'tb_closure_top_handoff': ['src/top_tf_hdmi_audio.v', 'sim/integration/vendor_control_stubs.v'],
+    'tb_audio_reserve_priority_top': ['src/top_tf_hdmi_audio.v', 'sim/integration/vendor_control_stubs.v'],
 }
+TOP_CASES = frozenset(('tb_closure_top_handoff', 'tb_audio_reserve_priority_top'))
 
 def top_compile_options():
     options = ['-DVINYL_AUDIO_CACHE_SIM', '-I.', '-Isrc', '-Isrc/SD']
@@ -29,7 +31,7 @@ def top_compile_options():
 
 def input_hashes(name, files):
     inputs = set(files)
-    if name == 'tb_closure_top_handoff':
+    if name in TOP_CASES:
         inputs.update(p.relative_to(ROOT).as_posix() for p in (ROOT / 'src').rglob('*') if p.is_file())
     return {s: hashlib.sha256((ROOT / s).read_bytes()).hexdigest() for s in sorted(inputs)}
 
@@ -42,7 +44,7 @@ def main():
     for name, sources in CASES.items():
         files = [*sources, 'sim/' + name + '.v']
         image = (args.output / (name + '.vvp')).resolve()
-        top_case = name == 'tb_closure_top_handoff'
+        top_case = name in TOP_CASES
         options = top_compile_options() if top_case else []
         build = subprocess.run(['iverilog', '-g2005' if top_case else '-g2012', *options, '-Isrc/include', '-s', name,
                                 '-o', str(image), *files], cwd=ROOT, capture_output=True, text=True)

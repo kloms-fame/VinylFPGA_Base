@@ -93,9 +93,9 @@ module audio_prefetch_sdram #(
     assign client_done=live && (consumer_state==C_DONE || consumer_state==C_ERROR);
     assign client_error=consumer_state==C_ERROR ? (fault!=0 ? fault : 8'he4) : 8'd0;
     assign prefetch_low=live && fault==0 && producer_remaining!=0 && occupied<LOW_SECTORS;
-    // Keep the large refill watermark for audio continuity, but reserve strict
-    // SD priority for the last two seconds of cached PCM. Above this point the
-    // media arbiter can spend otherwise idle bandwidth on MV sectors.
+    // Late diagnostic watermark only. SD admission must use prefetch_low and
+    // audio-first arbitration to preserve the full slow-card service reserve;
+    // two seconds cannot cover the previously observed 4.9-second slow window.
     assign prefetch_critical=live && fault==0 && producer_remaining!=0 && occupied<10'd384;
     assign session_busy=session_active || producer_state!=P_IDLE || consumer_state!=C_IDLE ||
                         write_ack1!=write_toggle || read_ack1!=read_toggle;

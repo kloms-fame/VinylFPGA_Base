@@ -9,10 +9,11 @@ module tb_fat32_streamer_boundaries;
     wire [7:0] data,error;
     wire [31:0] offset,lba;
     reg reading=0;
+    reg same_cycle_done=0;
     integer cursor=0,case_id=0,got=0,requests=0,data_requests=0;
     reg [31:0] served=0;
     wire svalid=reading && cursor<512;
-    wire sdone=reading && cursor==512;
+    wire sdone=reading && cursor==(same_cycle_done ? 511 : 512);
     reg [27:0] fat[0:511];
     reg [31:0] expected_lba[0:15];
     reg [31:0] output_lba[0:15];
@@ -35,7 +36,7 @@ module tb_fat32_streamer_boundaries;
             if(lba>=100) begin output_lba[data_requests]=lba;data_requests=data_requests+1;end
             requests=requests+1;served<=lba;cursor<=0;reading<=1;
         end else if(reading) begin
-            if(cursor==512) reading<=0;else cursor<=cursor+1;
+            if(sdone) reading<=0;else cursor<=cursor+1;
         end
         if(rst_n && fvalid) begin
             if(offset!==got || data!==((output_lba[got/512]*7+(got%512))&255))
@@ -49,7 +50,7 @@ module tb_fat32_streamer_boundaries;
             @(negedge clk);rst_n=0;start=0;case_id=n;
             repeat(3) @(negedge clk);
             rst_n=1;got=0;requests=0;data_requests=0;size=512;first=2;spc=1;maximum=400;serror=0;
-            expected_requests=0;
+            expected_requests=0;same_cycle_done=0;
             for(integer j=0;j<512;j=j+1) fat[j]=28'hfffffff;
         end
     endtask
@@ -85,6 +86,14 @@ module tb_fat32_streamer_boundaries;
         reset_case(13);spc=2;size=1024;expected_requests=3;
         expected_lba[0]=100;expected_lba[1]=101;expected_lba[2]=10;run_case(0,1024);
         reset_case(14);first=400;expected_requests=2;expected_lba[0]=498;expected_lba[1]=13;run_case(0,512);
+        reset_case(15);size=1;expected_requests=2;expected_lba[0]=100;expected_lba[1]=10;run_case(0,1);
+        reset_case(16);size=511;expected_requests=2;expected_lba[0]=100;expected_lba[1]=10;run_case(0,511);
+        reset_case(17);size=513;spc=2;expected_requests=3;
+        expected_lba[0]=100;expected_lba[1]=101;expected_lba[2]=10;run_case(0,513);
+        reset_case(18);same_cycle_done=1;expected_requests=2;
+        expected_lba[0]=100;expected_lba[1]=10;run_case(0,512);
+        reset_case(19);size=17;same_cycle_done=1;expected_requests=2;
+        expected_lba[0]=100;expected_lba[1]=10;run_case(0,17);
         $display("PASS tb_fat32_streamer_boundaries");$finish;
     end
     initial begin #3000000;$fatal(1,"global timeout");end
