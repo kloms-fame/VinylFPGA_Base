@@ -18,6 +18,7 @@ module ec2_event_replay (
     `include "exp_event_defs.vh"
 
     wire is_enc2_step = (ev_code == EV_ENC_STEP) && ev_aux[1];
+    wire is_enc2_baseline = (ev_code == EV_ENC_BASELINE) && ev_aux[1];
     wire is_enc2_down = (ev_code == EV_ENC_SW) && ev_aux[1] &&
                         (ev_arg[0] == 1'b0);
 
@@ -59,7 +60,12 @@ module ec2_event_replay (
                 if (ev_valid && is_enc2_down)
                     press_event <= 1'b1;
 
-                if (ev_valid && is_enc2_step)
+                if (ev_valid && is_enc2_baseline) begin
+                    enc_target <= ev_arg;
+                    enc_delivered <= ev_arg;
+                    enc_seen <= 1'b1;
+                    enc_gap <= 3'd0;
+                end else if (ev_valid && is_enc2_step)
                     enc_target <= ev_arg;
 
                 if (emit_step && step_ready) begin

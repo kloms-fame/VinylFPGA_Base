@@ -1,0 +1,163 @@
+VinylFPGA S0：镜像与写卡诊断
+Image: D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\.codex_tmp\manual_lyrics_card_20261020\card_STAGE4_LYRICS_MANUAL_20261020.img
+Expected SHA256: 327f0f184401dc5f537d2e228354d6ba716f5528351a467508152ab7347d92b9
+请按配套教程确认当前固件与镜像版本匹配；本入口不提供阶段五旧候选13/14。
+
+number friendly_name          serial_number        bus_type    GiB is_boot is_system is_read_only is_offline
+------ -------------          -------------        --------    --- ------- --------- ------------ ----------
+     0 YMTC PC41Q-1TB-B       A428_B725_AAB2_000A. NVMe     953.87    True      True        False      False
+     1 Generic STORAGE DEVICE [                    USB       29.12   False     False        False      False
+
+
+请输入 SD 卡对应的磁盘号（上表 number；输入 Q 退出）: 1
+选中设备（还未写入）：
+
+
+number               : 1
+friendly_name        : Generic STORAGE DEVICE
+serial_number        : [
+unique_id            : USBSTOR\DISK&VEN_GENERIC&PROD_STORAGE_DEVICE&REV_1404\7&376754EE&0:Rennick
+size                 : 31266439168
+bus_type             : USB
+is_boot              : False
+is_system            : False
+is_read_only         : False
+is_offline           : False
+logical_sector_size  : 512
+physical_sector_size : 512
+partition_style      : MBR
+volumes              : {G:\, \\?\Volume{d83d15c6-ca94-11f1-a903-50bbb54fd099}\}
+partitions           : {@{PartitionNumber=1; AccessPaths=System.Object[]}}
+
+
+
+progress phase=prehash offset=0 total=134217728 MiB/s=0.00 status=RUNNING
+progress phase=prehash offset=134217728 total=134217728 MiB/s=1232.25 status=DONE
+{
+  "image": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\.codex_tmp\\manual_lyrics_card_20261020\\card_STAGE4_LYRICS_MANUAL_20261020.img",
+  "size_bytes": 134217728,
+  "expected_sha256": "327f0f184401dc5f537d2e228354d6ba716f5528351a467508152ab7347d92b9",
+  "layout": {
+    "layout": "superfloppy",
+    "filesystem_bytes": 134217728
+  },
+  "source_signature": [
+    9484721317145420703,
+    844424933205728,
+    134217728,
+    1792463469675271500
+  ],
+  "timings_seconds": {
+    "prehash": 0.10426679998636246
+  },
+  "device": {
+    "Number": 1,
+    "Size": 31266439168,
+    "LogicalSectorSize": 512,
+    "PhysicalSectorSize": 512,
+    "BusType": "USB",
+    "IsBoot": false,
+    "IsSystem": false,
+    "IsOffline": false,
+    "IsReadOnly": false,
+    "UniqueId": "USBSTOR\\DISK&VEN_GENERIC&PROD_STORAGE_DEVICE&REV_1404\\7&376754EE&0:Rennick",
+    "SerialNumber": "[",
+    "FriendlyName": "Generic STORAGE DEVICE",
+    "PartitionStyle": "MBR",
+    "Partitions": [
+      {
+        "PartitionNumber": 1,
+        "AccessPaths": [
+          "G:\\",
+          "\\\\?\\Volume{d83d15c6-ca94-11f1-a903-50bbb54fd099}\\"
+        ]
+      }
+    ]
+  },
+  "lock_volumes": [
+    "\\\\?\\Volume{d83d15c6-ca94-11f1-a903-50bbb54fd099}"
+  ],
+  "mode": "diagnose",
+  "throughput_mib_s": {
+    "prehash": 1227.6199136900884
+  }
+}
+输入 WRITE 写入本 S0 镜像；其他输入仅结束诊断: WRITE
+写入将覆盖上面选中的整个物理盘。确认其确为测试 SD 卡后输入：ERASE 1 31266439168
+确认文字: ERASE 1 31266439168
+progress phase=prehash offset=0 total=134217728 MiB/s=0.00 status=RUNNING
+progress phase=prehash offset=134217728 total=134217728 MiB/s=1455.80 status=DONE
+progress phase=write offset=0 total=134217728 MiB/s=0.00 status=RUNNING
+progress phase=write offset=20971520 total=134217728 MiB/s=24.65 status=RUNNING
+progress phase=write offset=37748736 total=134217728 MiB/s=22.30 status=RUNNING
+progress phase=write offset=58720256 total=134217728 MiB/s=23.17 status=RUNNING
+progress phase=write offset=79691776 total=134217728 MiB/s=23.58 status=RUNNING
+progress phase=write offset=104857600 total=134217728 MiB/s=24.84 status=RUNNING
+progress phase=write offset=125829120 total=134217728 MiB/s=24.84 status=RUNNING
+progress phase=write offset=134217728 total=134217728 MiB/s=25.06 status=DONE
+progress phase=readback offset=0 total=134217728 MiB/s=0.00 status=RUNNING
+progress phase=readback offset=0 total=134217728 MiB/s=0.00 status=RUNNING
+progress phase=readback offset=12582912 total=134217728 MiB/s=7.42 status=RUNNING
+progress phase=readback offset=37748736 total=134217728 MiB/s=14.81 status=RUNNING
+progress phase=readback offset=67108864 total=134217728 MiB/s=19.78 status=RUNNING
+progress phase=readback offset=92274688 total=134217728 MiB/s=21.78 status=RUNNING
+progress phase=readback offset=117440512 total=134217728 MiB/s=23.13 status=RUNNING
+progress phase=readback offset=134217728 total=134217728 MiB/s=24.22 status=DONE
+{
+  "image": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\.codex_tmp\\manual_lyrics_card_20261020\\card_STAGE4_LYRICS_MANUAL_20261020.img",
+  "size_bytes": 134217728,
+  "expected_sha256": "327f0f184401dc5f537d2e228354d6ba716f5528351a467508152ab7347d92b9",
+  "layout": {
+    "layout": "superfloppy",
+    "filesystem_bytes": 134217728
+  },
+  "source_signature": [
+    9484721317145420703,
+    844424933205728,
+    134217728,
+    1792463469675271500
+  ],
+  "timings_seconds": {
+    "prehash": 0.08824849996017292,
+    "write": 5.107473799958825,
+    "flush": 7.550005102530122e-05,
+    "readback": 5.286420900025405
+  },
+  "device": {
+    "Number": 1,
+    "Size": 31266439168,
+    "LogicalSectorSize": 512,
+    "PhysicalSectorSize": 512,
+    "BusType": "USB",
+    "IsBoot": false,
+    "IsSystem": false,
+    "IsOffline": false,
+    "IsReadOnly": false,
+    "UniqueId": "USBSTOR\\DISK&VEN_GENERIC&PROD_STORAGE_DEVICE&REV_1404\\7&376754EE&0:Rennick",
+    "SerialNumber": "[",
+    "FriendlyName": "Generic STORAGE DEVICE",
+    "PartitionStyle": "MBR",
+    "Partitions": [
+      {
+        "PartitionNumber": 1,
+        "AccessPaths": [
+          "G:\\",
+          "\\\\?\\Volume{d83d15c6-ca94-11f1-a903-50bbb54fd099}\\"
+        ]
+      }
+    ]
+  },
+  "lock_volumes": [
+    "\\\\?\\Volume{d83d15c6-ca94-11f1-a903-50bbb54fd099}"
+  ],
+  "readback_sha256": "327f0f184401dc5f537d2e228354d6ba716f5528351a467508152ab7347d92b9",
+  "mode": "physical-write-verified",
+  "throughput_mib_s": {
+    "prehash": 1450.4495833670508,
+    "write": 25.061313090050877,
+    "readback": 24.212979333405872
+  }
+}
+S0 写入与完整回读成功。安全弹出后再装卡验收。
+操作日志：D:\Data_Backup\VinylFPGA_Workspace_Base\VinylFPGA\doc\资源\sd卡\stage4\write_logs\S0_20261020_110552_19240.log
+按 Enter 关闭:

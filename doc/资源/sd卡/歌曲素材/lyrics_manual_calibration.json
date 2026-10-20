@@ -1,35 +1,115 @@
 {
-  "schema": "vinylfpga-lyrics-manual-calibration-v1",
+  "schema": "vinylfpga-lyrics-manual-calibration-v2",
   "timebase": "source MP4 timestamps; extracted PCM starts at 0 ms",
   "tracks": {
     "1": {
       "timeline_offset_ms": 0,
-      "character_wrap_cues": [1],
+      "character_wrap_cues": [
+        1
+      ],
       "replace_text": {
         "1": "We're no strangers to love",
         "3": "A full commitment's what I'm thinking of",
         "4": "You wouldn't get this from any other guy",
         "6": "Gotta make you understand",
         "13": "We've known each other for so long",
-        "14": "Your heart's been aching, but you're too shy to say it",
+        "14": "Your heart's been aching but you're too shy to say it",
         "15": "Inside we both know what's been going on",
         "16": "We know the game and we're gonna play it",
         "17": "And if you ask me how I'm feeling",
         "18": "Don't tell me you're too blind to see",
         "33": "We've known each other for so long",
-        "34": "Your heart's been aching, but you're too shy to say it",
+        "34": "Your heart's been aching but you're too shy to say it",
         "35": "Inside we both know what's been going on",
         "36": "We know the game and we're gonna play it",
         "37": "I just wanna tell you how I'm feeling",
         "38": "Gotta make you understand",
-        "40": "Never gonna let you down"
+        "40": "Never gonna let you down",
+        "2": "You know the rules and so do I",
+        "5": "I just wanna tell you how I'm feeling",
+        "7": "Never gonna give you up"
       }
     },
     "2": {
-      "timeline_offset_ms": 0
+      "timeline_offset_ms": 0,
+      "replace_text": {
+        "1": "啊啊啊啊啊啊",
+        "2": "鸡你太美 哎哦",
+        "3": "鸡你太美 ehoh",
+        "4": "只因你实在是太美 ehoh",
+        "5": "如今你走过我的身旁让我如此蠢蠢欲动",
+        "7": "So who are you",
+        "15": "想要把你占为己有 baby",
+        "17": "不管走到哪里都会想着你",
+        "18": "我应该把你怎样啊",
+        "25": "第一次要变成这样的我",
+        "26": "管我怎么去否认",
+        "27": "鸡你太美 ehoh",
+        "28": "鸡你太美 ehoh",
+        "29": "鸡你实在是太美 ehoh",
+        "30": "鸡你实在是太美 ehoh",
+        "31": "鸡你太美 ehoh",
+        "32": "你到底属于谁",
+        "33": "鸡你太美",
+        "34": "现在确认地告诉我",
+        "35": "eeeh 属于谁",
+        "36": "你到底属于谁就是现在告诉我",
+        "49": "i'm in love with you",
+        "52": "哦到底应该怎样啊啊我心里是很不安",
+        "54": "啊全都是看上你的脸唉哦",
+        "59": "我管我怎么去否认",
+        "60": "鸡你太美",
+        "61": "ehoh",
+        "63": "哦鸡你太美 ehoh",
+        "64": "哦 鸡你太美",
+        "65": "哎呦 ehoh",
+        "66": "现在准确地告诉我",
+        "67": "你现在属于谁",
+        "68": "就是现在准确的告诉我"
+      },
+      "replace_timing": {
+        "66": {
+          "start_ms": 147680,
+          "end_ms": 149280
+        },
+        "67": {
+          "start_ms": 151280,
+          "end_ms": 154000
+        },
+        "68": {
+          "start_ms": 155100,
+          "end_ms": 157340
+        }
+      },
+      "insert_cues": [
+        {
+          "after": 68,
+          "start_ms": 158100,
+          "end_ms": 163340,
+          "text": "你现在属于谁就是现在告诉我"
+        }
+      ]
     },
     "3": {
-      "timeline_offset_ms": 0
+      "timeline_offset_ms": 0,
+      "replace_text": {
+        "1": "他们都黄仁勋",
+        "2": "你这CUDA太菜",
+        "4": "十年冷板凳熬穿",
+        "6": "so AI just AI GPT横空出世",
+        "8": "算力荒席卷全球",
+        "9": "大厂乖乖等待",
+        "10": "建算力中心靠我 钞票统统拿来",
+        "11": "so AI AI时代到来者",
+        "12": "Just AI AI AI AI",
+        "13": "AI时代没人能够逃开",
+        "14": "市值狂飙5万亿",
+        "15": "华尔街全部",
+        "16": "看呆",
+        "17": "打开DLSS5",
+        "18": "应接这个舞台",
+        "19": "Just ai ai ai just ai just ai ai ai just ai"
+      }
     },
     "4": {
       "timeline_offset_ms": 0,
@@ -38,17 +118,61 @@
         "41": "一砖一瓦",
         "50": "唯华夏",
         "62": "红日升在东方",
-        "63": "其大道满霞光"
+        "63": "其大道满霞光",
+        "4": "生于你怀 承一脉血流淌",
+        "5": "难同当 福共享",
+        "7": "吾国万疆 以仁爱",
+        "9": "写苍天 只写一角",
+        "14": "观万古 上下五千年",
+        "29": "唯华夏 崭锋芒",
+        "35": "怀 承一脉血流淌",
+        "36": "难同当 福共享",
+        "39": "以仁爱 千年不灭的信仰",
+        "40": "抚流光",
+        "57": "怀 承一脉血流淌",
+        "58": "难同当 福共享",
+        "61": "以仁爱 千年不灭的信仰"
       },
       "merge_cues": [
-        {"first": 23, "last": 24, "text": "一花一木悲喜"},
-        {"first": 44, "last": 45, "text": "一花一木悲喜"}
+        {
+          "first": 23,
+          "last": 24,
+          "text": "一花一木悲喜"
+        },
+        {
+          "first": 44,
+          "last": 45,
+          "text": "一花一木悲喜"
+        }
       ]
     }
   },
   "review_notes": [
     "All four source MP4 audio streams report start_time=0; preserve source subtitle clock without a speculative global shift.",
     "Track 1 corrections restore clear contractions and remove one duplicated subtitle phrase.",
-    "Track 4 repeated chorus provides the source wording for the two final-cue transcription errors; contiguous 悲/喜 cues form one lyric phrase."
-  ]
+    "Track 4 repeated chorus provides the source wording for the two final-cue transcription errors; contiguous 悲/喜 cues form one lyric phrase.",
+    "Imported the four user-provided 人工校准.srt files; originals are preserved in 人工校准记录 with SHA-256. Text remains in replace_text; local cue times use replace_timing; added cues use insert_cues."
+  ],
+  "manual_source_files": {
+    "1": {
+      "file": "人工校准记录/Never Gonna Give You Up - Rick Astley - 人工校准.srt",
+      "sha256": "59fbf37a4983cf2af1c34458cab87bce702ea730901a59922b0bf2cccd3f13bc",
+      "cues": 50
+    },
+    "2": {
+      "file": "人工校准记录/【真ikun翻唱】鸡 你 太 美 官 方 M V_哔哩哔哩_bilibili_BV1cW4y177D2_P字幕 - 人工校准.srt",
+      "sha256": "a77bdd788a2462ae67ce59d47b3d8333077a3fd46813d9194a2f5900c667e2d6",
+      "cues": 69
+    },
+    "3": {
+      "file": "人工校准记录/⚡️黄仁勋 世界巡演⚡️【AI MV大赛】_哔哩哔哩_bilibili_BV1VRHr6AEZ6_P字幕 - 人工校准.srt",
+      "sha256": "320a79f52849838318b0b525aa83a2f1881abfab8c60db683c36d5e5c8eb30c4",
+      "cues": 19
+    },
+    "4": {
+      "file": "人工校准记录/【李玉刚自投稿】《万疆》MV官方发布~_哔哩哔哩_bilibili_BV1q64y1d7Ee_P字幕 - 人工校准.srt",
+      "sha256": "fffb81037cddd68697e59d4766288d1bc8cca86b3d3dec4aed564e88b1ce59d8",
+      "cues": 63
+    }
+  }
 }

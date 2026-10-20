@@ -11,7 +11,7 @@ module tb_closure_header_compare;
  fat32_media_loader dut(.clk(clk),.rst(rst),.sd_init_done(1'b1));
  task check_pair;
   begin
-   position=49;expected=(offset>=32'd54 && offset<bytes);
+   position=49;expected=(offset==32'd54 && offset<bytes);
    @(negedge clk);position=51;
    @(negedge clk);
    if(dut.header_offset_ok!==expected) $fatal(1,"offset comparison %h < %h",offset,bytes);

@@ -1989,7 +1989,8 @@ wire [7:0]  merged_err_code  = media_err_code_clk;
 wire media_audio_available = media_status_v2[20] && (|media_status_v2[19:16]);
 wire audio_silent = boot_active || (S5_PLAY_ENABLE &&
                     (paused_v2 || !play_active_v2 ||
-                     !stream_enable_vid[1] || !wav_stream_active));
+                     !stream_enable_vid[1] || !wav_stream_active ||
+                     !cache_playback_ready_video || !wav_startup_ready));
 
 // 16点正弦 LUT 峰值约 12000，200/255 缩放后仍保留足够余量，避免削波爆音。
 // EC2、KEY/IR 与音频增益均只读写同一份 VOL CSR；暂停/启动静音仍沿用原门控。

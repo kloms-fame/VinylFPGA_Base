@@ -174,9 +174,11 @@ module promax_audio_waveform #(
 
                 // 使用 16bit PCM 的高 8bit 直接映射，96 像素窗口只做上限保护。
                 // 高幅度时更快接近满高，同时保留不同采样值之间的明显高低差。
-                bar_height = {1'b0, selected_sample};
-                if (bar_height > DISPLAY_HEIGHT)
+                // Clamp at the source width before narrowing to seven bits.
+                if (selected_sample > DISPLAY_HEIGHT)
                     bar_height = DISPLAY_HEIGHT;
+                else
+                    bar_height = selected_sample[6:0];
                 if (bar_height == 0)
                     bar_height = 1;
 
@@ -199,9 +201,10 @@ module promax_audio_waveform #(
 
         if (in_peak_area) begin
             row_from_base = BASE_Y - line_y;
-            peak_height   = {1'b0, display_peak};
-            if (peak_height > DISPLAY_HEIGHT)
+            if (display_peak > DISPLAY_HEIGHT)
                 peak_height = DISPLAY_HEIGHT;
+            else
+                peak_height = display_peak[6:0];
             if (peak_height == 0)
                 peak_height = 1;
             peak_pixel = (row_from_base <= peak_height);

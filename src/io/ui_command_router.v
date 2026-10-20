@@ -180,7 +180,7 @@ module ui_command_router #(
 
     // 有效操作：用于空闲清零与消隐唤醒（不含纯松开、DIP、IR repeat）
     wire ev_action  = ev_valid && (is_key_down || is_enc_step || is_enc_sw_dn ||
-                                   (is_ir_frame && ir_x_valid));
+                                   (is_ir_frame && ir_x_valid && dip_level[4]));
 
     // ---- 1 ms 预分频（饱和回绕，组合 tick）----
     reg [MS_W-1:0] ms_cnt;
@@ -225,6 +225,14 @@ module ui_command_router #(
         if (ev_valid) begin
             if (wake_only) begin
                 // 消隐唤醒吞掉本拍普通业务命令
+                // Still advance the absolute-count baseline, so the consumed
+                // wake step cannot be replayed by the next encoder event.
+                if (is_enc_step) begin
+                    cmd_valid_c = 1'b1;
+                    cmd_code_c = EV_ENC_BASELINE;
+                    cmd_arg_c = ev_arg;
+                    cmd_aux_c = ev_aux;
+                end
             end else if (ir_x_valid && dip_level[4] && (ir_x_evcode != EV_NONE)) begin
                 cmd_valid_c = 1'b1;
                 cmd_code_c  = ir_x_evcode;

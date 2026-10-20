@@ -1,0 +1,145 @@
+{
+  "phase": "S2_visual_fullbleed",
+  "input_image_sha256": "ce3d12ba31edbcce891bae80eea4350234d727466bdffdd0ea1ea1d4ecfcbf58",
+  "image": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\资源\\sd卡\\release_20261020_manual_lyrics_4songs_4mvs_fullbleed\\VinylFPGA_SD_4SONGS_4MVS_MANUAL_LYRICS_FULLBLEED_20261020.img",
+  "image_bytes": 1610612736,
+  "image_sha256": "3bf36c259d093b9f85fd538892e11c74275b1e68111ed366b8c77e58cd654654",
+  "index_entries_crc32": "0xA2973669",
+  "mv_contract": {
+    "canvas": [
+      320,
+      240
+    ],
+    "fps": 10,
+    "pixel_format": "RGB565LE",
+    "frame_bytes": 153600,
+    "sectors_per_frame": 300,
+    "scale_and_crop_filter": "scale=320:240:force_original_aspect_ratio=increase:flags=lanczos,crop=320:240:(iw-ow)/2:(ih-oh)/2,setsar=1",
+    "source_crops_from_0d25421": {
+      "1": "crop=928:718:176:0",
+      "4": "crop=1920:834:0:122"
+    },
+    "policy": "remove known embedded mattes, then fill 4:3 with center crop; no padding"
+  },
+  "songs": [
+    {
+      "name": "TRACK1.MV",
+      "path": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\.codex_tmp\\sdcard_visual_fullbleed_rebuild_20261020\\assets\\TRACK1.MV",
+      "bytes": 326092800,
+      "frames": 2123,
+      "fps": 10,
+      "frame_bytes": 153600,
+      "sectors": 636900,
+      "sectors_per_frame": 300,
+      "duration_seconds": 212.3,
+      "duration_delta_from_video_seconds": 0.060000000000002274,
+      "sha256": "36f58cc5a2a4baf6134071ee2db4d3dfd6e2729bd3c0c99dff777c653cfa1631",
+      "source_crop": "crop=928:718:176:0",
+      "filter": "crop=928:718:176:0,scale=320:240:force_original_aspect_ratio=increase:flags=lanczos,crop=320:240:(iw-ow)/2:(ih-oh)/2,setsar=1,fps=10,format=rgb565le",
+      "format": "RGB565LE 320x240 top-down row-major",
+      "source_video": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\资源\\sd卡\\歌曲素材\\歌曲1\\video_【官方 MV】Never Gon..._0.mp4",
+      "source_video_sha256": "7dc42c7d9e040406304698531be0b32936117c0d5e7aac94c6c28cdffeebddad",
+      "video_probe": {
+        "codec": "h264",
+        "width": 1280,
+        "height": 720,
+        "sample_aspect_ratio": "1:1",
+        "avg_frame_rate": "25/1",
+        "r_frame_rate": "25/1",
+        "duration_seconds": 212.24,
+        "container_duration_seconds": 212.308833
+      }
+    },
+    {
+      "name": "TRACK2.MV",
+      "path": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\.codex_tmp\\sdcard_visual_fullbleed_rebuild_20261020\\assets\\TRACK2.MV",
+      "bytes": 260044800,
+      "frames": 1693,
+      "fps": 10,
+      "frame_bytes": 153600,
+      "sectors": 507900,
+      "sectors_per_frame": 300,
+      "duration_seconds": 169.3,
+      "duration_delta_from_video_seconds": 0.0,
+      "sha256": "8db259b524ea3aa65f380d4718404d80ddfd23f94d3d183b21b83a5929ae3569",
+      "source_crop": "none",
+      "filter": "scale=320:240:force_original_aspect_ratio=increase:flags=lanczos,crop=320:240:(iw-ow)/2:(ih-oh)/2,setsar=1,fps=10,format=rgb565le",
+      "format": "RGB565LE 320x240 top-down row-major",
+      "source_video": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\资源\\sd卡\\歌曲素材\\歌曲2\\video_【真ikun翻唱】鸡 你 太 美..._0.mp4",
+      "source_video_sha256": "9d746cccef161fc73a314cf4fcb47dc330ae084260aeaf288c86175cb41709df",
+      "video_probe": {
+        "codec": "h264",
+        "width": 1920,
+        "height": 1080,
+        "sample_aspect_ratio": "1:1",
+        "avg_frame_rate": "30/1",
+        "r_frame_rate": "30/1",
+        "duration_seconds": 169.3,
+        "container_duration_seconds": 169.365692
+      }
+    },
+    {
+      "name": "TRACK3.MV",
+      "path": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\.codex_tmp\\sdcard_visual_fullbleed_rebuild_20261020\\assets\\TRACK3.MV",
+      "bytes": 131328000,
+      "frames": 855,
+      "fps": 10,
+      "frame_bytes": 153600,
+      "sectors": 256500,
+      "sectors_per_frame": 300,
+      "duration_seconds": 85.5,
+      "duration_delta_from_video_seconds": -0.03331300000000681,
+      "sha256": "3d1e1e1712c669e5d6cdef2d790a5687653691563c9fca786af55ea5714b3e67",
+      "source_crop": "none",
+      "filter": "scale=320:240:force_original_aspect_ratio=increase:flags=lanczos,crop=320:240:(iw-ow)/2:(ih-oh)/2,setsar=1,fps=10,format=rgb565le",
+      "format": "RGB565LE 320x240 top-down row-major",
+      "source_video": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\资源\\sd卡\\歌曲素材\\歌曲3\\video_⚡️黄仁勋 世界巡演⚡️【AI ..._0.mp4",
+      "source_video_sha256": "f13da00e373895dbd42c93ba48eeb536e597b46d6b5754bfac400f93afbb0b10",
+      "video_probe": {
+        "codec": "h264",
+        "width": 960,
+        "height": 720,
+        "sample_aspect_ratio": "1:1",
+        "avg_frame_rate": "41056000/1368533",
+        "r_frame_rate": "30/1",
+        "duration_seconds": 85.533313,
+        "container_duration_seconds": 85.568
+      }
+    },
+    {
+      "name": "TRACK4.MV",
+      "path": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\.codex_tmp\\sdcard_visual_fullbleed_rebuild_20261020\\assets\\TRACK4.MV",
+      "bytes": 374630400,
+      "frames": 2439,
+      "fps": 10,
+      "frame_bytes": 153600,
+      "sectors": 731700,
+      "sectors_per_frame": 300,
+      "duration_seconds": 243.9,
+      "duration_delta_from_video_seconds": 0.020000000000010232,
+      "sha256": "19059c55dd2a41dc068d731dc45157a1884935ade575b0ba4b4048d7d93fd361",
+      "source_crop": "crop=1920:834:0:122",
+      "filter": "crop=1920:834:0:122,scale=320:240:force_original_aspect_ratio=increase:flags=lanczos,crop=320:240:(iw-ow)/2:(ih-oh)/2,setsar=1,fps=10,format=rgb565le",
+      "format": "RGB565LE 320x240 top-down row-major",
+      "source_video": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\资源\\sd卡\\歌曲素材\\歌曲4\\video_【李玉刚自投稿】《万疆》MV官方..._0.mp4",
+      "source_video_sha256": "2d96322e4eec19f7a5099c4ad96d68307237ed71f0bddd060241918fb860f2f8",
+      "video_probe": {
+        "codec": "h264",
+        "width": 1920,
+        "height": 1080,
+        "sample_aspect_ratio": "1:1",
+        "avg_frame_rate": "25/1",
+        "r_frame_rate": "25/1",
+        "duration_seconds": 243.88,
+        "container_duration_seconds": 243.925
+      }
+    }
+  ],
+  "verified": {
+    "all_four_mv_flags": true,
+    "full_frame_lengths": true,
+    "contiguous_clusters": true,
+    "full_physical_sha256_readback": true,
+    "index_crc_readback": true
+  }
+}

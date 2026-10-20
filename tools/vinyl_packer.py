@@ -454,11 +454,11 @@ def _check_cover(data: bytes, name: str, width: int, height: int) -> None:
     comp = struct.unpack_from("<I", data, 30)[0]
     need = data_off + width * height * 3
     ok = (dib >= 40 and w == width and h == height and planes == 1 and bpp == 24
-          and comp == 0 and BMP_HEADER_MIN <= data_off < file_len
+          and comp == 0 and data_off == BMP_HEADER_MIN and data_off < file_len
           and file_len >= need and len(data) >= need)
     if not ok:
         raise PackError(
-            f"{name}: 不符合 RTL 的封面约束（需 {width}x{height} 24bit 未压缩 BMP，"
+            f"{name}: 不符合 RTL 的封面约束（需 {width}x{height} 24bit 未压缩 BMP、像素偏移 54，"
             f"实测 {w}x{h} {bpp}bpp comp={comp} len={file_len} off={data_off}）")
 
 

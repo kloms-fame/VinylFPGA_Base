@@ -536,14 +536,14 @@
         </Run>
     </Runs>
     <MultiSeed>
-        <Property Enable="true" GenBit="true" EndStep="bitgen" Random="false" Num="1" Init="3" Jobs="1" Save="1" Step="1">
+        <Property Enable="true" GenBit="true" EndStep="bitgen" Random="false" Num="1" Init="6" Jobs="1" Save="1" Step="1">
             <Filter enabled="false">
                 <congestion>100</congestion>
                 <place_swns>0</place_swns>
                 <route_swns>0</route_swns>
             </Filter>
         </Property>
-        <Seeds select="3">3 </Seeds>
+        <Seeds select="6">6 </Seeds>
     </MultiSeed>
     <Project_Settings>
     </Project_Settings>

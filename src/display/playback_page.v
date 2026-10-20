@@ -311,7 +311,7 @@ module playback_page #(
                 selected_kind = TEXT_ARTIST;
                 selected_column = browse_artist_dx[7:4];
                 selected_pixel_col = browse_artist_dx[3:0];
-                if (selected_column < artist_length) begin
+                if (!browse_artist_dx[8] && selected_column < artist_length) begin
                     text_request = 1'b1;
                     direct_glyph = packed_glyph_at(artist_glyphs, selected_column);
                 end

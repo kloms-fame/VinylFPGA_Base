@@ -55,7 +55,8 @@ always @(posedge I_clk or posedge I_rst) begin
             end
 
             // 640x480 最后一个有效像素
-            if (S_x_cnt == 11'd639)
+            // At pixel 639 the registered counter still holds pixel 638.
+            if (S_de_1d && S_x_cnt == 11'd638)
                 O_video_last <= 1'b1;
         end
         else begin

@@ -94,6 +94,17 @@ module tb_fat32_streamer_boundaries;
         expected_lba[0]=100;expected_lba[1]=10;run_case(0,512);
         reset_case(19);size=17;same_cycle_done=1;expected_requests=2;
         expected_lba[0]=100;expected_lba[1]=10;run_case(0,17);
+        reset_case(20);spc=2;size=2048;fat[2]=130;expected_requests=6;
+        expected_lba[0]=100;expected_lba[1]=101;expected_lba[2]=10;
+        expected_lba[3]=356;expected_lba[4]=357;expected_lba[5]=11;run_case(0,2048);
+        reset_case(21);spc=4;size=6144;fat[2]=130;fat[130]=3;expected_requests=15;
+        expected_lba[0]=100;expected_lba[1]=101;expected_lba[2]=102;expected_lba[3]=103;expected_lba[4]=10;
+        expected_lba[5]=612;expected_lba[6]=613;expected_lba[7]=614;expected_lba[8]=615;expected_lba[9]=11;
+        expected_lba[10]=104;expected_lba[11]=105;expected_lba[12]=106;expected_lba[13]=107;expected_lba[14]=10;
+        run_case(0,6144);
+        reset_case(22);spc=2;size=1537;fat[2]=130;same_cycle_done=1;expected_requests=6;
+        expected_lba[0]=100;expected_lba[1]=101;expected_lba[2]=10;
+        expected_lba[3]=356;expected_lba[4]=357;expected_lba[5]=11;run_case(0,1537);
         $display("PASS tb_fat32_streamer_boundaries");$finish;
     end
     initial begin #3000000;$fatal(1,"global timeout");end

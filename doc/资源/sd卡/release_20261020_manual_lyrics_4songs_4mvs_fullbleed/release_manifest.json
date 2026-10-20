@@ -1,0 +1,295 @@
+{
+  "release": "VinylFPGA SD final manual lyrics, four independent songs and four full-length full-bleed MVs",
+  "created": "2026-10-20",
+  "image": {
+    "file": "VinylFPGA_SD_4SONGS_4MVS_MANUAL_LYRICS_FULLBLEED_20261020.img",
+    "bytes": 1610612736,
+    "sha256": "3bf36c259d093b9f85fd538892e11c74275b1e68111ed366b8c77e58cd654654",
+    "filesystem": "FAT32 superfloppy",
+    "size_mib": 1536
+  },
+  "index": {
+    "version": 2,
+    "entries_crc32": "0xA2973669",
+    "all_tracks_audio_mv_lyrics_flags": true,
+    "mv_format": "320x240 RGB565LE, 10fps, 153600 bytes/frame; source mattes removed, then full-bleed crop"
+  },
+  "songs": [
+    {
+      "number": 1,
+      "title": "Never Gonna Give You Up",
+      "artist": "Rick Astley",
+      "audio": {
+        "name": "AUDIO.PCM",
+        "first_cluster": 258051,
+        "bytes": 20381696,
+        "sha256": "e41edee911a79d0c30c50391475aabed000581d6461d30816d3f6d9971dec996",
+        "start_lba": 307171,
+        "clusters": 39808
+      },
+      "mv": {
+        "name": "TRACK1.MV",
+        "bytes": 326092800,
+        "frames": 2123,
+        "fps": 10,
+        "sha256": "36f58cc5a2a4baf6134071ee2db4d3dfd6e2729bd3c0c99dff777c653cfa1631",
+        "start_lba": 440516,
+        "filter": "crop=928:718:176:0,scale=320:240:force_original_aspect_ratio=increase:flags=lanczos,crop=320:240:(iw-ow)/2:(ih-oh)/2,setsar=1,fps=10,format=rgb565le",
+        "source_crop": "crop=928:718:176:0"
+      },
+      "lyrics": {
+        "source_cues": 50,
+        "calibrated_cues": 50,
+        "display_rows": 128,
+        "first_ms": 18788,
+        "last_ms": 195621,
+        "manual_calibration_sha256": "db0835a1850ec091684b4d573dff21cbb440f40f881fa8a5fee0860e4326f39a"
+      },
+      "cover": {
+        "name": "PIC1.BMP",
+        "bytes": 921654,
+        "sha256": "f628e4d600c9d0be1f46c36377238cee15ff1caa7cbb607ab8a3ebdde28d5ee9",
+        "dimensions": [
+          640,
+          480
+        ],
+        "policy": "full_bleed_content_biased_crop_4_3"
+      }
+    },
+    {
+      "number": 2,
+      "title": "鸡你太美国风版",
+      "artist": "鬼山哥",
+      "audio": {
+        "name": "AUDIO2.PCM",
+        "first_cluster": 297859,
+        "bytes": 16259170,
+        "sha256": "538902881020f29e5eae0cdf161a8bb868f9042dc4545709203fa8bcb5b0c0d5",
+        "start_lba": 346979,
+        "clusters": 31757
+      },
+      "mv": {
+        "name": "TRACK2.MV",
+        "bytes": 260044800,
+        "frames": 1693,
+        "fps": 10,
+        "sha256": "8db259b524ea3aa65f380d4718404d80ddfd23f94d3d183b21b83a5929ae3569",
+        "start_lba": 1077416,
+        "filter": "scale=320:240:force_original_aspect_ratio=increase:flags=lanczos,crop=320:240:(iw-ow)/2:(ih-oh)/2,setsar=1,fps=10,format=rgb565le",
+        "source_crop": "none"
+      },
+      "lyrics": {
+        "source_cues": 68,
+        "calibrated_cues": 69,
+        "display_rows": 72,
+        "first_ms": 920,
+        "last_ms": 158100,
+        "manual_calibration_sha256": "db0835a1850ec091684b4d573dff21cbb440f40f881fa8a5fee0860e4326f39a"
+      },
+      "cover": {
+        "name": "PIC2.BMP",
+        "bytes": 921654,
+        "sha256": "e0938830e6b93cb9ba6fbb7c5d43806e9536dfe070b728493752434b0965f02b",
+        "dimensions": [
+          640,
+          480
+        ],
+        "policy": "full_bleed_content_biased_crop_4_3"
+      }
+    },
+    {
+      "number": 3,
+      "title": "黄仁勋世界巡演",
+      "artist": "王与也行",
+      "audio": {
+        "name": "AUDIO3.PCM",
+        "first_cluster": 329616,
+        "bytes": 8214528,
+        "sha256": "1b54628e25272910430757051fe46168ea9a641b74a12119d8a1fa07863e1619",
+        "start_lba": 378736,
+        "clusters": 16044
+      },
+      "mv": {
+        "name": "TRACK3.MV",
+        "bytes": 131328000,
+        "frames": 855,
+        "fps": 10,
+        "sha256": "3d1e1e1712c669e5d6cdef2d790a5687653691563c9fca786af55ea5714b3e67",
+        "start_lba": 1585316,
+        "filter": "scale=320:240:force_original_aspect_ratio=increase:flags=lanczos,crop=320:240:(iw-ow)/2:(ih-oh)/2,setsar=1,fps=10,format=rgb565le",
+        "source_crop": "none"
+      },
+      "lyrics": {
+        "source_cues": 19,
+        "calibrated_cues": 19,
+        "display_rows": 22,
+        "first_ms": 36900,
+        "last_ms": 81741,
+        "manual_calibration_sha256": "db0835a1850ec091684b4d573dff21cbb440f40f881fa8a5fee0860e4326f39a"
+      },
+      "cover": {
+        "name": "PIC3.BMP",
+        "bytes": 921654,
+        "sha256": "040e072dcf7a4c8a25b537a4ae8311e3655daed2629afd2b236dbea652095346",
+        "dimensions": [
+          640,
+          480
+        ],
+        "policy": "full_bleed_content_biased_crop_4_3"
+      }
+    },
+    {
+      "number": 4,
+      "title": "万疆",
+      "artist": "李玉刚",
+      "audio": {
+        "name": "AUDIO4.PCM",
+        "first_cluster": 345660,
+        "bytes": 23416832,
+        "sha256": "a0c586da8ffc4c3e3b66fa718470df34a26851584578bec668b0ef7ceecfdbf2",
+        "start_lba": 394780,
+        "clusters": 45736
+      },
+      "mv": {
+        "name": "TRACK4.MV",
+        "bytes": 374630400,
+        "frames": 2439,
+        "fps": 10,
+        "sha256": "19059c55dd2a41dc068d731dc45157a1884935ade575b0ba4b4048d7d93fd361",
+        "start_lba": 1841816,
+        "filter": "crop=1920:834:0:122,scale=320:240:force_original_aspect_ratio=increase:flags=lanczos,crop=320:240:(iw-ow)/2:(ih-oh)/2,setsar=1,fps=10,format=rgb565le",
+        "source_crop": "crop=1920:834:0:122"
+      },
+      "lyrics": {
+        "source_cues": 63,
+        "calibrated_cues": 61,
+        "display_rows": 61,
+        "first_ms": 3540,
+        "last_ms": 205700,
+        "manual_calibration_sha256": "db0835a1850ec091684b4d573dff21cbb440f40f881fa8a5fee0860e4326f39a"
+      },
+      "cover": {
+        "name": "PIC4.BMP",
+        "bytes": 921654,
+        "sha256": "f0e00efa64abbe5a0ec3eae47c19a72a9dc4b1663a998e301c806822affda10c",
+        "dimensions": [
+          640,
+          480
+        ],
+        "policy": "full_bleed_content_biased_crop_4_3"
+      }
+    }
+  ],
+  "firmware": {
+    "file": "VinylFPGA_4songs_4mvs_manual_lyrics_fullbleed_20261020.bit",
+    "bytes": 676184,
+    "sha256": "26baebd9fcf9a051bd91b204fda325e40bf92f29985a21afce10a454ec3fe82e",
+    "source_bit": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\VinylFPGA_Runs\\phy_1\\seed_6\\VinylFPGA.bit",
+    "timing_ns": {
+      "SWNS": 0.128,
+      "STNS": 0.0,
+      "HWNS": 0.023,
+      "HTNS": 0.0
+    },
+    "latest_run_log": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\VinylFPGA_Runs\\phy_1\\seed_6\\run.log",
+    "flow_status": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\VinylFPGA_Runs\\phy_1\\seed_6\\flow.status",
+    "snapshot_checked_against": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\resource_opt_verified_20261005\\al_project_retry_20261020_1115\\inputs.sha256.json",
+    "src_constraints_match_snapshot": true
+  },
+  "verification": {
+    "s1_source_media_extraction_and_readback": {
+      "index_readback": true,
+      "fat_audio_chains_contiguous": true,
+      "audio_full_sha256_readback": true,
+      "covers_full_sha256_readback": true,
+      "background_lba_readback": true
+    },
+    "s2_four_mv_full_physical_sha256_readback": {
+      "all_four_mv_flags": true,
+      "full_frame_lengths": true,
+      "fat_chains_contiguous": true,
+      "mv_ranges_nonoverlapping": true,
+      "index_readback": true,
+      "full_mv_physical_sha256_readback": true
+    },
+    "s3_lyrics_decode_crc_rom_same_rows": {
+      "lyr2_decode_crc": true,
+      "rom_generated_from_same_rows": true,
+      "fat_chain_contiguous": true,
+      "lyr2_full_readback_sha256": true,
+      "all_index_lrc_flags": true,
+      "manual_calibration_applied": true
+    },
+    "vinyl_packer_verify_width_640_height_480": true,
+    "all_four_audio_hashes_unique": true,
+    "all_four_mv_hashes_unique": true,
+    "physical_card_written": false,
+    "board_playback_tested": false,
+    "visual_full_bleed_policy": true,
+    "full_bleed_card_sha_and_index_crc": true,
+    "audio_and_LYRICS_BIN_unchanged_from_manual_lyrics_release": true
+  },
+  "visual_policy": {
+    "cover": {
+      "canvas": [
+        640,
+        480
+      ],
+      "format": "24-bit BMP",
+      "policy": "full bleed 4:3 center crop using LANCZOS",
+      "per_song_centering": {
+        "1": [
+          0.5,
+          0.5
+        ],
+        "2": [
+          0.25,
+          0.5
+        ],
+        "3": [
+          0.25,
+          0.5
+        ],
+        "4": [
+          0.25,
+          0.5
+        ]
+      },
+      "no_padding_or_blurred_bars": true
+    },
+    "mv": {
+      "canvas": [
+        320,
+        240
+      ],
+      "fps": 10,
+      "pixel_format": "RGB565LE",
+      "frame_bytes": 153600,
+      "sectors_per_frame": 300,
+      "scale_and_crop_filter": "scale=320:240:force_original_aspect_ratio=increase:flags=lanczos,crop=320:240:(iw-ow)/2:(ih-oh)/2,setsar=1",
+      "source_crops_from_0d25421": {
+        "1": "crop=928:718:176:0",
+        "4": "crop=1920:834:0:122"
+      },
+      "policy": "remove known embedded mattes, then fill 4:3 with center crop; no padding"
+    },
+    "preview_samples": [
+      "10%",
+      "50%",
+      "90%"
+    ]
+  },
+  "source_git_commits": {
+    "material_baseline": "9fbbf5be75353debca4be674e1684dd315a50dfe",
+    "latest_materials_and_manual_lyrics": "ae68e728b310344d35850c99787d7838544e7f62"
+  },
+  "supersedes_image_sha256": "ce3d12ba31edbcce891bae80eea4350234d727466bdffdd0ea1ea1d4ecfcbf58",
+  "lyric_asset": {
+    "file": "LYRICS.BIN",
+    "bytes": 6161,
+    "sha256": "2ae9abdefff60900424d0d1f2104d255f8a5119c869a6742f3ad042f88ffd3e3",
+    "manual_calibration_sha256": "db0835a1850ec091684b4d573dff21cbb440f40f881fa8a5fee0860e4326f39a",
+    "source_manifest": "S3_lyrics_manifest.json"
+  },
+  "validation_note": "PC image and FAT/media checks passed. The historical r2/r4 images referenced by the two S5-named BAT files are not present at their absolute backup paths on this machine; this candidate was rebuilt from their committed visual policy and the current manual-lyrics card."
+}

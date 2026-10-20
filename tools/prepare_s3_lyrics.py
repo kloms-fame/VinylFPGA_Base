@@ -150,15 +150,20 @@ def make_display_rows(cues: list[Cue]) -> list[tuple[int, str]]:
 
 def apply_manual_calibration(cues: list[Cue], song_number: int,
                              calibration: dict) -> list[Cue]:
-    """Apply reviewed, one-based source-cue corrections without editing SRTs."""
+    """Apply reviewed, one-based text/time edits and inserted cues without editing SRTs."""
     track = calibration.get("tracks", {}).get(str(song_number), {})
     offset_ms = int(track.get("timeline_offset_ms", 0))
+    timing_edits = {int(index): value
+                    for index, value in track.get("replace_timing", {}).items()}
     corrected = []
-    for cue in cues:
-        start_ms = max(0, cue.start_ms + offset_ms)
-        end_ms = cue.end_ms + offset_ms
+    for index, cue in enumerate(cues, 1):
+        edit = timing_edits.get(index, {})
+        if not isinstance(edit, dict) or set(edit) - {"start_ms", "end_ms"}:
+            raise LyricError(f"歌曲{song_number} 字幕时间修正格式无效：cue {index} {edit!r}")
+        start_ms = max(0, int(edit.get("start_ms", cue.start_ms)) + offset_ms)
+        end_ms = int(edit.get("end_ms", cue.end_ms)) + offset_ms
         if end_ms <= start_ms:
-            raise LyricError(f"歌曲{song_number} 校准后字幕时段无效：{cue}")
+            raise LyricError(f"歌曲{song_number} 校准后字幕时段无效：cue {index}")
         corrected.append(Cue(start_ms, end_ms, cue.text))
     replacements = {int(index): str(text)
                     for index, text in track.get("replace_text", {}).items()}
@@ -178,10 +183,27 @@ def apply_manual_calibration(cues: list[Cue], song_number: int,
     unknown = [index for index in replacements if not 1 <= index <= len(corrected)]
     if unknown:
         raise LyricError(f"歌曲{song_number} 人工文本修正序号越界：{unknown}")
+    unknown_timing = [index for index in timing_edits if not 1 <= index <= len(corrected)]
+    if unknown_timing:
+        raise LyricError(f"歌曲{song_number} 人工时间修正序号越界：{unknown_timing}")
+    insertions: dict[int, list[Cue]] = {}
+    for item in track.get("insert_cues", []):
+        after = int(item["after"])
+        start_ms = max(0, int(item["start_ms"]) + offset_ms)
+        end_ms = int(item["end_ms"]) + offset_ms
+        text = str(item["text"])
+        if not 0 <= after <= len(corrected) or not text or end_ms <= start_ms:
+            raise LyricError(f"歌曲{song_number} 插入字幕无效：{item}")
+        insertions.setdefault(after, []).append(Cue(start_ms, end_ms, text))
+    if any(first <= after < last
+           for first, (last, _) in merged_ranges.items()
+           for after in insertions):
+        raise LyricError(f"歌曲{song_number} 插入字幕位置与合并字幕范围重叠")
     character_wrap = {int(index) for index in track.get("character_wrap_cues", [])}
     if any(not 1 <= index <= len(corrected) for index in character_wrap):
         raise LyricError(f"歌曲{song_number} 强制字格换行序号越界")
     result: list[Cue] = []
+    result.extend(insertions.get(0, []))
     index = 1
     while index <= len(corrected):
         if index in consumed:
@@ -191,13 +213,17 @@ def apply_manual_calibration(cues: list[Cue], song_number: int,
             last, text = merged_ranges[index]
             result.append(Cue(corrected[index - 1].start_ms,
                               corrected[last - 1].end_ms, text))
+            result.extend(insertions.get(last, []))
             index = last + 1
         else:
             cue = corrected[index - 1]
             result.append(Cue(cue.start_ms, cue.end_ms,
                               replacements.get(index, cue.text),
                               index in character_wrap))
+            result.extend(insertions.get(index, []))
             index += 1
+    if any(right.start_ms < left.start_ms for left, right in zip(result, result[1:])):
+        raise LyricError(f"歌曲{song_number} 校准后字幕时间顺序倒置")
     return result
 
 

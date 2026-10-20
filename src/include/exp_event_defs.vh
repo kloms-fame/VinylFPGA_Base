@@ -13,6 +13,8 @@
 //   ENC_SW   {15'b0, pressed}                      {15'b0, enc_id}
 //   IR_FRAME ir_code[15:0]                         ir_code[31:16]
 //   IR_REPEAT ir_code[15:0]                        ir_code[31:16]
+//   ENC_BASELINE enc_count                        {14'b0, enc_id, direction}
+// Router-only baseline update after consuming an encoder step to wake the display.
 //
 // 约定：enc_id 0=EC1 1=EC2；direction 0=递增(+) 1=递减(-)；pressed 1=按下。
 //       NEC 帧布局 = {Addr[31:24], ~Addr[23:16], Cmd[15:8], ~Cmd[7:0]}；
@@ -31,3 +33,4 @@ localparam [3:0] EV_ENC_STEP   = 4'd4;
 localparam [3:0] EV_ENC_SW     = 4'd5;
 localparam [3:0] EV_IR_FRAME   = 4'd6;
 localparam [3:0] EV_IR_REPEAT  = 4'd7;
+localparam [3:0] EV_ENC_BASELINE = 4'd8;

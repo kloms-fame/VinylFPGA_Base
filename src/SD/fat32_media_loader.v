@@ -345,10 +345,12 @@ module fat32_media_loader #(
         // Fields settle by byte 33 and are consumed only at byte 53.
         // Precompute continuously instead of merging byte/state decode into CE.
         else
-            header_offset_parts <= {data_offset >= 32'd54,
-                                    data_offset[31:16] < file_len[31:16],
-                                    data_offset[31:16] == file_len[31:16],
-                                    data_offset[15:0] < file_len[15:0]};
+            // The byte parser enters LD_DATA immediately after byte 53.
+            // Accept exactly that layout; do not decode extended-header bytes as pixels.
+            header_offset_parts <= {data_offset == 32'd54,
+                                    file_len[31:16] != 16'd0,
+                                    file_len[31:16] == 16'd0,
+                                    file_len[15:0] > 16'd54};
     end
     always @(posedge clk or posedge rst) begin
         if (rst) header_offset_ok <= 1'b0;

@@ -136,7 +136,7 @@ module fat32_file_streamer #(
             chain_count <= chain_count + 1'b1;
             current_cluster <= cluster_value;
             sector_in_cluster <= 8'd0;
-            last_sector_in_cluster <= 8'd0;
+            // The volume's sectors-per-cluster limit applies to every cluster.
             state <= ST_CLUSTER_DELTA;
         end
     endtask
@@ -156,6 +156,7 @@ module fat32_file_streamer #(
             remaining_bytes <= 32'd0;
             remaining_nonzero <= 1'b0;
             sector_in_cluster <= 8'd0;
+            last_sector_in_cluster <= 8'd0;
             spc_shift <= 3'd0;
             fat_entry_offset <= 9'd0;
             fat_byte0 <= 8'd0;

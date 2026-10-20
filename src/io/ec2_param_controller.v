@@ -82,6 +82,7 @@ module ec2_param_controller #(
                     case (ui_state)
                         STATE_HIDDEN: begin
                             ui_state       <= STATE_ADJUST;
+                            selected_param <= PARAM_VOL;
                             param_req_valid <= 1'b1;
                             param_req_id   <= PARAM_VOL;
                             param_req_up   <= step_up;
