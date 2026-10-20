@@ -265,7 +265,7 @@ wire de;
 wire [23:0] vout_data_raw;
 wire [23:0] vout_data;
 wire [23:0] transition_rgb;
-wire [23:0] osd_rgb_out;
+wire [23:0] video_layer_rgb;
 wire [23:0] waveform_rgb_out;
 wire        waveform_active;
 reg         waveform_enable_frame;
@@ -292,12 +292,12 @@ wire [4:0]  wipe_ramp;
 wire [1:0]  transition_kind;
 wire        frame_start;
 
-// Transition alpha stays at full-scale brightness; image BRI/CON are applied
-// in the following registered, frame-snapshotted pixel stage.
+// Transition alpha stays at full-scale brightness. BRI/CON are applied to the
+// final composed display pixel in the registered, frame-snapshotted output stage.
 wire [7:0] brightness_frame = 8'd255;
-wire [23:0] adjusted_rgb;
-wire        adjusted_de;
-reg  [9:0]  adjusted_pixel_x;
+wire [23:0] final_adjusted_rgb;
+wire        final_adjusted_de;
+reg         final_vs_q;
 wire        ec2_panel_vs;
 wire        ec2_panel_de;
 wire [9:0]  ec2_panel_x;
@@ -1011,8 +1011,8 @@ wire        display_ok        = pat_mode ? pat_done_s2 : display_valid_sync2;
 
 // 诊断模式下把 OSD / 转场 / 波形逐级旁路，屏幕上只留 SDRAM 读回数据本身
 wire [23:0] trans_rgb_eff     = pat_mode ? vout_data : transition_rgb;
-wire [23:0] osd_rgb_eff       = pat_mode ? trans_rgb_eff : osd_rgb_out;
-wire [23:0] wave_rgb_eff      = pat_mode ? osd_rgb_eff : osd_rgb_out;
+wire [23:0] osd_rgb_eff       = pat_mode ? trans_rgb_eff : video_layer_rgb;
+wire [23:0] wave_rgb_eff      = pat_mode ? osd_rgb_eff : video_layer_rgb;
 
 localparam PAT_IDLE   = 2'd0;
 localparam PAT_REQ    = 2'd1;
@@ -1674,31 +1674,11 @@ video_transition_apply #(
     .rgb_out     (transition_rgb)
 );
 
-// D4/D5: integer shift-add levels, one pixel register, saturating channels.
-brightness_contrast_steps u_brightness_contrast_steps (
-    .clk              (video_clk),
-    .rst_n            (video_rst_n),
-    .in_de            (de),
-    .rgb_in           (transition_rgb),
-    .brightness_level (brightness_level_frame),
-    .contrast_level   (contrast_level_frame),
-    .out_de           (adjusted_de),
-    .rgb_out          (adjusted_rgb)
-);
-
-// 对比度模块内部有一拍流水线，像素 x 坐标同步后移一拍，保证 OSD/波形
-// 仍与 rgb 对齐。
-always @(posedge video_clk or negedge video_rst_n) begin
-    if (!video_rst_n)
-        adjusted_pixel_x <= 10'd0;
-    else if (!adjusted_de)
-        adjusted_pixel_x <= 10'd0;
-    else
-        adjusted_pixel_x <= adjusted_pixel_x + 10'd1;
-end
-
-// Retain the startup error background; the three debug text rows are retired.
-assign osd_rgb_out = (!display_valid_sync2 && media_err_code_frame != 0) ? 24'h201018 : adjusted_rgb;
+// Keep error-state pixels in the same base-video path as the selected image.
+// Final brightness/contrast is applied after playback, waveform, parameter,
+// and boot layers have all been composed.
+assign video_layer_rgb = (!display_valid_sync2 && media_err_code_frame != 0)
+                       ? 24'h201018 : transition_rgb;
 
 
 
@@ -2375,7 +2355,7 @@ s6_video_layer #(.ENABLE(S6_VIDEO_ENABLE)) u_s6_video_layer(
  .track_id(song_metadata_video[1:0]),
  .seek_frame(seek_frame_vid),
  .visual_toggle(mv_visual_tgl),.raw_read_en(video_read_en),.out_de(de),.out_x(osd_pixel_x),
- .adjusted_de(adjusted_de),.adjusted_x(adjusted_pixel_x),.rgb_in(wave_rgb_eff),.rgb_out(s6_rgb),
+ .adjusted_de(de),.adjusted_x(osd_pixel_x),.rgb_in(wave_rgb_eff),.rgb_out(s6_rgb),
  .mv_read_active(mv_read_active),.mv_read_bank(mv_read_bank),
  .fifo_read_allowed(mv_fifo_read_allowed),.mv_window_visible(mv_window_visible),
  .request_toggle(mv_req_tgl),.request_lba(mv_request_lba),.request_bank(mv_request_bank),
@@ -2506,8 +2486,8 @@ ascii_font_rom u_shared_ascii_font_rom (
     .clk(video_clk),.addr(shared_ascii_font_addr),.dout(shared_ascii_font_row)
 );
 playback_page #(.IMAGE_BACKGROUND(1)) u_playback_page (
-    .clk(video_clk),.rst_n(video_rst_n),.vs(vs),.de(adjusted_de),
-    .pixel_x(adjusted_pixel_x),
+    .clk(video_clk),.rst_n(video_rst_n),.vs(vs),.de(de),
+    .pixel_x(osd_pixel_x),
     .enable(playback_page_mode_frame),
     .end_mode(song_metadata_video[4:3]),
     .bg_cycle_toggle_async(brw_ev_home_tgl),
@@ -2602,12 +2582,41 @@ wire blank_active_vid = blank_v2;
 assign final_rgb = blank_active_vid ? 24'h000000 :
                    (s2_boot_on && boot_active) ? boot_rgb : ec2_panel_rgb;
 
+// D4/D5: reuse the existing shift-add pixel stage at the HDMI output boundary
+// so every visible layer (including the EC2 OSD and boot logo) shares one
+// frame-coherent brightness/contrast setting. Diagnostic color bars retain
+// their historical unadjusted pixels; blanking selects unity correction so
+// black remains exactly black without adding another pixel register.
+wire final_bypass_adjustment = pat_mode || blank_active_vid;
+wire [2:0] final_brightness_level = final_bypass_adjustment
+                                  ? 3'd3 : brightness_level_frame;
+wire [2:0] final_contrast_level = final_bypass_adjustment
+                                ? 3'd2 : contrast_level_frame;
+brightness_contrast_steps u_brightness_contrast_steps (
+    .clk              (video_clk),
+    .rst_n            (video_rst_n),
+    .in_de            (ec2_panel_de),
+    .rgb_in           (final_rgb),
+    .brightness_level (final_brightness_level),
+    .contrast_level   (final_contrast_level),
+    .out_de           (final_adjusted_de),
+    .rgb_out          (final_adjusted_rgb)
+);
+
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n) begin
+        final_vs_q <= 1'b0;
+    end else begin
+        final_vs_q <= ec2_panel_vs;
+    end
+end
+
 video_rgb_to_axis_640x480 u_video_rgb_to_axis_640x480(
     .I_clk         (video_clk),
     .I_rst         (~video_rst_n),
-    .I_vs          (ec2_panel_vs),
-    .I_de          (ec2_panel_de),
-    .I_rgb         (final_rgb),
+    .I_vs          (final_vs_q),
+    .I_de          (final_adjusted_de),
+    .I_rgb         (final_adjusted_rgb),
     .O_video_user  (axis_s_user),
     .O_video_valid (axis_s_valid),
     .O_video_last  (axis_s_last),
