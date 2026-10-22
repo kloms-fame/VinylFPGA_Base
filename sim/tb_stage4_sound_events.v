@@ -5,7 +5,7 @@ module tb_stage4_sound_events;
     reg clk=0,rst_n=0;
     always #10 clk=~clk; // real 50 MHz
     reg [11:0] keys=0;
-    reg board_key=0;
+    reg [2:0] board_key=0;
     reg [5:0] dips=0,dip_levels=0;
     reg [2:0] dip_index=0,board_index=0;
     reg [3:0] board_changes=0,board_levels=0;
@@ -20,6 +20,7 @@ module tb_stage4_sound_events;
         .underrun_pulse(1'b0),.wav_buffer_low(1'b0),.wav_stream_active(1'b0),
         .mv_failed(1'b0),.osd_err_valid(1'b0),.osd_err_code(8'd0),
         .slideshow_beep_event(slide),.pcm_level(8'd0),.ws_brightness_level(3'd0),
+        .save_success(1'b0),.nvm_fault(1'b0),
         .mv_mode_active(1'b0),.ws_mode_tgl(1'b0),.board_buzzer_n(buzzer_n));
     task check;
         input ok;
@@ -86,7 +87,7 @@ module tb_stage4_sound_events;
     endtask
     task all_sources;
         begin
-            keys=12'hfff;board_key=1;dips=6'h3f;dip_levels=6'h3f;
+            keys=12'hfff;board_key=3'b010;dips=6'h3f;dip_levels=6'h3f;
             e1=1;e2=1;d1=1;d2=0;s1=1;s2=1;ir=1;slide=1;
         end
     endtask
@@ -104,7 +105,7 @@ module tb_stage4_sound_events;
         force dut.enc1_sw_fall_pulse=s1;force dut.enc2_sw_fall_pulse=s2;
         force dut.ir_event=ir;force dut.ir_repeat_event=ir_repeat;
         reset_case;keys=12'h800;pulse(10'd512,4'd2,32'd12500);
-        reset_case;board_key=1;pulse(10'd512,4'd2,32'd12500);
+        reset_case;board_key=3'b010;pulse(10'd512,4'd2,32'd12500);
         reset_case;dips=6'b000100;dip_index=2;dip_levels=6'b000100;pulse(10'd384,4'd3,32'd10000);
         reset_case;dips=6'b001000;dip_index=3;pulse(10'd256,4'd3,32'd16667);
         reset_case;board_changes=4'b1000;board_index=3;board_levels=4'b1000;

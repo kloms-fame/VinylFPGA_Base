@@ -1,0 +1,19 @@
+{
+  "local_document_links": 11,
+  "主片分镜_178秒.csv": {
+    "scenes": 16,
+    "seconds": 178,
+    "continuous_timeline": true
+  },
+  "完整功能版分镜_360秒.csv": {
+    "scenes": 14,
+    "seconds": 360,
+    "continuous_timeline": true
+  },
+  "feature_families": 23,
+  "bit_copies_match": true,
+  "production_source_hashes_match_reference": true,
+  "frozen_source_constraint_files": 139,
+  "videos_recorded_or_rendered": false,
+  "narration_timing_status": "Editorial budget only; final spoken timing must follow the recorded voice and footage"
+}

@@ -13,6 +13,7 @@ module ui_param_persistence #(
     output wire restore_valid,
     output wire [19:0] restore_data,
     output wire [3:0] led_status,
+    output wire save_success, // One clk pulse after the NOR commit succeeds.
     output wire flash_cs_n, flash_sclk, flash_mosi,
     input wire flash_miso,
     output wire flash_wp_n, flash_hold_n
@@ -27,6 +28,7 @@ module ui_param_persistence #(
     localparam AW = $clog2(AUTO_SAVE_MS+1);
     reg [AW-1:0] idle_ms = 0;
     wire dirty = current_params!=saved_params;
+    assign save_success = store_done;
     assign restore_valid = store_load_valid && !startup_override && !defaults_req && !user_write;
     assign restore_data = store_load_params;
     // LED1: startup restore accepted; LED2: current values durably saved;

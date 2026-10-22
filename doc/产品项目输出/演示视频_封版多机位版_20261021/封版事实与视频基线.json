@@ -1,0 +1,103 @@
+{
+  "prepared_date": "2026-10-21",
+  "timezone": "Asia/Shanghai",
+  "project_stage": "delivery_materials_and_demo_video",
+  "version_fixed": {
+    "status": "complete",
+    "evidence": "user_confirmation"
+  },
+  "final_hardware_acceptance": {
+    "status": "complete",
+    "evidence": "user_confirmation",
+    "repeated_in_this_task": false
+  },
+  "video_recorded": false,
+  "video_preferences": {
+    "multiple_cameras": true,
+    "editing": true,
+    "multiple_operators": true,
+    "priority": "show the work and its functionality clearly and completely"
+  },
+  "gui_artifact_check": {
+    "project": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\VinylFPGA.al",
+    "flow": "TD GUI MultiSeed, one fixed seed 6",
+    "project_strategy": {
+      "syn_1/map_mode": "area_prior",
+      "syn_1/pack_effort": "high",
+      "phy_1/opt_timing": "high",
+      "phy_1/effort": "routability"
+    },
+    "timing_ns": {
+      "SWNS": 0.22,
+      "STNS": 0.0,
+      "HWNS": 0.024,
+      "HTNS": 0.0
+    },
+    "bit": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\prj\\VinylFPGA_Runs\\phy_1\\seed_6\\VinylFPGA.bit",
+    "bit_sha256": "5e41a3882d0fde4c00f46ac1e31ad8107dd763b1a2ec176da83b8ed05bae0b62",
+    "bit_bytes": 676184,
+    "snapshot_checked": true
+  },
+  "delivery_bit": "prj/VinylFPGA_Runs/best_result/VinylFPGA.bit",
+  "bit_copies_sha256": {
+    "prj/VinylFPGA_Runs/best_result/VinylFPGA.bit": "5e41a3882d0fde4c00f46ac1e31ad8107dd763b1a2ec176da83b8ed05bae0b62",
+    "prj/VinylFPGA_Runs/phy_1/VinylFPGA.bit": "5e41a3882d0fde4c00f46ac1e31ad8107dd763b1a2ec176da83b8ed05bae0b62",
+    "prj/VinylFPGA_Runs/phy_1/seed_6/VinylFPGA.bit": "5e41a3882d0fde4c00f46ac1e31ad8107dd763b1a2ec176da83b8ed05bae0b62"
+  },
+  "resources": {
+    "lut": {
+      "used": 17835,
+      "total": 19600,
+      "percent": 90.99
+    },
+    "reg": {
+      "used": 11899,
+      "total": 19600,
+      "percent": 60.71
+    },
+    "bram": {
+      "used": 64,
+      "total": 64,
+      "percent": 100.0
+    },
+    "bram32k": {
+      "used": 1,
+      "total": 16,
+      "percent": 6.25
+    },
+    "dsp": {
+      "used": 10,
+      "total": 29,
+      "percent": 34.48
+    },
+    "pll": {
+      "used": 2,
+      "total": 4,
+      "percent": 50.0
+    }
+  },
+  "authoritative_timing_report": "prj/VinylFPGA_Runs/phy_1/VinylFPGA_pr.timing",
+  "timing_report_header": "Generated: Wed Oct 21 19:48:17 2026; Routed; Slow and Fast",
+  "historical_reports": {
+    "best_result/signoff_timing.ts": {
+      "SWNS_ns": 0.143,
+      "use_for_video": false
+    },
+    "best_result/VinylFPGA_place.ts": {
+      "stage": "place",
+      "use_for_final_route_numbers": false
+    }
+  },
+  "recommended_video_outputs": [
+    {
+      "id": "main",
+      "seconds": 178
+    },
+    {
+      "id": "full",
+      "seconds": 360
+    }
+  ],
+  "duration_status": "editorial targets; final competition upload restrictions have not been supplied",
+  "hardware_results_source": "User confirms final acceptance; local artifact consistency checked separately"
+}

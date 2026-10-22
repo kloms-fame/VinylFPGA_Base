@@ -19,6 +19,7 @@
 `include "io/ui_ms_tick.v"
 `include "io/health_monitor.v"
 `include "io/buzzer_feedback.v"
+`include "io/system_sound_scheduler.v"
 `include "io/expansion_integration.v"
 `include "io/ui_event_bridge.v"
 `include "io/ui_param_csr.v"
@@ -168,6 +169,7 @@ parameter BUF3_ADDR     = FRAME_PIXELS * 24'd3;
 
 // Declare shared nets before their first expression use (Verilog-2005 tools).
 wire [3:0] nvm_led_status;
+wire nvm_save_success;
 reg [7:0] media_err_code_clk;
 wire mv_read_active;
 wire [1:0] mv_read_bank;
@@ -848,6 +850,7 @@ ui_param_persistence u_ui_param_persistence(
     .auto_enable(board_sw_level_clk[2]),
     .restore_valid(nvm_restore_valid), .restore_data(nvm_restore_data),
     .led_status(nvm_led_status),
+    .save_success(nvm_save_success),
     .flash_cs_n(flash_cs_n), .flash_sclk(flash_sclk), .flash_mosi(flash_mosi),
     .flash_miso(flash_miso), .flash_wp_n(flash_wp_n), .flash_hold_n(flash_hold_n));
 
@@ -2763,6 +2766,8 @@ expansion_integration #(
     .osd_err_valid    (merged_err_valid),
     .osd_err_code     (merged_err_code),
     .slideshow_beep_event(slideshow_beep_event_clk),
+    .save_success(nvm_save_success),
+    .nvm_fault(nvm_led_status[3]),
     .ui_event_valid   (ui_event_valid),
     .ui_event_code    (ui_event_code),
     .ui_event_arg     (ui_event_arg),

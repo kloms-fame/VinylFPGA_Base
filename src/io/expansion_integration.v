@@ -64,6 +64,8 @@ module expansion_integration #(
     input  wire        osd_err_valid,      // 错误码变化单拍脉冲
     input  wire [7:0]  osd_err_code,       // 已同步错误码
     input  wire        slideshow_beep_event, // D1：自动 bank 确认后的单拍事件
+    input  wire        save_success,         // Flash commit succeeded, clk pulse
+    input  wire        nvm_fault,            // Flash fault, clk domain
 
     // ===================== S3：选曲事件出口（S7-03 起由 ui_command_router 净化后输出）=====================
     // 原为 ui_event_bus 单拍事件流；S7-03 起改为 ui_command_router 的"业务命令流"
@@ -455,6 +457,22 @@ module expansion_integration #(
             encoder_switch_any,encoder_switch_source_any,
             (ir_event & ~ir_repeat_event & dip_level[4]),slideshow_beep_event};
     end
+    wire buzzer_busy;
+    wire fault_tone_event, save_chime_event;
+    wire [1:0] fault_tone_action, save_tone_action;
+    // Check both pipeline stages so queued operation feedback keeps priority.
+    wire operation_sound_pending = sound_events_q[9] | sound_events_q[8] |
+        sound_events_q[6] | sound_events_q[3] | sound_events_q[1] | sound_events_q[0] |
+        key_press_any | dip_change_any | encoder_step_any | encoder_switch_any |
+        (ir_event & ~ir_repeat_event & dip_level[4]) | slideshow_beep_event;
+    system_sound_scheduler u_system_sound_scheduler (
+        .clk(clk), .rst_n(rst_n), .tick_1ms(ui_tick_1ms),
+        .alarm_enable(board_sw_level[3]), .media_fault(err_code != 8'd0),
+        .nvm_fault(nvm_fault), .save_success(save_success),
+        .buzzer_busy(buzzer_busy), .operation_pending(operation_sound_pending),
+        .fault_tone_event(fault_tone_event), .fault_tone_action(fault_tone_action),
+        .save_chime_event(save_chime_event), .save_tone_action(save_tone_action)
+    );
     buzzer_feedback u_buzzer_feedback (
         .clk                   (clk),
         .rst_n                 (rst_n),
@@ -467,11 +485,12 @@ module expansion_integration #(
         .encoder_source        (sound_events_q[4]),
         .encoder_switch        (sound_events_q[3]),
         .encoder_switch_source (sound_events_q[2]),
-        .ir_event              (sound_events_q[1]),
-        .ir_action             (2'd0),
+        .ir_event              (sound_events_q[1] | fault_tone_event | save_chime_event),
+        .ir_action             (save_chime_event ? save_tone_action :
+                                fault_tone_event ? fault_tone_action : 2'd0),
         .slideshow_event       (sound_events_q[0]),
         .buzzer_n              (board_buzzer_n),
-        .busy                  ()
+        .busy                  (buzzer_busy)
     );
 
     // ===================== X1A：LED1~4 业务化执行器 =====================
