@@ -304,6 +304,12 @@ def case_fragmented_audio() -> None:
                   "--report", str(rep),
                   "--width", str(info["width"]), "--height", str(info["height"])])
     check(rc == 0, "显式允许后可出索引（风险已记录）")
+    before = hashlib.sha256(img.read_bytes()).hexdigest()
+    rc = vp.main(["verify", "--image", str(img),
+                  "--width", str(info["width"]), "--height", str(info["height"])])
+    check(rc == 2, "正式 verify 必须拒绝碎片音频，即使打包显式允许")
+    check(hashlib.sha256(img.read_bytes()).hexdigest() == before,
+          "拒绝碎片音频时只读校验不得改写镜像")
 
 
 def case_odd_audio() -> None:

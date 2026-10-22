@@ -23,7 +23,8 @@
     所有被引用的文件都必须落在根目录前 16 项内，否则工具直接报错。
   * 索引本身带 entries_crc32（CRC-32/ISO-HDLC），RTL 侧逐字节重算比对。
   * 音频走 wav_stream_player 的"逐扇区 +1"读法（S0~S3 既有行为），
-    因此工具默认要求音频物理连续；不连续时报警并要求 --allow-fragmented-audio。
+    因此工具默认要求音频物理连续；--allow-fragmented-audio 仅供离线索引实验，
+    正式 verify 始终拒绝碎片音频，不能将该选项用于板端交付。
 """
 
 from __future__ import annotations
@@ -669,12 +670,15 @@ def cmd_verify(args) -> int:
             print(f"VERIFY_OK 曲目 {i}: 封面 簇{s['cover_cluster']} "
                   f"{s['cover_bytes']}B 运行段 {runs} CRC32 一致")
             if s["flags"] & FLAG_AUDIO:
+                aruns = img.cluster_runs(s["audio_cluster"])
+                if len(aruns) != 1:
+                    raise PackError(f"songs[{i}].audio fragmented: FPGA requires contiguous sectors; "
+                                    "copy the PCM file again contiguously")
                 aud = img.read_file(s["audio_cluster"], s["audio_bytes"])
                 got = zlib.crc32(aud) & 0xFFFFFFFF
                 if got != s["audio_crc32"]:
                     raise PackError(f"songs[{i}].audio CRC 不符：卡上 0x{got:08X} != "
                                     f"索引 0x{s['audio_crc32']:08X}")
-                aruns = img.cluster_runs(s["audio_cluster"])
                 print(f"VERIFY_OK 曲目 {i}: 音频 簇{s['audio_cluster']} "
                       f"{s['audio_bytes']}B 起始LBA {aruns[0][0]} 运行段 {aruns} CRC32 一致")
     return 0
@@ -694,14 +698,14 @@ def main(argv=None) -> int:
     pp.add_argument("--width", type=int, default=640)
     pp.add_argument("--height", type=int, default=480)
     pp.add_argument("--allow-fragmented-audio", action="store_true",
-                    help="允许音频物理不连续（默认拒绝，见文件头说明）")
+                    help="仅允许离线生成碎片音频索引；正式 verify 仍拒绝，不能用于板端交付")
     pp.set_defaults(func=cmd_pack)
 
     pi = sub.add_parser("info", help="打印 INDEX.BIN 内容")
     pi.add_argument("--image", required=True)
     pi.set_defaults(func=cmd_info)
 
-    pv = sub.add_parser("verify", help="只读回读校验索引与文件 CRC")
+    pv = sub.add_parser("verify", help="只读校验索引、文件 CRC 及板端所需音频连续布局")
     pv.add_argument("--image", required=True)
     pv.add_argument("--width", type=int, default=640)
     pv.add_argument("--height", type=int, default=480)
