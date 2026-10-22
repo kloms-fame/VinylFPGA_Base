@@ -406,6 +406,7 @@ wire        brw_ev_confirm_tgl;
 wire        brw_ev_mode_tgl;
 // Legacy home_tgl port now carries KEY11 to the video-domain background only.
 wire brw_ev_home_tgl,brw_ev_effect_tgl,brw_ev_end_mode_tgl;
+wire lyric_focus_tgl;
 wire brw_play_start,brw_play_stop;
 reg play_start_pending_sd;
 wire [1:0] play_end_mode;
@@ -2494,6 +2495,7 @@ playback_page #(.IMAGE_BACKGROUND(1)) u_playback_page (
     .enable(playback_page_mode_frame),
     .end_mode(song_metadata_video[4:3]),
     .bg_cycle_toggle_async(brw_ev_home_tgl),
+    .lyric_focus_toggle_async(lyric_focus_tgl),
     .background_image_active(background_image_active),.background_mode(background_mode),
     .browse_mode(browse_page_mode_frame),.rgb_in(lrc_rgb),
     .song_id(active_ui_song_id),.title_length(song_title_length),
@@ -2809,6 +2811,7 @@ ui_event_bridge u_ui_event_bridge (
     .mode_tgl     (brw_ev_mode_tgl),
     .home_tgl     (brw_ev_home_tgl),
     .effect_tgl   (brw_ev_effect_tgl),
+    .lyric_focus_tgl(lyric_focus_tgl),
     .end_mode_tgl (brw_ev_end_mode_tgl),
     .enc_cw_tgl   (brw_ev_enc_cw_tgl),
     .enc_ccw_tgl  (brw_ev_enc_ccw_tgl),

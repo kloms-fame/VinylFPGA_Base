@@ -4,6 +4,7 @@ module tb_ui_encoder_gap;
  reg [3:0] ev_code=0;
  reg [15:0] ev_arg=0,ev_aux=0;
  wire prev_tgl,next_tgl,confirm_tgl,mode_tgl,home_tgl,effect_tgl,end_mode_tgl;
+ wire lyric_focus_tgl;
  wire enc_cw_tgl,enc_ccw_tgl,key_up_tgl,visual_tgl,key_down_tgl,ws_mode_tgl;
  wire seek_fwd5_tgl,seek_bwd5_tgl,replay_tgl,seek_fwd2_tgl,seek_bwd2_tgl;
  integer cycles=0,last_toggle=-1,toggle_count=0,i;

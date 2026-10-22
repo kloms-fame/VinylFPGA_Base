@@ -2,11 +2,13 @@
 
 基于安路 EG4S20BG256 的唱片主题本地音乐画屏：TF 卡媒体、HDMI 音视频、歌词、MV、实体控制、灯效与 Flash 参数保存。
 
-2026-10-22 冻结版本已完成代码复核和交付工具修复；用户已报告烧录后实板测试正常。完整验证范围、资源、时序、已有告警和冗余处理决定见 [最终收尾验收](doc/产品项目输出/27_最终冻结与收尾验收_20261022.md)。
+2026-10-22 新增 **SW9 / KEY6：五行歌词 / 单句专注切换**，已通过仿真及原工程完整构建，新增行为待实板验收。[本轮固件](prj/VinylFPGA_Runs/lyric_focus_20261022/release/VinylFPGA.bit)与[开发验证记录](doc/产品项目输出/29_KEY6歌词专注模式开发与验证_20261022.md)单独归档；原工程布局 seed 已固定为本轮通过时序的 **7**，其他策略、引脚与约束沿用原配置。
 
-- 工程入口：[prj/VinylFPGA.al](prj/VinylFPGA.al)，TD 6.2.168116，顶层 `top`，沿用固定 seed 6 及现有策略。
-- 冻结固件：[VinylFPGA.bit](prj/VinylFPGA_Runs/save_success_phrase_20261022/release/VinylFPGA.bit)，SHA-256 为 `1801a8d36429fe767c0d7e510db0edfed86faaccdba966c8843e043aba39dad5`。
-- 源码、工程、固件和媒体身份：[版本清单](doc/产品项目输出/final_release_20261022.json)。原三音发布包保留原样，本轮复编译产物仅作验证。
+此前的 2026-10-22 冻结版本已完成代码复核和交付工具修复；用户已明确确认该版本全部功能人工验收通过。完整验证范围、资源、时序、已有告警和冗余处理决定见 [最终收尾验收](doc/产品项目输出/27_最终冻结与收尾验收_20261022.md)，该次身份与回归复核见 [人工验收确认与开发冻结复核](doc/产品项目输出/28_人工验收确认与开发冻结复核_20261022.md)。
+
+- 工程入口：[prj/VinylFPGA.al](prj/VinylFPGA.al)，TD 6.2.168116，顶层 `top`，固定 seed 7 及现有策略。
+- 此前冻结固件：[VinylFPGA.bit](prj/VinylFPGA_Runs/save_success_phrase_20261022/release/VinylFPGA.bit)，SHA-256 为 `1801a8d36429fe767c0d7e510db0edfed86faaccdba966c8843e043aba39dad5`。
+- 此前冻结版本的源码、工程、固件和媒体身份：[版本清单](doc/产品项目输出/final_release_20261022.json)。原三音发布包保留原样；新增 KEY6 版本见上方本轮固件与验证记录。
 - 交付 ZIP：[包校验值](doc/产品项目输出/final_delivery_20261022.sha256)，用于核对单独归档的 `VinylFPGA_Final_20261022.zip`。
 - 项目分析与交接：[文档导航](doc/产品项目输出/00_文档集导航.md)。
 

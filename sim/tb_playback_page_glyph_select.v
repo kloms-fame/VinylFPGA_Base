@@ -13,6 +13,7 @@ module playback_background (
 endmodule
 
 module lrc_five_osd (
+    input wire focus_only,
     input wire enable, input wire de, input wire [9:0] pixel_x, input wire [9:0] pixel_y,
     input wire window_valid, input wire highlight_valid, input wire scroll_active,
     input wire [2:0] row_base_slot,
@@ -69,6 +70,7 @@ module tb_playback_page_glyph_select;
     always #5 clk = ~clk;
 
     playback_page dut (
+        .lyric_focus_toggle_async(1'b0),
         .clk(clk), .rst_n(rst_n), .vs(vs), .de(de), .pixel_x(pixel_x),
         .enable(enable), .browse_mode(browse_mode), .bg_cycle_toggle_async(1'b0),
         .background_image_active(1'b0), .background_mode(background_mode),

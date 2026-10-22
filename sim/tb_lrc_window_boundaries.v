@@ -54,6 +54,7 @@ module tb_lrc_window_boundaries;
     );
 
     lrc_five_osd preview_osd (
+        .focus_only(1'b0),
         .enable(1'b1), .de(1'b1), .pixel_x(`PLAYBACK_LYRIC_X),
         .pixel_y(preview_y), .window_valid(window_valid),
         .highlight_valid(target_valid), .scroll_active(1'b0),

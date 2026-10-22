@@ -100,3 +100,4 @@ sim/s6_20261006/*.json
 /doc/资源/sd卡/stage4/card_STAGE4.img
 # Rebuildable release SD-card images stay local; distribute them outside Git.
 /doc/资源/sd卡/release_*/VinylFPGA_SD_*.img
+VinylFPGA_MediaStudio/

@@ -10,7 +10,7 @@ module tb_closure_lyric_equiv;
  wire [44:0] current,previous;
  integer i,j,xx,yy,pass_count=0;
  reg [31:0] random_word;
- lrc_five_osd now_dut(.enable(enable),.de(de),.pixel_x(x),.pixel_y(y),
+ lrc_five_osd now_dut(.focus_only(1'b0),.enable(enable),.de(de),.pixel_x(x),.pixel_y(y),
   .window_valid(valid),.scroll_active(scroll),.row_lengths(lengths),.row_glyphs(glyphs),
   .scroll_offset(offset),.line_count(count),.no_lyrics_glyphs(empty_text),
   .font_request(current[44]),.font_glyph(current[43:36]),.font_column(current[35:32]),

@@ -8,6 +8,7 @@
 // request with title/artist/time and drives the single shared font ROM.
 module lrc_five_osd (
     input  wire          enable,
+    input  wire          focus_only,
     input  wire          de,
     input  wire [9:0]    pixel_x,
     input  wire [9:0]    pixel_y,
@@ -122,7 +123,10 @@ module lrc_five_osd (
                         3'd4: begin selected_length = row_lengths[24:20]; selected_glyph = glyph_byte_at(row_glyphs[639:512], font_column); end
                         default: begin selected_length = row_lengths[29:25]; selected_glyph = glyph_byte_at(row_glyphs[767:640], font_column); end
                     endcase
-                    if (font_column < selected_length) begin
+                    // The current logical row moves from slot 3 to slot 2
+                    // on scroll commit. Keep the neutral prelude preview too.
+                    if ((font_column < selected_length) &&
+                        (!focus_only || (selected_slot == (scroll_active ? 3'd3 : 3'd2)))) begin
                         font_request = 1'b1;
                         font_glyph = selected_glyph;
                         font_row = selected_row_pixel;

@@ -10,18 +10,19 @@ module tb_ui_event_bridge_key_decode;
 
     wire prev_tgl, next_tgl, confirm_tgl, mode_tgl;
     wire home_tgl, effect_tgl, end_mode_tgl;
+    wire lyric_focus_tgl;
     wire enc_cw_tgl, enc_ccw_tgl, key_up_tgl, visual_tgl, key_down_tgl;
     wire ws_mode_tgl, seek_fwd5_tgl, seek_bwd5_tgl, replay_tgl;
     wire seek_fwd2_tgl, seek_bwd2_tgl;
 
-    wire [17:0] observed = {
+    wire [18:0] observed = {lyric_focus_tgl,
         seek_bwd2_tgl, seek_fwd2_tgl, replay_tgl, seek_bwd5_tgl,
         seek_fwd5_tgl, ws_mode_tgl, key_down_tgl, visual_tgl,
         key_up_tgl, enc_ccw_tgl, enc_cw_tgl, end_mode_tgl,
         effect_tgl, home_tgl, mode_tgl, confirm_tgl, next_tgl, prev_tgl
     };
 
-    reg [17:0] expected = 18'd0;
+    reg [18:0] expected = 19'd0;
     integer checks = 0;
     integer idx;
 
@@ -32,7 +33,7 @@ module tb_ui_event_bridge_key_decode;
     task send_and_check;
         input [3:0] code;
         input [15:0] arg;
-        input [17:0] toggle_mask;
+        input [18:0] toggle_mask;
         input [8*40-1:0] label;
         begin
             @(negedge clk);
@@ -59,13 +60,13 @@ module tb_ui_event_bridge_key_decode;
         rst_n = 1'b1;
         repeat (2) @(negedge clk);
 
-        // KEY indices 0..14, including deliberately unmapped index 5.
+        // KEY indices 0..14, including KEY6 lyric focus at index 5.
         send_and_check(4'd1, 16'd0,  18'h00101, "KEY index 0");
         send_and_check(4'd1, 16'd1,  18'h00004, "KEY index 1");
         send_and_check(4'd1, 16'd2,  18'h00082, "KEY index 2");
         send_and_check(4'd1, 16'd3,  18'h00201, "KEY index 3");
         send_and_check(4'd1, 16'd4,  18'h00802, "KEY index 4");
-        send_and_check(4'd1, 16'd5,  18'h00000, "KEY index 5 unmapped");
+        send_and_check(4'd1, 16'd5,  19'h40000, "KEY index 5 lyric focus");
         send_and_check(4'd1, 16'd6,  18'h00008, "KEY index 6");
         send_and_check(4'd1, 16'd7,  18'h00400, "KEY index 7");
         send_and_check(4'd1, 16'd8,  18'h00020, "KEY index 8");

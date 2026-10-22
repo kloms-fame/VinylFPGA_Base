@@ -18,6 +18,7 @@ module playback_page #(
     input  wire         browse_mode,
     input  wire [1:0]   end_mode, // Acknowledged video-domain play_ctrl policy.
     input  wire         bg_cycle_toggle_async,
+    input  wire         lyric_focus_toggle_async,
     input  wire         background_image_active,
     output wire [1:0]   background_mode,
     input  wire [23:0]  rgb_in,
@@ -216,6 +217,37 @@ module playback_page #(
     wire [3:0] lyric_font_pixel_column;
     wire [3:0] lyric_font_row;
     wire [23:0] lyric_text_color;
+    // Drain the toggle CDC even in browse mode. Acceptance uses the playback
+    // state at synchronized consumption, matching playback_background.
+    (* async_reg = "true" *) reg lyric_focus_meta = 1'b0;
+    (* async_reg = "true" *) reg lyric_focus_safe = 1'b0;
+    reg lyric_focus_history = 1'b0;
+    reg lyric_focus_requested = 1'b0;
+    reg lyric_focus_frame = 1'b0;
+    wire lyric_focus_event = lyric_focus_safe ^ lyric_focus_history;
+    wire lyric_focus_next = lyric_focus_requested ^
+        (enable && !browse_mode && lyric_focus_event);
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) lyric_focus_meta <= 1'b0;
+        else lyric_focus_meta <= lyric_focus_toggle_async;
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) lyric_focus_safe <= 1'b0;
+        else lyric_focus_safe <= lyric_focus_meta;
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) lyric_focus_history <= 1'b0;
+        else lyric_focus_history <= lyric_focus_safe;
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) lyric_focus_requested <= 1'b0;
+        else lyric_focus_requested <= lyric_focus_next;
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) lyric_focus_frame <= 1'b0;
+        else if (vs_q && !vs) lyric_focus_frame <= lyric_focus_next;
+    end
     wire [1:0] background_mode_frame;
     assign background_mode = background_mode_frame;
     wire [23:0] generated_background_rgb;
@@ -237,6 +269,7 @@ module playback_page #(
 
     lrc_five_osd u_lrc_five_osd (
         .enable(enable),.de(de),.pixel_x(pixel_x),.pixel_y(line_y),
+        .focus_only(lyric_focus_frame),
         .window_valid(lyric_window_valid),
         .highlight_valid(lyric_highlight_valid),
         .scroll_active(lyric_scroll_active),.row_base_slot(lyric_row_base_slot),

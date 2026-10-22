@@ -28,6 +28,7 @@ module tb_stage3a_page #(parameter IMAGE_BACKGROUND=0);
     always @(posedge sd_clk) if (rst_n && stop) stops=stops+1;
     ascii_font_rom ascii_rom(.clk(clk),.addr(ascii_addr),.dout(ascii_row));
     playback_page #(.IMAGE_BACKGROUND(IMAGE_BACKGROUND)) page(.clk(clk),.rst_n(rst_n),.vs(vs),.de(de),.pixel_x(x),
+        .lyric_focus_toggle_async(1'b0),
         .enable(enable),.browse_mode(browse),.bg_cycle_toggle_async(home_tgl),
         .background_image_active(background_image_active),
         .rgb_in(rgb),.song_id(2'd0),.title_length(5'd1),.artist_length(5'd1),

@@ -36,6 +36,7 @@ module ui_event_bridge (
     output reg         mode_tgl,
     output reg         home_tgl,       // Legacy port name: KEY11 background-cycle toggle
     output reg         effect_tgl,
+    output reg         lyric_focus_tgl, // KEY6: five rows / current-row focus
     output reg         end_mode_tgl,
     // ---- S5：播放控制额外需要的"原始"事件（与上面 4 路并存）----
     // enc_cw/enc_ccw 只取 KEY01/03；EC1 同时产生浏览导航和 Seek，由各目标状态门控；
@@ -55,6 +56,13 @@ module ui_event_bridge (
     output reg         seek_bwd2_tgl     // EC1 逆    -2 s
 );
     `include "exp_event_defs.vh"
+
+    initial lyric_focus_tgl = 1'b0;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) lyric_focus_tgl <= 1'b0;
+        else if (ev_valid && ev_code == EV_KEY_DOWN && ev_arg == 16'd5)
+            lyric_focus_tgl <= ~lyric_focus_tgl;
+    end
 
     always @(posedge clk or negedge rst_n) begin
         if(!rst_n) visual_tgl<=1'b0;
