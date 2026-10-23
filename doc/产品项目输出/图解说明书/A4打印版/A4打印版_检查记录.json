@@ -1,0 +1,136 @@
+{
+  "file": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\产品项目输出\\图解说明书\\A4打印版\\VinylFPGA_图解操作说明_A4横向_打印版.pdf",
+  "pages": [
+    {
+      "page": 1,
+      "width_mm": 297.000013,
+      "height_mm": 210.000003,
+      "embedded_fonts": [
+        "/AAAAAA+MicrosoftYaHei-Bold-0",
+        "/AAAAAA+MicrosoftYaHei-0",
+        "/AAAAAB+MicrosoftYaHei-0"
+      ],
+      "source_diagram_count": 1,
+      "extractable_text_characters": 795
+    },
+    {
+      "page": 2,
+      "width_mm": 297.000013,
+      "height_mm": 210.000003,
+      "embedded_fonts": [
+        "/AAAAAA+MicrosoftYaHei-Bold-0",
+        "/AAAAAA+MicrosoftYaHei-0",
+        "/AAAAAB+MicrosoftYaHei-0"
+      ],
+      "source_diagram_count": 1,
+      "extractable_text_characters": 834
+    },
+    {
+      "page": 3,
+      "width_mm": 297.000013,
+      "height_mm": 210.000003,
+      "embedded_fonts": [
+        "/AAAAAA+MicrosoftYaHei-Bold-0",
+        "/AAAAAA+MicrosoftYaHei-0",
+        "/AAAAAB+MicrosoftYaHei-0"
+      ],
+      "source_diagram_count": 1,
+      "extractable_text_characters": 605
+    }
+  ],
+  "safe_margin_mm": 7,
+  "body_font_size_pt": 8.0,
+  "remote_body_font_size_pt": 8.2,
+  "smallest_auxiliary_font_size_pt": 7.2,
+  "vector_line_width_mm": 0.23,
+  "text_box_overlap_count": 0,
+  "original_diagrams": [
+    {
+      "page": 1,
+      "source": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\相关素材\\处理素材\\开发板功能图.png",
+      "left": 79.0224609375,
+      "top": 9,
+      "width": 138.955078125,
+      "height": 186,
+      "dpi": 559.3462365591398,
+      "sha256": "eaf4182321ea8807fd9dd66278e869ffcdf10b41d0cd551d5e67f5be50800d60"
+    },
+    {
+      "page": 2,
+      "source": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\相关素材\\处理素材\\拓展板功能图.png",
+      "left": 73.5732421875,
+      "top": 9,
+      "width": 149.853515625,
+      "height": 186,
+      "dpi": 559.3462365591398,
+      "sha256": "a570e4e3289c347e6f4e17a9d1dced6be2a4c14fe4d390f9cf514bd1417dfa5c"
+    },
+    {
+      "page": 3,
+      "source": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\相关素材\\处理素材\\红外遥控功能图.jpg",
+      "left": 103.998046875,
+      "top": 9,
+      "width": 89.00390625,
+      "height": 186,
+      "dpi": 139.83655913978495,
+      "sha256": "82f10666bafa2346ef5035b099816c5a2cbd3dad73696a1a6f86024498ac5cef"
+    }
+  ],
+  "all_sources_unchanged": true,
+  "native_vector_text_and_leaders": true,
+  "print_scaling": "None",
+  "duplex": "Simplex",
+  "rendered_pages_checked": [
+    {
+      "page": 1,
+      "pixels": [
+        3508,
+        2481
+      ],
+      "dpi": 300,
+      "ink_margins_mm": [
+        6.94,
+        21.93,
+        25.64,
+        10.44
+      ],
+      "passed": true
+    },
+    {
+      "page": 2,
+      "pixels": [
+        3508,
+        2481
+      ],
+      "dpi": 300,
+      "ink_margins_mm": [
+        6.94,
+        9.91,
+        21.07,
+        8.15
+      ],
+      "passed": true
+    },
+    {
+      "page": 3,
+      "pixels": [
+        3508,
+        2481
+      ],
+      "dpi": 300,
+      "ink_margins_mm": [
+        6.94,
+        11.85,
+        45.46,
+        7.39
+      ],
+      "passed": true
+    }
+  ],
+  "all_approved_png_backups_verified": true,
+  "backup_zip_verified": true,
+  "pdf_sha256": "97313b2c07353b2f721f81ec39c9b2dd6e0b9357f8ae0d6f43f978c458219e24",
+  "pdf_bytes": 6874319,
+  "pdf_header": "%PDF-1.7",
+  "physical_test_print_performed": false
+}

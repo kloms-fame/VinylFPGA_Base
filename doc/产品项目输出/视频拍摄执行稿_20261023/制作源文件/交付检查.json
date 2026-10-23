@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-23",
+  "scope": "拍摄材料一致性、时间轴与既有产物哈希核对；不是新的RTL/构建/板卡测试",
+  "checks": {
+    "timeline_780_seconds": true,
+    "35_complete_scene_cards": true,
+    "60_seconds_real_idle_budget": true,
+    "no_idle_narration": true,
+    "coverage_scene_references_exist": true,
+    "coverage_all_have_shot_or_supplement": true,
+    "all_35_scenes_represented_in_coverage": true,
+    "short_180_seconds": true,
+    "34_default_tts_plus_3_alternates": true,
+    "html_all_35_scene_anchors": true,
+    "known_user_equipment_in_booklet": true,
+    "latest_hardware_snapshot_matches_current_files": true,
+    "release_bit_file_hashes_match": true,
+    "final_report_numbers_match": true
+  },
+  "all_passed": true,
+  "scenes": 35,
+  "feature_families_and_branches": 67,
+  "hardware_input_hashes_checked": 140,
+  "hardware_input_differences": [],
+  "firmware_file_hashes": {
+    "A": {
+      "path": "prj/VinylFPGA_Runs/save_success_phrase_20261022/release/VinylFPGA.bit",
+      "expected": "1801a8d36429fe767c0d7e510db0edfed86faaccdba966c8843e043aba39dad5",
+      "actual": "1801a8d36429fe767c0d7e510db0edfed86faaccdba966c8843e043aba39dad5",
+      "matches": true
+    },
+    "B": {
+      "path": "prj/VinylFPGA_Runs/lyric_focus_20261022/release/VinylFPGA.bit",
+      "expected": "8edae18e61d0bff6c732295039082755870b43ebb0d11f1f2cf2c1326dbff41a",
+      "actual": "8edae18e61d0bff6c732295039082755870b43ebb0d11f1f2cf2c1326dbff41a",
+      "matches": true
+    }
+  },
+  "hardware_download_performed": false,
+  "physical_sd_write_performed": false,
+  "tts_generated": false,
+  "actual_footage_recorded": false
+}

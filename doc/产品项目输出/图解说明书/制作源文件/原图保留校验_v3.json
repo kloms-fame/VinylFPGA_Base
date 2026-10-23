@@ -1,0 +1,60 @@
+{
+  "ProtectedRegions": [
+    {
+      "ChangedPixels": 0,
+      "Region": "All five navigation buttons"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "Function key at source y=1045"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "Function key at source y=1380"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "Function key at source y=1715"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "Function key at source y=2045"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "Function key at source y=2380"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "Function key at source y=2715"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "Function key at source y=3045"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "WS2812B printed caption"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "Status LED printed captions"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "Power indicator printed captions"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "EC1 knob face"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "EC2 knob face"
+    }
+  ],
+  "Width": 7000,
+  "OriginalEmbeddedAtOriginalResolution": true,
+  "Passed": true,
+  "Height": 4336
+}

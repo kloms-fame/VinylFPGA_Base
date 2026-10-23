@@ -1,0 +1,82 @@
+{
+  "Height": 4336,
+  "SourceUnchanged": true,
+  "Width": 7000,
+  "SourceOffset": [
+    1970,
+    120
+  ],
+  "Output": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\产品项目输出\\图解说明书\\开发板_图解操作说明_v1.png",
+  "ProtectedRegions": [
+    {
+      "ChangedPixels": 0,
+      "Region": "Key 01"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "Key 02"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "Key 03"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "Key 04"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "系统告警 · SW4"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "自动保存 · SW3"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "跳过开机动画 · SW2"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "数码管总控 · SW1"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "蜂鸣器开关 · BUZ_SW"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "SD slot content"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "Eight-digit display"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "Top IDC pins"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "Bottom IDC pins"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "LED caption 1015"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "LED caption 1200"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "LED caption 1390"
+    },
+    {
+      "ChangedPixels": 0,
+      "Region": "LED caption 1580"
+    }
+  ],
+  "Scale": 1,
+  "Passed": true
+}

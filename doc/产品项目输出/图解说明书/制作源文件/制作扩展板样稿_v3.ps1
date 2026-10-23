@@ -94,10 +94,10 @@ TextAt 'WS2812B 氛围灯' 5560 1300 $titleFont $blueBrush
 TextAt '8 颗彩灯呈现音乐律动。' 5560 1395
 Leader @(@(5520,1345),@(5230,1345),@(5230,1165),@(5025,1165))
 
-TextAt '播控旋钮 · EC1 / SW1' 5560 900 $titleFont $blueBrush
-TextAt '旋转：选曲／调整播放进度。' 5560 995
-TextAt '按下：确认播放／暂停／继续。' 5560 1073
-Leader @(@(5520,945),@(4390,945),@(4390,1090),@(4350,1090))
+TextAt '播控旋钮 · EC1 / SW1' 5560 890 $titleFont $blueBrush
+TextAt '旋转：选曲／调整播放进度。' 5560 985
+TextAt '按下：确认播放／暂停／继续。' 5560 1063
+Leader @(@(5520,935),@(4390,935),@(4390,1115),@(4328,1115))
 
 # Function keys use seven short, independently verified leaders and matching IDs.
 # The original seven controls are at x~1100, NOT at the slide switches or D-pad.
@@ -145,7 +145,7 @@ TextAt '切换参数或关闭浮窗，无需长按。' 5560 3343 $smallFont
 TextAt 'VOL 音量　BRI 亮度　CON 对比度' 5560 3440 $smallFont
 TextAt 'ROT 轮播周期　WSL 灯带亮度' 5560 3510 $smallFont
 TextAt 'WSL 为 0 时关灯，不关闭电机。' 5560 3590 $smallFont $mutedBrush
-Leader @(@(5520,3215),@(4390,3215),@(4350,3210))
+Leader @(@(5520,3215),@(4390,3215),@(4328,3210))
 
 TextAt '红外接收头 · U10' 120 4070 $titleFont $blueBrush
 TextAt '遥控器朝向此处使用。' 120 4165
