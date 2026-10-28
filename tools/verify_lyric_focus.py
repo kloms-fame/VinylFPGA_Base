@@ -34,7 +34,7 @@ def main():
         input_paths.update(ROOT/f for f in files)
         inputs={path.relative_to(ROOT).as_posix():hashlib.sha256(path.read_bytes()).hexdigest()
                 for path in sorted(input_paths)}
-        options=top_compile_options() if top=='tb_lyric_focus_top' else []
+        options=[*top_compile_options(), '-DVINYL_MV_BURST_BEHAV'] if top=='tb_lyric_focus_top' else []
         image=(a.output/(top+'.vvp')).resolve()
         compiled=subprocess.run(['iverilog','-g2005',*options,'-Isrc/include','-s',top,
                                  '-o',str(image),*files],cwd=ROOT,capture_output=True,text=True)
