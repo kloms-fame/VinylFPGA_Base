@@ -9,6 +9,14 @@ module sd_card_cmd(
 	input[47:0]                 cmd,                          //SD card command
 	input[7:0]                  cmd_r1,                       //SD card expect response
 	input[15:0]                 cmd_data_len,                 //SD card command read data length
+	input                       cmd_keep_cs,                  //keep CS low (CMD12 after CMD18)
+	input                       cmd_wait_busy,                //wait for busy release after R1
+	input                       multi_read,                   //CMD18 multi-block read owner
+	input[7:0]                  multi_sectors,                //blocks in this CMD18 burst
+	input                       multi_pause,                  //pause SPI at block boundary
+	input                       multi_abort,                  //abort current multi-block stream
+	output reg                  multi_sector_done,            //one block retired
+	output reg                  multi_read_done,              //burst retired
 	input                       block_read_req,               //SD card sector data read request
 	output reg                  block_read_valid,             //SD card sector data read data valid
 	output reg[7:0]             block_read_data,              //SD card sector data read data
@@ -42,8 +50,19 @@ parameter S_WRITE_BUSY   = 14;
 parameter S_WRITE_ACK    = 15;
 parameter S_ERR          = 16;
 parameter S_END          = 17;
+parameter S_CMD_BUSY     = 18;
+parameter S_MULTI_WAIT   = 19;
+parameter S_MULTI_READ   = 20;
+parameter S_MULTI_HOLD   = 21;
+parameter S_MULTI_SECTOR_END = 22;
+parameter S_MULTI_END    = 23;
+parameter S_MULTI_ABORT  = 24;
+parameter S_WAIT_REQ_LOW = 25;
+parameter S_RELEASE = 26;
 
 reg[4:0]                      state;
+reg[7:0]                      sec_left;
+reg                           multi_settle;
 reg                           CS_reg;
 reg[15:0]                     byte_cnt;
 reg[7:0]                      send_data;
@@ -69,8 +88,15 @@ begin
 		state <= S_IDLE;
 		cmd_req_error <= 1'b0;
 		wr_data_cnt <= 10'd0;
+		multi_sector_done <= 1'b0;
+		multi_read_done <= 1'b0;
+		sec_left <= 8'd0;
+		multi_settle <= 1'b0;
 	end
 	else
+	begin
+		multi_sector_done <= 1'b0;
+		multi_read_done <= 1'b0;
 		case(state)
 			S_IDLE:
 			begin
@@ -103,11 +129,25 @@ begin
 			begin
 				cmd_req_error <= 1'b0;
 				wr_data_cnt <= 10'd0;
+				multi_sector_done <= 1'b0;
+				multi_read_done <= 1'b0;
 				//wait for  instruction
 				if(cmd_req == 1'b1)
 					state <= S_CMD_PRE;
 				else if(block_read_req == 1'b1)
-					state <= S_READ_WAIT;
+				begin
+					if(multi_read == 1'b1)
+					begin
+						sec_left <= multi_sectors;
+						byte_cnt <= 16'd0;
+						if(multi_sectors == 8'd0)
+							state <= S_ERR;
+						else
+							state <= S_MULTI_WAIT;
+					end
+					else
+						state <= S_READ_WAIT;
+				end
 				else if(block_write_req == 1'b1)
 					state <= S_WRITE_TOKEN;
 				clk_div <= spi_clk_div;
@@ -124,7 +164,7 @@ begin
 				else
 				begin
 					spi_wr_req <= 1'b1;
-					CS_reg <= 1'b1;
+					CS_reg <= cmd_keep_cs ? 1'b0 : 1'b1;
 					send_data <= 8'hff;
 				end
 			end
@@ -132,7 +172,9 @@ begin
 			begin
 				if(spi_wr_ack == 1'b1)
 				begin
-					if((byte_cnt == 16'hffff) || (data_recv != cmd_r1 && data_recv[7] == 1'b0))
+					if(byte_cnt < 16'd6 || (cmd[45:40] == 6'd12 && byte_cnt == 16'd6))
+						byte_cnt <= byte_cnt + 16'd1;
+					else if((byte_cnt == 16'hffff) || (data_recv != cmd_r1 && data_recv[7] == 1'b0))
 					begin
 						state <= S_ERR;
 						spi_wr_req <= 1'b0;
@@ -141,7 +183,12 @@ begin
 					else if(data_recv == cmd_r1)
 					begin
 						spi_wr_req <= 1'b0;
-						if(cmd_data_len != 16'd0)
+						if(cmd_wait_busy)
+						begin
+							state <= S_CMD_BUSY;
+							byte_cnt <= 16'd0;
+						end
+						else if(cmd_data_len != 16'd0)
 						begin
 							state <= S_CMD_DATA;
 							byte_cnt <= 16'd0;
@@ -230,6 +277,118 @@ begin
 					spi_wr_req <= 1'b1;
 					send_data <= 8'hff;
 				end
+			end
+			S_CMD_BUSY:
+			begin
+				if(spi_wr_ack == 1'b1)
+				begin
+					if(data_recv == 8'hff)
+					begin
+						state <= S_RELEASE;
+						spi_wr_req <= 1'b0;
+						byte_cnt <= 16'd0;
+					end
+					else if(byte_cnt == 16'hffff)
+						state <= S_ERR;
+					else
+						byte_cnt <= byte_cnt + 16'd1;
+				end
+				else
+				begin
+					spi_wr_req <= 1'b1;
+					send_data <= 8'hff;
+				end
+			end
+            S_RELEASE:
+            begin
+                CS_reg <= 1'b1;
+                send_data <= 8'hff;
+                if (spi_wr_ack) begin
+                    spi_wr_req <= 1'b0;
+                    state <= S_END;
+                end else spi_wr_req <= 1'b1;
+            end
+			S_MULTI_WAIT:
+			begin
+				if(multi_abort == 1'b1)
+					state <= S_MULTI_ABORT;
+				else if(spi_wr_ack == 1'b1 && data_recv == 8'hfe)
+				begin
+					spi_wr_req <= 1'b0;
+					state <= S_MULTI_READ;
+					byte_cnt <= 16'd0;
+				end
+				else
+				begin
+					spi_wr_req <= 1'b1;
+					send_data <= 8'hff;
+				end
+			end
+			S_MULTI_READ:
+			begin
+				if(spi_wr_ack == 1'b1)
+				begin
+					if(byte_cnt == 16'd513)
+					begin
+						state <= S_MULTI_SECTOR_END;
+						spi_wr_req <= 1'b0;
+						byte_cnt <= 16'd0;
+						sec_left <= sec_left - 8'd1;
+						multi_sector_done <= 1'b1;
+						multi_settle <= 1'b1;
+					end
+					else
+						byte_cnt <= byte_cnt + 16'd1;
+				end
+				else
+				begin
+					spi_wr_req <= 1'b1;
+					send_data <= 8'hff;
+				end
+			end
+			S_MULTI_SECTOR_END:
+			begin
+				// The bridge updates its bank count on multi_sector_done, so pause
+				// is only valid one cycle after the block has been retired. Wait
+				// that cycle with the SPI clock stopped before deciding.
+				if(multi_abort == 1'b1)
+					state <= S_MULTI_ABORT;
+				else if(multi_settle == 1'b1)
+				begin
+					multi_settle <= 1'b0;
+					state <= S_MULTI_SECTOR_END;
+				end
+				else if(sec_left == 8'd0)
+					state <= S_MULTI_END;
+				else if(multi_pause == 1'b1)
+					state <= S_MULTI_HOLD;
+				else
+					state <= S_MULTI_WAIT;
+			end
+			S_MULTI_HOLD:
+			begin
+				spi_wr_req <= 1'b0;
+				if(multi_abort == 1'b1)
+					state <= S_MULTI_ABORT;
+				else if(multi_pause == 1'b0)
+					state <= S_MULTI_WAIT;
+			end
+			S_MULTI_END:
+			begin
+				spi_wr_req <= 1'b0;
+				multi_read_done <= 1'b1;
+				state <= S_WAIT_REQ_LOW;
+			end
+			S_MULTI_ABORT:
+			begin
+				spi_wr_req <= 1'b0;
+				state <= S_WAIT_REQ_LOW;
+			end
+			S_WAIT_REQ_LOW:
+			begin
+				spi_wr_req <= 1'b0;
+				if(block_read_req == 1'b0)
+					state <= S_WAIT;
 			end
 			S_WRITE_TOKEN:
 				if(spi_wr_ack == 1'b1)
@@ -321,7 +480,8 @@ begin
 			end
 			S_ERR:
 			begin
-				state <= S_END;
+				state <= cmd_wait_busy ? S_RELEASE : S_END;
+                spi_wr_req <= 1'b0;
 				cmd_req_error <= 1'b1;
 			end
 			S_READ_ACK,S_WRITE_ACK,S_END:
@@ -331,12 +491,13 @@ begin
 			default:
 				state <= S_IDLE;
 		endcase
+	end
 end
 always@(posedge sys_clk or posedge rst)
 begin
 	if(rst == 1'b1)
 		block_read_valid <= 1'b0;
-	else if(state == S_READ && byte_cnt < 16'd512)
+	else if((state == S_READ || state == S_MULTI_READ) && byte_cnt < 16'd512)
 		block_read_valid <= spi_wr_ack;
 	else
 		block_read_valid <= 1'b0;
@@ -346,7 +507,7 @@ always@(posedge sys_clk or posedge rst)
 begin
 	if(rst == 1'b1)
 		block_read_data <= 8'd0;
-	else if(state == S_READ && spi_wr_ack == 1'b1)
+	else if((state == S_READ || state == S_MULTI_READ) && spi_wr_ack == 1'b1)
 		block_read_data <= data_recv;
 end
 

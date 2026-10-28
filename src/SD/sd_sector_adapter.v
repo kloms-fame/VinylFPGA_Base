@@ -7,11 +7,13 @@
 // 的通用 sector 接口，本模块在两者之间做协议转换。
 // =============================================================================
 module sd_sector_adapter #(
+    parameter USE_BUS_GRANT = 1'b0,
     parameter [31:0] SECTOR_TIMEOUT_CYCLES = 32'd25_000_000 // 250ms @100MHz
 ) (
     input  wire        clk,
     input  wire        rst_n,
 
+    input  wire        bus_grant, // enabled by USE_BUS_GRANT at shared controller
     input  wire        sector_req,
     input  wire [31:0] sector_lba,
     output wire        sector_busy,
@@ -69,7 +71,7 @@ module sd_sector_adapter #(
                 sector_error <= ERR_NONE;
             end else if (sd_sec_read_data_valid) begin
                 byte_cnt <= byte_cnt + 9'd1;
-            end else if (busy_reg) begin
+            end else if (busy_reg && (!USE_BUS_GRANT || bus_grant)) begin
                 // 扇区事务看门狗：无数据/无结束活动时累计，超过期限即超时。
                 // 底层 SD 控制器可能已卡死，本层强制释放 busy 并返回 Err-05，
                 // 交由 media_supervisor 复位底层控制器恢复。

@@ -25,13 +25,22 @@ module mv_frame_scheduler (
  reg [15:0] requested_frame, target_frame;
  reg [31:0] next_time;
  reg [3:0] settle;
+ reg [15:0] rst_frame_q;
  wire [15:0] rst_frame = (frame_count == 16'd0) ? 16'd0 :
                          ((seek_frame >= frame_count) ? (frame_count - 16'd1) : seek_frame);
  wire [31:0] rst_frame_x100 = {10'd0, rst_frame, 6'b0} +
                               {11'd0, rst_frame, 5'b0} + {14'd0, rst_frame, 2'b0};
  wire [31:0] rst_next_time = rst_frame_x100 + 32'd100;
  wire completed = busy && (done_sync[2]==request_toggle);
- wire invalidating = !enable || restart;
+ // 定位器是逐拍常量减法（最坏 14400 帧 ≈ 576 us），比 stream_session 的重启
+ // 脉冲（≥ 32 个 sd 拍）慢得多。只要目标帧还在变，就持续把 target_frame/
+ // next_time 追到最新值；目标稳定后自然停在最终帧，不会锁在定位中途。
+ wire seek_moving = (rst_frame != rst_frame_q);
+ wire reload = restart || seek_moving;
+ // seek_moving 期间同样视为"流水线失效"：定位器还在逐拍推进时，任何在此刻
+ // 发出的请求都会落在中途的 rst_frame 上（seek 后闪一帧旧画面）。等目标稳定，
+ // invalidating 释放、settle 重新计数，才允许按最终帧发出新的请求。
+ wire invalidating = !enable || restart || seek_moving;
  wire [15:0] next_frame = first_frame ?
      ((pending_valid && target_frame<=pending_frame) ? pending_frame+16'd1 : target_frame) :
      ((pending_valid && pending_frame>display_frame) ?
@@ -52,8 +61,8 @@ module mv_frame_scheduler (
  // is queue room or the newer completion is already due on the audio clock.
  wire retire_complete = completed && (discard || invalidating || fail_sync[1] ||
                          !pending_valid || completed_due || (frame_start && show_ready));
- wire can_issue = enable && (!paused || first_frame) && !restart && settle==4'd15 &&
-                  !busy && !(first_frame && pending_valid) &&
+ wire can_issue = enable && (!paused || first_frame) && !restart && !seek_moving &&
+                  settle==4'd15 && !busy && !(first_frame && pending_valid) &&
                   frame_count!=0 && next_frame<frame_count &&
                   (bank0_free || bank1_free ||
                    (display_bank!=2'd2 && (!pending_valid || pending_bank!=2'd2)));
@@ -66,19 +75,23 @@ module mv_frame_scheduler (
   if(!rst_n) fail_sync<=0; else fail_sync<={fail_sync[0],failed};
  end
  always @(posedge clk or negedge rst_n) begin
+  if(!rst_n) rst_frame_q<=0;
+  else rst_frame_q<=rst_frame;
+ end
+ always @(posedge clk or negedge rst_n) begin
   if(!rst_n) settle<=0;
   else if(invalidating) settle<=0;
   else if(settle!=15) settle<=settle+1'b1;
  end
  always @(posedge clk or negedge rst_n) begin
   if(!rst_n) target_frame<=0;
-  else if(invalidating) target_frame<=rst_frame;
+  else if(reload) target_frame<=rst_frame;
   else if(!paused && time_ms>=next_time && target_frame+16'd1<frame_count)
    target_frame<=target_frame+1'b1;
  end
  always @(posedge clk or negedge rst_n) begin
   if(!rst_n) next_time<=100;
-  else if(invalidating) next_time<=rst_next_time;
+  else if(reload) next_time<=rst_next_time;
   else if(!paused && time_ms>=next_time && target_frame+16'd1<frame_count)
    next_time<=next_time+32'd100;
  end

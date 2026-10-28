@@ -63,7 +63,21 @@ module sd_card_bmp #(
     output wire [7:0]           audio_sec_byte,
     output wire [8:0]           audio_sec_byte_index,
     output wire                 audio_sec_done,
-    output wire [7:0]           audio_sec_error
+    output wire [7:0]           audio_sec_error,
+
+    // Bounded CMD18 MV read path. Audio/background/cover stay on CMD17.
+    input  wire                 mv_burst_req,
+    input  wire [31:0]          mv_burst_lba,
+    input  wire [7:0]           mv_burst_len,
+    input  wire                 mv_burst_pause,
+    input  wire                 mv_burst_abort,
+    output wire                 mv_burst_valid,
+    output wire [7:0]           mv_burst_data,
+    output wire                 mv_burst_sector_done,
+    output wire                 mv_burst_done,
+    output wire [7:0]           mv_burst_error,
+    output wire                 mv_burst_active,
+    output wire                 mv_cmd17_idle
 );
 
     // =========================================================================
@@ -71,6 +85,7 @@ module sd_card_bmp #(
     // =========================================================================
 
     wire        sd_sec_read;
+    wire        sd_bus_grant;
     wire [31:0] sd_sec_read_addr;
     wire [7:0]  sd_sec_read_data;
     wire        sd_sec_read_data_valid;
@@ -544,7 +559,7 @@ module sd_card_bmp #(
     // =========================================================================
     // 底层子模块例化：第七讲用 FAT32 加载器替换 bmp_read。
     // =========================================================================
-    fat32_media_loader fat32_media_loader_m0 (
+    fat32_media_loader #(.USE_SD_BUS_GRANT(1'b1)) fat32_media_loader_m0 (
         .clk                    (clk),
         .rst                    (rst),
         .ready                  (bmp_ready),
@@ -573,6 +588,7 @@ module sd_card_bmp #(
         .sd_sec_read_data       (sd_sec_read_data),
         .sd_sec_read_data_valid (sd_sec_read_data_valid),
         .sd_sec_read_end        (sd_sec_read_end),
+        .sd_bus_grant           (sd_bus_grant),
         .bmp_data_wr_en         (bmp_data_wr_en),
         .bmp_data               (bmp_data),
         .mv_metadata            (mv_metadata),
@@ -605,11 +621,25 @@ module sd_card_bmp #(
         .sd_sec_read_data       (sd_sec_read_data),
         .sd_sec_read_data_valid (sd_sec_read_data_valid),
         .sd_sec_read_end        (sd_sec_read_end),
+        .sd_bus_grant           (sd_bus_grant),
         .sd_sec_write           (1'b0),
         .sd_sec_write_addr      (32'd0),
         .sd_sec_write_data      (),
         .sd_sec_write_data_req  (),
-        .sd_sec_write_end       ()
+        .sd_sec_write_end       (),
+
+        .mv_burst_req           (mv_burst_req),
+        .mv_burst_lba           (mv_burst_lba),
+        .mv_burst_len           (mv_burst_len),
+        .mv_burst_pause         (mv_burst_pause),
+        .mv_burst_abort         (mv_burst_abort),
+        .mv_burst_valid         (mv_burst_valid),
+        .mv_burst_data          (mv_burst_data),
+        .mv_burst_sector_done   (mv_burst_sector_done),
+        .mv_burst_done          (mv_burst_done),
+        .mv_burst_error         (mv_burst_error),
+        .mv_burst_active        (mv_burst_active),
+        .mv_cmd17_idle          (mv_cmd17_idle)
     );
 
 endmodule

@@ -133,9 +133,14 @@ module wav_stream_player #(
     wire buffer_write = play_enable && (wstate == WS_FILL) &&
                         sd_valid && lo_pending &&
                         (skip_cnt == 8'd0) && (remaining != 32'd0);
+    // Before startup, wait for a full sector. After startup_ready, any
+    // buffered PCM is valid: a 255-sample FIFO must not be reported as an
+    // underrun just because it is one sample below the sector size. The EOF
+    // tail keeps the same >0 rule.
     wire buffer_available = play_enable_sync2 && !fault_sync[1] &&
-                            ((level_rd >= SAMPLES_PER_SECTOR) ||
-                            (finished_sync[1] && (level_rd > 0)));
+                            ((startup_ready && (level_rd > 0)) ||
+                             (!startup_ready && (level_rd >= SAMPLES_PER_SECTOR)) ||
+                             (finished_sync[1] && (level_rd > 0)));
     // A seek may discard up to 255 samples from its first sector. Arm once
     // enough valid samples (or the final short tail) have crossed the FIFO.
     // Stay armed afterwards so genuine in-stream underruns remain observable.

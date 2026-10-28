@@ -138,8 +138,8 @@ module tb_wav_underrun;
 
         play_enable = 1'b1;
 
-        // 数据源只喂第一个扇区后停住；读侧把缓冲消耗到不足一个扇区
-        // （欠载阈值）后应打出 underrun_pulse。用有限拍等待避免悬挂。
+        // The startup threshold is not a permanent read floor. Every buffered
+        // sample must be consumed before reporting a true empty-FIFO underrun.
         for (j = 0; j < 2000 && !underrun_seen; j = j + 1)
             @(posedge rd_clk);
 
@@ -147,6 +147,8 @@ module tb_wav_underrun;
             $display("FAIL underrun_pulse never asserted (sample_counter=%0d)", sample_counter);
             errors = errors + 1;
         end else begin
+            if(sample_counter!=32'd256)
+                $fatal(1,"FALSE_UNDERRUN_WITH_BUFFERED_PCM consumed=%0d expected=256 level=%0d",sample_counter,dut.level_rd);
             $display("PASS underrun_pulse asserted after drain (sample_counter=%0d)", sample_counter);
         end
 

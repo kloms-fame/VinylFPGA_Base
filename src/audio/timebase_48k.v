@@ -43,9 +43,18 @@ module timebase_48k (
             sample_count<=0; cur_time_ms<=0; sub_sample<=0;
             quotient<=0; remainder<=0; steps<=0; pending_samples<=0;
         end else if (load) begin
+            // load 优先于 restart。切曲、Seek、重播都走同一条 restart 脉冲，
+            // 它们的唯一区别就是 load_sample（切曲/重播=0，Seek=目标样本）。
+            // 旧实现让 restart 无条件清零，于是 Seek 也被当成切曲：时基回到 0，
+            // 歌词与 MV 从头播放（实板已复现）。
+            // 这里必须先立刻把 cur_time_ms 清零，再用 32 拍串行除法填准：
+            // 否则旧时间会在转换窗口里被 mv_frame_scheduler 当作"音频时间已超前"
+            // 而连续发帧（切曲冻结 2.4-2.6 s 的原始机制）。
             sample_count<=load_sample;
             quotient<=load_sample; remainder<=0; steps<=32; pending_samples<=0;
+            cur_time_ms<=0; sub_sample<=0;
         end else if (restart) begin
+            // 只有 restart 而没有 load 的历史路径：仍然硬清零。
             sample_count<=0; cur_time_ms<=0; sub_sample<=0;
             quotient<=0; remainder<=0; steps<=0; pending_samples<=0;
         end else begin

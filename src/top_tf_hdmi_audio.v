@@ -61,6 +61,7 @@
 `include "io/navigation_readiness.v"
 `include "io/slideshow_controller.v"
 `include "SD/media_probe.v"
+`include "SD/sd_cmd18_reader.v"
 // Keep S4/S5 dependencies visible even if the GUI project list is stale.
 `include "SD/song_index_db.v"
 `include "display/lrc_lines_rom.v"
@@ -85,6 +86,7 @@
 `include "video/background_frame_select.v"
 `include "video/media_write_pipeline.v"
 `include "video/mv_stream_player.v"
+`include "video/mv_sd_burst.v"
 `include "video/mv_frame_scheduler.v"
 `include "video/s6_video_layer.v"
 `include "SD/media_supervisor.v"
@@ -239,7 +241,22 @@ wire mv_writer_mem;
 wire frw_write_busy;
 wire [31:0] mv_pixel_data;
 wire mv_sec_req,mv_sec_busy,mv_sec_valid,mv_sec_done;
+wire [7:0] mv_sec_byte,mv_sec_error;
+wire [8:0] mv_sec_byte_index;
 wire [31:0] mv_sec_lba;
+// Bounded CMD18 MV prefetch owner (separate from the CMD17 audio/background path).
+wire        mv_burst_req, mv_burst_pause, mv_burst_abort;
+wire        mv_burst_valid, mv_burst_sector_done, mv_burst_done, mv_burst_active;
+wire        mv_cmd17_idle;
+wire [1:0] mv_debug_buf_count;
+wire        mv_burst_req_sd;
+
+// Requests remain asserted until the registered SD owner accepts them.
+assign mv_burst_req_sd = mv_burst_req;
+wire        mv_burst_stop, mv_burst_abort_all;
+wire [31:0] mv_burst_lba;
+wire [7:0]  mv_burst_len, mv_burst_data, mv_burst_error;
+wire        mv_cmd18_allowed;
 wire media_sec_req,media_sec_busy,media_sec_valid,media_sec_done;
 wire [31:0] media_sec_lba;
 wire mv_fifo_read_allowed,mv_window_visible;
@@ -504,6 +521,10 @@ wire        play_seek_clear_sd;
 reg  [31:0] seek_cur_sample_sd;
 // Seek 目标 -> video 域（稳定窗口内 2FF）
 reg  [31:0] play_seek_target_v1, play_seek_target_v2;
+// 目标"是否刚变化"：Seek 与切歌/重播的唯一区别就在这个值（切歌由 seek_clear
+// 在同一拍把目标清零）。时基只认目标，不认 restart 的来源，见下方 load 接线。
+reg  [31:0] play_seek_target_d_vid;
+wire        play_seek_target_changed_vid = (play_seek_target_v2 != play_seek_target_d_vid);
 // 目标样本 -> 目标帧：4800 样本/帧。用低频常量步进累减替代 32x15 乘法，
 // 最坏 32 位目标也远小于预缓冲窗口；视频域逐帧推进只使用寄存器路径。
 reg  [31:0] seek_frame_rem, seek_frame_target_d;
@@ -1209,7 +1230,21 @@ sd_card_bmp #(
     .audio_sec_byte    (media_raw_byte),
     .audio_sec_byte_index(media_raw_byte_index),
     .audio_sec_done    (probe_card_done),
-    .audio_sec_error   (media_raw_error)
+    .audio_sec_error   (media_raw_error),
+
+    // Bounded CMD18 owner for MV only; the audio/background path above stays CMD17.
+    .mv_burst_req      (mv_burst_req_sd),
+    .mv_burst_lba      (mv_burst_lba),
+    .mv_burst_len      (mv_burst_len),
+    .mv_burst_pause    (mv_burst_pause),
+    .mv_burst_abort    (mv_burst_abort_all),
+    .mv_burst_valid    (mv_burst_valid),
+    .mv_burst_data     (mv_burst_data),
+    .mv_burst_sector_done(mv_burst_sector_done),
+    .mv_burst_done     (mv_burst_done),
+    .mv_burst_error    (mv_burst_error),
+    .mv_burst_active   (mv_burst_active),
+    .mv_cmd17_idle     (mv_cmd17_idle)
 );
 
 media_probe u_media_probe(
@@ -1247,8 +1282,8 @@ media_supervisor #(
     .rst_n          (sdcard_rst_n),
     .media_ready    (media_mount_ok_sd),
     .mount_error    (osd_error_code),
-    .sector_error   (storage_error),
-    .sector_done    (storage_done),
+    .sector_error   ((mv_burst_done && mv_burst_error!=0) ? mv_burst_error : storage_error),
+    .sector_done    (storage_done || (mv_burst_done && mv_burst_error!=0)),
     .sector_busy    (media_sec_busy),
     .sd_rst_n       (media_sd_rst_n),
     .media_err_code (media_err_code),
@@ -1370,6 +1405,13 @@ always @(posedge video_clk or negedge media_video_rst_n) begin
         play_seek_target_v1 <= play_seek_target_sd;
         play_seek_target_v2 <= play_seek_target_v1;
     end
+end
+
+// 目标变化的单拍标志：目标跨域稳定后立刻把时基装到新位置。切歌/重播时
+// play_ctrl 的 seek_clear 会把目标清零，因此这里同样得到 0，无需区分事件来源。
+always @(posedge video_clk or negedge media_video_rst_n) begin
+    if (!media_video_rst_n) play_seek_target_d_vid <= 32'd0;
+    else                    play_seek_target_d_vid <= play_seek_target_v2;
 end
 
 // 目标样本 / 4800 的串行定位器。seek 事务期间目标保持不变；每个视频时钟
@@ -1748,7 +1790,7 @@ frame_read_write #(
     .App_wr_dm         (frw_wr_mask),
 
     .write_clk         (sd_card_clk),
-    .write_req         (background_writer_active ? background_write_req : (mv_writer_active ? mv_write_req : sd_write_req_eff)),
+    .write_req         (background_writer_active ? background_write_req : (mv_writer_active ? (mv_write_req && !background_sector_grant) : sd_write_req_eff)),
     .write_req_ack     (sd_card_write_req_ack),
     .write_finish      (frame_write_finish),
     .write_addr_0      (background_writer_mem ? background_write_address : (mv_writer_mem ? MV_ADDR0 : BUF0_ADDR)),
@@ -2312,35 +2354,59 @@ always @(posedge sd_card_clk or negedge sdcard_rst_n) begin
  if(!sdcard_rst_n) mv_audio_low_sync<=2'b11;
  else mv_audio_low_sync<={mv_audio_low_sync[0],wav_buffer_low};
 end
+wire mv_video_allowed = !audio_play_enable_gated ||
+                        (!mv_audio_low_sync[1] && !cache_prefetch_low);
 background_sector_mux u_mv_sector_mux(
  .clk(sd_card_clk),.rst_n(sd_media_rst_n),.audio_req(prefetch_sd_req),.audio_lba(prefetch_sd_lba),
- // Restore the board-proven audio-first policy. The ring must recover its
- // five-second reserve before optional MV traffic uses the shared SD service.
- // A 15:1 sector quota is not a bandwidth guarantee on a slow physical card.
+ // Audio/background/cover still use the original CMD17 owner. MV is removed
+ // from this mux and gets a bounded CMD18 burst owner below.
  .audio_urgent(1'b1),
- .video_req(mv_sec_req),.video_lba(mv_sec_lba),
- .allow_video(!audio_play_enable_gated || (!mv_audio_low_sync[1] && !cache_prefetch_low)),
+ .video_req(1'b0),.video_lba(32'd0),.allow_video(1'b0),
  .background_req(background_sector_req),.background_lba(background_sector_lba),
  .background_start(background_sector_start),
- .allow_background(!audio_play_enable_gated || (!mv_audio_low_sync[1] && !cache_prefetch_low)),
+ .allow_background(!mv_writer_active && (!audio_play_enable_gated || (!mv_audio_low_sync[1] && !cache_prefetch_low))),
  .background_busy(background_sector_busy),.background_grant(background_sector_grant),
  .background_valid(background_sector_valid),
  .background_done(background_sector_done),
- .audio_busy(prefetch_sd_busy),.video_busy(mv_sec_busy),
- .audio_valid(prefetch_sd_valid),.video_valid(mv_sec_valid),
- .audio_done(prefetch_sd_done),.video_done(mv_sec_done),
+ .audio_busy(prefetch_sd_busy),.video_busy(),
+ .audio_valid(prefetch_sd_valid),.video_valid(),
+ .audio_done(prefetch_sd_done),.video_done(),
  .sector_req(media_sec_req),.sector_lba(media_sec_lba),.sector_busy(media_sec_busy),
  .sector_valid(media_sec_valid),.sector_done(media_sec_done));
+
+// Preserve fixC audio reserve and 10 fps; one bounded burst per grant.
+assign mv_cmd18_allowed = mv_video_allowed;
+// Never abort a CMD18 burst in the middle of a data block: a CMD12 sent
+// while the card is still streaming can collide with the data tokens. The
+// bridge stops only at a block boundary (both banks full) and otherwise lets
+// the bounded 8-sector burst drain; this costs at most a few sectors of
+// latency but keeps the shared card protocol deterministic.
+assign mv_burst_abort = 1'b0;
+assign mv_burst_abort_all = mv_burst_stop;
+
+mv_sd_burst u_mv_sd_burst(
+ .clk(sd_card_clk),.rst_n(sd_media_rst_n),.abort(mv_burst_abort),
+ .allow(mv_cmd18_allowed),.stream_active(mv_writer_active),
+ .sector_req(mv_sec_req),.sector_lba(mv_sec_lba),.sector_busy(mv_sec_busy),
+ .sector_valid(mv_sec_valid),.sector_byte(mv_sec_byte),
+ .sector_byte_index(mv_sec_byte_index),.sector_done(mv_sec_done),
+ .sector_error(mv_sec_error),
+ .burst_req(mv_burst_req),.burst_lba(mv_burst_lba),.burst_len(mv_burst_len),
+ .burst_pause(mv_burst_pause),.burst_active(mv_burst_active),
+ .burst_valid(mv_burst_valid),.burst_data(mv_burst_data),
+ .burst_sector_done(mv_burst_sector_done),.burst_done(mv_burst_done),
+ .burst_error(mv_burst_error),.burst_stop(mv_burst_stop),.debug_buf_count(mv_debug_buf_count));
+
 mv_stream_player u_mv_stream_player(
  .clk(sd_card_clk),.rst_n(sd_media_rst_n),.abort_request(!stream_enable_sd),.request_toggle(mv_req_tgl),
  .request_lba(mv_request_lba),.request_bank(mv_request_bank),
  .done_toggle(mv_done_tgl),.failed(mv_failed),.writer_active(mv_writer_active),
- .write_req(mv_write_req),.write_ack(sd_card_write_req_ack && !background_writer_active),
+ .write_req(mv_write_req),.write_ack(sd_card_write_req_ack && !background_writer_active && !background_sector_grant),
  .write_finish_toggle(frame_write_toggle_mem),.write_bank(mv_write_bank),
  .pixel_valid(mv_pixel_valid),.pixel_data(mv_pixel_data),
  .sector_req(mv_sec_req),.sector_lba(mv_sec_lba),.sector_busy(mv_sec_busy),
- .sector_valid(mv_sec_valid),.sector_byte(media_raw_byte),.sector_byte_index(media_raw_byte_index),
- .sector_done(mv_sec_done),.sector_error(media_raw_error));
+ .sector_valid(mv_sec_valid),.sector_byte(mv_sec_byte),.sector_byte_index(mv_sec_byte_index),
+ .sector_done(mv_sec_done),.sector_error(mv_sec_error));
 // Original timing issues read_req before delayed vs/frame_start. In PLAY wait
 // 32 pixels (1.28 us of vertical blank) for committed MV base and length.
 // Keep the same blanking budget on every page so leaving an image background
@@ -2355,7 +2421,7 @@ s6_video_layer #(.ENABLE(S6_VIDEO_ENABLE)) u_s6_video_layer(
  .clk(video_clk),.rst_n(media_video_rst_n),.frame_start(frame_start),
  .play_active(S5_PLAY_ENABLE && play_active_v2),.paused(paused_v2),
  .restart(play_track_restart_vid),.diagnostic(pat_mode),
- .transport_ready(stream_enable_vid[1] && !seek_frame_busy),.covers_ready(media_preloaded_vid),.metadata_async(mv_metadata_video),.time_ms(lyric_time_ms),
+ .transport_ready(stream_enable_vid[1]),.covers_ready(media_preloaded_vid),.metadata_async(mv_metadata_video),.time_ms(lyric_time_ms),
  .track_id(song_metadata_video[1:0]),
  .seek_frame(seek_frame_vid),
  .visual_toggle(mv_visual_tgl),.raw_read_en(video_read_en),.out_de(de),.out_x(osd_pixel_x),
@@ -2900,7 +2966,10 @@ timebase_48k u_timebase_48k (
     .sample_tick  (wav_sample_consumed),
     .running      (play_running_vid),
     .restart      (play_track_restart_vid),
-    .load         (play_track_restart_vid),
+    // 位置跳变（Seek / 切歌 / 重播）一律以目标样本为准：切歌时 seek_clear 已把
+    // 目标清零，Seek 时目标就是落点。restart 只是"再来一次"的触发源之一；
+    // 目标变化也立即重装，避免 restart 到达前的空窗沿用旧时间。
+    .load         (play_track_restart_vid || play_seek_target_changed_vid),
     .load_sample  (play_seek_target_v2),
     .sample_count (lyric_sample_count),
     .cur_time_ms  (lyric_time_ms),

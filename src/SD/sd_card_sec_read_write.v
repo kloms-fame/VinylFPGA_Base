@@ -18,6 +18,7 @@ module sd_card_sec_read_write
 	input[7:0]       sd_sec_write_data,
 	output           sd_sec_write_data_req,
 	output           sd_sec_write_end,
+	output           idle,                        //CMD17 owner is parked
 
 	output reg[15:0] spi_clk_div,
 	output reg       cmd_req,
@@ -61,6 +62,7 @@ assign sd_sec_read_end = (state == S_READ_END);
 assign sd_sec_write_data_req = (state == S_WRITE) && block_write_data_rd;
 assign block_write_data = sd_sec_write_data;
 assign sd_sec_write_end = (state == S_WRITE_END);
+assign idle = (state == S_WAIT_READ_WRITE);
 
 always@(posedge clk or posedge rst)
 begin

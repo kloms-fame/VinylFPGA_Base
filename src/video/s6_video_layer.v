@@ -71,7 +71,11 @@ module s6_video_layer #(
   .clk(clk),.rst_n(rst_n),.frame_start(frame_start),.enable(schedule_enable),
   .paused(paused),.restart(restart || track_changed),
   .retain_display(display_enable && !track_changed && !entering_play),.time_ms(time_ms),.start_lba(meta2[31:0]),
-  .frame_count(meta2[47:32]),.seek_frame(seek_frame),.done_toggle(done_toggle),.failed(failed),
+  // seek_frame 一律以定位器结果为准：切歌/重播时 play_ctrl 的 seek_clear 已在
+ // restart 到达前把目标清零（同一 sd 拍发出，经 2FF + 串行定位器只需 3 个视频
+ // 时钟，而 restart 至少要等 stream_session 的 32 拍稳定窗口），不会再锁到旧曲
+ // 的定位值；反之把 seek 也强制成 0 会让 MV 从第 0 帧重播。
+ .frame_count(meta2[47:32]),.seek_frame(seek_frame),.done_toggle(done_toggle),.failed(failed),
   .request_toggle(request_toggle),.request_lba(request_lba),.request_bank(request_bank),
   .display_valid(display_valid),.display_bank(mv_read_bank),.display_frame(display_frame),.waiting(waiting));
  always @(posedge clk or negedge rst_n) begin

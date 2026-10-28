@@ -17,6 +17,7 @@
 module fat32_media_loader #(
     // S4：优先使用 INDEX.BIN 曲目索引；=0 或索引缺失/损坏时完全回退到
     // PIC1~4.BMP + AUDIO.PCM 旧路径（旧路径逐拍行为保持不变）。
+    parameter USE_SD_BUS_GRANT = 1'b0,
     parameter         USE_INDEX_BIN = 1'b1
 )(
     input  wire        clk,
@@ -52,6 +53,7 @@ module fat32_media_loader #(
     input  wire [7:0]  sd_sec_read_data,
     input  wire        sd_sec_read_data_valid,
     input  wire        sd_sec_read_end,
+    input  wire        sd_bus_grant,
 
     output reg         bmp_data_wr_en,
     output reg  [23:0] bmp_data,
@@ -978,7 +980,8 @@ module fat32_media_loader #(
     // -------------------------------------------------------------------------
     // 接到现有 sd_card_top 的协议适配层。
     // -------------------------------------------------------------------------
-    sd_sector_adapter u_sd_sector_adapter (
+    sd_sector_adapter #(.USE_BUS_GRANT(USE_SD_BUS_GRANT)) u_sd_sector_adapter (
+        .bus_grant              (sd_bus_grant),
         .clk                    (clk),
         .rst_n                  (~rst),
         .sector_req             (arb_sector_req),
