@@ -13,6 +13,22 @@ if {![regexp {Num="1" Init="7"} $project_text] ||
     ![regexp {<Seeds select="7">7 </Seeds>} $project_text]} {
     error "收尾构建要求单一 seed 7，请检查工程副本配置"
 }
+set required_params {
+    {set_param place timing_driven_mode on}
+    {set_param place crit_path_opt on}
+    {set_param place post_place_opt high}
+    {set_param place logic_level_opt on}
+    {set_param place shifter_opt on}
+    {set_param place split_data_from_clock on}
+    {set_param place hfn_opt_effort high}
+    {set_param route post_route_opt high}
+    {set_param route postrt_opt_extra_round 4}
+}
+foreach param $required_params {
+    if {[string first "<param>$param</param>" $project_text] < 0} {
+        error "工程文件未持久化候选实现参数: $param"
+    }
+}
 proc require_stage {directory stage} {
     if {![file exists [file join $directory .$stage.end.f]] ||
         [file exists [file join $directory .$stage.error.f]]} {
@@ -27,16 +43,6 @@ wait_run syn_1
 foreach stage {read_design opt_rtl opt_gate} {
     require_stage VinylFPGA_Runs/syn_1 $stage
 }
-set_user_params -run phy_1 -params [list \
-    [list place timing_driven_mode on] \
-    [list place crit_path_opt on] \
-    [list place post_place_opt high] \
-    [list place logic_level_opt on] \
-    [list place shifter_opt on] \
-    [list place split_data_from_clock on] \
-    [list place hfn_opt_effort high] \
-    [list route post_route_opt high] \
-    [list route postrt_opt_extra_round 4]]
 reset_runs phy_1 -f
 launch_runs phy_1 -step bitgen -jobs 1
 wait_run phy_1
@@ -54,6 +60,17 @@ foreach field {SWNS HWNS STNS HTNS} {
     if {([string match *WNS $field] && $value <= 0) ||
         ([string match *TNS $field] && $value != 0)} {
         error "最终时序未通过: $field=$value"
+    }
+}
+set qor_file [open [file join $result_dir route.qor] r]
+set qor [read $qor_file]
+close $qor_file
+foreach field {{Num of violated S-EP} {Num of violated H-EP}} {
+    if {![regexp [format {%s\s*\|\s*(\d+)} $field] $qor ignored value]} {
+        error "route QoR 缺少违例计数: $field"
+    }
+    if {$value != 0} {
+        error "route 存在时序端点违例: $field=$value"
     }
 }
 close_project

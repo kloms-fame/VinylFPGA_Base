@@ -525,13 +525,26 @@
         <Run Name="phy_1" Type="PhysicalDesign" ConstraintSet="constraint_1" Description="" SynRun="syn_1" Active="true">
             <Strategy Name="Default_PhysicalDesign_Strategy">
                 <PlaceProperty>
+                    <hfn_opt_effort>high</hfn_opt_effort>
+                    <logic_level_opt>on</logic_level_opt>
                     <opt_timing>high</opt_timing>
+                    <post_place_opt>high</post_place_opt>
                 </PlaceProperty>
                 <RouteProperty>
                     <effort>routability</effort>
+                    <post_route_opt>high</post_route_opt>
                 </RouteProperty>
             </Strategy>
             <UserParams>
+                <param>set_param place timing_driven_mode on</param>
+                <param>set_param place crit_path_opt on</param>
+                <param>set_param place post_place_opt high</param>
+                <param>set_param place logic_level_opt on</param>
+                <param>set_param place shifter_opt on</param>
+                <param>set_param place split_data_from_clock on</param>
+                <param>set_param place hfn_opt_effort high</param>
+                <param>set_param route post_route_opt high</param>
+                <param>set_param route postrt_opt_extra_round 4</param>
             </UserParams>
         </Run>
     </Runs>

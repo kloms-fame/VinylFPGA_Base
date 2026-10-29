@@ -161,10 +161,11 @@
   },
   "bit": "doc/资源/sd卡/release_20261029_font32_candidate/VinylFPGA_font32_candidate_20261029.bit",
   "qor": "doc/资源/sd卡/release_20261029_font32_candidate/route.qor",
-  "board_acceptance": "pending",
+  "board_acceptance": "passed",
   "open_items": [
-    "实板冷启动、旋钮seek和多曲长时间播放待验收",
-    "SDRAM位置与本地时钟布线关键警告待核查",
-    "Slice为95.73%，尚未达到95%目标"
-  ]
+    "PHY-7002：U3/sdram初始位置不合法，工具自动移动；需决定是否接受自动布局结果。",
+    "PHY-5079：SDRAM_CLK（ext_mem_clk_sft）使用1条本地布线资源；需结合器件时钟/IO架构确认。",
+    "Slice利用率95.73%，高于95%目标，但未超过器件资源上限。"
+  ],
+  "board_acceptance_basis": "用户于2026-10-29报告：烧录 VinylFPGA_font32_candidate_20261029.bit 后人工验收完美通过；本记录未对人工测试覆盖范围作额外推断。"
 }
