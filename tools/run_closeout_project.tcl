@@ -17,16 +17,19 @@ set required_params {
     {set_param place timing_driven_mode on}
     {set_param place crit_path_opt on}
     {set_param place post_place_opt high}
-    {set_param place logic_level_opt on}
     {set_param place shifter_opt on}
     {set_param place split_data_from_clock on}
     {set_param place hfn_opt_effort high}
-    {set_param route post_route_opt high}
     {set_param route postrt_opt_extra_round 4}
 }
 foreach param $required_params {
     if {[string first "<param>$param</param>" $project_text] < 0} {
         error "工程文件未持久化候选实现参数: $param"
+    }
+}
+foreach property {{<logic_level_opt>on</logic_level_opt>} {<post_route_opt>high</post_route_opt>}} {
+    if {[string first $property $project_text] < 0} {
+        error "工程策略未保存实现选项: $property"
     }
 }
 proc require_stage {directory stage} {

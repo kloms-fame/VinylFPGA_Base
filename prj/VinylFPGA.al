@@ -539,11 +539,9 @@
                 <param>set_param place timing_driven_mode on</param>
                 <param>set_param place crit_path_opt on</param>
                 <param>set_param place post_place_opt high</param>
-                <param>set_param place logic_level_opt on</param>
                 <param>set_param place shifter_opt on</param>
                 <param>set_param place split_data_from_clock on</param>
                 <param>set_param place hfn_opt_effort high</param>
-                <param>set_param route post_route_opt high</param>
                 <param>set_param route postrt_opt_extra_round 4</param>
             </UserParams>
         </Run>
