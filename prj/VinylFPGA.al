@@ -526,13 +526,11 @@
             <Strategy Name="Default_PhysicalDesign_Strategy">
                 <PlaceProperty>
                     <hfn_opt_effort>high</hfn_opt_effort>
-                    <logic_level_opt>on</logic_level_opt>
                     <opt_timing>high</opt_timing>
                     <post_place_opt>high</post_place_opt>
                 </PlaceProperty>
                 <RouteProperty>
                     <effort>routability</effort>
-                    <post_route_opt>high</post_route_opt>
                 </RouteProperty>
             </Strategy>
             <UserParams>
