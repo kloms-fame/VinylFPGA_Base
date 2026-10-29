@@ -11,6 +11,7 @@ module audio_sdram_arbiter #(
     input graphics_wr_en,graphics_rd_en,
     input [20:0] graphics_wr_addr,graphics_rd_addr,
     input [31:0] graphics_wr_data,
+    input [3:0] graphics_wr_mask,
     input audio_wr_en,audio_rd_en,
     input [20:0] audio_wr_addr,audio_rd_addr,
     input [31:0] audio_wr_data,
@@ -37,7 +38,7 @@ module audio_sdram_arbiter #(
     assign mem_wr_addr=audio_wr_en ? audio_wr_addr : graphics_wr_addr;
     assign mem_wr_data=audio_wr_en ? audio_wr_data : graphics_wr_data;
     assign mem_wr_mask=audio_wr_en ? audio_wr_mask :
-                       graphics_wr_en ? 4'b0001 : tail_active ? held_mask : 4'b0000;
+                       graphics_wr_en ? graphics_wr_mask : tail_active ? held_mask : 4'b0000;
     assign mem_rd_en=graphics_rd_en || audio_rd_en;
     assign mem_rd_addr=audio_rd_en ? audio_rd_addr : graphics_rd_addr;
     always @(posedge mem_clk or negedge rst_n) begin
@@ -47,7 +48,7 @@ module audio_sdram_arbiter #(
     end
     always @(posedge mem_clk or negedge rst_n) begin
         if (!rst_n) held_mask<=0;
-        else if (wr) held_mask<=audio_wr_en ? audio_wr_mask : 4'b0001;
+        else if (wr) held_mask<=audio_wr_en ? audio_wr_mask : graphics_wr_mask;
     end
     always @(posedge mem_clk or negedge rst_n) begin
         if (!rst_n) quiet_count<=0;

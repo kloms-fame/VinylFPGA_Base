@@ -17,7 +17,7 @@ module tb_background_cache_full_frame;
   .sector_byte(byte_value),.sector_byte_index(index),.sector_done(done),.sector_error(8'd0));
  always @(posedge clk) if(pv) begin
   pixels=pixels+1;
-  if(pd!==32'h00ff0000) $fatal(1,"full frame RGB565 green expansion");
+  if(pd!==(dut.job_art ? 32'h07e007e0 : 32'h00ff0000)) $fatal(1,"full frame RGB565 green storage/expansion");
  end
  initial begin
   #22 rst_n=1; @(negedge clk);enable=1;

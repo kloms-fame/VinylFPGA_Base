@@ -8,6 +8,7 @@ module background_frame_select (
     input wire [5:0] ready_info,
     output reg image_active = 1'b0,
     output reg epoch = 1'b0,
+    output reg art2 = 1'b0,
     output reg [20:0] base = 21'd0
 );
     reg commit = 1'b0;
@@ -19,9 +20,16 @@ module background_frame_select (
     end
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) image_active <= 1'b0;
-        else if (commit) image_active <= enable && epoch_matches &&
-            ((mode == 2'd1 && song_ready) ||
-             (mode[1] && ready_info[3] && ready_info[4] == mode[0]));
+        // Song replacement needs the reader fence; immutable art lanes do
+        // not. Track changes must never blank a ready static background.
+        else if (commit) image_active <= enable &&
+            ((mode == 2'd1 && song_ready && epoch_matches) ||
+             (mode == 2'd2 && ready_info[3]) ||
+             (mode == 2'd3 && ready_info[4]));
+    end
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) art2 <= 1'b0;
+        else if (commit) art2 <= mode == 2'd3;
     end
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) epoch <= 1'b0;

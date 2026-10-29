@@ -2,7 +2,8 @@
 `define VINYL_BACKGROUND_CACHE_LOADER_V
 // One sector is staged in the existing shared write FIFO. Hold its SDRAM
 // writer until all 512 bytes validate; retry ACK clears that FIFO in place.
-// Every slot replacement waits for the persistent reader epoch/ACK fence.
+// Song replacement waits for the reader epoch/ACK fence. The two immutable
+// artworks share addresses but have independent halfword masks and readiness.
 module background_cache_loader #(
  parameter integer FRAME_SECTORS = 1200,
  parameter integer SECTOR_RETRIES = 2
@@ -16,6 +17,7 @@ module background_cache_loader #(
  output wire [5:0] ready_info,
  output wire invalidate_toggle, writer_active, write_req,
  output wire write_hold, write_cancel,
+ output wire [3:0] write_mask,
  output reg [20:0] write_address = 21'd0,
  output wire pixel_valid, output wire [31:0] pixel_data,
  output wire sector_req, output wire sector_start,
@@ -37,9 +39,9 @@ module background_cache_loader #(
  (* async_reg = "true" *) reg [1:0] art2_request_sync = 2'd0;
  reg epoch = 1'b0;
  reg [1:0] target_song = 2'd0, cached_song = 2'd0;
- reg target_art2 = 1'b0, cached_art2 = 1'b0;
  reg art_ready = 1'b0, song_ready = 1'b0;
  reg art_failed = 1'b0, song_failed = 1'b0;
+ reg art2_ready = 1'b0, art2_failed = 1'b0;
  reg job_art = 1'b0, job_art2 = 1'b0;
  reg [1:0] job_song = 2'd0;
  reg [10:0] chunk = 11'd0;
@@ -54,13 +56,16 @@ module background_cache_loader #(
  wire source_valid = source_enabled && source_base_valid;
  wire song_changed = song_id != target_song;
  wire requested_art2 = source_art2_supported && art2_request_sync[1];
- wire art_changed = art_request_sync[1] && requested_art2 != target_art2;
  wire invalidate_pending = invalidation_ack_sync[1] != epoch;
- wire job_obsolete = !source_valid || (job_art
-     ? (job_art2 != target_art2 || art_changed)
-     : (job_song != song_id || song_changed));
- wire start_art_request = source_valid && !art_ready && !art_failed && !art_changed;
- wire start_song_request = source_valid && (art_ready || art_failed) &&
+ // Immutable artworks occupy independent 16-bit lanes of the same words.
+ // Warm both proactively; an explicit art2 request can bypass the song job.
+ wire job_obsolete = !source_valid || (!job_art && (job_song != song_id || song_changed));
+ wire need_art1 = !art_ready && !art_failed;
+ wire need_art2 = source_art2_supported && !art2_ready && !art2_failed;
+ wire next_art2 = need_art2 && (!need_art1 || (art_request_sync[1] && requested_art2));
+ wire start_art_request = source_valid && (need_art1 ||
+     (need_art2 && (song_ready || song_failed || (art_request_sync[1] && requested_art2))));
+ wire start_song_request = source_valid && !start_art_request && (art_ready || art_failed) &&
      !song_ready && !song_failed && !song_changed && !invalidate_pending;
  wire start_art = state == IDLE && start_art_request;
  wire start_song = state == IDLE && start_song_request;
@@ -69,7 +74,7 @@ module background_cache_loader #(
  wire sector_bad = sector_error != 8'd0 || byte_count_with_valid != 11'd512 || byte_bad;
  wire frame_finished = state == NEXT && !failed && !abandoned && !job_obsolete && chunk == FRAME_SECTORS-1;
  wire [15:0] rgb565 = {sector_byte,low_byte};
- assign ready_info = {epoch,cached_art2,art_ready,song_ready,cached_song};
+ assign ready_info = {epoch,art2_ready,art_ready,song_ready,cached_song};
  assign invalidate_toggle = epoch;
  // Never reserve SDRAM while waiting for the SD-sector arbiter. A writer
  // token is requested only after the mux confirms ownership of this sector.
@@ -82,7 +87,11 @@ module background_cache_loader #(
  assign sector_start = state == READ || (state == ABORT && sector_grant);
  assign pixel_valid = state == READ && sector_valid && sector_byte_index[0] &&
                       !failed && !byte_bad && !job_obsolete && !abandoned;
- assign pixel_data = {rgb565[15:11],rgb565[15:13],rgb565[10:5],rgb565[10:9],rgb565[4:0],rgb565[4:2],8'd0};
+ // Art1 writes bytes 3:2, art2 bytes 1:0. PCM occupies only addresses
+ // 0..524287; ART_ADDRESS..2073599 is outside that low-byte audio ring.
+ assign write_mask = job_art ? (job_art2 ? 4'b1100 : 4'b0011) : 4'b0001;
+ assign pixel_data = job_art ? {rgb565,rgb565} :
+     {rgb565[15:11],rgb565[15:13],rgb565[10:5],rgb565[10:9],rgb565[4:0],rgb565[4:2],8'd0};
  always @(posedge clk or negedge rst_n) begin
   if (!rst_n) begin
    invalidation_ack_sync<=0; write_ack_sync<=0; finish_sync<=0;
@@ -106,11 +115,10 @@ module background_cache_loader #(
   end
  end
  always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) begin target_song<=0; target_art2<=0; epoch<=0; end
+  if (!rst_n) begin target_song<=0; epoch<=0; end
   else begin
    target_song<=song_id;
-   if (art_request_sync[1]) target_art2<=requested_art2;
-   if ((song_changed || art_changed) && !invalidate_pending) epoch<=!epoch;
+   if (song_changed && !invalidate_pending) epoch<=!epoch;
   end
  end
  always @(posedge clk or negedge rst_n) begin
@@ -121,7 +129,7 @@ module background_cache_loader #(
    // start_art/start_song before feeding the state register again.
    IDLE: if (start_art_request || start_song_request) state<=WAIT_CHUNK;
    WAIT_CHUNK: if (job_obsolete || abandoned) state<=IDLE;
-               else if (!mv_writer_active && !invalidate_pending && !song_changed && !art_changed) state<=REQ;
+               else if (!mv_writer_active && !invalidate_pending && !song_changed) state<=REQ;
    ACK: if (write_ack_sync[1]) state<=CLEAR;
    CLEAR: if (!write_ack_sync[1]) state<=READ;
    REQ: if (sector_grant) state<=(job_obsolete || abandoned) ? ABORT : ACK;
@@ -142,13 +150,13 @@ module background_cache_loader #(
  always @(posedge clk or negedge rst_n) begin
   if (!rst_n) begin job_art<=0; job_art2<=0; job_song<=0; chunk<=0; end
   else if (start_art || start_song) begin
-   job_art<=start_art; job_art2<=target_art2; job_song<=song_id; chunk<=0;
+   job_art<=start_art; job_art2<=next_art2; job_song<=song_id; chunk<=0;
  end else if (state == NEXT && !failed) chunk<=chunk+11'd1;
  end
  always @(posedge clk or negedge rst_n) begin
   if (!rst_n) begin sector_lba<=0; write_address<=0; end
   else if (start_art) begin
-   sector_lba<=source_base+(target_art2 ? 32'd6000 : 32'd4800);
+   sector_lba<=source_base+(next_art2 ? 32'd6000 : 32'd4800);
    write_address<=ART_ADDRESS;
   end else if (start_song) begin
    case(song_id)
@@ -200,11 +208,19 @@ module background_cache_loader #(
   else if (state == ACK) finish_mark<=finish_sync[1];
  end
  always @(posedge clk or negedge rst_n) begin
-  if (!rst_n) begin art_ready<=0; art_failed<=0; cached_art2<=0; end
+  if (!rst_n) begin art_ready<=0; art_failed<=0; end
   else begin
-   if (art_changed || !source_valid) begin art_ready<=0; art_failed<=0; end
-   else if (frame_finished && job_art) begin art_ready<=1; cached_art2<=job_art2; end
-   else if (state == NEXT && failed && !abandoned && job_art) art_failed<=1;
+   if (!source_valid) begin art_ready<=0; art_failed<=0; end
+   else if (frame_finished && job_art && !job_art2) art_ready<=1;
+   else if (state == NEXT && failed && !retry_pending && !abandoned && job_art && !job_art2) art_failed<=1;
+  end
+ end
+ always @(posedge clk or negedge rst_n) begin
+  if (!rst_n) begin art2_ready<=0; art2_failed<=0; end
+  else begin
+   if (!source_valid) begin art2_ready<=0; art2_failed<=0; end
+   else if (frame_finished && job_art && job_art2) art2_ready<=1;
+   else if (state == NEXT && failed && !retry_pending && !abandoned && job_art && job_art2) art2_failed<=1;
   end
  end
  always @(posedge clk or negedge rst_n) begin
@@ -212,7 +228,7 @@ module background_cache_loader #(
   else begin
    if (song_changed || !source_valid) begin song_ready<=0; song_failed<=0; end
    else if (frame_finished && !job_art) begin song_ready<=1; cached_song<=job_song; end
-   else if (state == NEXT && failed && !abandoned && !job_art && job_song == song_id) song_failed<=1;
+   else if (state == NEXT && failed && !retry_pending && !abandoned && !job_art && job_song == song_id) song_failed<=1;
   end
  end
 endmodule

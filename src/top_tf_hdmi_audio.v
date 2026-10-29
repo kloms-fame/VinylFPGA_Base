@@ -221,6 +221,9 @@ wire background_sector_valid, background_sector_done;
 wire [20:0] background_write_address;
 wire [31:0] background_pixel_data, background_sector_lba;
 wire background_image_active, background_epoch, background_epoch_ack;
+wire background_art2;
+wire [3:0] background_write_mask;
+reg [3:0] background_mask_m0 = 4'd1, background_mask_m1 = 4'd1;
 wire [20:0] background_read_base;
 wire [1:0] background_mode;
 wire [1:0] song_id_frame;
@@ -1754,6 +1757,7 @@ frame_read_write #(
     .background_write_hold(background_writer_mem && background_hold_mem),
     .background_write_cancel(background_writer_mem && background_cancel_mem),
     .background_media_mv(mv_read_active),.background_epoch(background_epoch),
+    .background_art2(background_art2),
     .background_media_base(background_media_base),.background_base(background_read_base),
     .background_epoch_ack(background_epoch_ack),
     .external_read_busy(graphics_mem_stall),
@@ -1810,6 +1814,7 @@ audio_sdram_arbiter u_audio_sdram_arbiter (
     .graphics_wr_en(frw_wr_en),.graphics_rd_en(frw_rd_en),
     .graphics_wr_addr(frw_wr_addr),.graphics_rd_addr(frw_rd_addr),
     .graphics_wr_data(frw_wr_data),
+    .graphics_wr_mask(background_writer_mem ? background_mask_m1 : frw_wr_mask),
     .audio_wr_en(audio_mem_wr_en),.audio_rd_en(audio_mem_rd_en),
     .audio_wr_addr(audio_mem_wr_addr),.audio_rd_addr(audio_mem_rd_addr),
     .audio_wr_data(audio_mem_wr_data),.audio_wr_mask(audio_mem_wr_mask),
@@ -2307,7 +2312,8 @@ wire s2_boot_on = S2_BOOT_ENABLE && !pat_mode;
 
 // S6 reuses the existing SD client and frame FIFOs. No new clocks or IO.
 // 3B: storage completion is bundled with the cache tag/epoch. A new epoch
-// forces a gray frame; the memory reader ACK permits reusing the song slot
+// fences the song background; immutable art lanes stay visible. The ACK
+// permits reusing the song slot
 // only after the preceding read burst has drained and its FIFO is cleared.
 always @(posedge sd_card_clk or negedge sd_media_rst_n) begin
  if(!sd_media_rst_n) background_ready_previous <= 6'd0;
@@ -2323,6 +2329,16 @@ sync_2ff u_background_hold_sync(.clk(ext_mem_clk),.rst_n(mem_rst_n),
  .async_in(background_hold_sd),.sync_out(background_hold_mem));
 sync_2ff u_background_cancel_sync(.clk(ext_mem_clk),.rst_n(mem_rst_n),
  .async_in(background_cancel_sd),.sync_out(background_cancel_mem));
+// Bundled with writer ownership: job mask is fixed before the ACK/CLEAR
+// round trip and stays fixed until SDRAM completion returns to the loader.
+always @(posedge ext_mem_clk or negedge mem_rst_n) begin
+ if (!mem_rst_n) background_mask_m0 <= 4'd1;
+ else background_mask_m0 <= background_write_mask;
+end
+always @(posedge ext_mem_clk or negedge mem_rst_n) begin
+ if (!mem_rst_n) background_mask_m1 <= 4'd1;
+ else background_mask_m1 <= background_mask_m0;
+end
 background_cache_loader u_background_cache_loader (
  .clk(sd_card_clk),.rst_n(sd_media_rst_n),.enable(media_preloaded_sd && !pat_mode),
  .base_lba(background_base_lba_sd),.song_id(metadata_song_sd),
@@ -2332,6 +2348,7 @@ background_cache_loader u_background_cache_loader (
  .ready_info(background_ready_sd),.invalidate_toggle(),
  .writer_active(background_writer_active),.write_req(background_write_req),
  .write_hold(background_hold_sd),.write_cancel(background_cancel_sd),
+ .write_mask(background_write_mask),
  .write_ack(sd_card_write_req_ack),
  .write_finish_toggle(frame_write_toggle_mem),.write_address(background_write_address),
  .pixel_valid(background_pixel_valid),.pixel_data(background_pixel_data),
@@ -2345,7 +2362,7 @@ background_frame_select u_background_frame_select (
  .clk(video_clk),.rst_n(video_rst_n),.frame_start(frame_start),
  .enable(playback_page_mode_frame && !pat_mode),.mode(background_mode),
  .song_id(song_id_frame),.ready_info(background_ready_video),
- .image_active(background_image_active),.epoch(background_epoch),.base(background_read_base));
+ .image_active(background_image_active),.epoch(background_epoch),.art2(background_art2),.base(background_read_base));
 sync_2ff u_mv_preloaded_sync(.clk(video_clk),.rst_n(video_rst_n),
  .async_in(media_preloaded_sd),.sync_out(media_preloaded_vid));
 sync_2ff u_mv_writer_sync(.clk(ext_mem_clk),.rst_n(mem_rst_n),

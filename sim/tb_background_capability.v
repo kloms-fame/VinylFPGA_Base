@@ -51,8 +51,8 @@ module tb_background_capability;
             repeat(12) @(negedge clk);
             mv=0;
             cycles=0;
-            while(!info[3] && cycles<3000) begin @(negedge clk);cycles=cycles+1;end
-            if(!info[3] || info[4] !== (capability && want2) || pixels!=256 || issued!=1)
+            while(!(capability && want2 ? info[4] : info[3]) && cycles<3000) begin @(negedge clk);cycles=cycles+1;end
+            if(!(capability && want2 ? info[4] : info[3]) || pixels!=256 || issued!=1)
                 $fatal(1,"art tag/count cap%0d want%0d info%b pixels%0d requests%0d",capability,want2,info,pixels,issued);
         end
     endtask

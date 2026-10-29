@@ -18,7 +18,7 @@ module frame_read_write
 ) 
 (
 	input                            linear_write,
-    input wire background_enable, background_media_mv, background_epoch,
+    input wire background_enable, background_media_mv, background_epoch, background_art2,
     input wire background_write_hold, background_write_cancel,
     input wire [20:0] background_media_base, background_base,
     output wire background_epoch_ack,
@@ -96,6 +96,10 @@ wire                                 write_fifo_aclr;            // fifo Asynchr
 wire O_wr_busy;
 wire O_rd_busy;
 wire read_data_keep;
+wire read_data_art, read_data_art2;
+wire [15:0] art565 = read_data_art2 ? Sdr_rd_dout[15:0] : Sdr_rd_dout[31:16];
+wire [31:0] graphics_read_data = read_data_art ?
+    {art565[15:11],art565[15:13],art565[10:5],art565[10:9],art565[4:0],art565[4:2],8'd0} : Sdr_rd_dout;
 
 assign App_wr_busy = O_wr_busy | (EXTERNAL_READ_BUSY ? external_read_busy : 1'b0);
 assign app_write_busy = O_wr_busy;
@@ -155,7 +159,7 @@ frame_fifo_write_m0
 	.write_addr_index           (write_addr_index         ),    
 	.write_len                  (write_len                ),
 	.fifo_aclr                  (write_fifo_aclr          ),
-	.rdusedw                 	(rdusedw                  )
+	.rdusedw                 	({1'b0,rdusedw}           )
 );
 
 //instantiate an asynchronous FIFO 
@@ -166,7 +170,7 @@ rfifo_32_32_512 read_buf
 	.rst                      	(read_fifo_aclr             ),          // Asynchronous clear
 	.we                     	(Sdr_rd_en && read_data_keep),          // even cover columns only
 	.re                     	(read_en                    ),          // Read Request
-	.di                      	(Sdr_rd_dout                ),          // Input Data
+	.di                      	(graphics_read_data         ),          // Input Data
 	.empty_flag					(                           ),          // Read side Empty flag
 	.full_flag					(                           ),          // Write side Full flag
 	.wrusedw                	(wrusedw         	  	  		 ),          // Read Used Words
@@ -187,9 +191,11 @@ frame_fifo_read_m0
 (
     .background_enable(background_enable),
     .background_media_mv(background_media_mv),.background_epoch(background_epoch),
+    .background_art2(background_art2),
     .background_media_base(background_media_base),.background_base(background_base),
     .background_epoch_ack(background_epoch_ack),
     .read_data_keep(read_data_keep),
+    .read_data_art(read_data_art),.read_data_art2(read_data_art2),
 	.rst                        (rst                      ),
 	.mem_clk                    (mem_clk                  ),
     .Sdr_init_done				(Sdr_init_done),
@@ -211,7 +217,7 @@ frame_fifo_read_m0
 	.read_addr_index            (read_addr_index          ),    
 	.read_len                   (read_len                 ),
 	.fifo_aclr                  (read_fifo_aclr           ),
-	.wrusedw                	(wrusedw                  )
+	.wrusedw                	({1'b0,wrusedw}           )
 );
 
 endmodule

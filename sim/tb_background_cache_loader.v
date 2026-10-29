@@ -25,7 +25,7 @@ module tb_background_cache_loader;
   if(!active) $fatal(1,"pixel outside writer ownership");
   pixels=pixels+1;
   if(pd===32'd0 && pad_allowed) padded=padded+1;
-  else if(pd!==32'hff000000) $fatal(1,"RGB565 LE red expansion");
+  else if(pd!==(dut.job_art ? 32'hf800f800 : 32'hff000000)) $fatal(1,"RGB565 LE red storage/expansion");
  end
  task handshake;
  input [20:0] expected;

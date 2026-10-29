@@ -19,7 +19,7 @@ module tb_audio_sdram_arbiter;
         .refresh_active(refresh_active),.mem_read_valid(read_valid),
         .audio_lock(audio_lock),.audio_read_owner(audio_owner),
         .graphics_wr_en(gw),.graphics_rd_en(gr),.graphics_wr_addr(gwa),
-        .graphics_rd_addr(gra),.graphics_wr_data(gwd),
+        .graphics_rd_addr(gra),.graphics_wr_data(gwd),.graphics_wr_mask(4'b0001),
         .audio_wr_en(aw),.audio_rd_en(ar),.audio_wr_addr(awa),
         .audio_rd_addr(ara),.audio_wr_data(awd),.audio_wr_mask(4'b1110),
         .graphics_stall(stall),.write_tail_busy(tail),.graphics_read_valid(gvalid),

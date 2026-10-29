@@ -11,7 +11,8 @@ module background_raster_address (
     output wire [20:0] address,
     output wire [8:0] contiguous_words,
     output reg span_ready = 1'b0,
-    output wire cover_words
+    output wire cover_words,
+    output wire background_words
 );
     reg mv_q = 1'b0;
     reg [20:0] media_cursor = 21'd0;
@@ -25,6 +26,7 @@ module background_raster_address (
     // Covers read each even source row contiguously. Keep its even columns
     // before the read FIFO: two source commands produce one screen pixel.
     assign cover_words = enabled && !mv_q && in_media;
+    assign background_words = enabled && !in_media;
     wire screen_advance = advance && (!cover_words || cover_pair);
     assign address = in_media ? media_cursor : background_cursor;
     // End a burst before switching source slot, screen row or physical

@@ -3,14 +3,14 @@ module tb_background_frame_select;
     reg clk=0,rst_n=0,frame_start=0,enable=1;
     always #20 clk=~clk;
     reg [1:0] mode=1,song_id=0;
-    // {epoch,art2_tag,art_ready,song_ready,song_id}
+    // {epoch,art2_ready,art1_ready,song_ready,song_id}
     reg [5:0] ready_info=6'b001100;
-    wire active,epoch;
+    wire active,epoch,art2;
     wire [20:0] base;
     integer checks=0;
     background_frame_select dut(.clk(clk),.rst_n(rst_n),.frame_start(frame_start),
         .enable(enable),.mode(mode),.song_id(song_id),.ready_info(ready_info),
-        .image_active(active),.epoch(epoch),.base(base));
+        .image_active(active),.epoch(epoch),.art2(art2),.base(base));
     task check;
         input ok;
         begin checks=checks+1;if(ok!==1'b1) begin $display("FAIL selector check %0d",checks);$finish_and_return(1);end end
@@ -33,15 +33,22 @@ module tb_background_frame_select;
         ready_info[4]=1;
         repeat(5) @(negedge clk);check(!active);
         frame;check(active && base==1766400);
-        mode=2;frame;check(!active); // slot now holds second art
+        mode=2;frame;check(active); // art1 retained while art2 is ready
         ready_info[4]=0;frame;check(active);
         ready_info[3]=0;frame;check(!active);
-        ready_info[3]=1;ready_info[5]=0;frame;check(!active && !epoch);
+        ready_info[3]=1;ready_info[5]=0;frame;check(active && !epoch);
         frame;check(active && !epoch);
         enable=0;frame;check(!active);
         enable=1;mode=0;frame;check(!active);
         mode=3;ready_info[4]=1;frame;check(active);
-        rst_n=0;@(negedge clk);check(!active && !epoch && base==0);
+        ready_info[4:3]=2'b11;
+        repeat(32) begin
+            mode=2;ready_info[5]=~ready_info[5];frame;
+            check(active && !art2 && base==1766400);
+            mode=3;ready_info[5]=~ready_info[5];frame;
+            check(active && art2 && base==1766400);
+        end
+        rst_n=0;@(negedge clk);check(!active && !epoch && !art2 && base==0);
         $display("PASS background_frame_select: %0d checks, frame commit epoch gray barrier art identity modes 0/1/2/3",checks);$finish;
     end
 endmodule

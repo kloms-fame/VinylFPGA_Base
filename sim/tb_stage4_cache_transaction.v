@@ -53,7 +53,7 @@ module tb_stage4_cache_transaction;
   else if(app) begin
    if(hold_mem || cancel_mem) $fatal(1,"unvalidated sector wrote SDRAM");
    if(wp-rp<=0) $fatal(1,"write FIFO underflow");
-   if(fifo[rp%512]!==32'hff000000) $fatal(1,"rejected green data escaped ACK FIFO reset");
+   if(fifo[rp%512]!==(loader.job_art ? 32'hf800f800 : 32'hff000000)) $fatal(1,"rejected green data escaped ACK FIFO reset");
    if(app_addr!==expected_address) $fatal(1,"noncontiguous chunk address");
    expected_address=expected_address+1;rp=rp+1;total=total+1;
   end
@@ -101,21 +101,40 @@ module tb_stage4_cache_transaction;
   sector(512,1001,0,1);complete_chunk(1024);
   if(!info[2]) $fatal(1,"complete song not published");
   art=1;art2=1;repeat(15) @(negedge sd);
-  if(info[3] || !epoch || req) $fatal(1,"ART swap must invalidate and wait reader ACK");
+  if(!info[3] || epoch) $fatal(1,"ART2 preload must retain ART1 without reader invalidation");
   art2=0;repeat(8) @(negedge sd);art2=1;repeat(8) @(negedge sd);
-  if(!epoch || req || total!=1024) $fatal(1,"pending epoch must coalesce without overwriting");
+  if(epoch || total!=1024) $fatal(1,"mode changes must not invalidate immutable artworks");
   invack=epoch;
   sector(512,7000,0,1);complete_chunk(1280);
   sector(512,7001,0,1);complete_chunk(1536);
   if(info[4:3]!==2'b11) $fatal(1,"ART2 tag/ready not published");
-  art2=0;repeat(15) @(negedge sd);invack=epoch;
+  art2=0;repeat(15) @(negedge sd);
+  if(req || sr || info[4:3]!=2'b11) $fatal(1,"warm ART1 switch must not reload");
+  // Fail ART2 after warming ART1/song. The ready artwork and its physical
+  // lane remain intact; exhausted retries must not restart on a mode key.
+  enable=0;repeat(10) @(negedge sd);enable=1;
+  sector(512,5800,0,1);complete_chunk(1792);
+  sector(512,5801,0,1);complete_chunk(2048);
+  sector(512,1000,0,1);complete_chunk(2304);
+  sector(512,1001,0,1);complete_chunk(2560);
+  for(attempt=0;attempt<3;attempt=attempt+1) sector(12,7000,0,0);
+  wait(!owner);repeat(25) @(negedge sd);
+  if(!info[3] || info[4] || !loader.art2_failed || total!=2560 || req || sr)
+   $fatal(1,"failed ART2 must retain ART1/song and stop retrying");
+  art2=1;repeat(10) @(negedge sd);art2=0;repeat(10) @(negedge sd);
+  if(req || sr || !info[3] || info[4]) $fatal(1,"mode key restarted exhausted ART2");
+  // A new media session clears both ready bits. Exhaust ART1 retries and
+  // verify cancellation still releases the shared FIFO writer safely.
+  enable=0;repeat(10) @(negedge sd);enable=1;
   before_count=total;
   for(attempt=0;attempt<3;attempt=attempt+1) sector(512,5800,8'h20,0);
   if(loader.state!=0 && !cancel) wait(cancel || loader.state==0);
   wait(!owner);repeat(25) @(negedge sd);
-  if(total!=before_count || req || sr || info[3]) $fatal(1,"exhausted sector not safely cancelled");
+  if(total!=before_count || info[3]) $fatal(1,"exhausted sector not safely cancelled");
+  // A failed artwork must not prevent the independent song cache advancing.
+  enable=0;
   if(!loader.art_failed || writer.state!=0) $fatal(1,"cancel did not release memory writer");
-  $display("TEST_PASS stage4 cache FIFO hold retry cancel ART2 epoch/coalescing, %d SDRAM words",total);
+  $display("TEST_PASS stage4 cache FIFO hold retry cancel, immutable ART1/ART2, %d SDRAM words",total);
   $finish;
  end
  initial begin #1000000;$fatal(1,"timeout loader=%d writer=%d total=%d",loader.state,writer.state,total);end

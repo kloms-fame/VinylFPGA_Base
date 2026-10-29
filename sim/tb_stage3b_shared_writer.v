@@ -87,7 +87,7 @@ wire bg_active,bg_req,bg_pixel,bg_sec_req,bg_sec_start,bg_sec_busy,bg_sec_grant,
    check(used>0,"write FIFO underflow");
    popped=fifo[head];head=(head+1)%512;used=used-1;total=total+1;
    if(write_addr>=1766400) begin
-    check(write_addr===1766400+art_words && popped===32'hFF000000,"art chunk protected from pending MV, including padding");art_words=art_words+1;
+    check(write_addr===1766400+art_words && popped===32'hF800F800,"art chunk protected from pending MV, including padding");art_words=art_words+1;
    end else if(write_addr<1459200) begin
     check(write_addr===1228800+mv_words && popped===32'h0000FF00,"MV owns following transaction");mv_words=mv_words+1;
    end else begin

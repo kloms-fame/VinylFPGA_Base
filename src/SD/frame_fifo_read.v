@@ -52,10 +52,11 @@ module frame_fifo_read
 	output reg                       fifo_aclr,                  // to fifo asynchronous clear
 	input[9:0]                      wrusedw                     // from fifo write used words
 
-    ,input wire background_enable, background_media_mv, background_epoch
+    ,input wire background_enable, background_media_mv, background_epoch, background_art2
     ,input wire [20:0] background_media_base, background_base
     ,output wire background_epoch_ack
     ,output wire read_data_keep
+    ,output wire read_data_art, read_data_art2
 
 );
 localparam ONE                       = 256'd1;                   //256 bit '1'   you can use ONE[n-1:0] for n bit '1'
@@ -101,6 +102,9 @@ wire raster_enabled;
 wire [20:0] raster_address;
 wire [8:0] raster_span;
 wire raster_span_ready, raster_cover;
+wire raster_background;
+reg frame_art = 1'b0, frame_art2 = 1'b0;
+reg burst_art = 1'b0;
 reg burst_cover = 1'b0;
 reg returned_pair = 1'b0;
 reg [BURST_BITS-1:0] burst_limit = BURST_SIZE;
@@ -111,8 +115,24 @@ background_raster_address u_background_raster_address (
     .background_base(background_base),.enabled(raster_enabled),
     .epoch_ack(background_epoch_ack),.address(raster_address),
     .contiguous_words(raster_span),.span_ready(raster_span_ready),
-    .cover_words(raster_cover)
+    .cover_words(raster_cover),.background_words(raster_background)
 );
+// Freeze the format with the same frame mailbox as the address. Bursts are
+// split at every source boundary and fully drained before this tag changes.
+assign read_data_art = burst_art;
+assign read_data_art2 = frame_art2;
+always @(posedge mem_clk or posedge rst) begin
+    if (rst) frame_art <= 1'b0;
+    else if (state == S_ACK) frame_art <= background_base == 21'd1766400;
+end
+always @(posedge mem_clk or posedge rst) begin
+    if (rst) frame_art2 <= 1'b0;
+    else if (state == S_ACK) frame_art2 <= background_art2;
+end
+always @(posedge mem_clk or posedge rst) begin
+    if (rst) burst_art <= 1'b0;
+    else if (state == S_CHECK_FIFO) burst_art <= raster_background && frame_art;
+end
 // Source boundaries and 128-word/256-column splits make every cover burst
 // even. Hold its type until all returns drain; sample returned data, not the
 // command-side cursor or an assumed fixed SDRAM latency.

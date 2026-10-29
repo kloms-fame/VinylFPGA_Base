@@ -41,11 +41,11 @@ module tb_vendor_mask_isolation;
     audio_sdram_arbiter arbiter (
         .mem_clk(clk),.rst_n(!rst),.controller_busy(busy),
         .refresh_active(ref_active),.mem_read_valid(rd_valid),
-        .audio_lock(client_mask!=4'b0001),.audio_read_owner(1'b0),
-        .graphics_wr_en(wr_en && client_mask==4'b0001),
+        .audio_lock(client_mask==4'b1110),.audio_read_owner(1'b0),
+        .graphics_wr_en(wr_en && client_mask!=4'b1110),
         .graphics_rd_en(rd_en),.graphics_wr_addr(wr_addr),
-        .graphics_rd_addr(rd_addr),.graphics_wr_data(wr_data),
-        .audio_wr_en(wr_en && client_mask!=4'b0001),.audio_rd_en(1'b0),
+        .graphics_rd_addr(rd_addr),.graphics_wr_data(wr_data),.graphics_wr_mask(client_mask),
+        .audio_wr_en(wr_en && client_mask==4'b1110),.audio_rd_en(1'b0),
         .audio_wr_addr(wr_addr),.audio_rd_addr(21'd0),
         .audio_wr_data(wr_data),.audio_wr_mask(client_mask),
         .graphics_stall(),.write_tail_busy(write_tail_busy),
@@ -156,6 +156,15 @@ module tb_vendor_mask_isolation;
         for(n=0;n<32;n=n+1) expected[n]={24'h314159,expected[n][7:0]};
         check_arrays;
         $display("PASS graphics rewrite preserved cached PCM");
+        // Independent RGB565 art lanes, with producer mask changing while
+        // physical trailing beats are still queued inside the controller.
+        write_words(4'b0011,32'hf81f0000);
+        for(n=0;n<32;n=n+1) expected[n]={16'hf81f,expected[n][15:0]};
+        check_arrays;
+        write_words(4'b1100,32'h000007e0);
+        for(n=0;n<32;n=n+1) expected[n]={expected[n][31:16],16'h07e0+n[15:0]};
+        check_arrays;
+        $display("PASS art1/art2 halfword masks preserved the other artwork");
         wait_drained;
         if(held_mask!==0) $fatal(1,"read admitted with nonzero mask");
         checking_read=1;
