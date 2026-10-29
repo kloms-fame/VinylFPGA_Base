@@ -9,9 +9,9 @@ cd $build_dir
 set project_file [open VinylFPGA.al r]
 set project_text [read $project_file]
 close $project_file
-if {![regexp {Num="1" Init="7"} $project_text] ||
-    ![regexp {<Seeds select="7">7 </Seeds>} $project_text]} {
-    error "收尾构建要求单一 seed 7，请检查工程副本配置"
+if {![regexp {Num="3" Init="7"} $project_text] ||
+    ![regexp {<Seeds select="9">7 8 9 </Seeds>} $project_text]} {
+    error "收尾构建要求 MultiSeed 7/8/9 且选择已验收的 seed 9"
 }
 set required_params {
     {set_param place timing_driven_mode on}
@@ -50,19 +50,10 @@ try {
         require_stage VinylFPGA_Runs/syn_1 $stage
     }
     reset_runs phy_1 -f
-    set_user_params -run phy_1 -params [list \
-        [list place timing_driven_mode on] \
-        [list place crit_path_opt on] \
-        [list place post_place_opt high] \
-        [list place shifter_opt on] \
-        [list place split_data_from_clock on] \
-        [list place hfn_opt_effort high] \
-        [list route postrt_opt_extra_round 4] \
-        [list place logic_level_opt on] \
-        [list route post_route_opt high]]
     launch_runs phy_1 -step bitgen -jobs 1
     wait_run phy_1
-    set result_dir VinylFPGA_Runs/phy_1/seed_7
+    set result_dir VinylFPGA_Runs/phy_1/seed_9
+    require_stage VinylFPGA_Runs/phy_1 multiSeed
     foreach stage {opt_place opt_route bitgen} {
         require_stage $result_dir $stage
     }
@@ -81,12 +72,33 @@ try {
     set qor_file [open [file join $result_dir route.qor] r]
     set qor [read $qor_file]
     close $qor_file
-    foreach field {{Num of violated S-EP} {Num of violated H-EP}} {
-        if {![regexp [format {%s\s*\|\s*(\d+)} $field] $qor ignored value]} {
+    foreach {field pattern} {
+        {Num of violated S-EP} {Num of violated S-EP\s*\|\s*(\d+)}
+        {Num of violated H-EP} {Num of violated H-EP\s*\|\s*(\d+)}
+    } {
+        if {![regexp $pattern $qor ignored value]} {
             error "route QoR 缺少违例计数: $field"
         }
         if {$value != 0} {
             error "route 存在时序端点违例: $field=$value"
+        }
+    }
+    set best_dir VinylFPGA_Runs/best_result
+    set readme [open [file join $best_dir readMe.txt] r]
+    set best_text [read $readme]
+    close $readme
+    if {![string match *seed\ 9* $best_text]} {
+        error "best_result 未指向已验收的 seed 9"
+    }
+    foreach name {VinylFPGA.bit VinylFPGA_phy.ts} {
+        set selected [open [file join $result_dir $name] rb]
+        set selected_data [read $selected]
+        close $selected
+        set best [open [file join $best_dir $name] rb]
+        set best_data [read $best]
+        close $best
+        if {$selected_data ne $best_data} {
+            error "best_result 与 seed 9 的构建产物不一致: $name"
         }
     }
     close_project
