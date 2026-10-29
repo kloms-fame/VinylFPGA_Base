@@ -1,0 +1,22 @@
+# vsim -c -quiet work.tb_mv_frame_scheduler -do "run -all; quit" 
+# Start time: 21:31:25 on Oct 28,2026
+# ** Note: (vsim-3812) Design is being optimized...
+# //  ModelSim SE-64 10.6e Jun 23 2018
+# //
+# //  Copyright 1991-2018 Mentor Graphics Corporation
+# //  All Rights Reserved.
+# //
+# //  ModelSim SE-64 and its associated documentation contain trade
+# //  secrets and commercial or financial information that are the property of
+# //  Mentor Graphics Corporation and are privileged, confidential,
+# //  and exempt from disclosure under the Freedom of Information Act,
+# //  5 U.S.C. Section 552. Furthermore, this information
+# //  is prohibited from disclosure under the Trade Secrets Act,
+# //  18 U.S.C. Section 1905.
+# //
+# run -all
+# TEST_PASS mv_frame_scheduler pause underload restart seek three slots 600s no drift
+# ** Note: $finish    : ../../tb_mv_frame_scheduler.v(64)
+#    Time: 5771280 ns  Iteration: 1  Instance: /tb_mv_frame_scheduler
+# End time: 21:31:26 on Oct 28,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0

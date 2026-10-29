@@ -1,0 +1,57 @@
+#format: frame checksums
+#version: 2
+#hash: SHA256
+#software: Lavf62.3.100
+#tb 0: 1/25
+#media_type 0: video
+#codec_id 0: rawvideo
+#dimensions 0: 1920x1080
+#sar 0: 1/1
+#stream#, dts,        pts, duration,     size, hash
+0,          0,          0,        1,  3110400, 4cbf95d0551b7a3c1464967b41cb72137d5c47a193012c9af26c4049d576ac90
+0,          1,          1,        1,  3110400, 68734c26960952d7e4eb76d1894e98e22e94cc14131f7d86dc84b1efa9093f20
+0,          2,          2,        1,  3110400, ac9c3482f489ab7970395f1d0a30c1c4357ccbf18239eac1ee1a34ff338f2c99
+0,          3,          3,        1,  3110400, 546ed97994eaa644e913a5517cf5e8aad836ca867c5663ef8b37c76c533ae5b2
+0,          4,          4,        1,  3110400, 61ee3bf52d865eed76d754839b2add6ecec50c2739a38ee6ecf743d128571a05
+0,          5,          5,        1,  3110400, 9af2f0ddf88375b515950bf001a680eae436fdd356b25e6adb51b69ecc723869
+0,          6,          6,        1,  3110400, 95de01ada14192367d3b6dd598aaa45c45b86bfc8a2fe99c6f98620ab640f8b9
+0,          7,          7,        1,  3110400, 049596a9480fc466f24ff9f344e46224c1e097ba3e1488bd9cc88884ad195dbd
+0,          8,          8,        1,  3110400, 514e7f5956ad7c07e4731c7865f1f52e3a81405b3a85eaff7f4888caadc2ed8e
+0,          9,          9,        1,  3110400, 517cb75552be64f495d8c3c8187055937074a0ee2fc3e3aea5c70870f4d44a6a
+0,         10,         10,        1,  3110400, cefe98f49ea5cd1216f4ad6e741f7d87a40b1bbe15e26bcdaae175fab1813aa4
+0,         11,         11,        1,  3110400, 77c13b0368127f1ee50ce3acc30e5eb923ff711be907c71f1ffa458160e1ef70
+0,         12,         12,        1,  3110400, 967e08c3299137845e13bfc2eb36b9c062b6c781048965ab0daa4b9a1b81b31c
+0,         13,         13,        1,  3110400, 89ee81c6eedf5657cb8e550c41c9c6063a1db01624f9daea5589431fdb403877
+0,         14,         14,        1,  3110400, 19ab92cc0c30730fdfd882540931797a7d64ece28ebea94192795966871dd5f0
+0,         15,         15,        1,  3110400, b877f4cb6b66add0e412d42ca2d0f880bd420a1808a0217d9030f4d6fe56ae8c
+0,         16,         16,        1,  3110400, dd45cd39241b694d17fa6fc849477a70659da2ab5d0f2b0f73820817c58376dd
+0,         17,         17,        1,  3110400, bbaedebbb1f9f05c3caa1afc5ccb0ac4ab0dd1ebb7069e868461b38c593b0757
+0,         18,         18,        1,  3110400, 0cbe0ef6e50ea8ebd95cf9ec8e122ddcc0628a6567469993c9a2d138755eeb42
+0,         19,         19,        1,  3110400, c445d763aca2ed92c303375481ac420c2d534efd68c3e9394e842f252607cb5d
+0,         20,         20,        1,  3110400, f1d0d7e55a024b455fd860722e9cfbdc53e7b3958798528c2feee3753122a406
+0,         21,         21,        1,  3110400, db39acf67c07b27029686e9f42f3726b0b999183ef0a14e81f1a7551c2c1ec96
+0,         22,         22,        1,  3110400, fdc8f238203db877599661fa86fb321fea2948cc4abb696f29e0e4fa8f76fd12
+0,         23,         23,        1,  3110400, 882e90cdb31e32776b1ba52795ed999189126326331e323879e00a7fa2f40181
+0,         24,         24,        1,  3110400, e9cb1b9b8ba803a78c6fb324a512088c60f8788eef521b2496ab880547fd10ff
+0,         25,         25,        1,  3110400, 0054e158c1ef3d1420c119ad41052f3ba09aff05c7ce30986a2a3443b5b6786d
+0,         26,         26,        1,  3110400, 693a52b0190f1e8a4c4befedfe389cf7da598b13c9484bf4365351888b37dbed
+0,         27,         27,        1,  3110400, c0ff1e4e8189c6db7c2bf8793444fe686528521947b1e976af961532bc17596c
+0,         28,         28,        1,  3110400, 997b486a6c8e3a33aeba10a096efc5e754df062864419189a111a5a5ecff1490
+0,         29,         29,        1,  3110400, bb51cfa92021ffd6acbfd6ef4df56ab273684d39112fa953541a30b0a2eebe70
+0,         30,         30,        1,  3110400, 09d9c68224cc63de2717705ea2f9a6599eef5e1db8095778f94dbbb05f1d0b63
+0,         31,         31,        1,  3110400, 66fe967d1db3963ae46545895501e9bcc01dff3dbae244f5ff6c7dd97958690e
+0,         32,         32,        1,  3110400, 75d657941d60e4857c3386fd91c60e078deaccfde3680b0104d834e4534b52be
+0,         33,         33,        1,  3110400, 0fad7ad43912c75b676d1817c8a7b5dfade8499fa0017c74baf544bc006137cb
+0,         34,         34,        1,  3110400, afe20658fbf9f3e6541afd0a39ee882c23afd5f89d4b7a6adb744f05ac34dbbf
+0,         35,         35,        1,  3110400, afe20658fbf9f3e6541afd0a39ee882c23afd5f89d4b7a6adb744f05ac34dbbf
+0,         36,         36,        1,  3110400, ed1f277d5b8646b70cdec46c2a45f6face4f769862f15d899d570a6da42c3520
+0,         37,         37,        1,  3110400, ed1f277d5b8646b70cdec46c2a45f6face4f769862f15d899d570a6da42c3520
+0,         38,         38,        1,  3110400, ed1f277d5b8646b70cdec46c2a45f6face4f769862f15d899d570a6da42c3520
+0,         39,         39,        1,  3110400, ed1f277d5b8646b70cdec46c2a45f6face4f769862f15d899d570a6da42c3520
+0,         40,         40,        1,  3110400, ed1f277d5b8646b70cdec46c2a45f6face4f769862f15d899d570a6da42c3520
+0,         41,         41,        1,  3110400, ed1f277d5b8646b70cdec46c2a45f6face4f769862f15d899d570a6da42c3520
+0,         42,         42,        1,  3110400, ed1f277d5b8646b70cdec46c2a45f6face4f769862f15d899d570a6da42c3520
+0,         43,         43,        1,  3110400, ed1f277d5b8646b70cdec46c2a45f6face4f769862f15d899d570a6da42c3520
+0,         44,         44,        1,  3110400, ed1f277d5b8646b70cdec46c2a45f6face4f769862f15d899d570a6da42c3520
+0,         45,         45,        1,  3110400, ed1f277d5b8646b70cdec46c2a45f6face4f769862f15d899d570a6da42c3520
+0,         46,         46,        1,  3110400, ed1f277d5b8646b70cdec46c2a45f6face4f769862f15d899d570a6da42c3520

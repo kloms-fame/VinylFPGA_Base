@@ -1,0 +1,12 @@
+../../src/SD/sd_card_top.v
+../../src/SD/sd_card_sec_read_write.v
+../../src/SD/sd_card_cmd.v
+../../src/SD/sd_cmd18_reader.v
+../../src/SD/sd_sector_adapter.v
+../../src/SD/media_supervisor.v
+../../src/video/mv_sd_burst.v
+../../src/video/mv_stream_player.v
+fake_spi_card.v
+tb_sd_owner.v
+tb_mv_recovery.v
+tb_mv_shared_frame.v

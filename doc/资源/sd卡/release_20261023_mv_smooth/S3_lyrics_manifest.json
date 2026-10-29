@@ -1,0 +1,99 @@
+{
+  "phase": "S3",
+  "input_s2_image": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\.codex_tmp\\sdcard_rebuild_20261020\\S2_current_4mv\\card_STAGE2.img",
+  "input_s2_sha256": "834bba89d3cf5c83091205340d30ced1c8ef40ecaa968272072143a66bbcf49f",
+  "image": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\.codex_tmp\\sdcard_rebuild_20261020\\S3_manual_lyrics_4songs_4mv\\card_STAGE3.img",
+  "image_bytes": 1610612736,
+  "image_sha256": "ce3d12ba31edbcce891bae80eea4350234d727466bdffdd0ea1ea1d4ecfcbf58",
+  "size_mib": 1536,
+  "lyr2": {
+    "name": "LYRICS.BIN",
+    "bytes": 6161,
+    "sha256": "2ae9abdefff60900424d0d1f2104d255f8a5119c869a6742f3ad042f88ffd3e3",
+    "lba": 3145714,
+    "index_entries_crc32": "0x2CB7F7FF",
+    "crc32": "0x21DBF897"
+  },
+  "font": {
+    "bank_count": 2,
+    "bank0_glyphs": 210,
+    "bank1_glyphs": 235,
+    "rom_depth": 8192
+  },
+  "songs": [
+    {
+      "song_id": 0,
+      "title": "Never Gonna Give You Up",
+      "artist": "Rick Astley",
+      "srt": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\资源\\sd卡\\歌曲素材\\歌曲1\\Never Gonna Give You Up - Rick Astley.srt",
+      "srt_sha256": "0d50533471f393f8820e92b71c916af75eb2ebe5a9ea1d742dfc5e4726ddac65",
+      "source_cue_count": 50,
+      "cue_count": 50,
+      "display_row_count": 128,
+      "timeline_offset_ms": 0,
+      "manual_calibration_sha256": "db0835a1850ec091684b4d573dff21cbb440f40f881fa8a5fee0860e4326f39a",
+      "first_lyric_ms": 18788,
+      "last_lyric_ms": 195621,
+      "duration_seconds": 212.308833
+    },
+    {
+      "song_id": 1,
+      "title": "鸡你太美国风版",
+      "artist": "鬼山哥",
+      "srt": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\资源\\sd卡\\歌曲素材\\歌曲2\\【真ikun翻唱】鸡 你 太 美 官 方 M V_哔哩哔哩_bilibili_BV1cW4y177D2_P字幕.srt",
+      "srt_sha256": "bb523469371863548829202f6a3194fc282e8945f15880b50b7d4a4a9d4e1865",
+      "source_cue_count": 68,
+      "cue_count": 69,
+      "display_row_count": 72,
+      "timeline_offset_ms": 0,
+      "manual_calibration_sha256": "db0835a1850ec091684b4d573dff21cbb440f40f881fa8a5fee0860e4326f39a",
+      "first_lyric_ms": 920,
+      "last_lyric_ms": 158100,
+      "duration_seconds": 169.365692
+    },
+    {
+      "song_id": 2,
+      "title": "黄仁勋世界巡演",
+      "artist": "王与也行",
+      "srt": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\资源\\sd卡\\歌曲素材\\歌曲3\\⚡️黄仁勋 世界巡演⚡️【AI MV大赛】_哔哩哔哩_bilibili_BV1VRHr6AEZ6_P字幕.srt",
+      "srt_sha256": "8a47cc234d29cf1014440aeeb1d30db0b326db9ccd6a4e0bee37a6a380fd9fa6",
+      "source_cue_count": 19,
+      "cue_count": 19,
+      "display_row_count": 22,
+      "timeline_offset_ms": 0,
+      "manual_calibration_sha256": "db0835a1850ec091684b4d573dff21cbb440f40f881fa8a5fee0860e4326f39a",
+      "first_lyric_ms": 36900,
+      "last_lyric_ms": 81741,
+      "duration_seconds": 85.568
+    },
+    {
+      "song_id": 3,
+      "title": "万疆",
+      "artist": "李玉刚",
+      "srt": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\资源\\sd卡\\歌曲素材\\歌曲4\\【李玉刚自投稿】《万疆》MV官方发布~_哔哩哔哩_bilibili_BV1q64y1d7Ee_P字幕.srt",
+      "srt_sha256": "f70389e35488e2476901bdfe0ba5bcb84aa7847c93b44f380b0c7cec54d76452",
+      "source_cue_count": 63,
+      "cue_count": 61,
+      "display_row_count": 61,
+      "timeline_offset_ms": 0,
+      "manual_calibration_sha256": "db0835a1850ec091684b4d573dff21cbb440f40f881fa8a5fee0860e4326f39a",
+      "first_lyric_ms": 3540,
+      "last_lyric_ms": 205700,
+      "duration_seconds": 243.925
+    }
+  ],
+  "verified": {
+    "lyr2_decode_crc": true,
+    "rom_generated_from_same_rows": true,
+    "fat_chain_contiguous": true,
+    "lyr2_full_readback_sha256": true,
+    "all_index_lrc_flags": true,
+    "manual_calibration_applied": true
+  },
+  "final_visual_image": "VinylFPGA_SD_4SONGS_4MVS_MANUAL_LYRICS_FULLBLEED_20261020.img",
+  "final_visual_image_sha256": "3bf36c259d093b9f85fd538892e11c74275b1e68111ed366b8c77e58cd654654",
+  "final_visual_image_note": "The LYR2 payload and its index flags were retained unchanged while full-bleed covers/MVs and cover CRC/index entries CRC were updated.",
+  "final_verified_image": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\资源\\sd卡\\release_20261023_mv_smooth\\VinylFPGA_SD_4SONGS_4MVS_MANUAL_LYRICS_MV_SMOOTH_20261023.img",
+  "final_verified_image_sha256": "3bf36c259d093b9f85fd538892e11c74275b1e68111ed366b8c77e58cd654654",
+  "preservation_note": "All non-MV image bytes verified unchanged from source fullbleed release."
+}

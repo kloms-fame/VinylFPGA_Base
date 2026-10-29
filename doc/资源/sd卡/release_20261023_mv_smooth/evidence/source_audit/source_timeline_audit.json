@@ -1,0 +1,182 @@
+{
+  "schema": "vinylfpga-mv-source-timeline-v1",
+  "source_manifest": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\资源\\sd卡\\release_20261020_manual_lyrics_4songs_4mvs_fullbleed\\S2_mv_manifest.json",
+  "source_manifest_sha256": "084e292fa85c977c05b22089ebe3e9f13c0132821755e6d788e0ba5fd51a8168",
+  "songs": [
+    {
+      "number": 1,
+      "source_video": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\资源\\sd卡\\歌曲素材\\歌曲1\\video_【官方 MV】Never Gon..._0.mp4",
+      "source_sha256": "7dc42c7d9e040406304698531be0b32936117c0d5e7aac94c6c28cdffeebddad",
+      "streams": [
+        {
+          "r_frame_rate": "25/1",
+          "avg_frame_rate": "25/1",
+          "time_base": "1/16000",
+          "start_time": "0.021000",
+          "duration": "212.240000"
+        }
+      ],
+      "native_frames": 5306,
+      "first_pts_seconds": 0.021,
+      "last_pts_seconds": 212.221,
+      "minimum_pts_step_seconds": 0.03999999999999204,
+      "maximum_pts_step_seconds": 0.040000000000020464,
+      "nonmonotonic_or_duplicate_pts": 0,
+      "pts_gaps_above_100ms": 0,
+      "native_original_resolution_windows": []
+    },
+    {
+      "number": 2,
+      "source_video": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\资源\\sd卡\\歌曲素材\\歌曲2\\video_【真ikun翻唱】鸡 你 太 美..._0.mp4",
+      "source_sha256": "9d746cccef161fc73a314cf4fcb47dc330ae084260aeaf288c86175cb41709df",
+      "streams": [
+        {
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "time_base": "1/16000",
+          "start_time": "0.046000",
+          "duration": "169.300000"
+        }
+      ],
+      "native_frames": 5079,
+      "first_pts_seconds": 0.046,
+      "last_pts_seconds": 169.313,
+      "minimum_pts_step_seconds": 0.03299999999998704,
+      "maximum_pts_step_seconds": 0.034000000000020236,
+      "nonmonotonic_or_duplicate_pts": 0,
+      "pts_gaps_above_100ms": 0,
+      "native_original_resolution_windows": [
+        {
+          "seek_seconds": 0,
+          "duration_seconds": 1,
+          "identical_frame_runs": [
+            {
+              "approximate_source_start_seconds": 0.066667,
+              "approximate_source_end_seconds_exclusive": 0.3,
+              "native_frames_identical": 7,
+              "sha256": "bc4e52a8816ff4c433df47c81b47d95aec230966cf71dfb1a862d2d48e1e3ff5"
+            },
+            {
+              "approximate_source_start_seconds": 0.3,
+              "approximate_source_end_seconds_exclusive": 0.466667,
+              "native_frames_identical": 5,
+              "sha256": "c6d077f48e139019d5502ad1143851149a74232ce6ed5fa1281009f92b920279"
+            }
+          ],
+          "evidence": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\.codex_tmp\\mv_sources_20261023\\source_2_native_0.framehash",
+          "timing_note": "Seek-relative framehash times plus requested seek; approximate to one native frame. Full original PTS are in source_N_pts.json."
+        },
+        {
+          "seek_seconds": 163,
+          "duration_seconds": 3,
+          "identical_frame_runs": [
+            {
+              "approximate_source_start_seconds": 163.666667,
+              "approximate_source_end_seconds_exclusive": 163.733333,
+              "native_frames_identical": 2,
+              "sha256": "89c96fb89213be26eb6c8f0bba1ac9044f4635027cf48e4bcdcc04502b64f761"
+            },
+            {
+              "approximate_source_start_seconds": 163.833333,
+              "approximate_source_end_seconds_exclusive": 163.9,
+              "native_frames_identical": 2,
+              "sha256": "1bcbc9d8d0741175a3e9378fc42a6b16b59143a6d56c203d4f770caf7267c6b5"
+            },
+            {
+              "approximate_source_start_seconds": 163.9,
+              "approximate_source_end_seconds_exclusive": 164.2,
+              "native_frames_identical": 9,
+              "sha256": "4f814a5045346ed7edc4d3e77d5b340cf04e58474e2cd5087eff2ac0e1d6c757"
+            },
+            {
+              "approximate_source_start_seconds": 164.2,
+              "approximate_source_end_seconds_exclusive": 164.7,
+              "native_frames_identical": 15,
+              "sha256": "33fbb4d25b03632aacb6747bfa64808122c25f351ece9cc64f365d6fa219c288"
+            },
+            {
+              "approximate_source_start_seconds": 164.966667,
+              "approximate_source_end_seconds_exclusive": 165.033333,
+              "native_frames_identical": 2,
+              "sha256": "050fd16cebc1628343731c2e8b3c36a9dac7435a048fbe0a09dbe3a0482b348b"
+            }
+          ],
+          "evidence": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\.codex_tmp\\mv_sources_20261023\\source_2_native_163.framehash",
+          "timing_note": "Seek-relative framehash times plus requested seek; approximate to one native frame. Full original PTS are in source_N_pts.json."
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "source_video": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\资源\\sd卡\\歌曲素材\\歌曲3\\video_⚡️黄仁勋 世界巡演⚡️【AI ..._0.mp4",
+      "source_sha256": "f13da00e373895dbd42c93ba48eeb536e597b46d6b5754bfac400f93afbb0b10",
+      "streams": [
+        {
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "41056000/1368533",
+          "time_base": "1/16000",
+          "start_time": "0.000000",
+          "duration": "85.533313"
+        }
+      ],
+      "native_frames": 2566,
+      "first_pts_seconds": 0.0,
+      "last_pts_seconds": 85.5,
+      "minimum_pts_step_seconds": 0.03331199999999512,
+      "maximum_pts_step_seconds": 0.03337600000000407,
+      "nonmonotonic_or_duplicate_pts": 0,
+      "pts_gaps_above_100ms": 0,
+      "native_original_resolution_windows": []
+    },
+    {
+      "number": 4,
+      "source_video": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\doc\\资源\\sd卡\\歌曲素材\\歌曲4\\video_【李玉刚自投稿】《万疆》MV官方..._0.mp4",
+      "source_sha256": "2d96322e4eec19f7a5099c4ad96d68307237ed71f0bddd060241918fb860f2f8",
+      "streams": [
+        {
+          "r_frame_rate": "25/1",
+          "avg_frame_rate": "25/1",
+          "time_base": "1/16000",
+          "start_time": "0.000000",
+          "duration": "243.880000"
+        }
+      ],
+      "native_frames": 6097,
+      "first_pts_seconds": 0.0,
+      "last_pts_seconds": 243.84,
+      "minimum_pts_step_seconds": 0.03999999999999204,
+      "maximum_pts_step_seconds": 0.040000000000020464,
+      "nonmonotonic_or_duplicate_pts": 0,
+      "pts_gaps_above_100ms": 0,
+      "native_original_resolution_windows": [
+        {
+          "seek_seconds": 71.5,
+          "duration_seconds": 1.5,
+          "identical_frame_runs": [],
+          "evidence": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\.codex_tmp\\mv_sources_20261023\\source_4_native_71.5.framehash",
+          "timing_note": "Seek-relative framehash times plus requested seek; approximate to one native frame. Full original PTS are in source_N_pts.json."
+        },
+        {
+          "seek_seconds": 242,
+          "duration_seconds": 2,
+          "identical_frame_runs": [
+            {
+              "approximate_source_start_seconds": 243.36,
+              "approximate_source_end_seconds_exclusive": 243.44,
+              "native_frames_identical": 2,
+              "sha256": "afe20658fbf9f3e6541afd0a39ee882c23afd5f89d4b7a6adb744f05ac34dbbf"
+            },
+            {
+              "approximate_source_start_seconds": 243.44,
+              "approximate_source_end_seconds_exclusive": 243.88,
+              "native_frames_identical": 11,
+              "sha256": "ed1f277d5b8646b70cdec46c2a45f6face4f769862f15d899d570a6da42c3520"
+            }
+          ],
+          "evidence": "D:\\Data_Backup\\VinylFPGA_Workspace_Base\\VinylFPGA\\.codex_tmp\\mv_sources_20261023\\source_4_native_242.framehash",
+          "timing_note": "Seek-relative framehash times plus requested seek; approximate to one native frame. Full original PTS are in source_N_pts.json."
+        }
+      ]
+    }
+  ]
+}

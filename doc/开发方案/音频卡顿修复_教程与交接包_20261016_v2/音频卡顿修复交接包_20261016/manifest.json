@@ -1,0 +1,292 @@
+{
+  "base_commit": "1f9013a26ce40f3d00b88d8cc3c63373ccb30df7",
+  "r5_relative_path": "prj/resource_opt_verified_20261005/audio_sdram_prefetch_20261016_r5",
+  "document_revision": "2026-10-16-v2",
+  "r5_input_manifest_entries_checked": 135,
+  "input_manifest_mismatches": [],
+  "all_r5_src_constraint_differences_from_base_normalized": [
+    "src/audio/audio_prefetch_sdram.v",
+    "src/audio/audio_prefetch_stage.v",
+    "src/audio/audio_sdram_arbiter.v",
+    "src/audio/audio_sdram_dma.v",
+    "src/audio/wav_stream_player.v",
+    "src/SD/frame_read_write.v",
+    "src/SD/song_index_db.v",
+    "src/top_tf_hdmi_audio.v"
+  ],
+  "core_patch_covers_all_r5_src_constraint_differences": true,
+  "patch_validation": {
+    "git_apply_check": true,
+    "applied_text_hashes_equal": true,
+    "scope": "temporary baseline subset; no FPGA build or RTL simulation"
+  },
+  "files": [
+    {
+      "path": "src/audio/audio_prefetch_stage.v",
+      "patch": "01_baseline_to_R5_rtl.patch",
+      "kind": "added",
+      "base_sha256_raw": null,
+      "target_sha256_raw": "b83b75dda32f4b429844b5e3e325da22e1c0d9e9c7fc77a254dd2cc77a538063",
+      "target_sha256_lf": "b83b75dda32f4b429844b5e3e325da22e1c0d9e9c7fc77a254dd2cc77a538063",
+      "lines_added": 51,
+      "lines_deleted": 0,
+      "worktree_matches_r5_raw": true
+    },
+    {
+      "path": "src/audio/audio_sdram_dma.v",
+      "patch": "01_baseline_to_R5_rtl.patch",
+      "kind": "added",
+      "base_sha256_raw": null,
+      "target_sha256_raw": "07d51ae18fdffdc204bdfead2e650e4d57a6a066f14894baa6f38d6c7c97e233",
+      "target_sha256_lf": "8e304c8f79b7c585d0e40990ba1b90cf10bcf723035f4cf48bd6d518f9de1b5a",
+      "lines_added": 187,
+      "lines_deleted": 0,
+      "worktree_matches_r5_raw": true
+    },
+    {
+      "path": "src/audio/audio_prefetch_sdram.v",
+      "patch": "01_baseline_to_R5_rtl.patch",
+      "kind": "added",
+      "base_sha256_raw": null,
+      "target_sha256_raw": "ab46fc70bd726596060596b2e3b76464ecfbe22857f42b57bc1f2c190889a197",
+      "target_sha256_lf": "ab46fc70bd726596060596b2e3b76464ecfbe22857f42b57bc1f2c190889a197",
+      "lines_added": 250,
+      "lines_deleted": 0,
+      "worktree_matches_r5_raw": true
+    },
+    {
+      "path": "src/audio/audio_sdram_arbiter.v",
+      "patch": "01_baseline_to_R5_rtl.patch",
+      "kind": "added",
+      "base_sha256_raw": null,
+      "target_sha256_raw": "82d9fd5572b735f4db8b2c891b923dc3254749ec67ddc238ed278072f9bf2d54",
+      "target_sha256_lf": "82d9fd5572b735f4db8b2c891b923dc3254749ec67ddc238ed278072f9bf2d54",
+      "lines_added": 58,
+      "lines_deleted": 0,
+      "worktree_matches_r5_raw": true
+    },
+    {
+      "path": "src/SD/frame_read_write.v",
+      "patch": "01_baseline_to_R5_rtl.patch",
+      "kind": "modified",
+      "base_sha256_raw": "497893e4fc55d0ddb215c2c09f26cee257a18e0bb97c4e04a00e039e621eff63",
+      "target_sha256_raw": "c07edb7c28810d4de28d33956e0bab66ced9781b35cda8d3bc78bdd0bc922baa",
+      "target_sha256_lf": "774053859f1f172d4feb09a46d2f88dbac670e7447e67669b0019a82bc61b19d",
+      "lines_added": 5,
+      "lines_deleted": 2,
+      "worktree_matches_r5_raw": true
+    },
+    {
+      "path": "src/SD/song_index_db.v",
+      "patch": "01_baseline_to_R5_rtl.patch",
+      "kind": "modified",
+      "base_sha256_raw": "210098d2915a0493082ad3a83162eea0613c057e2bd37b8d8946595384952597",
+      "target_sha256_raw": "0947414609aa8c9d8e3417527083e34a2f291dfa0a5c715075081fca318ae8dc",
+      "target_sha256_lf": "c96df27705fa7232f925d3465e9590f116679785ed95392aac740df9ee5da3e4",
+      "lines_added": 8,
+      "lines_deleted": 3,
+      "worktree_matches_r5_raw": true
+    },
+    {
+      "path": "src/audio/wav_stream_player.v",
+      "patch": "01_baseline_to_R5_rtl.patch",
+      "kind": "modified",
+      "base_sha256_raw": "79c068391789825a1760a3582b30ebd473b2557fdf134d003e02ca228c7dd01f",
+      "target_sha256_raw": "51f809febeec398efbd73010eb46dd0f99d2168af0d72aa115773aaeb50411c0",
+      "target_sha256_lf": "3e8a11a0c4451b08712aede5eab29cf47142ef44bf28bc1103bbc99670dd100b",
+      "lines_added": 9,
+      "lines_deleted": 0,
+      "worktree_matches_r5_raw": true
+    },
+    {
+      "path": "src/top_tf_hdmi_audio.v",
+      "patch": "01_baseline_to_R5_rtl.patch",
+      "kind": "modified",
+      "base_sha256_raw": "4cf87feaa25cc63a2b925126d7f57fe28e4003160bd570e1008a9de23997dc6d",
+      "target_sha256_raw": "632fe244e640ff8a7a6415e7a02336df02f424c17f7779fe1d0889b33e06b4fb",
+      "target_sha256_lf": "a3941e42d48919e67f1e41ce333569124b4df880c77b9ad319efd0a3ab74ac0b",
+      "lines_added": 101,
+      "lines_deleted": 26,
+      "worktree_matches_r5_raw": true
+    },
+    {
+      "path": "sim/tb_background_index.v",
+      "patch": "02_verification.patch",
+      "kind": "modified",
+      "base_sha256_raw": "f260076efbe30ec732a261c5aa01aa63ea5cbe6d6bade73e6add03f2c6c4485e",
+      "target_sha256_raw": "1fbe77258a2bd0c2342aa9f72931c1fe606f9d5c35e8832da9e79a30ec11b5fa",
+      "target_sha256_lf": "1fbe77258a2bd0c2342aa9f72931c1fe606f9d5c35e8832da9e79a30ec11b5fa",
+      "lines_added": 3,
+      "lines_deleted": 0,
+      "worktree_matches_r5_raw": null
+    },
+    {
+      "path": "sim/tb_wav_stream_player_flow.v",
+      "patch": "02_verification.patch",
+      "kind": "modified",
+      "base_sha256_raw": "663c3c4ea0990606daba35c348b6d9a7c6879a44090df73bb14bbdc81a9709cc",
+      "target_sha256_raw": "ba17aed86767bad7bbe83f7bb10bc67e6fd4d73b610acfbde48030430e843974",
+      "target_sha256_lf": "32fef0378a41bfe494c99945e2e4f3ce382b01fc9f8522c1aa2efd9e5a716065",
+      "lines_added": 15,
+      "lines_deleted": 6,
+      "worktree_matches_r5_raw": null
+    },
+    {
+      "path": "tools/run_audio_cache_regression.py",
+      "patch": "02_verification.patch",
+      "kind": "added",
+      "base_sha256_raw": null,
+      "target_sha256_raw": "4035c25dadb77548f634512a546ad852a6ec69968dd9990d2a7b2c125bc5750b",
+      "target_sha256_lf": "4035c25dadb77548f634512a546ad852a6ec69968dd9990d2a7b2c125bc5750b",
+      "lines_added": 49,
+      "lines_deleted": 0,
+      "worktree_matches_r5_raw": null
+    },
+    {
+      "path": "sim/audio_cache/tb_audio_sdram_dma.v",
+      "patch": "02_verification.patch",
+      "kind": "added",
+      "base_sha256_raw": null,
+      "target_sha256_raw": "fff9e387b79a28dfd63339ce68b467c0a127bf32e47bd735ed752d8067d3f2ab",
+      "target_sha256_lf": "fff9e387b79a28dfd63339ce68b467c0a127bf32e47bd735ed752d8067d3f2ab",
+      "lines_added": 164,
+      "lines_deleted": 0,
+      "worktree_matches_r5_raw": null
+    },
+    {
+      "path": "sim/audio_cache/tb_audio_sdram_arbiter.v",
+      "patch": "02_verification.patch",
+      "kind": "added",
+      "base_sha256_raw": null,
+      "target_sha256_raw": "ebd36ea12b0d3f00c5a570ce211beaee6b66ca7e8caa607ab4a9e86b2125c6b6",
+      "target_sha256_lf": "ebd36ea12b0d3f00c5a570ce211beaee6b66ca7e8caa607ab4a9e86b2125c6b6",
+      "lines_added": 117,
+      "lines_deleted": 0,
+      "worktree_matches_r5_raw": null
+    },
+    {
+      "path": "sim/audio_cache/tb_audio_prefetch_sdram.v",
+      "patch": "02_verification.patch",
+      "kind": "added",
+      "base_sha256_raw": null,
+      "target_sha256_raw": "ee7a8c1418291a1280530f72f43472db2b641a8d7c6e9ef98dba8fc705f077a9",
+      "target_sha256_lf": "ee7a8c1418291a1280530f72f43472db2b641a8d7c6e9ef98dba8fc705f077a9",
+      "lines_added": 207,
+      "lines_deleted": 0,
+      "worktree_matches_r5_raw": null
+    },
+    {
+      "path": "sim/audio_cache/tb_wav_startup_ready.v",
+      "patch": "02_verification.patch",
+      "kind": "added",
+      "base_sha256_raw": null,
+      "target_sha256_raw": "bb7473315d217bfe7dc0806c777bb1c2eff43c0662f5ac94e4409cab1f57986d",
+      "target_sha256_lf": "bb7473315d217bfe7dc0806c777bb1c2eff43c0662f5ac94e4409cab1f57986d",
+      "lines_added": 96,
+      "lines_deleted": 0,
+      "worktree_matches_r5_raw": null
+    },
+    {
+      "path": "sim/audio_cache/vendor/README.md",
+      "patch": "02_verification.patch",
+      "kind": "added",
+      "base_sha256_raw": null,
+      "target_sha256_raw": "60717d4c01d204d97065e5baa13f5e18875cd3010d6c60e4bb9ffe320b81ed99",
+      "target_sha256_lf": "60717d4c01d204d97065e5baa13f5e18875cd3010d6c60e4bb9ffe320b81ed99",
+      "lines_added": 27,
+      "lines_deleted": 0,
+      "worktree_matches_r5_raw": null
+    },
+    {
+      "path": "sim/audio_cache/vendor/run_vendor_mask.ps1",
+      "patch": "02_verification.patch",
+      "kind": "added",
+      "base_sha256_raw": null,
+      "target_sha256_raw": "9cf4d4e0c1966467f3ddedf394b05fc9219b7985b2317283b21744c9efe73bab",
+      "target_sha256_lf": "9cf4d4e0c1966467f3ddedf394b05fc9219b7985b2317283b21744c9efe73bab",
+      "lines_added": 55,
+      "lines_deleted": 0,
+      "worktree_matches_r5_raw": null
+    },
+    {
+      "path": "sim/audio_cache/vendor/tb_vendor_mask_isolation.v",
+      "patch": "02_verification.patch",
+      "kind": "added",
+      "base_sha256_raw": null,
+      "target_sha256_raw": "ff2d62fc02979127669c379d7f0545b60103400edd7f17a0c84a9acaae2f3e31",
+      "target_sha256_lf": "ff2d62fc02979127669c379d7f0545b60103400edd7f17a0c84a9acaae2f3e31",
+      "lines_added": 175,
+      "lines_deleted": 0,
+      "worktree_matches_r5_raw": null
+    },
+    {
+      "path": "sim/audio_cache/vendor/tb_vendor_stage.v",
+      "patch": "02_verification.patch",
+      "kind": "added",
+      "base_sha256_raw": null,
+      "target_sha256_raw": "43988fe7a8d48927ed52fcf3d1309deb57155d16d05380b14aaaeff26d633bca",
+      "target_sha256_lf": "43988fe7a8d48927ed52fcf3d1309deb57155d16d05380b14aaaeff26d633bca",
+      "lines_added": 66,
+      "lines_deleted": 0,
+      "worktree_matches_r5_raw": null
+    }
+  ],
+  "patches": {
+    "01_baseline_to_R5_rtl.patch": "971235d8b30ef40d93b498a03e49d8f8b0bf363ceec38ee261128e140489de18",
+    "02_verification.patch": "ffa3cb67a43c13e6f51e060aea3af2fa0950982d3e706d9d4dcd96a182f18d2f"
+  },
+  "r5_evidence": {
+    "inputs.sha256.json": {
+      "bytes": 13660,
+      "sha256": "9b592331c68a5530c5a7fa5035d4ceab41680af49383f9e5b1131ec98e33f3eb"
+    },
+    "VinylFPGA.al": {
+      "bytes": 30960,
+      "sha256": "ca0d7c7256610c627b7aed9c26d90c23786c975075ac297ada907c70ac572333"
+    },
+    "native_build.tcl": {
+      "bytes": 3196,
+      "sha256": "69d142da18774cdc7c7c7a59d8f1cd6ee42cb2e69ca09a8bfea9c16870df4536"
+    },
+    "native_build.log": {
+      "bytes": 192711,
+      "sha256": "cf658b40404b14a4bea33c09faea04bc932cf9c6230c1fd4d180f4d85c7e7584"
+    },
+    "final_timing.rpt": {
+      "bytes": 746069,
+      "sha256": "6e0ea98fb74bd259f4d1009ba9057063d925c96c197bc215a3a02fb10753c1ce"
+    },
+    "final.timing": {
+      "bytes": 746358,
+      "sha256": "a6e979ed94d2b5e2209a6324f9305ba72763408a5657176f1e1309de65c562bb"
+    },
+    "final.qor": {
+      "bytes": 1313,
+      "sha256": "c916583dfa684cf993495108e841890eb13f5dc4c350ad4925f7ab70f463a2c2"
+    },
+    "route.status": {
+      "bytes": 1911,
+      "sha256": "1408d6d1fcfe29db48e5b2c13f50158cfb0dda3c220f9aa687e7db033af6af54"
+    },
+    "final.constraints": {
+      "bytes": 27123,
+      "sha256": "39ec6efe3919ab93f51ba8c112e77262373916a6077076727abdf5da70fc6105"
+    },
+    "final.area": {
+      "bytes": 43421,
+      "sha256": "21051b115cd53cae4fb444c89cd0f4608f277fc0d14876a8749c7fb273999b98"
+    },
+    "routed.db": {
+      "bytes": 13837020,
+      "sha256": "2ee17a97bfcc80459372082764bad9f9b8bac10d903bd25638f240be04f2d4e4"
+    },
+    "VFPGA_DIAG_S6.bit": {
+      "bytes": 676184,
+      "sha256": "61069f4ee5d8261a4207eecf055e026f73697e91c1bcb85c1adcfaf8e6dc0323"
+    },
+    "VFPGA_DIAG_S6.bitgen_param.f": {
+      "bytes": 326,
+      "sha256": "4782317c37138edb5af25475933f063500b7223fc4d9d0130aa2167a5befc37f"
+    }
+  }
+}
