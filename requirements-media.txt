@@ -1,0 +1,2 @@
+# Optional: only needed for image/MV conversion tools, not RTL checks or packaging.
+Pillow

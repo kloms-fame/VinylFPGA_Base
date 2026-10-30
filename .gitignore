@@ -1,131 +1,50 @@
-# Python缓存（参考你给的模板）
+# Python and editor caches
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*~
+*.bak
 
-# 仿真波形文件
+# Local agent state and separate development worktrees
+/.codex_tmp/
+/.agents/
+/.mcp.json
+/.worktrees/
+
+# TD implementation and machine-local state
+*_Runs/
+/prj/log/
+/prj/out/
+/prj/.lock.f
+*.bit
+*.bid
+*.log
+*.logw
+*.jou
+*.tproj.user
+
+# Generated verification and submission outputs
+/output/
+/reports/
+*.vvp
 *.vcd
 *.wlf
 *.fsdb
-*.shm
-
-# Icarus Verilog 编译产物
-*.vvp
-
-# TD工具运行输出目录
-*_Runs/
-run/
-run_board/
-work/
-VinylFPGA_Runs/
-
-# 报告输出
-reports/
-reports/sim/
-reports/raw/
-
-# TD工程生成中间文件
-*.bit
-*.bin
-*.mcs
-*.hex
-*.prm
-*.log
-*.logw
-*.rpt
-*.txt.out
-
-# TD工程缓存、用户本地配置（每个人本地不一样，不要上传）
-*.tproj.user
-*.tproj.*.bak
-*.bak
-*.backup
-.DS_Store
-Thumbs.db
-
-# 工程临时文件、布局布线中间网表
-output/
-tmp/
-temp/
-*.jou
-*.history
-
-# 仿真编译输出
-sim_build/
-sim_out/
-
-# 编辑器临时文件
-*~
-.#*
-.vscode/.DS_Store
-.idea/
-.vscode/
-
-# Reproducible resource optimization simulation outputs
-sim/resource_opt/
-prj/resource_opt_20261005/seed*/
-
-# Per-round source snapshots and generated cycle-equivalence benches.
-prj/resource_opt_verified_20261005/
-sim/resource_opt_verified/
-sim/counter_r5_results/
-sim/ws2812_context/
-sim/visual_feedback/
-sim/x1x2_repair/visual_flow_*/
-sim/x1x2_repair/vu_charge_*/
-sim/x1x2_repair/o8_final/
-sim/x1x2_repair/ws_context_r5/
-
-# S4 曲目索引仿真夹具：.hex 是 RTL 仿真台必需的输入（$readmemh），必须入库；
-# .img 可由 `python tools/test_vinyl_packer.py` 现场重建，不入库避免重复体积。
-!sim/s4_fixture/
-!sim/s4_fixture/*.hex
-sim/s4_fixture/*.img
-sim/s4_fixture/*.json
-
-# S6 reproducible media/test results. Index vectors are kept for RTL-only runs.
-sim/s6_20261006/*.img
-sim/s6_20261006/*.json
-!sim/s6_20261006/index_v1.hex
-!sim/s6_20261006/index_v2.hex
-
-# Local isolated development worktrees
-.worktrees/
-
-# Local Codex scratch files and preserved copies from history cleanup
-/.codex_tmp/
-
-# Rebuildable 128 MiB SD-card images; keep generated artifacts out of Git history.
-/doc/资源/sd卡/stage3b/card_STAGE3B.img
-/doc/资源/sd卡/stage4/card_STAGE4.img
-# Rebuildable release SD-card images stay local; distribute them outside Git.
-/doc/资源/sd卡/release_*/VinylFPGA_SD_*.img
-VinylFPGA_MediaStudio/
-
-# Final source repository: local integrations and generated TD/ModelSim files.
-/.mcp.json
-/.agents/
-/prj/.lock.f
-/prj/out/
-*.bid
 **/transcript
-**/realtime_transcript
 **/modelsim.ini
 /sim/**/results.json
 
-# Media is distributed separately; keep conversion tools, manifests and fixtures.
-/tf_card_stage/
-/doc/资源/sd卡/**/*.img
-/doc/资源/sd卡/**/*.PCM
-/doc/资源/sd卡/**/*.pcm
-/doc/资源/sd卡/**/*.MV
-/doc/资源/sd卡/**/*.mv
-/doc/资源/sd卡/**/*.mp4
-/doc/资源/sd卡/**/*.wav
-/doc/资源/sd卡/**/*.mp3
-/doc/资源/sd卡/frames_s6/
-/doc/相关素材/*.psd
-
-# Superseded plans and copied RTL handoff packages are archived outside Git.
-/docs/superpowers/
-/doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2*
+# Large media is supplied separately; HEX test inputs stay tracked.
+*.img
+*.PCM
+*.pcm
+*.MV
+*.mv
+*.mp4
+*.wav
+*.mp3
+*.psd

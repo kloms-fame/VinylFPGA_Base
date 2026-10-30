@@ -1,0 +1,142 @@
+{
+  "date": "2026-10-30",
+  "status": "PASS",
+  "design_inputs_unchanged": 142,
+  "source_entries_resolved": 59,
+  "tool_tests": 27,
+  "rtl_scenarios": 70,
+  "brightness_internal_checks": 16385,
+  "suite_counts": {
+    "audio_media": 32,
+    "closure": 10,
+    "sd_owner_recovery": 11,
+    "seek": 2,
+    "lyrics_ui": 8,
+    "sound_flash": 6,
+    "brightness": 1
+  },
+  "modelsim_optional": {
+    "executed": true,
+    "cases": 6,
+    "passed": 6
+  },
+  "source_archive_validation": {
+    "extracted_regression": "PASS",
+    "tool_tests": 27,
+    "rtl_scenarios": 70,
+    "tampered_source_rejected": true,
+    "source_directory_package_output_rejected": true
+  },
+  "suites": {
+    "unified": [
+      {
+        "suite": "tool_tests",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "closure",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "audio",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "sd_owner",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "seek",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "lyrics",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "sound_flash",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "brightness",
+        "passed": true,
+        "exit_code": 0
+      }
+    ],
+    "extracted_regression": [
+      {
+        "suite": "tool_tests",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "closure",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "audio",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "sd_owner",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "seek",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "lyrics",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "sound_flash",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "brightness",
+        "passed": true,
+        "exit_code": 0
+      }
+    ]
+  },
+  "identity": {
+    "current_bit_sha256": "97b370265af7ec7e7b8b4341a88407631722808f434e473d8ba1b4abf11d3863",
+    "accepted_bit_sha256": "fa994e2a090a845cca6ee70b46c87a29bfa7bc417f45d9228dd8c981f9850ad3",
+    "configuration_payload_identical": true,
+    "date_header_changed_offsets": [
+      135,
+      136,
+      138,
+      139
+    ],
+    "current_timing_ns": {
+      "SWNS": 0.105,
+      "HWNS": 0.024,
+      "STNS": 0,
+      "HTNS": 0
+    },
+    "design_inputs_unchanged": 142,
+    "project_entries": 59,
+    "manual_acceptance": "User confirmed project passed manual acceptance on 2026-10-30; no per-case measurements invented."
+  },
+  "evidence_sha256": {
+    "unified/results.json": "0f6b7681db17cf8122252159e5806ef0c294bc22e4a306acd7d41b9bf33b0b94",
+    "extracted_regression/results.json": "0f6b7681db17cf8122252159e5806ef0c294bc22e4a306acd7d41b9bf33b0b94",
+    "modelsim/results.json": "1dbc27907ce71453b834b8b76aa01fdb70c5358490a0a4a18edb85ad5cad93cb"
+  },
+  "evidence_location": "Local .codex_tmp/contest_submission_20261030; logs and waveforms excluded from Git."
+}
