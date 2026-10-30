@@ -1,6 +1,0 @@
-{
-  "tb_fat32_volume_scanner": true,
-  "tb_fat32_media_loader": true,
-  "tb_s7_media_lifecycle": true,
-  "tb_fat32_index_loader": true
-}

@@ -1,0 +1,2536 @@
+{
+  "backup_tag": "backup/pre-final-cleanup-20261030",
+  "backup_directory": ".codex_tmp/git_closeout_20261030/removed_files",
+  "files": {
+    ".agents/skills/fpga-demo-video/SKILL.md": {
+      "action": "keep_local_untrack",
+      "bytes": 5356,
+      "sha256": "0f1884df8377636d7b984a27cd4e1e1238c4f61e3bb6bb26b7838aca213a77f8"
+    },
+    ".agents/skills/fpga-demo-video/references/shooting-rules.md": {
+      "action": "keep_local_untrack",
+      "bytes": 2132,
+      "sha256": "080821215b381ae9a41d57a256280aee455add56b213387e76a806698e181548"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-production/SKILL.md": {
+      "action": "keep_local_untrack",
+      "bytes": 6683,
+      "sha256": "3b182b25988c13c9bbafbcc654ac0844822cfc1ff5d865b44a99bb57666ae59e"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-production/description_ar.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 293,
+      "sha256": "cfbd0ac9830f38c94f1dc67e5a0e2885c129502ecede587cfc30558f580dde9c"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-production/description_cn.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 140,
+      "sha256": "a08fe2d9cee942a081a498f77e15e4c3eb6d2c02ae2327f60e8c0102f2b77729"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-production/description_de.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 177,
+      "sha256": "50ff5e8d9fb1ed268f04fc8e84dc9c283fe7b24e632cec2bc9aec1b733553296"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-production/description_en.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 153,
+      "sha256": "c0ff31f8d3e135d307b0c5764422b7157602ef69b6825d28c60eea12f588d7c8"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-production/description_es.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 195,
+      "sha256": "05fae2eeaf4356985766c4385adb8348b3a005153657ea1c869c231ca8c658ff"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-production/description_fr.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 215,
+      "sha256": "ba034a3f7a9abb1fd3fec992a777ead69b57b585f003241bce3008946f2c8e84"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-production/description_it.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 203,
+      "sha256": "89b0c0ad82c2a898d28521ba8e76ef02a97970ef170845480c0c3fb39da5dd06"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-production/description_ja.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 253,
+      "sha256": "4fd79b022cb247153c23554702f68c9c8d3fe08a69f43a65f05d2203c26b6aa7"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-production/description_ko.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 213,
+      "sha256": "87840881edff3520812f03ca7904a018ef96c4bbe0eedfb66d1963228066cdb3"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-production/description_ru.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 349,
+      "sha256": "ecf2c0c5bd2caf75c61a8a7e1b28b6180c41a12eaf6b182a08541306e9af559d"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-production/description_tw.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 140,
+      "sha256": "06534e1df86e6a8e7b43a9d1a6468495ebc4b95381109c29c26fbc8be377a077"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-production/stats.json": {
+      "action": "keep_local_untrack",
+      "bytes": 68,
+      "sha256": "309970cc7307a9bc76a2b17df5a6ab01b95da9a176407278f334b3b711055ead"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-scriptwriting/SKILL.md": {
+      "action": "keep_local_untrack",
+      "bytes": 15894,
+      "sha256": "03e3f7175e7a72a2d21ae17b65350fca903003dd4832bb9633436ccdfb458122"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-scriptwriting/description_ar.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 595,
+      "sha256": "397d4a3ec7fb403d4099edd02beb76d9998f592bea985d788c139de2ea0c2df1"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-scriptwriting/description_cn.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 310,
+      "sha256": "dc997ffbbb0f8ec91c337695920987bd026a5eeb657b96d299fb20ad668b1ef4"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-scriptwriting/description_de.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 391,
+      "sha256": "ac24398235e1a82daab3d060f09a16e755b338dfa1bbd3c4f8c1fdb9b40494d1"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-scriptwriting/description_en.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 349,
+      "sha256": "cf789594a603c408d58c1338f3da8af15a5a37273f30216739ecd3c231dbb845"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-scriptwriting/description_es.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 460,
+      "sha256": "f79ac3e000f5b79a58cdf1baaaeb1c02858f15c63b36fca513b066ff92e53049"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-scriptwriting/description_fr.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 492,
+      "sha256": "23bd21ad1332d290d23639eaf789ad160bfc1faaf04eaeccb9fad440004c3c68"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-scriptwriting/description_it.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 411,
+      "sha256": "698b870d5e1e3e982683b7de32e029ce61ac73cc0d1f98f3a6155145627c1882"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-scriptwriting/description_ja.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 625,
+      "sha256": "4227ec48370695faab380c0ad285fb81fc006004ee4c648a9ef88a0403e9f579"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-scriptwriting/description_ko.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 424,
+      "sha256": "31eab81c37c5c38c83fe7ee9e0f7902501480ca2a219cf1b522488df64b09cad"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-scriptwriting/description_ru.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 752,
+      "sha256": "0209fb67b60f96cb721b6890119f8f3f21cdcffcaf57565d5e78ee8a51148589"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-scriptwriting/description_tw.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 313,
+      "sha256": "6258bc4c167f3ddf2d5227be25580ab15335f1ecb84d8fdbd2284a8a0e74470a"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-scriptwriting/stats.json": {
+      "action": "keep_local_untrack",
+      "bytes": 68,
+      "sha256": "533cede33a5c5a966e279f25e76a7f2be2acb19c081d8c9897f9178c757147ba"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-storyboard/SKILL.md": {
+      "action": "keep_local_untrack",
+      "bytes": 15410,
+      "sha256": "8677b67defe936545217c5a7004566b9da26b873ae8084d82897463f7f9e2dd8"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-storyboard/description_ar.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 936,
+      "sha256": "274951252e714171a652f2d1949e84eb6b9ef3b9a7b2fe9eeeecbbce2a54ca3a"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-storyboard/description_cn.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 542,
+      "sha256": "5dad9e59a252d451922ac118433af1cc90d0b1e970ba82a13de58519d1549391"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-storyboard/description_de.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 733,
+      "sha256": "be40b4442380f32aaae5c5478bed268b4c9c35a48e57d184ec1523726b84986d"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-storyboard/description_en.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 575,
+      "sha256": "a0f07f538c32d3baa5c06a07c6aaaac685cf1b47749409d1c8400f9f05145c7a"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-storyboard/description_es.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 751,
+      "sha256": "cefc47e89ae86aac6bd1b43d9c64b2e699f006d647e91bb1f8f5f8f35d192908"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-storyboard/description_fr.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 805,
+      "sha256": "35757ff7146b58b08c1eb4c46af478c98377dc15c103e48014e8830e764f04c5"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-storyboard/description_it.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 726,
+      "sha256": "77a5a957f4afec271e41eb60c8751fd887d0e4e10e486a11dbae1d6856ff4f64"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-storyboard/description_ja.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 906,
+      "sha256": "b9bf7a437d4da5e3e82335aaf8ce396add0be455ca051db1815e9475223f3353"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-storyboard/description_ko.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 726,
+      "sha256": "a6e172a85355bd16bbeba29751f5bbba22cea67b79b92454942786acbf5d7a41"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-storyboard/description_ru.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 1217,
+      "sha256": "7d2bb3a3d3464781f758f6e9ed21f00b2f50033676bee337517179a4c41b3544"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-storyboard/description_tw.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 542,
+      "sha256": "ded395435a4377c268547d7b4cc338357429c996997af00ef46f61efec7c81c3"
+    },
+    ".agents/skills/neversight-learn-skills.dev-video-storyboard/stats.json": {
+      "action": "keep_local_untrack",
+      "bytes": 69,
+      "sha256": "db5b732ec1b455477256f796970be4afa571b26e3bdfbf570250574dca9c6924"
+    },
+    ".mcp.json": {
+      "action": "keep_local_untrack",
+      "bytes": 114,
+      "sha256": "34efed6e14526911ce472354866bd703acc0cdce2db6cbcca4190ee15e117cce"
+    },
+    "VinylFPGA_inst.bid": {
+      "action": "keep_local_untrack",
+      "bytes": 89251,
+      "sha256": "0ff492494935d669ad4e6658b80b91a60d78715b616cda7ace8147facbc6d011"
+    },
+    "doc/相关素材/033fb1ab-cdc5-4e5e-9ac3-b4fbebf9b24e_upscayl_4x_digital-art-4x.psd": {
+      "action": "keep_local_untrack",
+      "bytes": 12108877,
+      "sha256": "4662a29f68079711269367c9498839f3d444aec888afc38e7d6ab8c87b32c0cb"
+    },
+    "doc/相关素材/9ab7f597-5928-4454-a9ce-4cd2c27f0c3c (1).psd": {
+      "action": "keep_local_untrack",
+      "bytes": 1838038,
+      "sha256": "ce62dda86404db47c9f3dd8f71c3ff04848008bbd85d425c5d3de2b7a7aab2dc"
+    },
+    "doc/相关素材/9ab7f597-5928-4454-a9ce-4cd2c27f0c3c (1)_upscayl_4x_digital-art-4x.psd": {
+      "action": "keep_local_untrack",
+      "bytes": 19504068,
+      "sha256": "c18e75b31b736b96e5f0775fc08dc0339c1e3276705534802596afaad60f52af"
+    },
+    "doc/资源/sd卡/AUDIO.PCM": {
+      "action": "keep_local_untrack",
+      "bytes": 23560704,
+      "sha256": "bf2e41ca37f3903c9b5b4063c60617e06060d53eee118df1a55a106c973947f7"
+    },
+    "doc/资源/sd卡/TRACK1.MV": {
+      "action": "keep_local_untrack",
+      "bytes": 46080000,
+      "sha256": "491644a183a76e3b5f48cd66d6f4307a01b50dcacf8fdb28d18ff820f1a2d7c5"
+    },
+    "doc/资源/sd卡/card.img": {
+      "action": "keep_local_untrack",
+      "bytes": 27700736,
+      "sha256": "a7103f4072a90b59d69555354a6c7a0e686c8ece84d71cc5d4289608abcaadfc"
+    },
+    "doc/资源/sd卡/card_A.img": {
+      "action": "keep_local_untrack",
+      "bytes": 27700736,
+      "sha256": "a7103f4072a90b59d69555354a6c7a0e686c8ece84d71cc5d4289608abcaadfc"
+    },
+    "doc/资源/sd卡/card_A_broken.img": {
+      "action": "keep_local_untrack",
+      "bytes": 27700736,
+      "sha256": "b0af54a893503e84877793c9c4a238ad4fbebc1fcf150cd392d644c5499e4da4"
+    },
+    "doc/资源/sd卡/card_B_broken.img": {
+      "action": "keep_local_untrack",
+      "bytes": 27700736,
+      "sha256": "8154ab8bacdd90cb2fce809497121940ae1fbfbf6727a3a0268cd30680abfcba"
+    },
+    "doc/资源/sd卡/card_S5.img": {
+      "action": "keep_local_untrack",
+      "bytes": 27700736,
+      "sha256": "3683e44b5eebc2a9625fe60f9b1e26ad2dd54d7aac4a645531c6e4be60a8b8ee"
+    },
+    "doc/资源/sd卡/card_S6.img": {
+      "action": "keep_local_untrack",
+      "bytes": 74509824,
+      "sha256": "a8be9d182a9b206a39f8baffe5277fe93fd1308221ffed14d7c0af70611b42ef"
+    },
+    "doc/资源/sd卡/card_SONG.img": {
+      "action": "keep_local_untrack",
+      "bytes": 27700736,
+      "sha256": "4d136e0c0eb4f5d6e2c41690c0b10761cd84efee31a98c9c2ea26bc70782630a"
+    },
+    "doc/资源/sd卡/frames_s6/f_0001.png": {
+      "action": "keep_local_untrack",
+      "bytes": 914,
+      "sha256": "98654d4a8fd4b9aa5f6ccd3c06ec39a62b7464e2cd5c5ca97f583589df8e39b9"
+    },
+    "doc/资源/sd卡/frames_s6/f_0002.png": {
+      "action": "keep_local_untrack",
+      "bytes": 83950,
+      "sha256": "1e0cbe5d6d2ea0c4eb73f95d0631c18a0b99fea0a259e30a7914741a99869ecc"
+    },
+    "doc/资源/sd卡/frames_s6/f_0003.png": {
+      "action": "keep_local_untrack",
+      "bytes": 80891,
+      "sha256": "af745f75c873e190817ac48f704f4a302ec275ac1a431538a6b58d0872a4f0cf"
+    },
+    "doc/资源/sd卡/frames_s6/f_0004.png": {
+      "action": "keep_local_untrack",
+      "bytes": 86481,
+      "sha256": "7264fb9b4fc9e13a1c717e29038e2ceee96df036ead08d09e5df8bac8504509c"
+    },
+    "doc/资源/sd卡/frames_s6/f_0005.png": {
+      "action": "keep_local_untrack",
+      "bytes": 85208,
+      "sha256": "9b60271663ce676d8b7d427cbe5249a5fa8e2e11f6597156f27719a0b4b1fcb6"
+    },
+    "doc/资源/sd卡/frames_s6/f_0006.png": {
+      "action": "keep_local_untrack",
+      "bytes": 85382,
+      "sha256": "72aac227d65234a9b9a73f8149d5d990803cce959fc553e19bbc7bf48f0a3bc0"
+    },
+    "doc/资源/sd卡/frames_s6/f_0007.png": {
+      "action": "keep_local_untrack",
+      "bytes": 85301,
+      "sha256": "ad6d7712b987f1f9a2517315c41918e87fbc46e2ab500d1475d06f5cb4ce4634"
+    },
+    "doc/资源/sd卡/frames_s6/f_0008.png": {
+      "action": "keep_local_untrack",
+      "bytes": 78156,
+      "sha256": "3f7020946716b337f5f6752e2df531da3bac364282b670c35a8a80270914f4f2"
+    },
+    "doc/资源/sd卡/frames_s6/f_0009.png": {
+      "action": "keep_local_untrack",
+      "bytes": 80588,
+      "sha256": "7c1db51ce73414b354c8e9816f5ce08f24cfd53d65f0ef440a405a9ff6dab89f"
+    },
+    "doc/资源/sd卡/frames_s6/f_0010.png": {
+      "action": "keep_local_untrack",
+      "bytes": 79278,
+      "sha256": "ae47cc1b2098153439164e2311f358745a06bf6d65f86eabf3b71775ac5540aa"
+    },
+    "doc/资源/sd卡/frames_s6/f_0011.png": {
+      "action": "keep_local_untrack",
+      "bytes": 48332,
+      "sha256": "7e83679f0a2cd07f6195e706e0b6db3b87b3c219734dd989777903312932abb5"
+    },
+    "doc/资源/sd卡/frames_s6/f_0012.png": {
+      "action": "keep_local_untrack",
+      "bytes": 51026,
+      "sha256": "8c5664637a0f81c58f89f642573be0cf808c333d697f0111797365a578b1f0c0"
+    },
+    "doc/资源/sd卡/frames_s6/f_0013.png": {
+      "action": "keep_local_untrack",
+      "bytes": 49855,
+      "sha256": "1739a72bc280c8da4ebf99e8ca04ba5ce733e98ec1868296cb4ea26bf9f0f6c8"
+    },
+    "doc/资源/sd卡/frames_s6/f_0014.png": {
+      "action": "keep_local_untrack",
+      "bytes": 53569,
+      "sha256": "ad0a164913523d68db5c6f3bbb623a29c8e3c22b73f4b62751934b6f2c36bd36"
+    },
+    "doc/资源/sd卡/frames_s6/f_0015.png": {
+      "action": "keep_local_untrack",
+      "bytes": 48014,
+      "sha256": "c4008d660954833a1e53d46b6db10ea192e57bcc54455a30edb47950ce910ef9"
+    },
+    "doc/资源/sd卡/frames_s6/f_0016.png": {
+      "action": "keep_local_untrack",
+      "bytes": 51239,
+      "sha256": "4448643cfe8163a1262b27e0f01871b0ae1b5860f9833b0a0ef0ee501a549ff3"
+    },
+    "doc/资源/sd卡/frames_s6/f_0017.png": {
+      "action": "keep_local_untrack",
+      "bytes": 52901,
+      "sha256": "a86ab5096e22da741890e12d444b8ef11b8b7a2dd13651fcf39a6c18997d7452"
+    },
+    "doc/资源/sd卡/frames_s6/f_0018.png": {
+      "action": "keep_local_untrack",
+      "bytes": 52736,
+      "sha256": "345d091d6f94616792e6a5cc09f6e3941421442549aa5af9254b8dacce410df6"
+    },
+    "doc/资源/sd卡/frames_s6/f_0019.png": {
+      "action": "keep_local_untrack",
+      "bytes": 52140,
+      "sha256": "5b33ce750379e5f1b565e2fbfc688a70891b3464bc53c54b9a2281547a89e0f5"
+    },
+    "doc/资源/sd卡/frames_s6/f_0020.png": {
+      "action": "keep_local_untrack",
+      "bytes": 55758,
+      "sha256": "6e661a16cb9beff8b0f6f4167a660ddd202f6bc34e532c313ff251887026be2a"
+    },
+    "doc/资源/sd卡/frames_s6/f_0021.png": {
+      "action": "keep_local_untrack",
+      "bytes": 40466,
+      "sha256": "91dfc06ce81da0c345a49169c0ebc3fd15bb0e4e5e2db6ac99ef49089803d7d1"
+    },
+    "doc/资源/sd卡/frames_s6/f_0022.png": {
+      "action": "keep_local_untrack",
+      "bytes": 41001,
+      "sha256": "c245220a5451343c8144c450b041eb57a050fe33dbad5beef93298be20aebe7c"
+    },
+    "doc/资源/sd卡/frames_s6/f_0023.png": {
+      "action": "keep_local_untrack",
+      "bytes": 45497,
+      "sha256": "d75f7b7a4816d4b1302cbcf64bc90ac6842febf6f88d3ab11c740125b503ca18"
+    },
+    "doc/资源/sd卡/frames_s6/f_0024.png": {
+      "action": "keep_local_untrack",
+      "bytes": 37108,
+      "sha256": "73b479d48f38e7c5ab67a32355e3942ecad85f1c80af0d8372a05d4de606687b"
+    },
+    "doc/资源/sd卡/frames_s6/f_0025.png": {
+      "action": "keep_local_untrack",
+      "bytes": 31313,
+      "sha256": "24559cb88baffc89044b133552ea03af6aac992a5b43c5ca149448c8bace0366"
+    },
+    "doc/资源/sd卡/frames_s6/f_0026.png": {
+      "action": "keep_local_untrack",
+      "bytes": 87591,
+      "sha256": "37d806539c242ad77f4d5ffc0e86c323443db88aa04efcf55bbc6f08e1291864"
+    },
+    "doc/资源/sd卡/frames_s6/f_0027.png": {
+      "action": "keep_local_untrack",
+      "bytes": 88143,
+      "sha256": "0eb208530d0b8a6736c88d2fce1ae1758bd6683ad4ee083ef58de66403d4f7df"
+    },
+    "doc/资源/sd卡/frames_s6/f_0028.png": {
+      "action": "keep_local_untrack",
+      "bytes": 87355,
+      "sha256": "e3faea92cb22bd2d59656e50ba0b0645a0098450a8329f037af52310fd50f340"
+    },
+    "doc/资源/sd卡/frames_s6/f_0029.png": {
+      "action": "keep_local_untrack",
+      "bytes": 87828,
+      "sha256": "ffe36e357baabc9d1e28751fe1cdc33a4b2b9d543431b4cd109ad261e419b1af"
+    },
+    "doc/资源/sd卡/frames_s6/f_0030.png": {
+      "action": "keep_local_untrack",
+      "bytes": 88944,
+      "sha256": "960698995452f3b2e56db226ae97a07623e87283a0fda67605b0cde94dcb9890"
+    },
+    "doc/资源/sd卡/frames_s6/f_0031.png": {
+      "action": "keep_local_untrack",
+      "bytes": 89286,
+      "sha256": "cc42eb06dcac13a2b5f2dd680b6e6f53f5a91acb917a6e98c43d69556ec91244"
+    },
+    "doc/资源/sd卡/frames_s6/f_0032.png": {
+      "action": "keep_local_untrack",
+      "bytes": 87762,
+      "sha256": "a8c36e568647111fde40f3a5b53d92464ce58115e6c758f76cbbe58d44bb4b39"
+    },
+    "doc/资源/sd卡/frames_s6/f_0033.png": {
+      "action": "keep_local_untrack",
+      "bytes": 92395,
+      "sha256": "8ff172d7b6121e30053b897d0205b2cb8c861841c5b1ae660bbe4288e8183bb0"
+    },
+    "doc/资源/sd卡/frames_s6/f_0034.png": {
+      "action": "keep_local_untrack",
+      "bytes": 93274,
+      "sha256": "ced90d9a78d7b3a36d4f5c48a874bf31484e076aa0b63de447c443f5ce149dd0"
+    },
+    "doc/资源/sd卡/frames_s6/f_0035.png": {
+      "action": "keep_local_untrack",
+      "bytes": 94094,
+      "sha256": "299af2961049a9aeae3960c04f9d56583a4bd6e64dced6fe75399ca3566687e4"
+    },
+    "doc/资源/sd卡/frames_s6/f_0036.png": {
+      "action": "keep_local_untrack",
+      "bytes": 93756,
+      "sha256": "65f16b9d2709cef5f4a8630600a1c39fc303137dc4add5f455b231b69fbdfdff"
+    },
+    "doc/资源/sd卡/frames_s6/f_0037.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91672,
+      "sha256": "7a51f5e66d4a865b16f5ff17d6469d274d6ae1664d21605107a8d91a0715df9a"
+    },
+    "doc/资源/sd卡/frames_s6/f_0038.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91504,
+      "sha256": "cc71824ca807c374ccd4ef1ccbc26e50758eb4ba6fcdc312a6005fd332f7437e"
+    },
+    "doc/资源/sd卡/frames_s6/f_0039.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91948,
+      "sha256": "940a624bd8c71d47a1acdbd957ec8820bb4f7b1447ab2ec65081acfc966849a5"
+    },
+    "doc/资源/sd卡/frames_s6/f_0040.png": {
+      "action": "keep_local_untrack",
+      "bytes": 92282,
+      "sha256": "332f2ffb623bc6b8e3ec659be23cf6e2cc8117c164179eb1b3fd09e1c09d4ed2"
+    },
+    "doc/资源/sd卡/frames_s6/f_0041.png": {
+      "action": "keep_local_untrack",
+      "bytes": 92323,
+      "sha256": "9bd1da31e5305dfa8d03846c04bc460bc1576b0f9296e658080234d07a238cc7"
+    },
+    "doc/资源/sd卡/frames_s6/f_0042.png": {
+      "action": "keep_local_untrack",
+      "bytes": 82506,
+      "sha256": "8bc7ef43f2d8ac61aa6f185090e6490b2401d22cb634857972345cdcef51af4d"
+    },
+    "doc/资源/sd卡/frames_s6/f_0043.png": {
+      "action": "keep_local_untrack",
+      "bytes": 82990,
+      "sha256": "4c663f334a11d457c522d08c33369068d2c500e8786d77e3b3a5e3ff5154149b"
+    },
+    "doc/资源/sd卡/frames_s6/f_0044.png": {
+      "action": "keep_local_untrack",
+      "bytes": 83627,
+      "sha256": "4387a46021092dfb2b5ce34ad48b7b25e63d9016cfe3450f8803725a96a9532a"
+    },
+    "doc/资源/sd卡/frames_s6/f_0045.png": {
+      "action": "keep_local_untrack",
+      "bytes": 85609,
+      "sha256": "163628133f3c0dcda3f2c25c7a0d1a88d9c547bb42d2f4c70f8ca0575b47f047"
+    },
+    "doc/资源/sd卡/frames_s6/f_0046.png": {
+      "action": "keep_local_untrack",
+      "bytes": 86061,
+      "sha256": "6ac19ba04708ed6750addfccfca0621bb9da42d16717f44839eaf08472edfb74"
+    },
+    "doc/资源/sd卡/frames_s6/f_0047.png": {
+      "action": "keep_local_untrack",
+      "bytes": 86661,
+      "sha256": "071dae2e02802f92ddf415ed1f71d4041c195d4d2cb68cfceeabdcd0cf8f4045"
+    },
+    "doc/资源/sd卡/frames_s6/f_0048.png": {
+      "action": "keep_local_untrack",
+      "bytes": 84866,
+      "sha256": "f3218a71d00e046ac416b1b86acc3f432a550249df40ec02e2b3dbf6a6cbf9dd"
+    },
+    "doc/资源/sd卡/frames_s6/f_0049.png": {
+      "action": "keep_local_untrack",
+      "bytes": 84679,
+      "sha256": "47cbdafc4b99c859cda4f2158cc3a244fba41890496bbbcac51f252f9b7d975e"
+    },
+    "doc/资源/sd卡/frames_s6/f_0050.png": {
+      "action": "keep_local_untrack",
+      "bytes": 83820,
+      "sha256": "4568ba7cb0b8a99d4923af9242000aaf0e7a0a665d7fa012180e330dd240809d"
+    },
+    "doc/资源/sd卡/frames_s6/f_0051.png": {
+      "action": "keep_local_untrack",
+      "bytes": 83047,
+      "sha256": "24a09aed1520a29a4abf626b116800a682005d7deb4b41225ea6d2c8bb0cbe35"
+    },
+    "doc/资源/sd卡/frames_s6/f_0052.png": {
+      "action": "keep_local_untrack",
+      "bytes": 83502,
+      "sha256": "a69018fb2927bad2f8600a903adf3048fcdaa5520481f97f55c40aed6ca1c1ee"
+    },
+    "doc/资源/sd卡/frames_s6/f_0053.png": {
+      "action": "keep_local_untrack",
+      "bytes": 83507,
+      "sha256": "eac24972f41d9ba76dd431b5c9d4e17a87e07ed3b7a796d7b7578bfc01f44cf7"
+    },
+    "doc/资源/sd卡/frames_s6/f_0054.png": {
+      "action": "keep_local_untrack",
+      "bytes": 84093,
+      "sha256": "ffe835f7c716ff05c26000b4009e59d954edb4c6853128bcaf458b609f355e48"
+    },
+    "doc/资源/sd卡/frames_s6/f_0055.png": {
+      "action": "keep_local_untrack",
+      "bytes": 84062,
+      "sha256": "e9c011bb98a72466ddc34a45553e076720b5333f5dae20bede5211ab14390985"
+    },
+    "doc/资源/sd卡/frames_s6/f_0056.png": {
+      "action": "keep_local_untrack",
+      "bytes": 86847,
+      "sha256": "5ab26764b3bc2c14eaf95fe280ca867a9d4f803df545b75a19a06a0b52a5b17a"
+    },
+    "doc/资源/sd卡/frames_s6/f_0057.png": {
+      "action": "keep_local_untrack",
+      "bytes": 86754,
+      "sha256": "7416fda2cb001332f083e0f04f60516163e6a1136bf4141817dca1cd04e4b8f2"
+    },
+    "doc/资源/sd卡/frames_s6/f_0058.png": {
+      "action": "keep_local_untrack",
+      "bytes": 85765,
+      "sha256": "656c89f2ba7c434cdb301fc44122cedcdd246b0856f05de6a486fdc49c9dcd33"
+    },
+    "doc/资源/sd卡/frames_s6/f_0059.png": {
+      "action": "keep_local_untrack",
+      "bytes": 88799,
+      "sha256": "ee045b45d32233b40b9c4a06e38da58e6875586397cf51ebf61ea2a1fa45c0d3"
+    },
+    "doc/资源/sd卡/frames_s6/f_0060.png": {
+      "action": "keep_local_untrack",
+      "bytes": 89716,
+      "sha256": "4c7cf4138962f94ad8152b319a0327ad2a1766355314ebdbe9226e8c29dd907b"
+    },
+    "doc/资源/sd卡/frames_s6/f_0061.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91326,
+      "sha256": "abc0ebe4af8a859f56ff08976f43668a8b9421dc8174fb218ec8da5525906463"
+    },
+    "doc/资源/sd卡/frames_s6/f_0062.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91816,
+      "sha256": "1ba40015336e2d342d338cf9657a4a9a94c9d1b140ef056832e005a2f7b5f473"
+    },
+    "doc/资源/sd卡/frames_s6/f_0063.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91497,
+      "sha256": "edb1bb8ca40cff9c15011b59cd1e0b93a7e4d5795500bba369ba9b9476faf3c1"
+    },
+    "doc/资源/sd卡/frames_s6/f_0064.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91485,
+      "sha256": "7c105948be25b32fd6cfffb62d044e93b9386c700916e4ab72cfa39438995c55"
+    },
+    "doc/资源/sd卡/frames_s6/f_0065.png": {
+      "action": "keep_local_untrack",
+      "bytes": 88933,
+      "sha256": "e0b548474884f17840ff802e494b1c4503822f23c90282f0003edf5bff91368c"
+    },
+    "doc/资源/sd卡/frames_s6/f_0066.png": {
+      "action": "keep_local_untrack",
+      "bytes": 89486,
+      "sha256": "1a41bf22b1c02d7fd45159ad2bb62ee4f8e94c4f9f8855b355c23bdd4832dc65"
+    },
+    "doc/资源/sd卡/frames_s6/f_0067.png": {
+      "action": "keep_local_untrack",
+      "bytes": 88804,
+      "sha256": "984e8a0414f7cb7ba778d78577c339418353597a3854d4c6a3d1cd786862adac"
+    },
+    "doc/资源/sd卡/frames_s6/f_0068.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91086,
+      "sha256": "6c69bdee8f3ad0cfd2cafc4ffbdee8337d03bfef91f9270d27678a4ba97a2487"
+    },
+    "doc/资源/sd卡/frames_s6/f_0069.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91495,
+      "sha256": "e3796c0772a0bcb0683dc6a51f408e0fd21340ebed7aa9aefc5bd24d97ba26df"
+    },
+    "doc/资源/sd卡/frames_s6/f_0070.png": {
+      "action": "keep_local_untrack",
+      "bytes": 90592,
+      "sha256": "037b348b63a8eb69d95ab4c01aa4005dc74a42c8f0f96a166d53e87b95ac9724"
+    },
+    "doc/资源/sd卡/frames_s6/f_0071.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91558,
+      "sha256": "fe05fc0415b3746486a0dfe6928556b6a33b3d8d3833e6a2e5d7fb14b6823888"
+    },
+    "doc/资源/sd卡/frames_s6/f_0072.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91936,
+      "sha256": "ed529c2e5c2e6b11a56e9cc8c22a96b5673789f624841b8e715db19d64e2a3f1"
+    },
+    "doc/资源/sd卡/frames_s6/f_0073.png": {
+      "action": "keep_local_untrack",
+      "bytes": 93687,
+      "sha256": "e968b736d39c71d3d3bb247cc3bb9479b49fdfe038b9f88d5147734581b0563f"
+    },
+    "doc/资源/sd卡/frames_s6/f_0074.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95333,
+      "sha256": "41816fed8b102860c07c23e0edb7b0254005e91a5508d287dbd28e62b589a639"
+    },
+    "doc/资源/sd卡/frames_s6/f_0075.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91099,
+      "sha256": "75ef86fd4a632cbd62308e9dc84951c69d97a9bf41a0cc615ed11ecd7cb3da0d"
+    },
+    "doc/资源/sd卡/frames_s6/f_0076.png": {
+      "action": "keep_local_untrack",
+      "bytes": 80656,
+      "sha256": "082e5769c159bf450f5bd819ca3776780d66fb183b4a8281e7bce29e9b72993f"
+    },
+    "doc/资源/sd卡/frames_s6/f_0077.png": {
+      "action": "keep_local_untrack",
+      "bytes": 80515,
+      "sha256": "80213b8af996640bf6eaf12c023a95cfd52f2291a6e68129ffcfe8fc49792851"
+    },
+    "doc/资源/sd卡/frames_s6/f_0078.png": {
+      "action": "keep_local_untrack",
+      "bytes": 81648,
+      "sha256": "1e519c75587e0755abd6762d7538a67b29e0f39d672040dd3de907d5945239b8"
+    },
+    "doc/资源/sd卡/frames_s6/f_0079.png": {
+      "action": "keep_local_untrack",
+      "bytes": 80498,
+      "sha256": "a88afd59ff21b84df2952a87cc79e4a9a35d467bbfa9a15f9a58e7bcef2e5275"
+    },
+    "doc/资源/sd卡/frames_s6/f_0080.png": {
+      "action": "keep_local_untrack",
+      "bytes": 76743,
+      "sha256": "fd0a82760dce02782418ecb74280c1183e20ab13ab540cedf8559724acaca2e9"
+    },
+    "doc/资源/sd卡/frames_s6/f_0081.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95242,
+      "sha256": "c3e7044ac4a473dc09b46542d2c09fc2efd2147f758abc67ef3b00e321adcec9"
+    },
+    "doc/资源/sd卡/frames_s6/f_0082.png": {
+      "action": "keep_local_untrack",
+      "bytes": 92867,
+      "sha256": "2c7adee8b55249b2dfd5bdf5e293ef02b9d3ba79b8551cc0561f43477fc9376e"
+    },
+    "doc/资源/sd卡/frames_s6/f_0083.png": {
+      "action": "keep_local_untrack",
+      "bytes": 90538,
+      "sha256": "009afb69978e58d3532f4f9cc4bb6382df3269b7589c29762fdc978ba5fa7dd8"
+    },
+    "doc/资源/sd卡/frames_s6/f_0084.png": {
+      "action": "keep_local_untrack",
+      "bytes": 90225,
+      "sha256": "e65b5af2b42ba6c2024381d38835074f80cd91f689476298bf922753cbf29326"
+    },
+    "doc/资源/sd卡/frames_s6/f_0085.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91242,
+      "sha256": "207597f43c59032d2a600046a86cf6d3e630909d1a41c74b88f996b9d314213c"
+    },
+    "doc/资源/sd卡/frames_s6/f_0086.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95796,
+      "sha256": "7388ca89d5353e8acb18ddffee0e9b7fbc49b9a8475392ee30d3cad0083b8e0d"
+    },
+    "doc/资源/sd卡/frames_s6/f_0087.png": {
+      "action": "keep_local_untrack",
+      "bytes": 98757,
+      "sha256": "ad772b835b525572f55fce04aba534e2866a643d495d1fe357ca6aee84f04353"
+    },
+    "doc/资源/sd卡/frames_s6/f_0088.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95167,
+      "sha256": "dbf0994d9b55f9b87b3e31731ab5ad5e1f609c4a0b3312a66848ebfc6df949cd"
+    },
+    "doc/资源/sd卡/frames_s6/f_0089.png": {
+      "action": "keep_local_untrack",
+      "bytes": 102135,
+      "sha256": "8abb7c48f7879d39d3d546229f5ff625118d72d556156c5c783d9204af19874e"
+    },
+    "doc/资源/sd卡/frames_s6/f_0090.png": {
+      "action": "keep_local_untrack",
+      "bytes": 103514,
+      "sha256": "c846a2fde0d2509ef8c0007c5a1fef14442fdcffe780794cdb7243fad5afadce"
+    },
+    "doc/资源/sd卡/frames_s6/f_0091.png": {
+      "action": "keep_local_untrack",
+      "bytes": 99684,
+      "sha256": "21823ce4d218c337a2f017a159a9aec28b294f84b5eab49b8e2695bcedcae3cd"
+    },
+    "doc/资源/sd卡/frames_s6/f_0092.png": {
+      "action": "keep_local_untrack",
+      "bytes": 98854,
+      "sha256": "81d85ce5bbc6a2f8b605bcafa58db95b294449b6207e66eb66811d0b9205c8b4"
+    },
+    "doc/资源/sd卡/frames_s6/f_0093.png": {
+      "action": "keep_local_untrack",
+      "bytes": 101558,
+      "sha256": "e512b52d7cb64c98b79d21299339b9166d9c7eea6e8e47b11f487e886a598598"
+    },
+    "doc/资源/sd卡/frames_s6/f_0094.png": {
+      "action": "keep_local_untrack",
+      "bytes": 100325,
+      "sha256": "f07541b305c3c022156709e2cd406e5523911aa0a798ad79262d6fec5f256a3c"
+    },
+    "doc/资源/sd卡/frames_s6/f_0095.png": {
+      "action": "keep_local_untrack",
+      "bytes": 96636,
+      "sha256": "e5acddaa14fe4df19891eadc565b0a336900d5d5ba4771fd060d6bb098b8d699"
+    },
+    "doc/资源/sd卡/frames_s6/f_0096.png": {
+      "action": "keep_local_untrack",
+      "bytes": 66461,
+      "sha256": "83ed0e99273a2df6eef1f1ae6805a8a0c8f0721eb23e322311260e97dd1c7f65"
+    },
+    "doc/资源/sd卡/frames_s6/f_0097.png": {
+      "action": "keep_local_untrack",
+      "bytes": 70251,
+      "sha256": "d1d379c7ea5343a6da902382602fd6883ab0cca0ae71d022993e6446adc882f3"
+    },
+    "doc/资源/sd卡/frames_s6/f_0098.png": {
+      "action": "keep_local_untrack",
+      "bytes": 75451,
+      "sha256": "61586736f2f37e1fd2ced05079d92ddda875e9b3c0119015d21504c58b8acd07"
+    },
+    "doc/资源/sd卡/frames_s6/f_0099.png": {
+      "action": "keep_local_untrack",
+      "bytes": 77868,
+      "sha256": "6f051de24d2d36040b52a6aa50bbbd1493f984d0810ec086279377940343e936"
+    },
+    "doc/资源/sd卡/frames_s6/f_0100.png": {
+      "action": "keep_local_untrack",
+      "bytes": 79923,
+      "sha256": "85797a8df2c18ee928460e275f38f2e26ffffc52b3d815965be92518b89c7c28"
+    },
+    "doc/资源/sd卡/frames_s6/f_0101.png": {
+      "action": "keep_local_untrack",
+      "bytes": 80482,
+      "sha256": "cb64156393ba03d8336c17fb1b23333512edbf21102344a27a511a99bf598e79"
+    },
+    "doc/资源/sd卡/frames_s6/f_0102.png": {
+      "action": "keep_local_untrack",
+      "bytes": 80484,
+      "sha256": "7a18f75e9a202c1676f41a9c29384bd70af8c9c7ad35ac59e9aaaf134ee3b290"
+    },
+    "doc/资源/sd卡/frames_s6/f_0103.png": {
+      "action": "keep_local_untrack",
+      "bytes": 79718,
+      "sha256": "22211ba13e8ddd13162923a682e6cfae3ec0149d2001a8e3fff8d2e510272e6f"
+    },
+    "doc/资源/sd卡/frames_s6/f_0104.png": {
+      "action": "keep_local_untrack",
+      "bytes": 78262,
+      "sha256": "6225827c00f708b3f49e255e33bd2ce870430df872720ec08c7b9816bb026768"
+    },
+    "doc/资源/sd卡/frames_s6/f_0105.png": {
+      "action": "keep_local_untrack",
+      "bytes": 73773,
+      "sha256": "9ea644b42ee027d26459274ea77e3eb17043bf33f9e563d5f7cd4def57ced3a7"
+    },
+    "doc/资源/sd卡/frames_s6/f_0106.png": {
+      "action": "keep_local_untrack",
+      "bytes": 85960,
+      "sha256": "6ce115e4125045b69afdbc4a0dfb7540e39b3b44007485664807cfc242ded2f9"
+    },
+    "doc/资源/sd卡/frames_s6/f_0107.png": {
+      "action": "keep_local_untrack",
+      "bytes": 86334,
+      "sha256": "f5f14f9d3f8c53ba2e9c2a399fccbc695ade845768451a158409d43be5eb54a5"
+    },
+    "doc/资源/sd卡/frames_s6/f_0108.png": {
+      "action": "keep_local_untrack",
+      "bytes": 86375,
+      "sha256": "0e950c621262054e51dd4672d2f80d0162dc1b2f9adb9c07180b760d79ca74c0"
+    },
+    "doc/资源/sd卡/frames_s6/f_0109.png": {
+      "action": "keep_local_untrack",
+      "bytes": 87448,
+      "sha256": "ea5efcd09bcb4f12f730fbaba02057ecc1fe0e55c662122c9973bda509eb2fb4"
+    },
+    "doc/资源/sd卡/frames_s6/f_0110.png": {
+      "action": "keep_local_untrack",
+      "bytes": 88268,
+      "sha256": "5eaf67fcdadd992f2dbaa6436915a63757e658372c5fbb2ba0c029a34d19444e"
+    },
+    "doc/资源/sd卡/frames_s6/f_0111.png": {
+      "action": "keep_local_untrack",
+      "bytes": 88555,
+      "sha256": "d0d9e9eecc16f46cccc44db2bbeeb74a9ec32e093a3c7952315eb9819924912b"
+    },
+    "doc/资源/sd卡/frames_s6/f_0112.png": {
+      "action": "keep_local_untrack",
+      "bytes": 89411,
+      "sha256": "724ace580c3436510ecf7364c9df91d19883612b17507bf79c9bd75b8d4d67a5"
+    },
+    "doc/资源/sd卡/frames_s6/f_0113.png": {
+      "action": "keep_local_untrack",
+      "bytes": 89790,
+      "sha256": "dccc99dfe1bf3131768b87d02d4d1c12472fbac798d8233120b11e3525b8b42c"
+    },
+    "doc/资源/sd卡/frames_s6/f_0114.png": {
+      "action": "keep_local_untrack",
+      "bytes": 113175,
+      "sha256": "c8169f62fad6a01d7f336918add70a464beeefb1ce11f449eabde3d78d635299"
+    },
+    "doc/资源/sd卡/frames_s6/f_0115.png": {
+      "action": "keep_local_untrack",
+      "bytes": 110356,
+      "sha256": "7529840fe818c84ed63b66e393b54f5fc908bc2d7649df0432bd3bd0470e7293"
+    },
+    "doc/资源/sd卡/frames_s6/f_0116.png": {
+      "action": "keep_local_untrack",
+      "bytes": 111194,
+      "sha256": "5068b518c8edfbc6edd9372fa6e80c61daaea5dcead44d122fd63bfb7b6d8c38"
+    },
+    "doc/资源/sd卡/frames_s6/f_0117.png": {
+      "action": "keep_local_untrack",
+      "bytes": 111760,
+      "sha256": "0feed5c0e69004c58b347920acb3d9377c787f02bc207445dee3939cc66bbefb"
+    },
+    "doc/资源/sd卡/frames_s6/f_0118.png": {
+      "action": "keep_local_untrack",
+      "bytes": 111133,
+      "sha256": "d61596a29ecc79e124606ddb01d7914d6f3a4d0ae029960ae59647cfbd74c3db"
+    },
+    "doc/资源/sd卡/frames_s6/f_0119.png": {
+      "action": "keep_local_untrack",
+      "bytes": 110539,
+      "sha256": "13708312c6cd567b3ad68943a3356a790de388f70b13ad1c70516a901979c904"
+    },
+    "doc/资源/sd卡/frames_s6/f_0120.png": {
+      "action": "keep_local_untrack",
+      "bytes": 108000,
+      "sha256": "ab6e1918c8756ff540969ccf04e0b7afa126821ee168bb1c88c1e73bb33e936b"
+    },
+    "doc/资源/sd卡/frames_s6/f_0121.png": {
+      "action": "keep_local_untrack",
+      "bytes": 113526,
+      "sha256": "870e8782f88cd7ae09178e770c56fe1b3ab1db2de44f8953b96249bd21abc81f"
+    },
+    "doc/资源/sd卡/frames_s6/f_0122.png": {
+      "action": "keep_local_untrack",
+      "bytes": 82272,
+      "sha256": "544bed062b92126afded798c14e6efa9aa016a25b3892818779bf06fbc96b7b4"
+    },
+    "doc/资源/sd卡/frames_s6/f_0123.png": {
+      "action": "keep_local_untrack",
+      "bytes": 85766,
+      "sha256": "88ee6a0508e2b1417f09533eb54f8d599517a773f1cfb2d5ab8cc58110edad58"
+    },
+    "doc/资源/sd卡/frames_s6/f_0124.png": {
+      "action": "keep_local_untrack",
+      "bytes": 87653,
+      "sha256": "18aea070fe4e9dda9f006f8afc4ea68827496832419563b6cbc53a29aa58f0b4"
+    },
+    "doc/资源/sd卡/frames_s6/f_0125.png": {
+      "action": "keep_local_untrack",
+      "bytes": 90308,
+      "sha256": "cfc57cb7e75dd5dc051ed059058101e4d1cbd2d2ac99543207ee65b9ee20c06c"
+    },
+    "doc/资源/sd卡/frames_s6/f_0126.png": {
+      "action": "keep_local_untrack",
+      "bytes": 90752,
+      "sha256": "00372371a6d721f871aea8c7cb0651f2a6cde293c3e56c1026ac9cb23b2bd8e0"
+    },
+    "doc/资源/sd卡/frames_s6/f_0127.png": {
+      "action": "keep_local_untrack",
+      "bytes": 90319,
+      "sha256": "31c1ba844b948f43cac2a725a1cc59cecee72c4ebc3d1dd88e44988bae3b3301"
+    },
+    "doc/资源/sd卡/frames_s6/f_0128.png": {
+      "action": "keep_local_untrack",
+      "bytes": 88558,
+      "sha256": "e5946bf6a4053536ae5d200f95a92adfe10603d9e8f2c29c7eadeb530af908b6"
+    },
+    "doc/资源/sd卡/frames_s6/f_0129.png": {
+      "action": "keep_local_untrack",
+      "bytes": 90275,
+      "sha256": "d3d752d42149dfb72c18543e02c062b9e4e8b3d4263285a9a02dc8375e298461"
+    },
+    "doc/资源/sd卡/frames_s6/f_0130.png": {
+      "action": "keep_local_untrack",
+      "bytes": 87359,
+      "sha256": "48465f0a1b23030c1f0fb974d3e3b56c9996e2489e11381737a31545aa6d86ba"
+    },
+    "doc/资源/sd卡/frames_s6/f_0131.png": {
+      "action": "keep_local_untrack",
+      "bytes": 90934,
+      "sha256": "370a0043d45e729f7ab293b00a708cacd67be5612a55cfb769687a434507a12d"
+    },
+    "doc/资源/sd卡/frames_s6/f_0132.png": {
+      "action": "keep_local_untrack",
+      "bytes": 94139,
+      "sha256": "1d021c3df943c923b73fe2be56617eb94aaf2059bc0aa31ebb0c47c51a2a53a6"
+    },
+    "doc/资源/sd卡/frames_s6/f_0133.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91988,
+      "sha256": "481633fbc149d9de99a549eef1c3eb9d1d028e673a6e2386bbf65988af4dce6f"
+    },
+    "doc/资源/sd卡/frames_s6/f_0134.png": {
+      "action": "keep_local_untrack",
+      "bytes": 93033,
+      "sha256": "f46b5a3cf61a60cc22fe3b7aea17a28bca0c8067d89c3d0c78a5fc6a27e2c07f"
+    },
+    "doc/资源/sd卡/frames_s6/f_0135.png": {
+      "action": "keep_local_untrack",
+      "bytes": 92878,
+      "sha256": "0c7ed07913b226b16757e7f21095504ebe7b385277117e2222c776ac8e1cb64d"
+    },
+    "doc/资源/sd卡/frames_s6/f_0136.png": {
+      "action": "keep_local_untrack",
+      "bytes": 93568,
+      "sha256": "3d63254ca1b203e1ed281ae9328d9af2d6e3c9fc993ecf97b2022b93babdc448"
+    },
+    "doc/资源/sd卡/frames_s6/f_0137.png": {
+      "action": "keep_local_untrack",
+      "bytes": 96630,
+      "sha256": "6ed7e38670294edba8b4534b914dc7f0e79cbd823a99817ce93a4ee8969ba612"
+    },
+    "doc/资源/sd卡/frames_s6/f_0138.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95232,
+      "sha256": "07d9536a6c8b3a809edb0f05bcc39c23595b347131d20ec2b17d9a4fbb5f9fa0"
+    },
+    "doc/资源/sd卡/frames_s6/f_0139.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95695,
+      "sha256": "faccd650278448ad564b4cae5cf99866b9d05f49518ea29d75203003f3e72316"
+    },
+    "doc/资源/sd卡/frames_s6/f_0140.png": {
+      "action": "keep_local_untrack",
+      "bytes": 98676,
+      "sha256": "b63fb7b974473ab1f88ffa8f06ab60c6e40022652968d9e4245e397182a160f6"
+    },
+    "doc/资源/sd卡/frames_s6/f_0141.png": {
+      "action": "keep_local_untrack",
+      "bytes": 99655,
+      "sha256": "342d5122d5f5d9b788e758701bed592c12a1bbebde3ca39f1fe19d646a4da9c1"
+    },
+    "doc/资源/sd卡/frames_s6/f_0142.png": {
+      "action": "keep_local_untrack",
+      "bytes": 96206,
+      "sha256": "eac2ca9c3791b35dcdad3b7de60cb27d67914c66595728af19ab744009d1d6a4"
+    },
+    "doc/资源/sd卡/frames_s6/f_0143.png": {
+      "action": "keep_local_untrack",
+      "bytes": 94816,
+      "sha256": "1731019fee60d2cafc2294014c99a7495d045b930d485fc9b88f4ca18aa4681b"
+    },
+    "doc/资源/sd卡/frames_s6/f_0144.png": {
+      "action": "keep_local_untrack",
+      "bytes": 98631,
+      "sha256": "6609165712886f56efc4db97cb8019a69f190b86fb9a92953878d23e272f2abb"
+    },
+    "doc/资源/sd卡/frames_s6/f_0145.png": {
+      "action": "keep_local_untrack",
+      "bytes": 99999,
+      "sha256": "18cf16191340e86500f4904fbb52a8bd75a37d06a250ab976fc1fee75269a38b"
+    },
+    "doc/资源/sd卡/frames_s6/f_0146.png": {
+      "action": "keep_local_untrack",
+      "bytes": 104598,
+      "sha256": "45e90c345f932b7848671576e28d82c89de605bc7ac3e3a307b57358a86e0fe5"
+    },
+    "doc/资源/sd卡/frames_s6/f_0147.png": {
+      "action": "keep_local_untrack",
+      "bytes": 104988,
+      "sha256": "5afd0d7837affa209b55bb5576ca2a51be0ca3203730ee53639d81494cd9d939"
+    },
+    "doc/资源/sd卡/frames_s6/f_0148.png": {
+      "action": "keep_local_untrack",
+      "bytes": 101802,
+      "sha256": "0500388d9ad10e41e09f30c3a24b521c4c8a1dc8851de2568a9087d8ab99b3f9"
+    },
+    "doc/资源/sd卡/frames_s6/f_0149.png": {
+      "action": "keep_local_untrack",
+      "bytes": 101985,
+      "sha256": "4ed6fd49a31ea8f06befd6d2fa21b0dd2ba620cb0f7630db47460637b2e14007"
+    },
+    "doc/资源/sd卡/frames_s6/f_0150.png": {
+      "action": "keep_local_untrack",
+      "bytes": 105871,
+      "sha256": "972c63d643ff8d74a68cf6ba4892eaeb941e3db769cc1c03c500ca0241025475"
+    },
+    "doc/资源/sd卡/frames_s6/f_0151.png": {
+      "action": "keep_local_untrack",
+      "bytes": 114975,
+      "sha256": "58b1262cf47de7e360d3e183e86e389f4156cf412817a042c04424758b195ac2"
+    },
+    "doc/资源/sd卡/frames_s6/f_0152.png": {
+      "action": "keep_local_untrack",
+      "bytes": 109481,
+      "sha256": "8238285eaa5e058498873dbfd10d575474478784f0bf6dddfe4dba2d68314fba"
+    },
+    "doc/资源/sd卡/frames_s6/f_0153.png": {
+      "action": "keep_local_untrack",
+      "bytes": 110541,
+      "sha256": "92ab4514a5319f157864069cc292539f22da7735bffdd41df78f9e0fd8af6a14"
+    },
+    "doc/资源/sd卡/frames_s6/f_0154.png": {
+      "action": "keep_local_untrack",
+      "bytes": 105767,
+      "sha256": "bbcb73fdcc39feebd5d341510f30092c986d3df8b55e8e83bd85cad546bb3626"
+    },
+    "doc/资源/sd卡/frames_s6/f_0155.png": {
+      "action": "keep_local_untrack",
+      "bytes": 113012,
+      "sha256": "7c6226528f304c06b9b3131ab23f13fa0b9ad55eb52d9b1b706a299eb6242fef"
+    },
+    "doc/资源/sd卡/frames_s6/f_0156.png": {
+      "action": "keep_local_untrack",
+      "bytes": 112817,
+      "sha256": "d42d99ae5d5799da1de5ad9dc106a2a1e55db63af5ca35c33bf21d16363e4d9b"
+    },
+    "doc/资源/sd卡/frames_s6/f_0157.png": {
+      "action": "keep_local_untrack",
+      "bytes": 113346,
+      "sha256": "706ba74d7c1a76a1514a1b3525fa7316fa82032c930f5ed4119b608486f3e34b"
+    },
+    "doc/资源/sd卡/frames_s6/f_0158.png": {
+      "action": "keep_local_untrack",
+      "bytes": 115396,
+      "sha256": "0f466cc4ee0806750463bee1b20e1cfa883c422afbd36a8e46770c66b5da404e"
+    },
+    "doc/资源/sd卡/frames_s6/f_0159.png": {
+      "action": "keep_local_untrack",
+      "bytes": 115006,
+      "sha256": "824e5b1d239882d7fcea700d8e8b993520313c34a9aaf3b41865211dd3d2029a"
+    },
+    "doc/资源/sd卡/frames_s6/f_0160.png": {
+      "action": "keep_local_untrack",
+      "bytes": 116071,
+      "sha256": "0193a6abdb6140c0224d6d4b1d14fb19411815d8e0c66b0ed51bc0afca7bfe92"
+    },
+    "doc/资源/sd卡/frames_s6/f_0161.png": {
+      "action": "keep_local_untrack",
+      "bytes": 116745,
+      "sha256": "35cbcbb44894253292d8e3787ba04fed7be4a26f5c5e20b8cf668bec2b78674c"
+    },
+    "doc/资源/sd卡/frames_s6/f_0162.png": {
+      "action": "keep_local_untrack",
+      "bytes": 117147,
+      "sha256": "5d1b37b9f7340a27b52675c70ea2ff1c079725db33ea676bf8307c7fdd551a77"
+    },
+    "doc/资源/sd卡/frames_s6/f_0163.png": {
+      "action": "keep_local_untrack",
+      "bytes": 117062,
+      "sha256": "e2b8c3edba46a711c8ce1e437da769e77faf1da708ad2e9e288d4293ff8f3626"
+    },
+    "doc/资源/sd卡/frames_s6/f_0164.png": {
+      "action": "keep_local_untrack",
+      "bytes": 113961,
+      "sha256": "c5410ab03a7e7a12cd22d3e0d8a92479d3c0c05bcf0a2abc5b8a7ed319a43440"
+    },
+    "doc/资源/sd卡/frames_s6/f_0165.png": {
+      "action": "keep_local_untrack",
+      "bytes": 112081,
+      "sha256": "9101ede62e8a0b116400d387312982cf59a1e99b35be8ee4a2bb2f5751e6517a"
+    },
+    "doc/资源/sd卡/frames_s6/f_0166.png": {
+      "action": "keep_local_untrack",
+      "bytes": 113585,
+      "sha256": "3481f7e2c85d147008f5e72dcda791f550e16b3b7d2b2f9053615be832cd2e40"
+    },
+    "doc/资源/sd卡/frames_s6/f_0167.png": {
+      "action": "keep_local_untrack",
+      "bytes": 114627,
+      "sha256": "45021ff9619f89d657e8b1e9cbc7b91c97bc014a56c4f13c6667705ed2222e9f"
+    },
+    "doc/资源/sd卡/frames_s6/f_0168.png": {
+      "action": "keep_local_untrack",
+      "bytes": 113475,
+      "sha256": "62782a7a783e3913df02776a3a329fa65f3ca271e7fcb88a3e31bc7d513e7512"
+    },
+    "doc/资源/sd卡/frames_s6/f_0169.png": {
+      "action": "keep_local_untrack",
+      "bytes": 115842,
+      "sha256": "4f75f1ac4b7cfa3eb708e3f6e387cb7df0fe92f44f3811f3ce452ef63823da1d"
+    },
+    "doc/资源/sd卡/frames_s6/f_0170.png": {
+      "action": "keep_local_untrack",
+      "bytes": 115157,
+      "sha256": "f343e68cf3f2b6f546bb3059e2c896e4555cbb6b46811277a676499741cff2cd"
+    },
+    "doc/资源/sd卡/frames_s6/f_0171.png": {
+      "action": "keep_local_untrack",
+      "bytes": 116716,
+      "sha256": "aac691cf6a24589f2011e62ea7c106aca0cc9989e9f2adbac14cc331ccb4f094"
+    },
+    "doc/资源/sd卡/frames_s6/f_0172.png": {
+      "action": "keep_local_untrack",
+      "bytes": 113541,
+      "sha256": "3eb5d2cbbfc51ce2364b6b481f4ccc0c3201ebd8285ff69a39e92f01576cb33d"
+    },
+    "doc/资源/sd卡/frames_s6/f_0173.png": {
+      "action": "keep_local_untrack",
+      "bytes": 112285,
+      "sha256": "61121e2ff61b907f9713e01d70fd4bca43d890d611982cdfee49fdf3a38d3590"
+    },
+    "doc/资源/sd卡/frames_s6/f_0174.png": {
+      "action": "keep_local_untrack",
+      "bytes": 108139,
+      "sha256": "52be851ca4f838b703a372f2c19facffd8f81e3a0ce6617ef314f41f972fcfa5"
+    },
+    "doc/资源/sd卡/frames_s6/f_0175.png": {
+      "action": "keep_local_untrack",
+      "bytes": 88750,
+      "sha256": "4cdff41a85edd78f6f1806c15ff37a0f28bf66b35bf6013d8fa96226f1743553"
+    },
+    "doc/资源/sd卡/frames_s6/f_0176.png": {
+      "action": "keep_local_untrack",
+      "bytes": 112154,
+      "sha256": "28022df8afe3f967b63f738f3387ce2a010e19e359d3a13bf686914fd3d7447e"
+    },
+    "doc/资源/sd卡/frames_s6/f_0177.png": {
+      "action": "keep_local_untrack",
+      "bytes": 112373,
+      "sha256": "c3181b91385b3d9684e80e6f78f5ecd708d9a133b586442cc3ccaaec8f7e6393"
+    },
+    "doc/资源/sd卡/frames_s6/f_0178.png": {
+      "action": "keep_local_untrack",
+      "bytes": 115088,
+      "sha256": "c2fbb695b25df668a324d0cd8f1423a2f03e66b2741993a5782e3ea645080a0d"
+    },
+    "doc/资源/sd卡/frames_s6/f_0179.png": {
+      "action": "keep_local_untrack",
+      "bytes": 108167,
+      "sha256": "45dae85426c4f4f69f880d20b0d3935a78b68abe62eb55ec7ceb914f71249b06"
+    },
+    "doc/资源/sd卡/frames_s6/f_0180.png": {
+      "action": "keep_local_untrack",
+      "bytes": 106262,
+      "sha256": "a351f457d8fb941f152cc5bda29ab212f39638f81728bf3a70fac0303624cd0b"
+    },
+    "doc/资源/sd卡/frames_s6/f_0181.png": {
+      "action": "keep_local_untrack",
+      "bytes": 113658,
+      "sha256": "f596fdf851516d87f8f3c4a9b10668d654dea8f235ffcd843b3e904678857202"
+    },
+    "doc/资源/sd卡/frames_s6/f_0182.png": {
+      "action": "keep_local_untrack",
+      "bytes": 123096,
+      "sha256": "3d35c0711000ab74c9d46ca5d53f4c32b8d534a784e50d26c7b338e752b3744c"
+    },
+    "doc/资源/sd卡/frames_s6/f_0183.png": {
+      "action": "keep_local_untrack",
+      "bytes": 127265,
+      "sha256": "8ddbdaa2aecd6a4eed71e0bfb2b6bbc629b5186ba2e7c0ce51e6a4b788be07ab"
+    },
+    "doc/资源/sd卡/frames_s6/f_0184.png": {
+      "action": "keep_local_untrack",
+      "bytes": 87879,
+      "sha256": "aaa79db9e57e9082c73d4a09101ba1cf0f7e5f4b43008a20e09a1f74db2eb421"
+    },
+    "doc/资源/sd卡/frames_s6/f_0185.png": {
+      "action": "keep_local_untrack",
+      "bytes": 94746,
+      "sha256": "29a102576b0136b5c632705c67ee6cb37581704d1369270144c723e1a4370173"
+    },
+    "doc/资源/sd卡/frames_s6/f_0186.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95728,
+      "sha256": "2aa79d41d7452f4b23928e5913f21a24f2ca34ac76c0c8e9fac52eb116028d76"
+    },
+    "doc/资源/sd卡/frames_s6/f_0187.png": {
+      "action": "keep_local_untrack",
+      "bytes": 94282,
+      "sha256": "54498c47cc3a57a1a1fa12b754df611cbe2f75e9123588e3b71f8d8ea7d0f95e"
+    },
+    "doc/资源/sd卡/frames_s6/f_0188.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95768,
+      "sha256": "5af381e7923f728b01c46339adc87e13f3d7ee975b2c431fe0c733e9b2fdbb9d"
+    },
+    "doc/资源/sd卡/frames_s6/f_0189.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95572,
+      "sha256": "d546cdd80037e55e389b73cea31c72f0d633dd52e935d57a4777c69fb705fcb4"
+    },
+    "doc/资源/sd卡/frames_s6/f_0190.png": {
+      "action": "keep_local_untrack",
+      "bytes": 98087,
+      "sha256": "4799c1031abe9b7a26be055a73a071e55a257645ba189464061975ebb1cd2b94"
+    },
+    "doc/资源/sd卡/frames_s6/f_0191.png": {
+      "action": "keep_local_untrack",
+      "bytes": 97240,
+      "sha256": "c9a845bf3af3e7569cae4202796ecb1014f5208980715012f262e3b501d749d3"
+    },
+    "doc/资源/sd卡/frames_s6/f_0192.png": {
+      "action": "keep_local_untrack",
+      "bytes": 92353,
+      "sha256": "53014a3a065ed9d83b9247361636bfa0cb6314579e3dae4f8ae2c4b0e9503ba4"
+    },
+    "doc/资源/sd卡/frames_s6/f_0193.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95165,
+      "sha256": "3c046c528b7cfdfda305a006da9524991d270e3b16903d3bac835c338ac9a256"
+    },
+    "doc/资源/sd卡/frames_s6/f_0194.png": {
+      "action": "keep_local_untrack",
+      "bytes": 97032,
+      "sha256": "9b2b5401022237ff19bb4ebf11a31582b71de6900da56e0993295ee39ce780d5"
+    },
+    "doc/资源/sd卡/frames_s6/f_0195.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95762,
+      "sha256": "1ce89e98a1d2dd812181dcc154bc9b4dc781a4b4661af0c5263481e4e6dbedf2"
+    },
+    "doc/资源/sd卡/frames_s6/f_0196.png": {
+      "action": "keep_local_untrack",
+      "bytes": 94786,
+      "sha256": "7f8a9a6897fd9f593786eeac145df265f2ae5a62b7c91258a1d6cf9db0831020"
+    },
+    "doc/资源/sd卡/frames_s6/f_0197.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91781,
+      "sha256": "4c8af8939b18140615b97798fc75448afa8d85cb2fc5a9025ff3a3033e044051"
+    },
+    "doc/资源/sd卡/frames_s6/f_0198.png": {
+      "action": "keep_local_untrack",
+      "bytes": 92001,
+      "sha256": "5859c1d86f10a55dd4a2ca1d2a51ee3d6941e9c8a81f5707a454d962ce2c55b6"
+    },
+    "doc/资源/sd卡/frames_s6/f_0199.png": {
+      "action": "keep_local_untrack",
+      "bytes": 96265,
+      "sha256": "7c3c0361e033533af20cd6acc68cd20284d105545b26d557c407889c27c343a1"
+    },
+    "doc/资源/sd卡/frames_s6/f_0200.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95142,
+      "sha256": "ba95b3c7fdf3e17abf6be827ca314f6daa105bcd3dd230967429fe9a3c979e0e"
+    },
+    "doc/资源/sd卡/frames_s6/f_0201.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95534,
+      "sha256": "b9d58961c41f5a700a89736af06376a85e7dadadb81f1239d718d8581b118a7a"
+    },
+    "doc/资源/sd卡/frames_s6/f_0202.png": {
+      "action": "keep_local_untrack",
+      "bytes": 99218,
+      "sha256": "b0c0e1ae59e241f9b92bab6571c52693bbd2cf8eeb9036fa878fe30869c37f11"
+    },
+    "doc/资源/sd卡/frames_s6/f_0203.png": {
+      "action": "keep_local_untrack",
+      "bytes": 100830,
+      "sha256": "6463355e719d3b3d0fbcd36ddd812967ec9c1c19e0123c3785bbe8df59a2e787"
+    },
+    "doc/资源/sd卡/frames_s6/f_0204.png": {
+      "action": "keep_local_untrack",
+      "bytes": 97266,
+      "sha256": "b472fcaa1d88038f81cd7851713028906f5c595a210482e2b4ee2eade35c15c6"
+    },
+    "doc/资源/sd卡/frames_s6/f_0205.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95769,
+      "sha256": "5dc268c19ace5d2cdfeb7beb91610d51834695ffa7e6b502491e7273c10f1e2a"
+    },
+    "doc/资源/sd卡/frames_s6/f_0206.png": {
+      "action": "keep_local_untrack",
+      "bytes": 97988,
+      "sha256": "d56455b44af83384086e7cb21e44c5e78c7298b391877093383c2bc01905cbdf"
+    },
+    "doc/资源/sd卡/frames_s6/f_0207.png": {
+      "action": "keep_local_untrack",
+      "bytes": 96962,
+      "sha256": "9a9d1ec183496e1043c2182318e6ce6fc57a2ed0d8db0f6ca8c858c249e49fae"
+    },
+    "doc/资源/sd卡/frames_s6/f_0208.png": {
+      "action": "keep_local_untrack",
+      "bytes": 99155,
+      "sha256": "0149aa62213f133a060599da7889d424d782bd6aaace611e9f1869bc7fc8e6cb"
+    },
+    "doc/资源/sd卡/frames_s6/f_0209.png": {
+      "action": "keep_local_untrack",
+      "bytes": 96862,
+      "sha256": "a467351fbb92a15bc06ffc808ce3bf8b8bf3a55def5a548bb7345544be21b903"
+    },
+    "doc/资源/sd卡/frames_s6/f_0210.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95261,
+      "sha256": "cbddf0337d3ad6e97743844af15b0ba8deeca664296c1e8a1708eb1ff9d95d9b"
+    },
+    "doc/资源/sd卡/frames_s6/f_0211.png": {
+      "action": "keep_local_untrack",
+      "bytes": 92133,
+      "sha256": "cfedfacc9567b99b2a57b87a9f4899ed389ef01f143f30a68bbe9a73d40089ef"
+    },
+    "doc/资源/sd卡/frames_s6/f_0212.png": {
+      "action": "keep_local_untrack",
+      "bytes": 85762,
+      "sha256": "53446cc9a8e8c665df034287a613fa38503e3af152d52d70474ae61e696f8c2c"
+    },
+    "doc/资源/sd卡/frames_s6/f_0213.png": {
+      "action": "keep_local_untrack",
+      "bytes": 90930,
+      "sha256": "b8cb08343092adea3827677eab53e73b8a3627bcd486c8aba24653c2f8432f59"
+    },
+    "doc/资源/sd卡/frames_s6/f_0214.png": {
+      "action": "keep_local_untrack",
+      "bytes": 89890,
+      "sha256": "d2497fee3d2bb41e59f5c44cb2157277b0518975b2656473ad25955a624cdfa3"
+    },
+    "doc/资源/sd卡/frames_s6/f_0215.png": {
+      "action": "keep_local_untrack",
+      "bytes": 93721,
+      "sha256": "a8fca9987822d049749fcddf43b07789e637c7b13e77e063665d2642e0996f68"
+    },
+    "doc/资源/sd卡/frames_s6/f_0216.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95170,
+      "sha256": "81705a77a2c2cf610af4f1679bd38ba754dfd30c7a53a074c99b956bba16c41f"
+    },
+    "doc/资源/sd卡/frames_s6/f_0217.png": {
+      "action": "keep_local_untrack",
+      "bytes": 92472,
+      "sha256": "d2f3a412478b61eb7bdff56980bcbcac5d10ab344ea811f2bdb00c1deaba8bd6"
+    },
+    "doc/资源/sd卡/frames_s6/f_0218.png": {
+      "action": "keep_local_untrack",
+      "bytes": 92634,
+      "sha256": "b8ea20b4c548537ad08543bde683e610e38c98635211cbe99e477789536fc36f"
+    },
+    "doc/资源/sd卡/frames_s6/f_0219.png": {
+      "action": "keep_local_untrack",
+      "bytes": 87539,
+      "sha256": "c1f4838980cebd9bf619d2907a2093e4bb376e10e388b9f0ee231901c966d7d1"
+    },
+    "doc/资源/sd卡/frames_s6/f_0220.png": {
+      "action": "keep_local_untrack",
+      "bytes": 87563,
+      "sha256": "7fbf105d5190f8f1cf891043f8e419b250a7cc5d174fa3498c7b9ab689cfabe9"
+    },
+    "doc/资源/sd卡/frames_s6/f_0221.png": {
+      "action": "keep_local_untrack",
+      "bytes": 89036,
+      "sha256": "eec32db5db66bd95a426b72564db443f35be134b9f0b135ebbca87c1f7867112"
+    },
+    "doc/资源/sd卡/frames_s6/f_0222.png": {
+      "action": "keep_local_untrack",
+      "bytes": 87832,
+      "sha256": "e625f28c72fc23fc7b2f24db0b8048c0fcc0a533813a69f97487ca93954f4cb9"
+    },
+    "doc/资源/sd卡/frames_s6/f_0223.png": {
+      "action": "keep_local_untrack",
+      "bytes": 89818,
+      "sha256": "87fc631698291e367da1cd719728b8c349cbb31689bee1a48e7f78aa03e1de6d"
+    },
+    "doc/资源/sd卡/frames_s6/f_0224.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91213,
+      "sha256": "15489b76c94370766374dea0f86fbf7be3a2104c6dfdc060294bce973fd464a6"
+    },
+    "doc/资源/sd卡/frames_s6/f_0225.png": {
+      "action": "keep_local_untrack",
+      "bytes": 90259,
+      "sha256": "0b1406f7668647ec0f66ad8bac2c0f3eb0df4d1d9f053136b60421d32d92a5af"
+    },
+    "doc/资源/sd卡/frames_s6/f_0226.png": {
+      "action": "keep_local_untrack",
+      "bytes": 92414,
+      "sha256": "066df1d63c6d22949596cc521f2dc386a9d27b5a97e47c653a226b65898bde1f"
+    },
+    "doc/资源/sd卡/frames_s6/f_0227.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91138,
+      "sha256": "52230350d0b6e3d05ea6072a83a9418015606891f78205a6cfd1e16b08852c86"
+    },
+    "doc/资源/sd卡/frames_s6/f_0228.png": {
+      "action": "keep_local_untrack",
+      "bytes": 90698,
+      "sha256": "9e1a45fbe4102c63369037eff5a449828d1df3c25cfb966e0911f694656b8347"
+    },
+    "doc/资源/sd卡/frames_s6/f_0229.png": {
+      "action": "keep_local_untrack",
+      "bytes": 89291,
+      "sha256": "ff663d2f45e14b4593c9b1ebe8f6162a9408b69448f917d416d98a20ce15a5a4"
+    },
+    "doc/资源/sd卡/frames_s6/f_0230.png": {
+      "action": "keep_local_untrack",
+      "bytes": 88048,
+      "sha256": "9157d2d38f6b158d3c63d6bbabaeda750c9d6eddb416f2f23f0ebdebe53832be"
+    },
+    "doc/资源/sd卡/frames_s6/f_0231.png": {
+      "action": "keep_local_untrack",
+      "bytes": 89653,
+      "sha256": "03975fac3e577842178cd5878157da0fe1082428092c1f22c2cd83e4c2e75dbd"
+    },
+    "doc/资源/sd卡/frames_s6/f_0232.png": {
+      "action": "keep_local_untrack",
+      "bytes": 86742,
+      "sha256": "7e2d76634c5e07eb4a37ef5b5d3a37bf1b76a260c6511332a6a2d52880cd175c"
+    },
+    "doc/资源/sd卡/frames_s6/f_0233.png": {
+      "action": "keep_local_untrack",
+      "bytes": 90531,
+      "sha256": "44f983f7c65a74e14e57588fe2ca60bcb370c9ef0a803fbdc8cf51d6e8ef1a65"
+    },
+    "doc/资源/sd卡/frames_s6/f_0234.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91971,
+      "sha256": "ccd1aae413f595ee8a3938b3d6f9845003cc245a972785b9ef449d81c504e516"
+    },
+    "doc/资源/sd卡/frames_s6/f_0235.png": {
+      "action": "keep_local_untrack",
+      "bytes": 90534,
+      "sha256": "37d0ad6a176689030f84801bad447ca02fbb3c63123cac1c331a89c42c9c4eee"
+    },
+    "doc/资源/sd卡/frames_s6/f_0236.png": {
+      "action": "keep_local_untrack",
+      "bytes": 94109,
+      "sha256": "3059b3bb4f7c3c0e48f0e628ed155829f6eeea598d71d91ac17a889eee126896"
+    },
+    "doc/资源/sd卡/frames_s6/f_0237.png": {
+      "action": "keep_local_untrack",
+      "bytes": 94161,
+      "sha256": "97879660ea8b85128c7d1c328f2ee85e41e0cb1bf022a765af4b59712f8fc1d4"
+    },
+    "doc/资源/sd卡/frames_s6/f_0238.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95705,
+      "sha256": "99cad303e25b855295f61d4e9ef75383665dbaa084843b7277dd1b1147e41ad3"
+    },
+    "doc/资源/sd卡/frames_s6/f_0239.png": {
+      "action": "keep_local_untrack",
+      "bytes": 93989,
+      "sha256": "9e8710c830d9777c0e5f9e1002fc501a84f2cbaee355e4148b8b12a18771aba3"
+    },
+    "doc/资源/sd卡/frames_s6/f_0240.png": {
+      "action": "keep_local_untrack",
+      "bytes": 88940,
+      "sha256": "830cab75d3ab1268458e880bd423fbfc632fb0940e479e238895c3098ca7ea82"
+    },
+    "doc/资源/sd卡/frames_s6/f_0241.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91832,
+      "sha256": "42ecf75f892698a55f37598362294f4c5a130b422355948946234f001c7f4088"
+    },
+    "doc/资源/sd卡/frames_s6/f_0242.png": {
+      "action": "keep_local_untrack",
+      "bytes": 92873,
+      "sha256": "9fb9ca807100bbe206c5e87b3a28a0c60d4d08f763e12dd283d5cf7277c7abed"
+    },
+    "doc/资源/sd卡/frames_s6/f_0243.png": {
+      "action": "keep_local_untrack",
+      "bytes": 92773,
+      "sha256": "33fdbd0b90b453aaaeb06fb8b7c4e2e9cdedb2101c90e19afb2d8ae75a5be4d1"
+    },
+    "doc/资源/sd卡/frames_s6/f_0244.png": {
+      "action": "keep_local_untrack",
+      "bytes": 94718,
+      "sha256": "7b435d908758d1c3bc041cc1cee7f7026d00f394a9d7ea519e056cea5985f9cd"
+    },
+    "doc/资源/sd卡/frames_s6/f_0245.png": {
+      "action": "keep_local_untrack",
+      "bytes": 90881,
+      "sha256": "b8e1fe154c6f548d5ee966fcab393fa0b49824fbd877e8a1492b14dcd0827600"
+    },
+    "doc/资源/sd卡/frames_s6/f_0246.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91720,
+      "sha256": "a6f862a4561e03f5736c6928a5efac85911d2887e8dd9fc42c82947d098e980c"
+    },
+    "doc/资源/sd卡/frames_s6/f_0247.png": {
+      "action": "keep_local_untrack",
+      "bytes": 103748,
+      "sha256": "3eb5ba1c858807627b8cccb5d4f4845d22bc69caf0b64d9415dd1b6e62a1f3de"
+    },
+    "doc/资源/sd卡/frames_s6/f_0248.png": {
+      "action": "keep_local_untrack",
+      "bytes": 101115,
+      "sha256": "1549c1eb11c6324231600749cbdc2f8b9fee63043b2111381e076f0131604ea0"
+    },
+    "doc/资源/sd卡/frames_s6/f_0249.png": {
+      "action": "keep_local_untrack",
+      "bytes": 99472,
+      "sha256": "100719144510ae031838dc111dbbe6e897d5202703c34d2d030e4192c1c47434"
+    },
+    "doc/资源/sd卡/frames_s6/f_0250.png": {
+      "action": "keep_local_untrack",
+      "bytes": 99128,
+      "sha256": "d830819b5a984143f49c1fab8f98889ee56ee49f0cd0b99ec4c1ff7869fad2bf"
+    },
+    "doc/资源/sd卡/frames_s6/f_0251.png": {
+      "action": "keep_local_untrack",
+      "bytes": 94531,
+      "sha256": "7cab9afa9b07a6b0f8b38a8c9d1d00d6e198dd70a0f6172b56ad928f69317f12"
+    },
+    "doc/资源/sd卡/frames_s6/f_0252.png": {
+      "action": "keep_local_untrack",
+      "bytes": 93681,
+      "sha256": "2613871fe2f03396754bc28386b6d51e769cba4eea012fc7b57594b824d48b3f"
+    },
+    "doc/资源/sd卡/frames_s6/f_0253.png": {
+      "action": "keep_local_untrack",
+      "bytes": 97042,
+      "sha256": "5b60f5c5b75a11e010dce172c8af378d1c1dc2355d1325709d5ad1a2c2333812"
+    },
+    "doc/资源/sd卡/frames_s6/f_0254.png": {
+      "action": "keep_local_untrack",
+      "bytes": 99467,
+      "sha256": "507c0d62da9f1254ec637dd564684c1adf0eeb6213cd07c15bd3642c7bc38ffc"
+    },
+    "doc/资源/sd卡/frames_s6/f_0255.png": {
+      "action": "keep_local_untrack",
+      "bytes": 101878,
+      "sha256": "fffa914166bbafc0d087178f5fcbdc50a2088f2ed17e022ecb7ceeb6eab951ff"
+    },
+    "doc/资源/sd卡/frames_s6/f_0256.png": {
+      "action": "keep_local_untrack",
+      "bytes": 100266,
+      "sha256": "94bb02617176263c183bb6c5ddd1e14087c9e510eccf8ff609aab4ee16221528"
+    },
+    "doc/资源/sd卡/frames_s6/f_0257.png": {
+      "action": "keep_local_untrack",
+      "bytes": 104767,
+      "sha256": "9cc8c5ce42f3f43243067c1bd9a9686455b4a3a7a5ea5e210ab867c7517adf83"
+    },
+    "doc/资源/sd卡/frames_s6/f_0258.png": {
+      "action": "keep_local_untrack",
+      "bytes": 105209,
+      "sha256": "b7ae4ea32f1916c3c92bbc39fcedc2199d17127e45840c52cc5d2aa5111071bf"
+    },
+    "doc/资源/sd卡/frames_s6/f_0259.png": {
+      "action": "keep_local_untrack",
+      "bytes": 106252,
+      "sha256": "792698094fb12dd05af87ccbc4ba438bb73e2be959f7d34599e9c03307893358"
+    },
+    "doc/资源/sd卡/frames_s6/f_0260.png": {
+      "action": "keep_local_untrack",
+      "bytes": 104483,
+      "sha256": "61ea84f3fbf83ace50a8c9fa2ec04ad7640013db8f287d7cfc161293ba5efbe6"
+    },
+    "doc/资源/sd卡/frames_s6/f_0261.png": {
+      "action": "keep_local_untrack",
+      "bytes": 105831,
+      "sha256": "c1fd178d19834395e8bbf23e5fc4b4d2ba8f39fadcb51af7ebb322f1696e1640"
+    },
+    "doc/资源/sd卡/frames_s6/f_0262.png": {
+      "action": "keep_local_untrack",
+      "bytes": 103685,
+      "sha256": "d499fa479fc483ee21be4805f2165326c2cc50992aae58dc7341c6661ba68125"
+    },
+    "doc/资源/sd卡/frames_s6/f_0263.png": {
+      "action": "keep_local_untrack",
+      "bytes": 102226,
+      "sha256": "647e8e92bf0122e9b3a52fab761fcfdb26d5b44d963a9d298be3a78458823ebe"
+    },
+    "doc/资源/sd卡/frames_s6/f_0264.png": {
+      "action": "keep_local_untrack",
+      "bytes": 97584,
+      "sha256": "573d62c29ee0984f51cc8b46ccea9b382a78bdf521882803bfa36c8baaa25e02"
+    },
+    "doc/资源/sd卡/frames_s6/f_0265.png": {
+      "action": "keep_local_untrack",
+      "bytes": 101232,
+      "sha256": "fc0280195bb0e1654dbdb94bd7242985f835e59b31930f5ffba68dcb21e38822"
+    },
+    "doc/资源/sd卡/frames_s6/f_0266.png": {
+      "action": "keep_local_untrack",
+      "bytes": 99127,
+      "sha256": "0506bc367467a1aea171bdac87b4ef9862dcc382558c2b03b5acd9e0d7170997"
+    },
+    "doc/资源/sd卡/frames_s6/f_0267.png": {
+      "action": "keep_local_untrack",
+      "bytes": 98812,
+      "sha256": "6bfed61dedaad8aab42cf9898f9cd1be085f11f2e10727c467c6eae560e5fe13"
+    },
+    "doc/资源/sd卡/frames_s6/f_0268.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95035,
+      "sha256": "17f771ff814189a81dbed99ebe831364e4f4ec0c970eb1cd3c453dfce791f665"
+    },
+    "doc/资源/sd卡/frames_s6/f_0269.png": {
+      "action": "keep_local_untrack",
+      "bytes": 96454,
+      "sha256": "20c8d5960c428d301fe9d96da4a54ad7f0659379862f7e530c35fa775b615368"
+    },
+    "doc/资源/sd卡/frames_s6/f_0270.png": {
+      "action": "keep_local_untrack",
+      "bytes": 97571,
+      "sha256": "cae316e21bae426db2e0fe4f97b8ccaeac4ab7363a64fdebfeb53378f7b247d8"
+    },
+    "doc/资源/sd卡/frames_s6/f_0271.png": {
+      "action": "keep_local_untrack",
+      "bytes": 92213,
+      "sha256": "2cd0a656bde4da59147800ba9c53328c2bdb66b2c1f382876cda52eb9094c5c0"
+    },
+    "doc/资源/sd卡/frames_s6/f_0272.png": {
+      "action": "keep_local_untrack",
+      "bytes": 97171,
+      "sha256": "9f87d527b203cc796e737688ac3f18aec8ad0863d532e2255113660377e53e50"
+    },
+    "doc/资源/sd卡/frames_s6/f_0273.png": {
+      "action": "keep_local_untrack",
+      "bytes": 97622,
+      "sha256": "1f07c8b6f9743b4113a25a5e0869d44749bc9208f5d3ce9783fab1ccfaa8bd7c"
+    },
+    "doc/资源/sd卡/frames_s6/f_0274.png": {
+      "action": "keep_local_untrack",
+      "bytes": 97658,
+      "sha256": "5dd6131d432ce59f274228da9e438f9f9266594e91e2940e22f691b83f253b52"
+    },
+    "doc/资源/sd卡/frames_s6/f_0275.png": {
+      "action": "keep_local_untrack",
+      "bytes": 101011,
+      "sha256": "8d1aafc4d93bfd17dae40f1f8d2f8b94cd8915aa067f36b6762c25a835e8735f"
+    },
+    "doc/资源/sd卡/frames_s6/f_0276.png": {
+      "action": "keep_local_untrack",
+      "bytes": 100867,
+      "sha256": "670a1a392d0a058174f3998af181d802cbee7a8a567e09520861872a6629bd66"
+    },
+    "doc/资源/sd卡/frames_s6/f_0277.png": {
+      "action": "keep_local_untrack",
+      "bytes": 104437,
+      "sha256": "faaacdf332033e6c5d9a5baff854ddf2a096142dfc7b733c1750c6df3ea32b4a"
+    },
+    "doc/资源/sd卡/frames_s6/f_0278.png": {
+      "action": "keep_local_untrack",
+      "bytes": 106942,
+      "sha256": "ae7a4e412439b7cfea42b2109fa1ca83cca3fc0284f80ef11db97dee37cf935d"
+    },
+    "doc/资源/sd卡/frames_s6/f_0279.png": {
+      "action": "keep_local_untrack",
+      "bytes": 98828,
+      "sha256": "37b92ff193618eaa663c1f660e92a6180de9197c142d5ece871b990992c22a01"
+    },
+    "doc/资源/sd卡/frames_s6/f_0280.png": {
+      "action": "keep_local_untrack",
+      "bytes": 94720,
+      "sha256": "409ac504975bbe397afc5c3cbdd4ff05cbadcf94aace1e762ea636575e8b9d3b"
+    },
+    "doc/资源/sd卡/frames_s6/f_0281.png": {
+      "action": "keep_local_untrack",
+      "bytes": 100201,
+      "sha256": "2acf5afd10e829c8fc4e2b96fec2da958d606a3725b55dfb3389ab3f0d485e17"
+    },
+    "doc/资源/sd卡/frames_s6/f_0282.png": {
+      "action": "keep_local_untrack",
+      "bytes": 103023,
+      "sha256": "41b6397e103272eee873f0568791715c32dbc50684ce842847cfeedb265bb17e"
+    },
+    "doc/资源/sd卡/frames_s6/f_0283.png": {
+      "action": "keep_local_untrack",
+      "bytes": 103356,
+      "sha256": "933b799edc9f4c9ed1f3a3d89ab8e9ee63a1dba006df315dfbc1c560a4bd84b3"
+    },
+    "doc/资源/sd卡/frames_s6/f_0284.png": {
+      "action": "keep_local_untrack",
+      "bytes": 106770,
+      "sha256": "6a2f12d8443d64eb9b2a5862d73c17a95271723a73499344f96d4e0065e8c9a5"
+    },
+    "doc/资源/sd卡/frames_s6/f_0285.png": {
+      "action": "keep_local_untrack",
+      "bytes": 105130,
+      "sha256": "1ab76e3ca1d2cd88d906044b9d551f2f8ac4e8748bb767ca1718b5817b650a34"
+    },
+    "doc/资源/sd卡/frames_s6/f_0286.png": {
+      "action": "keep_local_untrack",
+      "bytes": 102553,
+      "sha256": "f8608c4ccaeaa08ea3a011092cc81461b8e27a914ac526c9a4692560ac261a45"
+    },
+    "doc/资源/sd卡/frames_s6/f_0287.png": {
+      "action": "keep_local_untrack",
+      "bytes": 99799,
+      "sha256": "af30205e3c29baa1d8c72102465be41f0390a7aae0cbac966db119860f69297e"
+    },
+    "doc/资源/sd卡/frames_s6/f_0288.png": {
+      "action": "keep_local_untrack",
+      "bytes": 91577,
+      "sha256": "0c5db7ee1920fbdf684569d383e659351c314ddaed493439b560d5aea48edbf6"
+    },
+    "doc/资源/sd卡/frames_s6/f_0289.png": {
+      "action": "keep_local_untrack",
+      "bytes": 93056,
+      "sha256": "b240f879c61dfd45fbf3979fb9c1c20697a688a2329cd0269e23d13df89e52cd"
+    },
+    "doc/资源/sd卡/frames_s6/f_0290.png": {
+      "action": "keep_local_untrack",
+      "bytes": 88610,
+      "sha256": "1fd05c33741058cac45ae9fa6c8c92e5f8ad5181483152037c31370145925759"
+    },
+    "doc/资源/sd卡/frames_s6/f_0291.png": {
+      "action": "keep_local_untrack",
+      "bytes": 93074,
+      "sha256": "a4bfc23fc7566b9105248907475cfbaf98b40e22f2ca4e34fa18b27843587e2d"
+    },
+    "doc/资源/sd卡/frames_s6/f_0292.png": {
+      "action": "keep_local_untrack",
+      "bytes": 93826,
+      "sha256": "2b7f1880e8f796098de890fe1d9a794216013cf36862c68b364a3abec639ec8d"
+    },
+    "doc/资源/sd卡/frames_s6/f_0293.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95259,
+      "sha256": "96bc684d5908a7b3b9eed2615a6619b1e68f7d04cecf50c4633356c17946e5ab"
+    },
+    "doc/资源/sd卡/frames_s6/f_0294.png": {
+      "action": "keep_local_untrack",
+      "bytes": 94869,
+      "sha256": "0152bcf9000d7d5f5ab89586d808524f54ff8936eecd2e7e1428b0ac76d27729"
+    },
+    "doc/资源/sd卡/frames_s6/f_0295.png": {
+      "action": "keep_local_untrack",
+      "bytes": 92881,
+      "sha256": "834cf96ae40279ff1904095d26a908bb5328917381533bf5a5c439a39bf6933c"
+    },
+    "doc/资源/sd卡/frames_s6/f_0296.png": {
+      "action": "keep_local_untrack",
+      "bytes": 93703,
+      "sha256": "00d1d6172b1f4c783a56632714aaca167c895f40467f3285ea582929aa3b8eda"
+    },
+    "doc/资源/sd卡/frames_s6/f_0297.png": {
+      "action": "keep_local_untrack",
+      "bytes": 94043,
+      "sha256": "47c9017ea3d5e83994ad09daec78aa07f77bcbd63d43b326f8c073da2a999778"
+    },
+    "doc/资源/sd卡/frames_s6/f_0298.png": {
+      "action": "keep_local_untrack",
+      "bytes": 94026,
+      "sha256": "780d3a8828467a42c9b047a7a6bb62724ef2f7ff18ae4daac3458c122d4845be"
+    },
+    "doc/资源/sd卡/frames_s6/f_0299.png": {
+      "action": "keep_local_untrack",
+      "bytes": 95839,
+      "sha256": "d5feb11ad077803780d650facb3f4ab9c5055ddba6dfb717e99b6a7718069080"
+    },
+    "doc/资源/sd卡/frames_s6/f_0300.png": {
+      "action": "keep_local_untrack",
+      "bytes": 94605,
+      "sha256": "5c74791d0cf6ba4116120fc0c7a0dcd88133a5bd5b73afb4ba060cd3b60b2329"
+    },
+    "doc/资源/sd卡/release_20261023_mv_smooth/assets/TRACK1.MV": {
+      "action": "keep_local_untrack",
+      "bytes": 326092800,
+      "sha256": "36f58cc5a2a4baf6134071ee2db4d3dfd6e2729bd3c0c99dff777c653cfa1631"
+    },
+    "doc/资源/sd卡/release_20261023_mv_smooth/assets/TRACK2.MV": {
+      "action": "keep_local_untrack",
+      "bytes": 260044800,
+      "sha256": "8db259b524ea3aa65f380d4718404d80ddfd23f94d3d183b21b83a5929ae3569"
+    },
+    "doc/资源/sd卡/release_20261023_mv_smooth/assets/TRACK3.MV": {
+      "action": "keep_local_untrack",
+      "bytes": 131328000,
+      "sha256": "3d1e1e1712c669e5d6cdef2d790a5687653691563c9fca786af55ea5714b3e67"
+    },
+    "doc/资源/sd卡/release_20261023_mv_smooth/assets/TRACK4.MV": {
+      "action": "keep_local_untrack",
+      "bytes": 374630400,
+      "sha256": "19059c55dd2a41dc068d731dc45157a1884935ade575b0ba4b4048d7d93fd361"
+    },
+    "doc/资源/sd卡/rick.mp4": {
+      "action": "keep_local_untrack",
+      "bytes": 11190181,
+      "sha256": "c693295686c6edadbf30b065a1ad12076b7277d9d5adea11ee35f6d4363af178"
+    },
+    "doc/资源/sd卡/歌曲素材/歌曲1/video_【官方 MV】Never Gon..._0.mp4": {
+      "action": "keep_local_untrack",
+      "bytes": 51973319,
+      "sha256": "7dc42c7d9e040406304698531be0b32936117c0d5e7aac94c6c28cdffeebddad"
+    },
+    "doc/资源/sd卡/歌曲素材/歌曲2/video_【真ikun翻唱】鸡 你 太 美..._0.mp4": {
+      "action": "keep_local_untrack",
+      "bytes": 60262965,
+      "sha256": "9d746cccef161fc73a314cf4fcb47dc330ae084260aeaf288c86175cb41709df"
+    },
+    "doc/资源/sd卡/歌曲素材/歌曲3/video_⚡️黄仁勋 世界巡演⚡️【AI ..._0.mp4": {
+      "action": "keep_local_untrack",
+      "bytes": 14064245,
+      "sha256": "f13da00e373895dbd42c93ba48eeb536e597b46d6b5754bfac400f93afbb0b10"
+    },
+    "doc/资源/sd卡/歌曲素材/歌曲4/video_【李玉刚自投稿】《万疆》MV官方..._0.mp4": {
+      "action": "keep_local_untrack",
+      "bytes": 49539644,
+      "sha256": "2d96322e4eec19f7a5099c4ad96d68307237ed71f0bddd060241918fb860f2f8"
+    },
+    "prj/.lock.f": {
+      "action": "keep_local_untrack",
+      "bytes": 86,
+      "sha256": "b138b20d5bd55218ccab87542f99a4d53eece60edf4aabd80748d2f53ba93292"
+    },
+    "prj/out/back_annotation.adc": {
+      "action": "keep_local_untrack",
+      "bytes": 8399,
+      "sha256": "845b4df7d81b9732eae3f7d38ccef6c71294b800e69b8a3bddc3ec5f1c1cfa68"
+    },
+    "tf_card_stage/AUDIO.PCM": {
+      "action": "keep_local_untrack",
+      "bytes": 23560704,
+      "sha256": "bf2e41ca37f3903c9b5b4063c60617e06060d53eee118df1a55a106c973947f7"
+    },
+    "tf_card_stage/Copy-ToTfCard.ps1": {
+      "action": "keep_local_untrack",
+      "bytes": 4756,
+      "sha256": "f278c8e7c6bd468fa3b91edb3cb0f6452372af560ace2938eec655393b258350"
+    },
+    "tf_card_stage/PIC1.BMP": {
+      "action": "keep_local_untrack",
+      "bytes": 921654,
+      "sha256": "f9938325dcf16100ef4cd08ab2827e1e646878ae54518cb1604dc04875dca218"
+    },
+    "tf_card_stage/PIC2.BMP": {
+      "action": "keep_local_untrack",
+      "bytes": 921654,
+      "sha256": "958c09c75d9c1c329419b59b74c5b338f299e05648b1f76c8b93a1e567bb7665"
+    },
+    "tf_card_stage/PIC3.BMP": {
+      "action": "keep_local_untrack",
+      "bytes": 921654,
+      "sha256": "e84c4a500b919251a0df1ab6b8448e2d94438065fca0fe14a520e3c658e06bdd"
+    },
+    "tf_card_stage/PIC4.BMP": {
+      "action": "keep_local_untrack",
+      "bytes": 921654,
+      "sha256": "78c9692b7c47af62e82220ba294e71548507da16990aa04f7c3dd58987b3ca06"
+    },
+    "tf_card_stage/README.txt": {
+      "action": "keep_local_untrack",
+      "bytes": 1482,
+      "sha256": "97f6f055745c523008679e561370470fca3beb45ace9bbdd5e87cba0947e2c17"
+    },
+    "doc/开发方案/收尾核验进展_20261029.md": {
+      "action": "archive_remove",
+      "bytes": 7086,
+      "sha256": "51a107d67178e4e340dc50892a1aa5ccc98b5d7c25e520fc591895900c3f84b9"
+    },
+    "doc/开发方案/独立收尾证据_20261029.json": {
+      "action": "archive_remove",
+      "bytes": 19613,
+      "sha256": "65e84938e23647bcf3bbb3fe313afcc6ae5c0b227b6373cf59e79db74dbb0981"
+    },
+    "doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2.zip": {
+      "action": "archive_remove",
+      "bytes": 111786,
+      "sha256": "17eabfdda0101cc894fa426e5c213a4732cb6e6008349035f0d809ed56d5945b"
+    },
+    "doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2/音频卡顿修复与时序收敛执行教程_20261016.md": {
+      "action": "archive_remove",
+      "bytes": 55299,
+      "sha256": "acdcb0468c71fe1c8d41a5c460da4d5f850184dfb140551f0f32c6d076fb1559"
+    },
+    "doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2/音频卡顿修复交接包_20261016/01_baseline_to_R5_rtl.patch": {
+      "action": "archive_remove",
+      "bytes": 43105,
+      "sha256": "971235d8b30ef40d93b498a03e49d8f8b0bf363ceec38ee261128e140489de18"
+    },
+    "doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2/音频卡顿修复交接包_20261016/02_verification.patch": {
+      "action": "archive_remove",
+      "bytes": 51528,
+      "sha256": "ffa3cb67a43c13e6f51e060aea3af2fa0950982d3e706d9d4dcd96a182f18d2f"
+    },
+    "doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2/音频卡顿修复交接包_20261016/R5_project_template.al": {
+      "action": "archive_remove",
+      "bytes": 30960,
+      "sha256": "ca0d7c7256610c627b7aed9c26d90c23786c975075ac297ada907c70ac572333"
+    },
+    "doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2/音频卡顿修复交接包_20261016/R5_source/src/SD/frame_read_write.v": {
+      "action": "archive_remove",
+      "bytes": 12412,
+      "sha256": "c07edb7c28810d4de28d33956e0bab66ced9781b35cda8d3bc78bdd0bc922baa"
+    },
+    "doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2/音频卡顿修复交接包_20261016/R5_source/src/SD/song_index_db.v": {
+      "action": "archive_remove",
+      "bytes": 21419,
+      "sha256": "0947414609aa8c9d8e3417527083e34a2f291dfa0a5c715075081fca318ae8dc"
+    },
+    "doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2/音频卡顿修复交接包_20261016/R5_source/src/audio/audio_prefetch_sdram.v": {
+      "action": "archive_remove",
+      "bytes": 12053,
+      "sha256": "ab46fc70bd726596060596b2e3b76464ecfbe22857f42b57bc1f2c190889a197"
+    },
+    "doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2/音频卡顿修复交接包_20261016/R5_source/src/audio/audio_prefetch_stage.v": {
+      "action": "archive_remove",
+      "bytes": 1657,
+      "sha256": "b83b75dda32f4b429844b5e3e325da22e1c0d9e9c7fc77a254dd2cc77a538063"
+    },
+    "doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2/音频卡顿修复交接包_20261016/R5_source/src/audio/audio_sdram_arbiter.v": {
+      "action": "archive_remove",
+      "bytes": 2581,
+      "sha256": "82d9fd5572b735f4db8b2c891b923dc3254749ec67ddc238ed278072f9bf2d54"
+    },
+    "doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2/音频卡顿修复交接包_20261016/R5_source/src/audio/audio_sdram_dma.v": {
+      "action": "archive_remove",
+      "bytes": 9051,
+      "sha256": "07d51ae18fdffdc204bdfead2e650e4d57a6a066f14894baa6f38d6c7c97e233"
+    },
+    "doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2/音频卡顿修复交接包_20261016/R5_source/src/audio/wav_stream_player.v": {
+      "action": "archive_remove",
+      "bytes": 14819,
+      "sha256": "51f809febeec398efbd73010eb46dd0f99d2168af0d72aa115773aaeb50411c0"
+    },
+    "doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2/音频卡顿修复交接包_20261016/R5_source/src/top_tf_hdmi_audio.v": {
+      "action": "archive_remove",
+      "bytes": 122577,
+      "sha256": "632fe244e640ff8a7a6415e7a02336df02f424c17f7779fe1d0889b33e06b4fb"
+    },
+    "doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2/音频卡顿修复交接包_20261016/README.md": {
+      "action": "archive_remove",
+      "bytes": 1721,
+      "sha256": "6bdd441d22369ce6949d3cc0063f2658e7ea9d61c4853ea26aa312dede456f31"
+    },
+    "doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2/音频卡顿修复交接包_20261016/RTL差异与哈希表.md": {
+      "action": "archive_remove",
+      "bytes": 1071,
+      "sha256": "ad23e1788c743c59078843183e58ba3620277acf20516bdae1127300c4702d98"
+    },
+    "doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2/音频卡顿修复交接包_20261016/manifest.json": {
+      "action": "archive_remove",
+      "bytes": 11921,
+      "sha256": "6ef4d33e42d22a142b21d481146989b7cfd2b5887c1eb25832d4e7ec4f72b923"
+    },
+    "doc/赛题一相关资料/优化简介和作品名_修改前备份_20261025.md": {
+      "action": "archive_remove",
+      "bytes": 1329,
+      "sha256": "6811f89f88a47a889f75f2a24baa2e93222bb540baf395b7413664d79a500cc9"
+    },
+    "doc/赛题一相关资料/优化简介和作品名_定稿前备份_20261026.md": {
+      "action": "archive_remove",
+      "bytes": 2691,
+      "sha256": "9ea3ecfab63b427ab8200f70f7a8ab1febf13733d027aacfa2b2530c62aa2693"
+    },
+    "docs/superpowers/plans/2026-10-10-d1-three-second-auto-beep.md": {
+      "action": "archive_remove",
+      "bytes": 2504,
+      "sha256": "1e78701a46f88001e394b695bac3edb4d31b383f20c60f47bfa85f2117d5b2ab"
+    },
+    "docs/superpowers/plans/2026-10-10-d3-ec2-volume-owner.md": {
+      "action": "archive_remove",
+      "bytes": 3439,
+      "sha256": "5c81b4daac70e574dfa795271650e6e18dbad24f809ff41e44c88306f39d1ecb"
+    },
+    "docs/superpowers/plans/2026-10-10-o5-boot-logo.md": {
+      "action": "archive_remove",
+      "bytes": 5477,
+      "sha256": "a9b04c1b85cb18404587396d27f14c9a8d1150861f2e302e6ebd3a0469316fc4"
+    },
+    "docs/superpowers/plans/2026-10-11-player-ui-and-sd-content.md": {
+      "action": "archive_remove",
+      "bytes": 21900,
+      "sha256": "85972ec5ad9f3293a2072140b1ec99bb0463558712bc02cf240fb66663aa1643"
+    },
+    "docs/superpowers/plans/2026-10-13-stage2-browse-ui.md": {
+      "action": "archive_remove",
+      "bytes": 2985,
+      "sha256": "927ebb3cfbab5aecb8af8782fb663cc4c2eeca191c3ab453e939ac9d362f3c6d"
+    },
+    "docs/superpowers/plans/2026-10-22-lyric-focus.md": {
+      "action": "archive_remove",
+      "bytes": 2543,
+      "sha256": "b39fda9ee40dd59776e62139daf4347d8edbcc86494035c5bb45e2d0ad676dbd"
+    },
+    "docs/superpowers/plans/2026-10-23-mv-smooth.md": {
+      "action": "archive_remove",
+      "bytes": 3112,
+      "sha256": "ad43802a6b6f5b4d71f1ae39fd0eb58c482f8310d6675cc1b90e7eb071c7e8d4"
+    },
+    "docs/superpowers/specs/2026-10-10-d1-three-second-auto-beep-design.md": {
+      "action": "archive_remove",
+      "bytes": 2622,
+      "sha256": "4fedd8d6eec53d965f41a59f76b8b79dc2e7ac3d7717b842c1e8534b9d25e6e3"
+    },
+    "docs/superpowers/specs/2026-10-10-d3-ec2-volume-owner-design.md": {
+      "action": "archive_remove",
+      "bytes": 4259,
+      "sha256": "9a6901c8a28ae7c1dcc848170e026bab2015bf4d4dd410aec5d0639aeb240477"
+    },
+    "docs/superpowers/specs/2026-10-10-o5-boot-logo-design.md": {
+      "action": "archive_remove",
+      "bytes": 3915,
+      "sha256": "7fdd3fb10e159b9537d93891f0b4ac4b81b93ed2de680402fd174aef1c110688"
+    },
+    "docs/superpowers/specs/2026-10-11-player-ui-and-sd-content-design.md": {
+      "action": "archive_remove",
+      "bytes": 21128,
+      "sha256": "75362cfd19a633bd2fffe70e0eba1a0229b39d705439fa704c36beae3e91fd60"
+    },
+    "docs/superpowers/specs/2026-10-23-mv-smooth-design.md": {
+      "action": "archive_remove",
+      "bytes": 3510,
+      "sha256": "3a10b1950bea9ef3b65d77e851ff747b431c521040e8d5d4e9973011f56d7182"
+    },
+    "sim/audio_cache/final_fixF2_20261028/results.json": {
+      "action": "archive_remove",
+      "bytes": 13762,
+      "sha256": "1b65cfc20904c355f15c7bcd6ddf05f5347882c74eba7c686e3684b3863955b3"
+    },
+    "sim/audio_cache/final_fixF_20261028/results.json": {
+      "action": "archive_remove",
+      "bytes": 13762,
+      "sha256": "021b5ce5def5674938347d569b419c059565f374d5dc01c024c896c9b32405a0"
+    },
+    "sim/audio_cache/fixF_seek_20261028/results.json": {
+      "action": "archive_remove",
+      "bytes": 13762,
+      "sha256": "1b65cfc20904c355f15c7bcd6ddf05f5347882c74eba7c686e3684b3863955b3"
+    },
+    "sim/audio_cache/regression/r10_buzzer_timing/results.json": {
+      "action": "archive_remove",
+      "bytes": 13092,
+      "sha256": "9982d3545bc49ba03e88cdcb4363d4ee1d077cbf1f053e80f3ddaed37b3bc5df"
+    },
+    "sim/audio_cache/regression/r11_seek_eq/top/results.json": {
+      "action": "archive_remove",
+      "bytes": 137,
+      "sha256": "ffd53e6db299cf7820d383dcdbd3218292e82bbfc44d5826bd40214b396df3c3"
+    },
+    "sim/audio_cache/regression/r12_dma_decode/results.json": {
+      "action": "archive_remove",
+      "bytes": 13092,
+      "sha256": "109585932c31d33594e95f14239dab29a914dce6eb96d2d8037195a4b6b07b7f"
+    },
+    "sim/audio_cache/regression/r13_addr_select/results.json": {
+      "action": "archive_remove",
+      "bytes": 13092,
+      "sha256": "42208aab8a9b0698eb7e837cf36c12d0d768c72393b33c20c31ba0da912cc427"
+    },
+    "sim/audio_cache/regression/r14_raw_payload/results.json": {
+      "action": "archive_remove",
+      "bytes": 13092,
+      "sha256": "f04ef8e5819876870ccb13c77cc23c037a755a099979d894e3b68d69fc83b4b2"
+    },
+    "sim/audio_cache/regression/r15_sector_fields/results.json": {
+      "action": "archive_remove",
+      "bytes": 13092,
+      "sha256": "971b90a926ef1eed801462f02f46f1657b1dd24bbe03b751d74b5792f5c0b390"
+    },
+    "sim/audio_cache/regression/r16_error_flags/results.json": {
+      "action": "archive_remove",
+      "bytes": 13092,
+      "sha256": "318cdf6073b4ff90ae6a529e4e8dff526305f9458b1672d59b671ee39432ae0e"
+    },
+    "sim/audio_cache/regression/r17_idle_decode/results.json": {
+      "action": "archive_remove",
+      "bytes": 13092,
+      "sha256": "0649ba19ab765b9f144988d709639128576945955bc49e814979dcb6e1d96394"
+    },
+    "sim/audio_cache/regression/r18_spc_decode/results.json": {
+      "action": "archive_remove",
+      "bytes": 13092,
+      "sha256": "74b161374c69af44df1bb1d432fb4024daae61dcd79e252b177ee6401125f36e"
+    },
+    "sim/audio_cache/regression/r18_spc_decode_verified/results.json": {
+      "action": "archive_remove",
+      "bytes": 13092,
+      "sha256": "5e088323332ea279d74a8526150389debd231ac94d4337b6de7663385bae5b13"
+    },
+    "sim/audio_cache/regression/r20_stream_names_baseline/results.json": {
+      "action": "archive_remove",
+      "bytes": 13093,
+      "sha256": "d6d11be71b3df3da4ed1385c94934a39ebf23fc541beb9cb60416d5c71cd1c31"
+    },
+    "sim/audio_cache/regression/r21_streaming_name_cache/results.json": {
+      "action": "archive_remove",
+      "bytes": 13092,
+      "sha256": "9fcf1e83778ba6b37baaf92122b6f867eb9daa1e8a21e6553a7a49f7764ce980"
+    },
+    "sim/audio_cache/regression/r4_scan_match/results.json": {
+      "action": "archive_remove",
+      "bytes": 13092,
+      "sha256": "6af6e915fa8d97ea4575bfb8d7c032475e999946069a755ba528a878a6c4fc66"
+    },
+    "sim/audio_cache/regression/r5_original_name/results.json": {
+      "action": "archive_remove",
+      "bytes": 13092,
+      "sha256": "56c6ad69adceb1010ed264dcd16c3f128b4ce092fa9faec455c671f57cd7d4e5"
+    },
+    "sim/audio_cache/regression/r6_valid_payload/results.json": {
+      "action": "archive_remove",
+      "bytes": 13093,
+      "sha256": "8eab3a7e0fc1354f6996e4c6379f11d70f5c8dc84c5970aa89c1d6854de2fa1b"
+    },
+    "sim/audio_cache/regression/r7_rescan_fix/results.json": {
+      "action": "archive_remove",
+      "bytes": 13092,
+      "sha256": "991369c3b0fe4ea5f3f88ca833add7e4d7b8e91f8e232b815373653988fffe4f"
+    },
+    "sim/audio_cache/regression/r8_reset_ce/results.json": {
+      "action": "archive_remove",
+      "bytes": 13092,
+      "sha256": "eecf91680e84779221248f77d9044537489d0147450eb224000dd2fab438856b"
+    },
+    "sim/audio_cache/regression/r9_mux_full/results.json": {
+      "action": "archive_remove",
+      "bytes": 13092,
+      "sha256": "9982d3545bc49ba03e88cdcb4363d4ee1d077cbf1f053e80f3ddaed37b3bc5df"
+    },
+    "sim/audio_cache/regression/r9_mux_full/stage4_buzzer_phase/results.json": {
+      "action": "archive_remove",
+      "bytes": 66,
+      "sha256": "77debe63f0764b3999aa7876956f980e0c6fab8b628ac68831004db091901975"
+    },
+    "sim/audio_cache/regression/results.json": {
+      "action": "archive_remove",
+      "bytes": 987,
+      "sha256": "a85094de3ce6039833c4d6b794e496f34f8fd6dba7502580152b988259947f6f"
+    },
+    "sim/audio_cache/regression_20261017_brightness_candidate/results.json": {
+      "action": "archive_remove",
+      "bytes": 13762,
+      "sha256": "8c129998f10a932be17f7ada082f9ab100400af000d5121cb65e75e2c9fda9a0"
+    },
+    "sim/audio_cache/regression_20261017_final_recheck/results.json": {
+      "action": "archive_remove",
+      "bytes": 13762,
+      "sha256": "96f30190cded094b7a4147433beda49eeff92ff20705e3f8f79df07b85be5b11"
+    },
+    "sim/audio_cache/regression_20261017_main_commit/results.json": {
+      "action": "archive_remove",
+      "bytes": 13762,
+      "sha256": "8c129998f10a932be17f7ada082f9ab100400af000d5121cb65e75e2c9fda9a0"
+    },
+    "sim/audio_cache/regression_20261017_playback_bcd/results.json": {
+      "action": "archive_remove",
+      "bytes": 13420,
+      "sha256": "b82a89e685ce6ffb4aeb2be2222f60208ceae67be74a337c97a3e1a9af38c775"
+    },
+    "sim/audio_cache/regression_20261017_playback_page_mux/results.json": {
+      "action": "archive_remove",
+      "bytes": 13762,
+      "sha256": "d65f7eaccae2972c48994d9bcbaef3a16ccd08cb02097eacca50fac53127d7b1"
+    },
+    "sim/audio_cache/regression_20261017_quadrature_r1/results.json": {
+      "action": "archive_remove",
+      "bytes": 13762,
+      "sha256": "96f30190cded094b7a4147433beda49eeff92ff20705e3f8f79df07b85be5b11"
+    },
+    "sim/audio_cache/regression_20261017_ui_event_bridge/results.json": {
+      "action": "archive_remove",
+      "bytes": 13762,
+      "sha256": "8c129998f10a932be17f7ada082f9ab100400af000d5121cb65e75e2c9fda9a0"
+    },
+    "sim/audio_cache/regression_20261028_202447/results.json": {
+      "action": "archive_remove",
+      "bytes": 13762,
+      "sha256": "9a8ecd326c9fc5b0ebd1554a667d699eaa5e4737d1d46937934196cf6cd4bca1"
+    },
+    "sim/audio_cache/regression_20261028_202646/results.json": {
+      "action": "archive_remove",
+      "bytes": 13762,
+      "sha256": "9a8ecd326c9fc5b0ebd1554a667d699eaa5e4737d1d46937934196cf6cd4bca1"
+    },
+    "sim/closure_checkpoint_20261018/results.json": {
+      "action": "archive_remove",
+      "bytes": 63,
+      "sha256": "bacca68bfbf601bbc0eb8d6d1ac7dfc5eda083e42b83c330059b10a880a1816e"
+    },
+    "sim/closure_checkpoint_20261018_r2/results.json": {
+      "action": "archive_remove",
+      "bytes": 94,
+      "sha256": "6375823198b0a29f3ae1ef5a5c8be4471e275a425cb6b27a39ba99125a1b7e4e"
+    },
+    "sim/closure_checkpoint_20261018_r3/results.json": {
+      "action": "archive_remove",
+      "bytes": 92,
+      "sha256": "4ff44c8b765209fa01d6ace9053fb2b725beb640666540e63146a1857e2af159"
+    },
+    "sim/closure_final_regression_20261018_r4/results.json": {
+      "action": "archive_remove",
+      "bytes": 267,
+      "sha256": "4b8b0481e4963456b77247027ce11f2334ed2b57b9503be3fbb883637717cdba"
+    },
+    "sim/closure_final_seed6_20261018/results.json": {
+      "action": "archive_remove",
+      "bytes": 267,
+      "sha256": "4b8b0481e4963456b77247027ce11f2334ed2b57b9503be3fbb883637717cdba"
+    },
+    "sim/closure_fourbank_20261018/results.json": {
+      "action": "archive_remove",
+      "bytes": 39,
+      "sha256": "5f6597c673cab8635ea7171624b2aee5fbe241483b5081f878b95b9f4b37e966"
+    },
+    "sim/closure_fourbank_20261018_r3/results.json": {
+      "action": "archive_remove",
+      "bytes": 39,
+      "sha256": "5f6597c673cab8635ea7171624b2aee5fbe241483b5081f878b95b9f4b37e966"
+    },
+    "sim/closure_lrc_ring_20261018/results.json": {
+      "action": "archive_remove",
+      "bytes": 40,
+      "sha256": "fbc151f944d3fdb57fa2ab0e359689598e38c7788d08c441ed9904da0f0f6cec"
+    },
+    "sim/closure_lrc_ring_20261018_r2/results.json": {
+      "action": "archive_remove",
+      "bytes": 40,
+      "sha256": "fbc151f944d3fdb57fa2ab0e359689598e38c7788d08c441ed9904da0f0f6cec"
+    },
+    "sim/closure_lrc_ring_regression_20261018/results.json": {
+      "action": "archive_remove",
+      "bytes": 84,
+      "sha256": "f4f322406346d07f1896aeedc3d3181b697a06babb395ca42d66c7c3f0517c18"
+    },
+    "sim/closure_lrc_ring_sd_regression_20261018/results.json": {
+      "action": "archive_remove",
+      "bytes": 144,
+      "sha256": "3a07d872e2f5a6e539a412fc96e2db5266e2ae170269a22a35081991b9f25ba4"
+    },
+    "sim/closure_pixels_remaining_20261018/results.json": {
+      "action": "archive_remove",
+      "bytes": 143,
+      "sha256": "03a7a53dcb5b6e4a8572b7f3919035009637310eb825cc1ecfef267ba4481d2f"
+    },
+    "sim/closure_pixels_up19_20261018/results.json": {
+      "action": "archive_remove",
+      "bytes": 107,
+      "sha256": "cf7570befbcbe12401f72061d4199ff6d5bf5f40601019cfe96e92f3b06fe136"
+    },
+    "sim/closure_scanner_pipeline_regression_20261018/results.json": {
+      "action": "archive_remove",
+      "bytes": 40,
+      "sha256": "21222f8f9ddd43132c9cc32cdb2f3912d16e0ea2af3fd9577971116fed48ba3e"
+    },
+    "sim/closure_scanner_pipeline_regression_20261018_r2/results.json": {
+      "action": "archive_remove",
+      "bytes": 39,
+      "sha256": "4a6d3576b6801250addf045c9849cf3d06bcf7e5a05b76c65c70746e158f7af7"
+    },
+    "sim/counter_r5_results_20261017_ir_baseline/results.json": {
+      "action": "archive_remove",
+      "bytes": 1650,
+      "sha256": "081b4c13298d89ddec3a0dd2dcb758f6fb4d9101a7805bf6b41792f86ceb5102"
+    },
+    "sim/counter_r5_results_20261017_ir_only/results.json": {
+      "action": "archive_remove",
+      "bytes": 1618,
+      "sha256": "11cbd73724fae9afddfad2215815e43a52b142dc4124d85b6891dc8600db4257"
+    },
+    "sim/fat32_volume_scanner_equiv_20261017_r1/results.json": {
+      "action": "archive_remove",
+      "bytes": 1191,
+      "sha256": "ee24792653f83c97e2db7f5e831ee41c7a230d5d9c367ed1f073752fc2970596"
+    },
+    "sim/fat32_volume_scanner_prefix_20261017/results.json": {
+      "action": "archive_remove",
+      "bytes": 141,
+      "sha256": "3c0bb3535a96e62b92398bd2201bc32bc3b2768c6ec90fb12cd7a719ca288582"
+    },
+    "sim/final_baseline_regression_20261017/results.json": {
+      "action": "archive_remove",
+      "bytes": 206,
+      "sha256": "f831eef5d61500898c83e899dfb4a857705f0c5e22c9643f278ccbc029a8ea8f"
+    },
+    "sim/fixF_20261028/run_restart/transcript": {
+      "action": "archive_remove",
+      "bytes": 1017,
+      "sha256": "fa7e5acfa6cbfbb9f201a760e804abe4e3515f026253aa86ea1e0c0f2be5a7e0"
+    },
+    "sim/fixF_20261028/run_sched/transcript": {
+      "action": "archive_remove",
+      "bytes": 1061,
+      "sha256": "4ddc053f5d6666e9845c1bfb922a95b5fd568ea74357c8f7e2995d04b916fd29"
+    },
+    "sim/fixF_20261028/run_seek/transcript": {
+      "action": "archive_remove",
+      "bytes": 1652,
+      "sha256": "5e41a6abd743b37b6c619d56cfb7e527efcfdf6719e40be3c28dcef3c7b4949d"
+    },
+    "sim/fixF_20261028/run_x1x2/transcript": {
+      "action": "archive_remove",
+      "bytes": 1014,
+      "sha256": "bbd569a159c5ec3c0b99d5eec1dd17de4f2fa1ac228285fa5e32151773223e91"
+    },
+    "sim/font32/modelsim.ini": {
+      "action": "archive_remove",
+      "bytes": 94364,
+      "sha256": "06f96d0f86298364c3063c48e38d48e6ec4626a7f033a95be43b4017e4f3d90d"
+    },
+    "sim/font32/transcript": {
+      "action": "archive_remove",
+      "bytes": 2350,
+      "sha256": "8df5ad48bca88206893342d25c9223530a61f7cbe0bbbf52a2fb77d48c6b66f4"
+    },
+    "sim/mv_owner_20261028/final_fixF2_20261028/results.json": {
+      "action": "archive_remove",
+      "bytes": 1849,
+      "sha256": "09416e6c6902d8d6aea91a077df309ffebb6cacb9b448e53408c8aba95f19bb7"
+    },
+    "sim/mv_owner_20261028/final_r6tree/results.json": {
+      "action": "archive_remove",
+      "bytes": 1849,
+      "sha256": "09416e6c6902d8d6aea91a077df309ffebb6cacb9b448e53408c8aba95f19bb7"
+    },
+    "sim/mv_owner_20261028/fixF_audio_regression/results.json": {
+      "action": "archive_remove",
+      "bytes": 13762,
+      "sha256": "021b5ce5def5674938347d569b419c059565f374d5dc01c024c896c9b32405a0"
+    },
+    "sim/mv_owner_20261028/fixF_regression/results.json": {
+      "action": "archive_remove",
+      "bytes": 1952,
+      "sha256": "3f746468d6f6b93768ddb6772688069b6917b5d2496ceb1d0febb06ede57fc50"
+    },
+    "sim/mv_owner_20261028/modelsim.ini": {
+      "action": "archive_remove",
+      "bytes": 94364,
+      "sha256": "06f96d0f86298364c3063c48e38d48e6ec4626a7f033a95be43b4017e4f3d90d"
+    },
+    "sim/mv_owner_20261028/out_r8/results.json": {
+      "action": "archive_remove",
+      "bytes": 1849,
+      "sha256": "09416e6c6902d8d6aea91a077df309ffebb6cacb9b448e53408c8aba95f19bb7"
+    },
+    "sim/mv_owner_20261028/realtime_transcript": {
+      "action": "archive_remove",
+      "bytes": 7510,
+      "sha256": "440b9ee5b4e938faf0c927bc5017277af46b27b567327084aaecd095e93c447c"
+    },
+    "sim/mv_owner_20261028/transcript": {
+      "action": "archive_remove",
+      "bytes": 7647,
+      "sha256": "3cec1b86735bd717869816ace1a296fd2ead563cc503468355853859c81b9f42"
+    },
+    "sim/s7_acceptance_fast_rotation_r1/results.json": {
+      "action": "archive_remove",
+      "bytes": 59,
+      "sha256": "38981a9d40a335a00d15adeaff5187cbd18b1f1ddf2aec5703197a953c6c3a15"
+    },
+    "sim/s7_acceptance_final/results.json": {
+      "action": "archive_remove",
+      "bytes": 1644,
+      "sha256": "a8feff028f8ef51cdfceec32604938f256331f3bd3b326439953122b358d9df8"
+    },
+    "sim/s7_acceptance_final_targeted/results.json": {
+      "action": "archive_remove",
+      "bytes": 124,
+      "sha256": "d8bc066df940239629ef4657eaa14d59219b489bc2f04796a94c9881e725edab"
+    },
+    "sim/s7_acceptance_fix/results.json": {
+      "action": "archive_remove",
+      "bytes": 241,
+      "sha256": "8e96d69f4cc37522cb287f9202a59823fc59f74ca5d03d710192b0e2729f21cb"
+    },
+    "sim/s7_acceptance_playback_progress_area_baseline/results.json": {
+      "action": "archive_remove",
+      "bytes": 36,
+      "sha256": "48fd065c3b31cdf106ec638e090b6e53ecdd93bf8b9a9e3bd3e7f1407f8a414f"
+    },
+    "sim/s7_acceptance_playback_progress_area_r1/results.json": {
+      "action": "archive_remove",
+      "bytes": 36,
+      "sha256": "48fd065c3b31cdf106ec638e090b6e53ecdd93bf8b9a9e3bd3e7f1407f8a414f"
+    },
+    "sim/s7_acceptance_quadrature_area_baseline/results.json": {
+      "action": "archive_remove",
+      "bytes": 42,
+      "sha256": "dd26c8b972415916883e0ae442d8a6e656e45b52326aa729b21a73eb642fb9cb"
+    },
+    "sim/s7_acceptance_quadrature_area_r1/results.json": {
+      "action": "archive_remove",
+      "bytes": 42,
+      "sha256": "dd26c8b972415916883e0ae442d8a6e656e45b52326aa729b21a73eb642fb9cb"
+    },
+    "sim/s7_acceptance_ui_event_bridge/results.json": {
+      "action": "archive_remove",
+      "bytes": 97,
+      "sha256": "635ba5dd49ac1e6e1ac601cf2c33c8df5cef57986f7f9d2d56bb94572959e1f2"
+    },
+    "sim/s7_acceptance_ui_event_bridge_final/results.json": {
+      "action": "archive_remove",
+      "bytes": 59,
+      "sha256": "bafea7518a2be397b08d5ba8443aee166ed3d97fd772a0529360a259a0339ef1"
+    },
+    "sim/s7_acceptance_ui_event_bridge_r31/results.json": {
+      "action": "archive_remove",
+      "bytes": 59,
+      "sha256": "bafea7518a2be397b08d5ba8443aee166ed3d97fd772a0529360a259a0339ef1"
+    },
+    "sim/s7_ir_decoder_integration_20261017/results.json": {
+      "action": "archive_remove",
+      "bytes": 31,
+      "sha256": "cb7a1e414ef72e319cf5c721f473a62f37ba9d1ac77ce4bc3395682296489592"
+    },
+    "sim/s7_ir_decoder_quadrature_r1/results.json": {
+      "action": "archive_remove",
+      "bytes": 31,
+      "sha256": "cb7a1e414ef72e319cf5c721f473a62f37ba9d1ac77ce4bc3395682296489592"
+    },
+    "sim/s7_o4_independent_r1/results.json": {
+      "action": "archive_remove",
+      "bytes": 1524,
+      "sha256": "a85c400f255f007ebede5d26e7bfa16be28d2bc1fd8281328cac1b4b42409007"
+    },
+    "sim/s7_o4a_validation_r1/results.json": {
+      "action": "archive_remove",
+      "bytes": 1524,
+      "sha256": "a85c400f255f007ebede5d26e7bfa16be28d2bc1fd8281328cac1b4b42409007"
+    },
+    "sim/song_index_crc_narrow_20261017/results.json": {
+      "action": "archive_remove",
+      "bytes": 170,
+      "sha256": "d4286d799d9e80fb11d43993a7d0d613c16f45d04fd005239c108fb4e5593f81"
+    },
+    "sim/song_index_crc_narrow_expanded_20261017/results.json": {
+      "action": "archive_remove",
+      "bytes": 170,
+      "sha256": "d4286d799d9e80fb11d43993a7d0d613c16f45d04fd005239c108fb4e5593f81"
+    },
+    "sim/ws2812_driver_widths_20261017_baseline/results.json": {
+      "action": "archive_remove",
+      "bytes": 2338,
+      "sha256": "d911e50a37110af2e68231f466bb5488a48a45e7b850cccf9d1d188d6eacb0f1"
+    },
+    "sim/ws2812_driver_widths_20261017_candidate/results.json": {
+      "action": "archive_remove",
+      "bytes": 2338,
+      "sha256": "c653943aaa45cda20fa49da939a3476fb9cde41a93a696961eac3cc9a61cd5cc"
+    },
+    "sim/ws2812_driver_widths_20261017_candidate_r1/results.json": {
+      "action": "archive_remove",
+      "bytes": 3586,
+      "sha256": "25f9966547def2cd86f40cc590f8c3a4b05d12e3f85081a3324150a1c1ee8375"
+    },
+    "sim/ws2812_driver_widths_20261017_committed_baseline/results.json": {
+      "action": "archive_remove",
+      "bytes": 3586,
+      "sha256": "cc263f93d96d1bd9da46dbb9505732b47d29b3c31107571b194e7b46e75a8a9c"
+    },
+    "sim/x1x2_repair/20261007_180558/results.json": {
+      "action": "archive_remove",
+      "bytes": 148,
+      "sha256": "fc30bb0472be2a7943d2e2c80f0de6a77299ba3fc658f29c8cd9dbabe239425d"
+    },
+    "sim/x1x2_repair/green1/results.json": {
+      "action": "archive_remove",
+      "bytes": 94,
+      "sha256": "43bbabce20b7c7f11a2925101aec6a2418e5d415f520a7c3bf133dc6777ad6e2"
+    },
+    "sim/x1x2_repair/red/results.json": {
+      "action": "archive_remove",
+      "bytes": 96,
+      "sha256": "42f2e1f551c66329f4ea4f780bb3874a82dddbe2f0f54792ee8991026ea8ce68"
+    },
+    "sim/x1x2_repair/smoke1/results.json": {
+      "action": "archive_remove",
+      "bytes": 149,
+      "sha256": "6cb71613f78c492ebe49add9493b78a7a11fbf66ddc2de0c3f5f5416ab147083"
+    },
+    "sim/x1x2_repair/smoke_lights/results.json": {
+      "action": "archive_remove",
+      "bytes": 31,
+      "sha256": "4f40152bee1ef13e6824a649342c17c9f8408b96abd7294f55f4d1d035ad586b"
+    },
+    "sim/x1x2_repair/smoke_lights_fixed/results.json": {
+      "action": "archive_remove",
+      "bytes": 30,
+      "sha256": "b59794389fa9eab8cd269f4c958a54ac736d919fa4b185dbf8f9fdb0b56fe026"
+    },
+    "transcript": {
+      "action": "archive_remove",
+      "bytes": 56,
+      "sha256": "7ef96046ca83386ca54070b774e2a4eb46d4536bd80e63e5ff17de531eca925d"
+    },
+    "doc/开发方案/1提示词.md": {
+      "action": "archive_remove",
+      "bytes": 10203,
+      "sha256": "08dfef2b6a4161b88e18d307b65eb72c5904cfce5b4307f65a7bbd80f0a731c0"
+    },
+    "doc/开发方案/FPGA竞赛作品视频拍摄SOP.pptx": {
+      "action": "archive_remove",
+      "bytes": 165756,
+      "sha256": "2131e851365328217947b615ee28a56c9707e35d3540488ac95ea60a900430aa"
+    },
+    "doc/开发方案/fc17cb9600715f81b8c3b95b253221f7.jpg": {
+      "action": "archive_remove",
+      "bytes": 174929,
+      "sha256": "2b0eb286e83e648b638c19d4df540e685cb0a7c68bfcc01cd2b7d57b7b5524e7"
+    },
+    "doc/开发方案/红外遥控器功能说明书.pdf": {
+      "action": "archive_remove",
+      "bytes": 1234095,
+      "sha256": "ec6ce88478ec959ee54cd7ecff1e19e387e3ee3404518e1b0ac2f75cc32f395c"
+    },
+    "doc/相关素材/处理素材/开发板功能图.png": {
+      "action": "archive_remove",
+      "bytes": 2602105,
+      "sha256": "eaf4182321ea8807fd9dd66278e869ffcdf10b41d0cd551d5e67f5be50800d60"
+    },
+    "doc/相关素材/处理素材/拓展板功能图.png": {
+      "action": "archive_remove",
+      "bytes": 2827578,
+      "sha256": "a570e4e3289c347e6f4e17a9d1dced6be2a4c14fe4d390f9cf514bd1417dfa5c"
+    },
+    "doc/相关素材/处理素材/红外遥控功能图.jpg": {
+      "action": "archive_remove",
+      "bytes": 104956,
+      "sha256": "82f10666bafa2346ef5035b099816c5a2cbd3dad73696a1a6f86024498ac5cef"
+    }
+  }
+}

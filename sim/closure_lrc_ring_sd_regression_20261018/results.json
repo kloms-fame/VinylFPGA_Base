@@ -1,6 +1,0 @@
-{
-  "tb_fat32_volume_scanner": true,
-  "tb_fat32_index_loader": true,
-  "tb_fat32_file_streamer": true,
-  "tb_sd_card_bmp_fourbank": true
-}

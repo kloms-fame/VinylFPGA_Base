@@ -101,3 +101,31 @@ sim/s6_20261006/*.json
 # Rebuildable release SD-card images stay local; distribute them outside Git.
 /doc/资源/sd卡/release_*/VinylFPGA_SD_*.img
 VinylFPGA_MediaStudio/
+
+# Final source repository: local integrations and generated TD/ModelSim files.
+/.mcp.json
+/.agents/
+/prj/.lock.f
+/prj/out/
+*.bid
+**/transcript
+**/realtime_transcript
+**/modelsim.ini
+/sim/**/results.json
+
+# Media is distributed separately; keep conversion tools, manifests and fixtures.
+/tf_card_stage/
+/doc/资源/sd卡/**/*.img
+/doc/资源/sd卡/**/*.PCM
+/doc/资源/sd卡/**/*.pcm
+/doc/资源/sd卡/**/*.MV
+/doc/资源/sd卡/**/*.mv
+/doc/资源/sd卡/**/*.mp4
+/doc/资源/sd卡/**/*.wav
+/doc/资源/sd卡/**/*.mp3
+/doc/资源/sd卡/frames_s6/
+/doc/相关素材/*.psd
+
+# Superseded plans and copied RTL handoff packages are archived outside Git.
+/docs/superpowers/
+/doc/开发方案/音频卡顿修复_教程与交接包_20261016_v2*
