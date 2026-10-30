@@ -9,9 +9,37 @@ cd $build_dir
 set project_file [open VinylFPGA.al r]
 set project_text [read $project_file]
 close $project_file
-if {![regexp {Num="3" Init="7"} $project_text] ||
-    ![regexp {<Seeds select="9">7 8 9 </Seeds>} $project_text]} {
-    error "收尾构建要求 MultiSeed 7/8/9 且选择已验收的 seed 9"
+if {![regexp {<MultiSeed>(.*?)</MultiSeed>} $project_text ignored multi_text] ||
+    ![regexp {<Property\s+([^>]+)>} $multi_text ignored properties] ||
+    ![regexp {<Seeds select="(\d+)">([^<]+)</Seeds>} $multi_text ignored selected_seed seed_text]} {
+    error "收尾构建要求有效的 MultiSeed 配置"
+}
+set seed_properties [dict create]
+foreach {match key value} [regexp -all -inline {(\w+)="([^"]*)"} $properties] {
+    dict set seed_properties $key $value
+}
+foreach {key value} {Enable true Random false GenBit true EndStep bitgen} {
+    if {![dict exists $seed_properties $key] || [dict get $seed_properties $key] ne $value} {
+        error "MultiSeed 配置错误: $key"
+    }
+}
+set seed_list [regexp -all -inline {\d+} $seed_text]
+foreach key {Num Init Step} {
+    if {![dict exists $seed_properties $key] || ![string is integer -strict [dict get $seed_properties $key]]} {
+        error "MultiSeed 数值配置错误: $key"
+    }
+}
+if {[dict get $seed_properties Num] != [llength $seed_list] ||
+    [llength $seed_list] < 1 || [dict get $seed_properties Step] < 1 ||
+    [dict get $seed_properties Init] < 0 || [lsearch -exact $seed_list $selected_seed] < 0} {
+    error "MultiSeed 种子数量或选中项不一致"
+}
+set index 0
+foreach seed $seed_list {
+    if {$seed != [dict get $seed_properties Init] + $index * [dict get $seed_properties Step]} {
+        error "MultiSeed 种子列表与 Init/Step 不一致"
+    }
+    incr index
 }
 set required_params {
     {set_param place timing_driven_mode on}
@@ -38,6 +66,11 @@ proc require_stage {directory stage} {
         error "构建阶段未完成: $directory/$stage"
     }
 }
+proc require_artifact {path} {
+    if {![file isfile $path] || [file size $path] == 0} {
+        error "构建产物缺失或为空: $path"
+    }
+}
 set project_open 0
 try {
     import_device eagle_s20.db -package EG4S20BG256
@@ -49,13 +82,25 @@ try {
     foreach stage {read_design opt_rtl opt_gate} {
         require_stage VinylFPGA_Runs/syn_1 $stage
     }
+    require_artifact VinylFPGA_Runs/syn_1/VinylFPGA_gate.db
     reset_runs phy_1 -f
     launch_runs phy_1 -step bitgen -jobs 1
     wait_run phy_1
-    set result_dir VinylFPGA_Runs/phy_1/seed_9
     require_stage VinylFPGA_Runs/phy_1 multiSeed
+    set best_dir VinylFPGA_Runs/best_result
+    set readme [open [file join $best_dir readMe.txt] r]
+    set best_text [read $readme]
+    close $readme
+    if {![regexp {seed\s+(\d+)\M} $best_text ignored result_seed] ||
+        [lsearch -exact $seed_list $result_seed] < 0} {
+        error "best_result 未指向本轮配置的种子"
+    }
+    set result_dir VinylFPGA_Runs/phy_1/seed_$result_seed
     foreach stage {opt_place opt_route bitgen} {
         require_stage $result_dir $stage
+    }
+    foreach name {VinylFPGA_place.db VinylFPGA_pr.db VinylFPGA.bit VinylFPGA_phy.ts route.qor} {
+        require_artifact [file join $result_dir $name]
     }
     set timing_file [open [file join $result_dir VinylFPGA_phy.ts] r]
     set timing [read $timing_file]
@@ -83,13 +128,6 @@ try {
             error "route 存在时序端点违例: $field=$value"
         }
     }
-    set best_dir VinylFPGA_Runs/best_result
-    set readme [open [file join $best_dir readMe.txt] r]
-    set best_text [read $readme]
-    close $readme
-    if {![string match *seed\ 9* $best_text]} {
-        error "best_result 未指向已验收的 seed 9"
-    }
     foreach name {VinylFPGA.bit VinylFPGA_phy.ts} {
         set selected [open [file join $result_dir $name] rb]
         set selected_data [read $selected]
@@ -98,11 +136,13 @@ try {
         set best_data [read $best]
         close $best
         if {$selected_data ne $best_data} {
-            error "best_result 与 seed 9 的构建产物不一致: $name"
+            error "best_result 与 seed $result_seed 的构建产物不一致: $name"
         }
     }
     close_project
     set project_open 0
+    # Preserve the reviewed strategy, with the actual passing GUI selection.
+    regsub {<Seeds select="\d+">} $project_text "<Seeds select=\"$result_seed\">" project_text
 } finally {
     if {$project_open} {
         catch {close_project}

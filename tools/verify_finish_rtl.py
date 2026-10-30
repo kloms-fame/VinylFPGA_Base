@@ -22,7 +22,9 @@ CASES = {
 TOP_CASES = frozenset(('tb_closure_top_handoff', 'tb_audio_reserve_priority_top'))
 
 def top_compile_options():
-    options = ['-DVINYL_AUDIO_CACHE_SIM', '-I.', '-Isrc', '-Isrc/SD']
+    # Top control tests use behavioral hard-IP boundaries, including the
+    # explicit 32K packet RAM added to the MV burst reader.
+    options = ['-DVINYL_AUDIO_CACHE_SIM', '-DVINYL_MV_BURST_BEHAV', '-I.', '-Isrc', '-Isrc/SD']
     for directory in [ROOT / 'src', ROOT / 'sim',
                       *(p for p in (ROOT / 'src').iterdir() if p.is_dir() and p.name != 'IP')]:
         options += ['-y', str(directory)]

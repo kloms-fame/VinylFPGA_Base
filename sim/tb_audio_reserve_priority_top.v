@@ -1,5 +1,6 @@
 `timescale 1ns/1ps
-// Exercise the actual production admission wiring with controlled idle SD IP.
+// Exercise CMD17 audio priority and the current CMD18 MV reserve gate.
+// SD owner arbitration and packet buffering have separate transaction benches.
 module tb_audio_reserve_priority_top;
  reg clk=0;always #5 clk=~clk;
  reg low=0,critical=0,audio_req=1,video_req=1,playing=1;
@@ -19,18 +20,20 @@ module tb_audio_reserve_priority_top;
   force dut.media_sec_busy=1'b0;
   force dut.u_mv_sector_mux.owner_valid=1'b0;
   #1;
-  if(!dut.u_mv_sector_mux.take_audio || !dut.mv_sec_busy || dut.prefetch_sd_busy)
-   $fatal(1,"refill must win even above LOW watermark; MV must not dilute audio recovery bandwidth");
+  if(!dut.u_mv_sector_mux.take_audio || dut.prefetch_sd_busy)
+   $fatal(1,"CMD17 refill must be admitted even above LOW watermark");
+  if(dut.u_mv_sector_mux.video_req || dut.u_mv_sector_mux.allow_video)
+   $fatal(1,"MV must use the CMD18 owner, not the legacy CMD17 video input");
   audio_req=0;low=1;#1;
-  if(dut.u_mv_sector_mux.take_video || !dut.mv_sec_busy)
+  if(dut.mv_cmd18_allowed)
    $fatal(1,"MV admitted with less than the stable five-second PCM reserve");
   low=0;#1;
-  if(!dut.u_mv_sector_mux.take_video || dut.mv_sec_busy)
+  if(!dut.mv_cmd18_allowed)
    $fatal(1,"healthy cache did not release idle SD service to MV");
   fifo_levels=2'b11;#1;
-  if(dut.u_mv_sector_mux.take_video)$fatal(1,"output FIFO urgency lost");
+  if(dut.mv_cmd18_allowed)$fatal(1,"output FIFO urgency lost");
   playing=0;#1;
-  if(!dut.u_mv_sector_mux.take_video)$fatal(1,"idle playback blocks MV");
-  $display("TEST_PASS audio_reserve_priority_top actual top stable refill priority and five-second guard");$finish;
+  if(!dut.mv_cmd18_allowed)$fatal(1,"idle playback blocks MV");
+  $display("TEST_PASS audio_reserve_priority_top CMD17 refill admission and CMD18 five-second guard");$finish;
  end
 endmodule

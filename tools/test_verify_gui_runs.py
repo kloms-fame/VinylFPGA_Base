@@ -75,10 +75,10 @@ class GuiResultTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertNotIn('PROJECT_STRATEGY_VERIFIED', result.stdout)
 
-    def test_strategy_cli_rejects_wrong_multiseed_selection(self):
+    def test_strategy_cli_rejects_selection_outside_seed_list(self):
         self.fixture()
         self.project.write_text(self.project.read_text(encoding='utf-8').replace(
-            '<Seeds select="9">7 8 9 ', '<Seeds select="7">7 8 9 '), encoding='utf-8')
+            '<Seeds select="9">7 8 9 ', '<Seeds select="99">7 8 9 '), encoding='utf-8')
         result = subprocess.run([sys.executable, str(Path(__file__).with_name('verify_gui_runs.py')),
                                  '--project-file', str(self.project), '--strategy-only'],
                                 capture_output=True, text=True)
@@ -146,6 +146,28 @@ class GuiResultTests(unittest.TestCase):
         phy, _ = self.fixture()
         (phy / 'VinylFPGA.bit').write_bytes(b'old bitstream')
         with self.assertRaisesRegex(RuntimeError, 'mismatch'):
+            self.check()
+
+    def test_valid_new_seed_configuration(self):
+        from verify_gui_runs import verify_multiseed_config
+        self.fixture()
+        al = self.project.read_text().replace('Init="7"', 'Init="10"').replace(
+            '<Seeds select="9">7 8 9 ', '<Seeds select="12">10 11 12 ')
+        self.assertEqual(verify_multiseed_config(al), 12)
+
+    def test_nonzero_total_negative_slack_rejected(self):
+        _, run = self.fixture()
+        (run/'VinylFPGA_phy.ts').write_text(
+            'SWNS: 0.1ns, STNS: 0.1ns\nHWNS: 0.01ns, HTNS: 0ns')
+        with self.assertRaisesRegex(RuntimeError, 'timing does not pass'):
+            self.check()
+
+    def test_empty_matching_bitstreams_rejected(self):
+        phy, run = self.fixture()
+        for path in (run/'VinylFPGA.bit', phy/'VinylFPGA.bit',
+                     self.runs/'best_result/VinylFPGA.bit'):
+            path.write_bytes(b'')
+        with self.assertRaises(RuntimeError):
             self.check()
 
 

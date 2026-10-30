@@ -37,30 +37,32 @@ def verify_project_strategy(al):
 
 
 def verify_multiseed_config(al):
-    """Require the released native MultiSeed configuration, not just strategy tags."""
+    """Validate native MultiSeed semantics; acceptance comes from fresh reports."""
     multi = re.search(r'<MultiSeed>(.*?)</MultiSeed>', al, re.S)
     if not multi:
         raise RuntimeError('MultiSeed is disabled in the original AL')
     properties = dict(re.findall(r'(\w+)="([^"]*)"', multi[1].split('<Filter')[0]))
     for key, value in {'Enable': 'true', 'Random': 'false', 'GenBit': 'true',
-                       'EndStep': 'bitgen', 'Init': '7'}.items():
+                       'EndStep': 'bitgen'}.items():
         if properties.get(key) != value:
             raise RuntimeError(f'Unexpected MultiSeed property: {key}')
-    if properties.get('Num') != '3':
-        raise RuntimeError('MultiSeed seed list count does not match Num')
     seed_tag = re.search(r'<Seeds\b([^>]*)>(.*?)</Seeds>', multi[1], re.S)
     if not seed_tag:
         raise RuntimeError('MultiSeed seed list is missing')
     seed_list = [int(value) for value in re.findall(r'\d+', seed_tag[2])]
-    if seed_list != [7, 8, 9]:
-        raise RuntimeError(f'Unexpected MultiSeed seed list: {seed_list}; expected [7, 8, 9]')
+    try:
+        count, initial, step = (int(properties[k]) for k in ('Num', 'Init', 'Step'))
+    except (KeyError, ValueError) as error:
+        raise RuntimeError('Invalid MultiSeed seed list properties') from error
+    if count < 1 or initial < 0 or step < 1 or seed_list != [initial + i * step for i in range(count)]:
+        raise RuntimeError('MultiSeed seed list does not match Num/Init/Step')
     selected = re.search(r'\bselect="(\d+)"', seed_tag[1])
-    if not selected or int(selected[1]) != 9:
-        raise RuntimeError('Seed 9 is not selected as the released GUI result')
+    if not selected or int(selected[1]) not in seed_list:
+        raise RuntimeError('Selected seed is outside the MultiSeed list')
     private_seeds = re.findall(r'<seed>(.*?)</seed>', al)
     if any(value.strip() != '0' for value in private_seeds):
         raise RuntimeError('Private seed would trigger the GUI Revert dialog')
-    return 9
+    return int(selected[1])
 
 
 def verify(snapshot=None, run_root=None, project_file=None):
@@ -80,6 +82,8 @@ def verify(snapshot=None, run_root=None, project_file=None):
     for path in required:
         if not path.is_file():
             raise RuntimeError(f'Missing actual GUI output: {path}')
+        if path.suffix in ('.bit', '.db', '.ts') and not path.stat().st_size:
+            raise RuntimeError(f'Empty actual GUI output: {path}')
     if list(phy.rglob('*.error.f')):
         raise RuntimeError('TD reports an error marker')
     begin = required[0].stat().st_mtime
@@ -88,7 +92,8 @@ def verify(snapshot=None, run_root=None, project_file=None):
     timing = (seed / 'VinylFPGA_phy.ts').read_text(encoding='gbk')
     numbers = {k: float(v) for k, v in re.findall(
         r'(SWNS|STNS|HWNS|HTNS):\s*(-?\d+(?:\.\d+)?)ns', timing)}
-    if len(numbers) != 4 or any(v < 0 for v in numbers.values()):
+    if (len(numbers) != 4 or any(numbers[k] <= 0 for k in ('SWNS', 'HWNS'))
+            or any(numbers[k] != 0 for k in ('STNS', 'HTNS'))):
         raise RuntimeError(f'Final GUI timing does not pass: {timing.strip()}')
     log = (seed / 'run.log').read_text(encoding='gbk', errors='replace')
     if 'start command "fix_hold"' not in log:
@@ -106,17 +111,18 @@ def verify(snapshot=None, run_root=None, project_file=None):
     if snapshot:
         snapshot = Path(snapshot).resolve(strict=True)
         expected = json.loads((snapshot / 'inputs.sha256.json').read_text(encoding='utf-8'))
-        actual = {p.relative_to(ROOT).as_posix(): sha(p)
+        source_root = project.parent.parent
+        actual = {p.relative_to(source_root).as_posix(): sha(p)
                   for folder in ('src', 'constraints')
-                  for p in (ROOT / folder).rglob('*') if p.is_file()}
+                  for p in (source_root / folder).rglob('*') if p.is_file()}
         if expected != actual:
             raise RuntimeError('Source/constraint inputs changed during the build')
     bit = seed / 'VinylFPGA.bit'
     best = runs / 'best_result'
     readme = best / 'readMe.txt'
-    if not readme.is_file() or not re.search(r'seed\s+9\b',
+    if not readme.is_file() or not re.search(r'seed\s+' + str(seed_number) + r'\b',
             readme.read_text(encoding='gbk', errors='replace'), re.I):
-        raise RuntimeError('Native best_result does not select seed 9')
+        raise RuntimeError(f'Native best_result does not select seed {seed_number}')
     for name in ('VinylFPGA.bit', 'VinylFPGA_phy.ts'):
         source = seed / name
         result_copy = best / name
@@ -126,7 +132,7 @@ def verify(snapshot=None, run_root=None, project_file=None):
         selected_copy = phy / name
         if selected_copy.is_file() and sha(selected_copy) != sha(seed / name):
             raise RuntimeError(f'GUI selected-result mismatch: {name}')
-    return {'project': str(project), 'flow': f'TD GUI MultiSeed 7/8/9, selected seed {seed_number}',
+    return {'project': str(project), 'flow': f'TD GUI MultiSeed, selected seed {seed_number}',
             'project_strategy': strategy,
             'timing_ns': numbers, 'bit': str(bit), 'bit_sha256': sha(bit),
             'bit_bytes': bit.stat().st_size, 'snapshot_checked': bool(snapshot)}
