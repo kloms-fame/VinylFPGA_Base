@@ -14,6 +14,8 @@
 
 `audio_cache/` 保存音频专用测试台；`integration/vendor_control_stubs.v` 为顶层控制仿真的硬 IP 边界模型；`mv_owner_20261028/` 保存字节级 SPI 卡模型和当前 SD 控制器测试；`fixF_20261028/` 保存仍用于当前版本的 seek 集成测试。目录日期只标明测试起源，不表示使用旧生产 RTL。
 
+`mic_osd_v3/` 保存麦克风调理链与 MIC 页参数的两个 iverilog 自校验测试台（`tb_mic_signal_condition.v`、`tb_ui_mic_params.v`），命令见该目录 README。
+
 `s4_fixture/*.hex` 是只读索引/卡数据夹具，必须随源码提交。VVP、VCD、WLF、日志和 results.json 为生成结果，不入库。可选 ModelSim 的 run.do、wave.do 和波形由对应脚本生成。
 
 每个测试需要成功退出并出现 PASS/TEST_PASS。统一入口保留完整日志并汇总套件退出码；进程非零、超时或缺失 PASS 均视为失败。仿真中的供应商接口模型不覆盖真实 HDMI 接收设备、SDRAM 电气时序和卡片长期行为；板端人工验收是单独证据。
