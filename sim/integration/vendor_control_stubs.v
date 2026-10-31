@@ -224,3 +224,21 @@ endmodule
 
 module EG_PHY_SDRAM_2M_32(input clk,ras_n,cas_n,we_n,cs_n,dm0,dm1,dm2,dm3,cke,
  input[10:0]addr,input[1:0]ba,inout[31:0]dq); endmodule
+
+// ADC hard-macro stub for the microphone capture path. EOC is tied low and the
+// data bus is tied to mid-scale, so the capture FSM stays idle instead of
+// propagating X into the audio mixer. This is not a converter model.
+module EG_PHY_ADC #(
+  parameter CH5  = "DISABLE",
+  parameter VREF = "DISABLE"
+)(
+  input  wire       clk,
+  input  wire       pd,
+  input  wire [2:0] s,
+  input  wire       soc,
+  output wire       eoc,
+  output wire [11:0] dout
+);
+  assign eoc  = 1'b0;
+  assign dout = 12'h800;
+endmodule
