@@ -87,3 +87,15 @@ PASS mic gain follow: linear 0..5x, 0 mutes, clamped, monotonic
 
 - ~~增益跟随 VOL~~：已在本轮实现（`mic_gain_follow.v`，按 `play_volume_video` 映射），OSD 未新增任何菜单项。
 - 降噪档位：当前为 3 点平均 + 一阶高通的最简版；如实测噪声偏大，可加 2 阶低通或噪声门，代价约 +50–80 LUT。
+
+## 7. 版本冻结（2026-10-31）
+
+- 冻结版本 `mic-followvol-v1.0`：git 提交 `cb251d7`，标签 `mic-followvol-v1.0-seed15`。
+- 决策：按用户要求停止继续优化，**不再做降噪增强，不再改动 RTL/约束**。原因：3 个种子里仅 seed 15 通过（seed 13 −0.247 ns、seed 14 −2.876 ns），`sd_card_clk` 域在 95% 占用下对布局随机性极敏感，任何新增逻辑都可能让时序无法收敛。
+- 冻结包：`output/VinylFPGA_MicFollowVol_Firmware/`（`VinylFPGA.bit`、`manifest.json`、`README.txt`、`route.qor`、`VinylFPGA_phy.area`、`VinylFPGA_phy.ts`、`VinylFPGA_inst.bid`）；`manifest.json` 含规范固件 sha256 与全部产物哈希。
+- 规范固件 sha256 `12888be7…`（684,332 B，seed 15，SWNS +0.060 / HWNS +0.021，0 违例端点）；根目录副本 `稳定固件_麦克风跟随VOL_seed15_12888BE7.bit`。
+- 重跑等价性：2026-10-31 15:13 TD GUI 重跑同一工程得到 `8f22b6f3…`，与规范固件逐字节比较仅 3 字节不同，全部位于 bitgen ASCII 时间戳头（`13:46`→`15:13`），配置数据完全一致；`verify_gui_runs.py` 对重跑结果复核通过（SWNS +0.060 / HWNS +0.021，seed 15）。**两份 bit 可互换烧录。**
+- 回滚固件：`output/VinylFPGA_Contest_Firmware/VinylFPGA.bit`（sha256 `97b37026…`，主线 fe383ab 冻结版）。
+- 上板待验：仅剩 C3-8（音量 200→100→200 时麦克风增益随动，VOL=0 静音，无咔哒）；A/B/C 其余步骤按 [microphone_bringup.md](microphone_bringup.md)。
+- 将来若必须再改：从 `mic-followvol-v1.0-seed15` 拉分支，先跑 `verify_finish_rtl.py` 全量回归，并预留 4–6 个种子重跑时序；不要直接在 main 上增量叠加。
+

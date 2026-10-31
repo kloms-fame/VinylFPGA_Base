@@ -1,6 +1,6 @@
 # 片内 ADC 麦克风上板验收教程（分阶段）
 
-固件：`prj/VinylFPGA_Runs/best_result/VinylFPGA.bit`（684,332 字节，SHA-256 `12888BE734514BCE75FBF16651CACA2C2E680833A75909AD35F90CC582C4B2F8`，2026-10-31 在 `main`（基线 fe383ab）上重新综合，seed 15，SWNS +0.060 ns / HWNS +0.021 ns；麦克风增益跟随用户音量（VOL=200 → 5.0×，VOL=100 → 2.5×，VOL=0 → 静音）。工作区根目录留有便于烧录的副本 `稳定固件_麦克风跟随VOL_seed15_12888BE7.bit`）
+固件（冻结版 `mic-followvol-v1.0`）：`output/VinylFPGA_MicFollowVol_Firmware/VinylFPGA.bit`（684,332 字节，SHA-256 `12888BE734514BCE75FBF16651CACA2C2E680833A75909AD35F90CC582C4B2F8`，seed 15，SWNS +0.060 ns / HWNS +0.021 ns，0 违例端点；包内 `manifest.json` 记录全部产物哈希）。`prj/VinylFPGA_Runs/best_result/VinylFPGA.bit` 若被 TD 重跑过，只会差 bitgen 时间戳字节（如 `8F22B6F3…`），配置数据相同，任一份均可烧录。工作区根目录副本 `稳定固件_麦克风跟随VOL_seed15_12888BE7.bit`）
 工程：`prj/VinylFPGA.al`（Seeds 13/14/15，本轮选中 15）
 回滚固件（主线版）：`output/VinylFPGA_Contest_Firmware/VinylFPGA.bit`（比赛冻结交付版，seed 10，SWNS +0.105 ns / HWNS +0.024 ns，SHA-256 `97B370265AF7EC7E7B8B4341A88407631722808F434E473D8BA1B4ABF11D3863`，见同目录 `manifest.json`；工作区根目录副本 `稳定固件_主线fe383ab_seed10_97B37026.bit`）
 

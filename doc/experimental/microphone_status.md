@@ -62,4 +62,5 @@
 - 资源：LUT 18,688（95.35%）、REG 12,363、BRAM 63/64、DSP 11、ADC 1；route slices 9,604（98.00%）。
 - 风险：`sd_card_clk` 域在 95% 占用下对种子敏感（同一 seed 13 上轮通过、本轮 -0.247 ns），本轮仅 seed 15 兜住。
 - 详见 [microphone_main_rebuild.md](microphone_main_rebuild.md)。
+- 2026-10-31 冻结为 `mic-followvol-v1.0`（标签 `mic-followvol-v1.0-seed15`，提交 `cb251d7`），冻结包 `output/VinylFPGA_MicFollowVol_Firmware/`，规范固件 sha256 `12888BE7…`；不再做降噪增强。
 
