@@ -18,7 +18,7 @@
 - `src/audio/mic_adc_capture.v:10-56`：`video_clk` 25 MHz 二分频得到 12.5 MHz ADC 时钟，`sample_phase` 每 ADC 周期加 144，回绕阈值 12500，约 144 kS/s；`sample_valid` 仅在 `adc_eoc` 时有效；硬核实例 `EG_PHY_ADC #(.CH5("ENABLE"), .VREF("ENABLE")) u_adc(.clk(adc_clk), .pd(!rst_n), .s(3'd5), .soc(adc_soc), .eoc(adc_eoc), .dout(adc_data))`。
 - `src/audio/mic_signal_condition.v:10-21`：去直流（一阶 IIR）、三点平均降采样到 48 kHz、12 位超时约 164 µs 后静音。
 - `src/audio/mic_pcm_mixer.v`：增益寄存器 `mic_gain` 0..255，每 64 个样本步进 ±`MIC_GAIN_STEP`（=8），`mic_scaled = mic_sample * mic_gain >>> 5`，即 0…7.97×，16 位饱和后再与音乐在 18 位域饱和相加，静音键同时清零两路。上限由端口 `mic_gain_max` 决定，默认 160（5.0×）。
-- 顶层 `src/top_tf_hdmi_audio.v:2245-2260` 实例化三段，`mic_enable = !boot_active`，启动画面结束后约 20 ms 自动淡入；`mic_gain_setting = 8'd160` 决定默认音量；`hdmi_pcm_source_bridge` 改接混音结果。
+- 顶层 `src/top_tf_hdmi_audio.v:710-716` 实例化三段（另加 `mic_gain_follow`），`mic_enable = !boot_active`，启动画面结束后约 20 ms 自动淡入；`mic_gain_setting` 由用户音量映射而来（VOL=200 → 160 = 5.0×）；`hdmi_pcm_source_bridge` 改接混音结果。
 - 引脚：`constraints/pin.adc` 中 EXT3/N12 → ADC_CH5，EXT4/P14 → `mic_gnd_exp4`，EXT5/P12 → `mic_vcc_exp5`，EXT6/R12 → `mic_do_exp6`（未使用输入）。
 
 ## 验证记录
@@ -36,9 +36,9 @@
 
 ## 音量调参
 
-- 增益律固定在 `mic_pcm_mixer.v`：`mic_gain` 满量程 255 对应 7.97×，步进 8 对应 0.25×。改默认音量只需改 `top_tf_hdmi_audio.v` 里 `mic_gain_setting` 的常量：128→4.0×，160→5.0×，192→6.0×，224→7.0×。
-- 当前取 5.0×（较原 0.25× 提升约 +26 dB）。硬核 ADC 有效精度约 8 位，理论噪声底约 −48 dBFS，放大 5× 后约 −34 dBFS，仍低于音乐典型电平，因此不会明显抬高底噪；若实测觉得过响或啸叫，先降到 128 复测。
-- 下一步计划把该常量接到 OSD 菜单（麦克风音量档位 0…7），但 OSD 菜单项与输入按键需一并扩展，属后续改动。
+- 增益律：混音器内 `mic_gain` 满量程 255 对应 7.97×，斜坡步进 8 对应 0.25×；实际增益值由 `src/audio/mic_gain_follow.v` 按用户音量生成：`gain_q5 = round(VOL×4/5)`，VOL=200→160（5.0×）、VOL=100→80（2.5×）、VOL=0→0（静音），VOL>200 封顶 5.0×。
+- 上限 5.0×（VOL=200；较原 0.25× 提升约 +26 dB）。硬核 ADC 有效精度约 8 位，理论噪声底约 −48 dBFS，放大 5× 后约 −34 dBFS，仍低于音乐典型电平，因此不会明显抬高底噪；若实测觉得过响或啸叫，把主音量降到 128（≈2.5×）复测。
+- 已改为跟随既有用户音量，无需新增 OSD 菜单项；若以后要独立麦克风档位，再扩 OSD（本次未做）。
 
 ## 已知限制与风险
 
@@ -51,3 +51,15 @@
 ## main 分支重建（2026-10-31）
 
 本文档记录的是 `codex/microphone` 工作树。main 已于 `fe383ab` 基线上重放同一实现：4 个 TB 与 `verify_finish_rtl.py` 10/10 通过，closeout 构建 seed 13 通过（SWNS +0.104 ns / HWNS +0.012 ns，0 违例端点），新固件哈希与资源对比见 [microphone_main_rebuild.md](microphone_main_rebuild.md)。
+
+## 增益跟随 VOL（2026-10-31，main 第三轮）
+
+- 备份：标签 `mic-fixed5x-seed13-59c59c47`、分支 `backup/mic-fixed5x-20261031` 均指向 `1a93881`（固定 5× 版）。
+- 新增 `src/audio/mic_gain_follow.v`（纯组合，移位+加法，无乘法器/ROM）；顶层 `src/top_tf_hdmi_audio.v:710-716` 例化，混音器 `.mic_gain_max` 接其输出；`prj/VinylFPGA.al` CompileOrder 61。
+- 映射：增益 = round(VOL×4/5)，VOL>200 封顶 5.0×，VOL=0 静音；混音器每 64 个已接受样本 ±8 斜坡（约 27 ms），音量跳变无咔哒。
+- 新增 `sim/microphone/tb_mic_gain_follow.v`（关键点/全量程/单调/封顶）；5 个麦克风 TB 全 PASS，集成回归 `verify_finish_rtl.py` 10/10 PASS。
+- 构建：3 种子 13/14/15，seed 13（-0.247 ns）与 seed 14（-2.876 ns）失败，seed 15 通过（SWNS +0.060 / HWNS +0.021）；固件 sha256 `12888BE7…`，684,332 B。
+- 资源：LUT 18,688（95.35%）、REG 12,363、BRAM 63/64、DSP 11、ADC 1；route slices 9,604（98.00%）。
+- 风险：`sd_card_clk` 域在 95% 占用下对种子敏感（同一 seed 13 上轮通过、本轮 -0.247 ns），本轮仅 seed 15 兜住。
+- 详见 [microphone_main_rebuild.md](microphone_main_rebuild.md)。
+

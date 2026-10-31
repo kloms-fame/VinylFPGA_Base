@@ -493,6 +493,14 @@
                     <Attr Name="CompileOrder" Val="60"/>
                 </FileInfo>
             </File>
+            <File Path="../src/audio/mic_gain_follow.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="61"/>
+                </FileInfo>
+            </File>
         </Verilog>
         <ADC_FILE>
             <File Path="../constraints/pin.adc">
@@ -576,7 +584,7 @@
                 <route_swns>0</route_swns>
             </Filter>
         </Property>
-        <Seeds select="13">13 14 15 </Seeds>
+        <Seeds select="15">13 14 15 </Seeds>
     </MultiSeed>
     <Project_Settings>
     </Project_Settings>

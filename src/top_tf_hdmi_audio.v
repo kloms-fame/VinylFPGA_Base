@@ -707,8 +707,12 @@ wire signed [15:0] mic_sample;
 wire mic_valid;
 wire mic_mixed_valid, mic_mixed_ready;
 wire signed [15:0] mic_mixed_left, mic_mixed_right;
-// 麦克风数字增益，1/32 单位：8'd160 = 5.0x（固定增益，不接 OSD 参数）。
-wire [7:0] mic_gain_setting = 8'd160;
+// 麦克风数字增益跟随 VOL（0..200 -> 0..160，即 0..5.0x），见 mic_gain_follow.v。
+wire [7:0] mic_gain_setting;
+mic_gain_follow u_mic_gain_follow (
+    .volume  (play_volume_video),
+    .gain_q5 (mic_gain_setting)
+);
 reg  [31:0] wav_tick_acc;
 reg         wav_sample_tick;
 
