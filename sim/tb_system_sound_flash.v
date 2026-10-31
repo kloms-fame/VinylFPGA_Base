@@ -6,7 +6,9 @@ module tb_system_sound_flash #(
 );
     reg clk=0;always #10 clk=~clk;
     reg rst_n=0,key3=1,update=0;
-    reg [19:0] params={3'd4,3'd2,3'd2,3'd3,8'd200};
+    // 23-bit current_params: {MIC,WSL,ROT,CON,BRI,VOL}; MIC must match the
+    // store default (5X) or the dirty compare would auto-save a no-op.
+    reg [22:0] params={3'd5,3'd4,3'd2,3'd2,3'd3,8'd200};
     wire save_pulse,tick_ms,buzzer_n,success;
     integer chimes=0;reg chime_prev=0,deny_wren=0,save_voice=0;
     wire [3:0] nvm_led;
