@@ -14,13 +14,14 @@ module ec2_param_osd (
     input  wire [23:0] rgb_in,
     input  wire        visible,
     input  wire [1:0]  ui_state,       // 1=SELECT, 2=ADJUST
-    input  wire [2:0]  selected_param,// 0=VOL, 1=BRI, 2=CON, 3=ROT, 4=WSL
+    input  wire [2:0]  selected_param,// 0=VOL, 1=BRI, 2=CON, 3=ROT, 4=WSL, 5=MIC
     input  wire [7:0]  volume,
     input  wire [11:0] volume_bcd,
     input  wire [2:0]  brightness_level,
     input  wire [2:0]  contrast_level,
     input  wire [2:0]  rotation_level,
     input  wire [2:0]  ws_level,
+    input  wire [2:0]  mic_level,
     input  wire [7:0]  ascii_font_row,
     output wire [9:0]  ascii_font_addr,
     output wire        ascii_font_request,
@@ -34,6 +35,7 @@ module ec2_param_osd (
     localparam [2:0] PARAM_CON = 3'd2;
     localparam [2:0] PARAM_ROT = 3'd3;
     localparam [2:0] PARAM_WSL = 3'd4;
+    localparam [2:0] PARAM_MIC = 3'd5;
 
     reg [9:0] line_y;
     reg       de_q;
@@ -47,6 +49,7 @@ module ec2_param_osd (
     reg [2:0] contrast_d;
     reg [2:0] rotation_d;
     reg [2:0] ws_d;
+    reg [2:0] mic_d;
     reg [9:0] pixel_y_d;
     reg [23:0] rgb_d;
 
@@ -100,6 +103,15 @@ module ec2_param_osd (
                     3'd5: ratio_text = {8'h32,8'h30,8'h53,8'h20}; // 20S
                     default: ;
                 endcase
+            end else if (param_id == PARAM_MIC) begin
+                // 0X or 4X..7X follow the level encoding directly.
+                case (level)
+                    3'd0: ratio_text = {8'h30,8'h58,8'h20,8'h20}; // 0X
+                    3'd4: ratio_text = {8'h34,8'h58,8'h20,8'h20}; // 4X
+                    3'd5: ratio_text = {8'h35,8'h58,8'h20,8'h20}; // 5X
+                    3'd6: ratio_text = {8'h36,8'h58,8'h20,8'h20}; // 6X
+                    default: ratio_text = {8'h37,8'h58,8'h20,8'h20}; // 7X
+                endcase
             end else begin
                 case (level)
                     3'd0: ratio_text = {8'h30,8'h25,8'h20,8'h20}; // 0%
@@ -112,6 +124,17 @@ module ec2_param_osd (
             end
         end
     endfunction
+
+    // Formatting one 32-bit ratio string per call costs a full mux tree, so
+    // the active parameter's level is selected first and formatted once.
+    reg [2:0] adjust_level;
+    always @* begin
+        if (selected_param == PARAM_BRI) adjust_level = brightness_level;
+        else if (selected_param == PARAM_CON) adjust_level = contrast_level;
+        else if (selected_param == PARAM_ROT) adjust_level = rotation_level;
+        else if (selected_param == PARAM_WSL) adjust_level = ws_level;
+        else adjust_level = mic_level;
+    end
 
     reg [6:0] font_char;
     reg [2:0] font_row_index;
@@ -155,6 +178,13 @@ module ec2_param_osd (
                         default: font_char = 7'd76; // L
                     endcase
                 end
+                PARAM_MIC: begin
+                    case (text_slot)
+                        3'd0: font_char = 7'd77; // M
+                        3'd1: font_char = 7'd73; // I
+                        default: font_char = 7'd67; // C
+                    endcase
+                end
                 default: begin
                     case (text_slot)
                         3'd0: font_char = 7'd67; // C
@@ -190,14 +220,7 @@ module ec2_param_osd (
                     default: font_char = 7'h20;
                 endcase
             end else begin
-                if (selected_param == PARAM_BRI)
-                    ratio_value = ratio_text(selected_param, brightness_level);
-                else if (selected_param == PARAM_CON)
-                    ratio_value = ratio_text(selected_param, contrast_level);
-                else if (selected_param == PARAM_ROT)
-                    ratio_value = ratio_text(selected_param, rotation_level);
-                else
-                    ratio_value = ratio_text(selected_param, ws_level);
+                ratio_value = ratio_text(selected_param, adjust_level);
                 case (text_slot)
                     3'd0: font_char = ratio_value[31:24];
                     3'd1: font_char = ratio_value[23:16];
@@ -232,6 +255,7 @@ module ec2_param_osd (
             contrast_d    <= 3'd2;
             rotation_d    <= 3'd2;
             ws_d          <= 3'd4;
+            mic_d         <= 3'd5;
         end else begin
             de_q <= de;
             vs_q <= vs;
@@ -254,18 +278,19 @@ module ec2_param_osd (
             contrast_d   <= contrast_level;
             rotation_d   <= rotation_level;
             ws_d         <= ws_level;
+            mic_d        <= mic_level;
         end
     end
 
-    wire in_panel = visible_d && out_de &&
-                    (out_pixel_x >= `PLAYBACK_EC2_OSD_X0) &&
-                    (out_pixel_x <  `PLAYBACK_EC2_OSD_X1) &&
-                    (pixel_y_d >= `PLAYBACK_EC2_OSD_Y0) &&
-                    (pixel_y_d <  `PLAYBACK_EC2_OSD_Y1);
+    // Unsigned wrap keeps the window test valid for pixels left of the panel.
+    localparam integer PANEL_WIDTH  = `PLAYBACK_EC2_OSD_X1 - `PLAYBACK_EC2_OSD_X0;
+    localparam integer PANEL_HEIGHT = `PLAYBACK_EC2_OSD_Y1 - `PLAYBACK_EC2_OSD_Y0;
     wire [9:0] panel_dx = out_pixel_x - `PLAYBACK_EC2_OSD_X0;
     wire [9:0] panel_dy = pixel_y_d - `PLAYBACK_EC2_OSD_Y0;
-    wire panel_border = (panel_dx == 10'd0) || (panel_dx == 10'd263) ||
-                        (panel_dy == 10'd0) || (panel_dy == 10'd95);
+    wire in_panel = visible_d && out_de &&
+                    (panel_dx < PANEL_WIDTH) && (panel_dy < PANEL_HEIGHT);
+    wire panel_border = (panel_dx == 10'd0) || (panel_dx == PANEL_WIDTH - 1) ||
+                        (panel_dy == 10'd0) || (panel_dy == PANEL_HEIGHT - 1);
     wire title_text_area = (pixel_y_d >= `PLAYBACK_EC2_TITLE_Y) &&
                            (pixel_y_d < (`PLAYBACK_EC2_TITLE_Y + 10'd8)) &&
                            (((out_pixel_x >= `PLAYBACK_EC2_TEXT_X) &&
@@ -284,36 +309,27 @@ module ec2_param_osd (
                  (pixel_y_d < (`PLAYBACK_EC2_BAR_Y + 10'd6));
     wire [9:0] bar_x = out_pixel_x - `PLAYBACK_EC2_TEXT_X;
     wire [7:0] volume_bar_len = volume_d - (volume_d >> 3);
+    // Every parameter shares one five-step bar ladder. MIC keeps its sparse
+    // 0X/4X/5X/6X/7X encoding, the others all use 0/56/112/168/224.
     reg [8:0] level_bar_len;
     always @* begin
-        level_bar_len = 9'd168;
-        if (selected_d == PARAM_ROT) begin
-            case (rotation_d)
+        if (selected_d == PARAM_MIC) begin
+            case (mic_d)
                 3'd0: level_bar_len = 9'd0;
-                3'd1: level_bar_len = 9'd45;
-                3'd2: level_bar_len = 9'd90;
-                3'd3: level_bar_len = 9'd134;
-                3'd4: level_bar_len = 9'd179;
-                3'd5: level_bar_len = 9'd224;
-                default: level_bar_len = 9'd224;
-            endcase
-        end else if (selected_d == PARAM_WSL) begin
-            case (ws_d)
-                3'd0: level_bar_len = 9'd0;
-                3'd1: level_bar_len = 9'd56;
-                3'd2: level_bar_len = 9'd112;
-                3'd3: level_bar_len = 9'd168;
-                3'd4: level_bar_len = 9'd224;
+                3'd4: level_bar_len = 9'd56;
+                3'd5: level_bar_len = 9'd112;
+                3'd6: level_bar_len = 9'd168;
                 default: level_bar_len = 9'd224;
             endcase
         end else begin
-            case (selected_d == PARAM_BRI ? brightness_d : contrast_d)
+            case (selected_d == PARAM_BRI ? brightness_d :
+                  selected_d == PARAM_CON ? contrast_d :
+                  selected_d == PARAM_ROT ? rotation_d : ws_d)
                 3'd0: level_bar_len = 9'd0;
                 3'd1: level_bar_len = 9'd56;
                 3'd2: level_bar_len = 9'd112;
                 3'd3: level_bar_len = 9'd168;
-                3'd4: level_bar_len = 9'd224;
-                default: level_bar_len = 9'd168;
+                default: level_bar_len = 9'd224;
             endcase
         end
     end

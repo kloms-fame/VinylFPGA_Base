@@ -5,13 +5,13 @@
 module ui_param_persistence #(
     parameter integer AUTO_SAVE_MS = 5000,
     parameter integer SPI_HALF_CYCLES = 8,
-    parameter [19:0] DEFAULT_PARAMS = {3'd4,3'd2,3'd2,3'd3,8'd200}
+    parameter [22:0] DEFAULT_PARAMS = {3'd5,3'd4,3'd2,3'd2,3'd3,8'd200}
 )(
     input wire clk, rst_n, tick_1ms,
-    input wire [19:0] current_params,
+    input wire [22:0] current_params,
     input wire param_update, user_write, defaults_req, manual_save, auto_enable,
     output wire restore_valid,
-    output wire [19:0] restore_data,
+    output wire [22:0] restore_data,
     output wire [3:0] led_status,
     output wire save_success, // One clk pulse after the NOR commit succeeds.
     output wire flash_cs_n, flash_sclk, flash_mosi,
@@ -19,12 +19,12 @@ module ui_param_persistence #(
     output wire flash_wp_n, flash_hold_n
 );
     wire store_ready, store_available, store_busy, store_load_valid, store_done, store_fault;
-    wire [19:0] store_load_params;
+    wire [22:0] store_load_params;
     wire [3:0] store_fault_code;
     reg startup_override = 0, loaded_seen = 0, saved_valid = 0;
     reg manual_pending = 0, defaults_pending = 0, inflight = 0;
     reg save_start = 0, snapshot_default = 0;
-    reg [19:0] saved_params = DEFAULT_PARAMS, snapshot = DEFAULT_PARAMS;
+    reg [22:0] saved_params = DEFAULT_PARAMS, snapshot = DEFAULT_PARAMS;
     localparam AW = $clog2(AUTO_SAVE_MS+1);
     reg [AW-1:0] idle_ms = 0;
     wire dirty = current_params!=saved_params;

@@ -35,6 +35,8 @@
 `include "io/ws2812_driver.v"
 `include "io/ws2812_effects.v"
 `include "audio/pcm_tap.v"
+`include "audio/mic_adc_capture.v"
+`include "audio/mic_signal_condition.v"
 `include "display/seg_business_mux.v"
 `include "io/browse_fsm.v"
 
@@ -144,7 +146,10 @@ module top(
     // ===================== S1：J2 拓展板输出 =====================
     output [3:0]                exp_led_n,       // LED1..LED4，低有效点亮
     output                      exp_ws2812_data, // 原 J11 WS2812 灯带数据线
-    output [5:0]                exp_ext_o,       // EXT1=反馈音波形，EXT2..EXT6=0
+    output [1:0]                exp_ext_o,       // EXT1=反馈音波形，EXT2=备用
+    output                      mic_gnd_exp4,   // 麦克风模块 G，EXT4
+    output                      mic_vcc_exp5,   // 麦克风模块 +，EXT5
+    input                       mic_do_exp6,    // 麦克风模块 DO，EXT6，未使用
 
     // ===================== 母板蜂鸣器 =====================
     output                      board_buzzer_n,  // H11，PNP 驱动，低电平鸣叫（SW5 硬件通断）
@@ -330,6 +335,7 @@ reg  [2:0]  brightness_level_frame;
 reg  [2:0]  contrast_level_frame;
 reg  [2:0]  rotation_level_frame;
 reg  [2:0]  ws_brightness_level_frame;
+reg  [2:0]  mic_level_frame;
 reg  [1:0]  ec2_state_frame;
 reg  [2:0]  ec2_selected_frame;
 
@@ -386,7 +392,7 @@ wire        ui_ev_valid;
 wire        key2_reset_pulse;
 wire        key3_save_pulse;
 wire        nvm_restore_valid;
-wire [19:0] nvm_restore_data;
+wire [22:0] nvm_restore_data;
 wire        board_audio_mute;
 reg         board_audio_mute_v1;
 reg         board_audio_mute_v2;
@@ -546,9 +552,10 @@ wire [2:0] brightness_level_csr;
 wire [2:0] contrast_level_csr;
 wire [2:0] rotation_level_csr;
 wire [2:0] ws_brightness_level_csr;
+wire [2:0] mic_level_csr;
 wire       param_update_csr;
-wire [24:0] params_bundle_csr;
-wire [24:0] params_bundle_video;
+wire [27:0] params_bundle_csr;
+wire [27:0] params_bundle_video;
 wire [2:0] rotation_level_sd;
 wire       ui_tick_1ms;
 wire       ec2_step_valid;
@@ -690,6 +697,16 @@ wire        mix_sample_valid;
 wire        mix_sample_ready;
 wire signed [15:0] mix_sample_left;
 wire signed [15:0] mix_sample_right;
+wire        mixed_sample_valid;
+wire        mixed_sample_ready;
+wire signed [15:0] mixed_sample_left;
+wire signed [15:0] mixed_sample_right;
+wire [11:0] mic_adc_code;
+wire        mic_adc_valid;
+wire signed [15:0] mic_sample;
+wire        mic_valid;
+wire        mic_output_mute;
+wire [5:0] exp_ext_internal;
 reg  [31:0] wav_tick_acc;
 reg         wav_sample_tick;
 
@@ -863,13 +880,13 @@ ui_param_csr u_ui_param_csr(
     .wr_valid(param_csr_wr_valid), .wr_id(param_csr_wr_id), .wr_up(param_csr_wr_up),
     .volume(play_volume_csr), .brightness_level(brightness_level_csr),
     .contrast_level(contrast_level_csr), .rotation_level(rotation_level_csr),
-    .ws_level(ws_brightness_level_csr),
+    .ws_level(ws_brightness_level_csr), .mic_level(mic_level_csr),
     .param_update(param_update_csr));
 
 ui_param_persistence u_ui_param_persistence(
     .clk(clk), .rst_n(exp_rst_n), .tick_1ms(ui_tick_1ms),
-    .current_params({ws_brightness_level_csr,rotation_level_csr,contrast_level_csr,
-                     brightness_level_csr,play_volume_csr}),
+    .current_params({mic_level_csr,ws_brightness_level_csr,rotation_level_csr,
+                     contrast_level_csr,brightness_level_csr,play_volume_csr}),
     .param_update(param_update_csr), .user_write(param_csr_wr_valid),
     .defaults_req(key2_reset_pulse), .manual_save(key3_save_pulse),
     .auto_enable(board_sw_level_clk[2]),
@@ -879,12 +896,14 @@ ui_param_persistence u_ui_param_persistence(
     .flash_cs_n(flash_cs_n), .flash_sclk(flash_sclk), .flash_mosi(flash_mosi),
     .flash_miso(flash_miso), .flash_wp_n(flash_wp_n), .flash_hold_n(flash_hold_n));
 
-// Atomic video snapshot: {ui_state, selection, WSL, ROT, CON, BRI, VOL}.
-assign params_bundle_csr = {ec2_ui_state, ec2_selected_param, ws_brightness_level_csr,
-                            rotation_level_csr, contrast_level_csr,
-                            brightness_level_csr, play_volume_csr};
+// Atomic video snapshot:
+// {ui_state, selection, MIC, WSL, ROT, CON, BRI, VOL}.
+assign params_bundle_csr = {ec2_ui_state, ec2_selected_param, mic_level_csr,
+                            ws_brightness_level_csr, rotation_level_csr,
+                            contrast_level_csr, brightness_level_csr,
+                            play_volume_csr};
 assign play_volume_video = params_bundle_video[7:0];
-cdc_bundle_latest #(.WIDTH(25)) u_ui_params_cdc(
+cdc_bundle_latest #(.WIDTH(28)) u_ui_params_cdc(
     .src_clk(clk), .src_rst_n(exp_rst_n), .src_data(params_bundle_csr),
     .src_update(param_update_csr | ec2_ui_update), .dst_clk(video_clk),
     .dst_rst_n(media_video_rst_n), .dst_data(params_bundle_video));
@@ -920,6 +939,7 @@ always @(posedge video_clk or negedge media_video_rst_n) begin
         contrast_level_frame  <= 3'd2;
         rotation_level_frame  <= 3'd2;
         ws_brightness_level_frame <= 3'd4;
+        mic_level_frame       <= 3'd5;
         ec2_state_frame       <= 2'd0;
         ec2_selected_frame    <= 3'd0;
     end else if (frame_start) begin
@@ -929,8 +949,9 @@ always @(posedge video_clk or negedge media_video_rst_n) begin
         contrast_level_frame   <= params_bundle_video[13:11];
         rotation_level_frame   <= params_bundle_video[16:14];
         ws_brightness_level_frame <= params_bundle_video[19:17];
-        ec2_selected_frame     <= params_bundle_video[22:20];
-        ec2_state_frame        <= params_bundle_video[24:23];
+        mic_level_frame        <= params_bundle_video[22:20];
+        ec2_selected_frame     <= params_bundle_video[25:23];
+        ec2_state_frame        <= params_bundle_video[27:26];
     end
 end
 reset_sync u_media_video_reset(.clk(video_clk),
@@ -2224,13 +2245,61 @@ always @(posedge video_clk or negedge video_rst_n) begin
     end
 end
 
+// ------------------------------------------------------------------
+// 麦克风混音：与音乐共用 48 kHz valid/ready 节拍，不新增音频时钟域。
+// mic_signal_condition 已内含 0X/4X/5X/6X/7X 增益与软噪声门，这里只做饱和相加。
+// KEY4/IR 静音与开机保护作用在最终混音级。
+// ------------------------------------------------------------------
+assign mic_output_mute = board_audio_mute_v2 || boot_active;
+
+mic_adc_capture u_mic_adc (
+    .clk         (video_clk),
+    .rst_n       (video_rst_n),
+    .sample_code (mic_adc_code),
+    .sample_valid(mic_adc_valid)
+);
+
+mic_signal_condition u_mic_condition (
+    .clk        (video_clk),
+    .rst_n      (video_rst_n),
+    .sample_code(mic_adc_code),
+    .sample_valid(mic_adc_valid),
+    .mic_level  (mic_level_frame),
+    .mic_sample (mic_sample),
+    .mic_valid  (mic_valid)
+);
+
+// 48 kHz sample hold: both paths come from the same 25 MHz source, so a held
+// sample stays aligned with the PCM cadence even while music is paused.
+reg signed [15:0] mic_hold;
+always @(posedge video_clk or negedge video_rst_n) begin
+    if (!video_rst_n) mic_hold <= 16'sd0;
+    else if (mic_valid) mic_hold <= mic_output_mute ? 16'sd0 : mic_sample;
+end
+
+wire signed [16:0] mix_left_sum  = {mix_sample_left[15],  mix_sample_left}
+                                 + {mic_hold[15], mic_hold};
+wire signed [16:0] mix_right_sum = {mix_sample_right[15], mix_sample_right}
+                                 + {mic_hold[15], mic_hold};
+wire signed [15:0] mix_left_sat  = (mix_left_sum > 17'sd32767)   ? 16'sh7fff :
+                                   (mix_left_sum < -17'sd32768)  ? 16'sh8000 :
+                                   mix_left_sum[15:0];
+wire signed [15:0] mix_right_sat = (mix_right_sum > 17'sd32767)  ? 16'sh7fff :
+                                   (mix_right_sum < -17'sd32768) ? 16'sh8000 :
+                                   mix_right_sum[15:0];
+
+assign mixed_sample_valid = mix_sample_valid;
+assign mixed_sample_ready = mix_sample_ready;
+assign mixed_sample_left  = mix_left_sat;
+assign mixed_sample_right = mix_right_sat;
+
 hdmi_pcm_source_bridge u_hdmi_pcm_source_bridge (
     .clk            (video_clk),
     .rst_n          (video_rst_n),
-    .source_valid   (mix_sample_valid),
-    .source_ready   (mix_sample_ready),
-    .source_left    (mix_sample_left),
-    .source_right   (mix_sample_right),
+    .source_valid   (mixed_sample_valid),
+    .source_ready   (mixed_sample_ready),
+    .source_left    (mixed_sample_left),
+    .source_right   (mixed_sample_right),
     .audio_valid    (audio_valid),
     .audio_left     (audio_left_data),
     .audio_right    (audio_right_data),
@@ -2644,6 +2713,7 @@ ec2_param_osd u_ec2_param_osd (
     .contrast_level   (contrast_level_frame),
     .rotation_level   (rotation_level_frame),
     .ws_level         (ws_brightness_level_frame),
+    .mic_level        (mic_level_frame),
     .ascii_font_row   (shared_ascii_font_row),
     .ascii_font_addr  (ec2_ascii_addr),
     .ascii_font_request(ec2_ascii_request),
@@ -2833,7 +2903,7 @@ expansion_integration #(
     .sw4              (sw4),
     .exp_led_n        (exp_led_n),
     .exp_ws2812_data  (exp_ws2812_data),
-    .exp_ext_o        (exp_ext_o),
+    .exp_ext_o        (exp_ext_internal),
     .board_buzzer_n   (board_buzzer_n),
     .vinyl_motor_en   (vinyl_motor_en),
     .vinyl_ws2812_data(vinyl_ws2812_data),
@@ -2874,6 +2944,13 @@ expansion_integration #(
     .ui_actions_ready (ui_actions_ready_clk),
     .restart_confirm_active(restart_confirm_active_clk)
 );
+
+// EXT3/N12 is reserved for ADC_CH5. EXT4/EXT5 provide the module return and
+// supply levels used by the validated direct-insert arrangement; EXT6 is an
+// input so the module DO pin is never driven by the FPGA.
+assign exp_ext_o    = exp_ext_internal[1:0];
+assign mic_gnd_exp4 = 1'b0;
+assign mic_vcc_exp5 = 1'b1;
 
 // ==========================================================================
 // S3：主界面选歌事件解码（板级 clk 域）
@@ -2920,7 +2997,7 @@ ec2_event_replay u_ec2_event_replay(
     .step_valid(ec2_step_valid), .step_up(ec2_step_up),
     .step_ready(ec2_step_ready), .press_event(ec2_press_event));
 
-ec2_param_controller #(.PARAM_COUNT(5)) u_ec2_param_controller(
+ec2_param_controller #(.PARAM_COUNT(6)) u_ec2_param_controller(
     .clk(clk), .rst_n(exp_rst_n), .enable(ec2_control_enable),
     .tick_1ms(ui_tick_1ms), .step_valid(ec2_step_valid),
     .step_up(ec2_step_up), .step_ready(ec2_step_ready),

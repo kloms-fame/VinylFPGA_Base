@@ -36,6 +36,19 @@ rename_clock -name {ext_mem_clk_sft} -source [get_ports {clk}] -master_clock {cl
 rename_clock -name {video_clk}   -source [get_ports {clk}] -master_clock {clk} [get_pins {video_pll_m0/pll_inst.clkc[0]}]
 rename_clock -name {hdmi_5x_clk} -source [get_ports {clk}] -master_clock {clk} [get_pins {video_pll_m0/pll_inst.clkc[1]}]
 
+# Fabric divide-by-two drives the ADC hard IP. Keep it related to video_clk.
+# The divider register pin exists after synthesis; physical implementation may
+# rename that register, so fall back to the hard-ADC clock pin.
+set mic_adc_target [get_pins -quiet {u_mic_adc/adc_clk_reg.q}]
+if {[llength $mic_adc_target] == 0} {
+    set mic_adc_target [get_pins -quiet {u_mic_adc/u_adc.clk}]
+}
+if {[llength $mic_adc_target] > 0} {
+    create_generated_clock -name {mic_adc_clk} \
+        -source [get_pins {video_pll_m0/pll_inst.clkc[0]}] \
+        -master_clock {video_clk} -divide_by 2 $mic_adc_target
+}
+
 # ------------------------------------------------------------
 # 4. HDMI 像素/串行时钟关系
 #
@@ -71,11 +84,15 @@ rename_clock -name {hdmi_5x_clk} -source [get_ports {clk}] -master_clock {clk} [
 #    ext_mem_clk_sft 是 SDRAM 采样移位时钟（fanout=1，仅进硬 IP），仍由第 8 节的
 #    set_false_path 与 ext_mem_clk 互斥处理，不纳入异步组。
 # ------------------------------------------------------------
+set mic_video_group {video_clk hdmi_5x_clk}
+if {[llength $mic_adc_target] > 0} {
+    lappend mic_video_group mic_adc_clk
+}
 set_clock_groups -asynchronous \
     -group [get_clocks {clk}] \
     -group [get_clocks {sd_card_clk}] \
     -group [get_clocks {ext_mem_clk}] \
-    -group [get_clocks {video_clk hdmi_5x_clk}]
+    -group [get_clocks $mic_video_group]
 
 # ------------------------------------------------------------
 # 7. I/O timing model gaps
