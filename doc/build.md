@@ -2,15 +2,15 @@
 
 ## 工程与依赖
 
-- 主入口 `prj/VinylFPGA.al`，顶层 `top`，器件 EG4S20BG256，TD 6.2.168116，原生 MultiSeed 单 seed 10。
-- `src/` 与 `constraints/` 为已验收输入，不需要同级历史备份目录。59 个工程源条目的相对路径由提交核验工具检查。
+- 主入口 `prj/VinylFPGA.al`，顶层 `top`，器件 EG4S20BG256，TD 6.2.168116，原生 MultiSeed 选中 seed 18。
+- `src/` 与 `constraints/` 为已验收输入，不需要同级历史备份目录。61 个工程源条目的相对路径由提交核验工具检查。
 - TD 自带的安路器件库、原语和合法可用的厂商加密 HDMI/SDRAM 文件是必要依赖；它们的接口/源码包装随工程保留，TD 安装程序不分发。
 - Python 3.10+；Icarus Verilog 提供 `iverilog` 和 `vvp`；工具测试还使用 tkinter 中的 Tcl 解释器。无需网络账户运行提交核验与源码打包。
 - 可选 ModelSim 10.6e（脚本默认安装路径）；可选图片/MV 工具需 `python -m pip install -r requirements-media.txt`。
 
 ## 源码和回归
 
-在工程根目录执行 README 中的核验/回归命令。`verify_submission.py` 检查 142 个源码/约束输入和主工程相对路径；哈希对文本 CRLF/LF 做统一，以支持 Windows 和 Linux 签出。该检查不代替时序分析。
+在工程根目录执行 README 中的核验/回归命令。`verify_submission.py` 检查 144 个源码/约束输入和主工程相对路径；哈希对文本 CRLF/LF 做统一，以支持 Windows 和 Linux 签出。该检查不代替时序分析。
 
 `run_current_regression.py` 默认运行全部精选功能，`--quick` 运行工具及收尾测试。输出保存到新的 `.codex_tmp/regression_时间/`，可用 `--output 新目录` 指定。已有输出目录会被拒绝，避免覆盖旧证据。每个套件单独保留日志，整体以进程退出码 0 判定通过。控制接口模型用于替代仿真中的硬 IP 边界，不代表完整 DDR/HDMI 协议物理验证。
 

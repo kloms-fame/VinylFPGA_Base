@@ -6,8 +6,9 @@
 - [媒体格式与准备](media_format.md)：图片、音频、MV、索引、歌词和媒体输入说明。
 - [现场演示与人工验收](demo_acceptance.md)：建议演示顺序、验收依据及检查清单。
 - [提交版本验证记录](verification.md)：当前输入身份、时序、回归和剩余检查项。
+- [麦克风输入与 OSD MIC 页](mic_osd.md)：扩展板接线、降噪链、第 6 页档位、掉电保存与复现配方。
 - [官方参考资料](reference/README.md)：选题指南和赛题解析的原始文件及页码。
 - [比赛提交与 Git 上传](submission.md)：附件范围、干净历史 bundle 和恢复步骤。
-- [已验收输入清单](verification/accepted_inputs.json)：142 个设计输入的哈希和工程配置基线。
+- [已验收输入清单](verification/accepted_inputs.json)：144 个设计输入的哈希和工程配置基线。
 
 这些文档针对当前精简后的比赛提交工程。历史方案、旧候选、原媒体和开发工具已在用户的同级 `VinylFPGA_file` 中保留，不是当前构建的前置目录。

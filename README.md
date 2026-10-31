@@ -2,13 +2,13 @@
 
 基于安路 **HX4S20C / EG4S20BG256** 的唱片主题 HDMI 多媒体播放器。FPGA 完成 TF/FAT32 媒体读取、SDRAM 帧缓存、HDMI 视频与 PCM 音频输出，并整合 MV、歌词、波形、实体控制、灯效及 Flash 参数保存。
 
-本仓库为比赛提交源码工程。用户于 **2026-10-30 确认人工验收通过**；生产源码、约束和 seed 10 工程配置保持已验收版本。当前布线报告为 **SWNS +0.105 ns、HWNS +0.024 ns**，setup/hold 违例端点均为 0；完整检查范围见 [验证记录](doc/verification.md)。
+本仓库为比赛提交源码工程。在 **2026-10-30 人工验收通过** 的 `fe383ab` 基线上，2026-10-31 增加了扩展板麦克风输入、降噪与 OSD `MIC` 音量页（见 [麦克风与 OSD MIC 页](doc/mic_osd.md)），并重新走完官方收尾构建：seed 18，**SWNS +0.218 ns、HWNS +0.030 ns**，setup/hold 违例端点均为 0。完整检查范围与固件身份见 [验证记录](doc/verification.md)；本轮固件尚未由用户烧录复测。
 
 | 目录 | 内容 |
 | --- | --- |
 | `src/` | RTL、ROM、生成 IP 包装和厂商加密核心 |
 | `constraints/` | 引脚约束和时序约束 |
-| `prj/VinylFPGA.al` | TD 6.2.168116 主工程入口，顶层 `top`，单 seed 10 |
+| `prj/VinylFPGA.al` | TD 6.2.168116 主工程入口，顶层 `top`，原生 MultiSeed 选中 seed 18 |
 | [tools/](tools/README.md) | 当前构建、核验、回归、媒体与提交打包工具 |
 | [sim/](sim/README.md) | 当前功能测试台、控制接口模型和必要 HEX 夹具 |
 | [doc/](doc/README.md) | 项目架构、赛题对应、复建、媒体、演示与验收说明 |
@@ -23,7 +23,7 @@ python -X utf8 tools/run_current_regression.py --quick
 python -X utf8 tools/run_current_regression.py
 ```
 
-第一条检查输入哈希、59 个工程条目和文档链接；第二条运行 27 项工具测试及 10 项收尾 RTL 测试；第三条运行全部精选回归。它们不烧录硬件。可选 ModelSim 独立检查见 [构建说明](doc/build.md)。
+第一条检查输入哈希、61 个工程条目和文档链接；第二条运行 27 项工具测试及 10 项收尾 RTL 测试；第三条运行全部精选回归。它们不烧录硬件。可选 ModelSim 独立检查见 [构建说明](doc/build.md)。
 
 ## TD 复建与提交
 

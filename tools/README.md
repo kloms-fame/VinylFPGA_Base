@@ -4,7 +4,7 @@
 
 | 工具 | 用途 |
 | --- | --- |
-| `verify_submission.py` | 校验已验收设计输入、59 个工程条目与文档链接 |
+| `verify_submission.py` | 校验已验收设计输入、61 个工程条目与文档链接 |
 | `run_current_regression.py` | 统一运行精选测试，支持 `--quick` |
 | `package_submission.py` | 生成不含 Git/媒体/Runs 的源码 ZIP 和哈希 |
 | `build_closeout.ps1`、`run_closeout_project.tcl` | TD 完整构建及阶段/时序/产物停线判定 |

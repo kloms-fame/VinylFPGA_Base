@@ -26,8 +26,9 @@ def verify(root=ROOT):
         raise ValueError('Accepted project configuration changed')
     text = project.read_text(encoding='utf-8')
     entries = re.findall(r'<File Path="([^"]+)"', text)
-    if len(entries) != 59:
-        raise ValueError('Expected 59 project source/constraint entries')
+    expected_entries = manifest.get('project_entries', 61)
+    if len(entries) != expected_entries:
+        raise ValueError(f'Expected {expected_entries} project source/constraint entries, found {len(entries)}')
     for entry in entries:
         target = (project.parent/entry).resolve()
         if not target.is_relative_to(root) or not target.is_file():
@@ -44,8 +45,12 @@ def verify(root=ROOT):
             if not target.is_relative_to(root) or not target.exists():
                 raise ValueError(f'Broken documentation link: {md.name}: {href}')
     return {'status': 'PASS', 'design_inputs': len(actual), 'project_entries': len(entries),
-            'seed': 10, 'hash_policy': 'SHA256 after CRLF to LF normalization',
-            'hardware_acceptance': 'User confirmed on 2026-10-30',
+            'accepted_date': manifest.get('accepted_date'),
+            'seed': manifest.get('seed'),
+            'timing_ns': manifest.get('timing_ns'),
+            'bit_sha256': manifest.get('historical_accepted_bit_sha256'),
+            'hash_policy': 'SHA256 after CRLF to LF normalization',
+            'hardware_acceptance': manifest.get('hardware_acceptance', 'Pending hardware confirmation'),
             'scope': 'Source identity and submission completeness; routed timing needs TD reports.'}
 
 

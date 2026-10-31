@@ -108,19 +108,25 @@
 | v2（`e1933d4`，旧 mic 实现） | 18712（95.47%） | 12441 | 63 / 64 | 11 | 1 |
 | **v3（本次）** | **17570（89.64%）** | **12218** | **55 / 64** | **10** | **1** |
 
-布线（`phy3_s18`，seed 18，`parent ../syn_v3`）：
+布线：
 
-| 指标 | 基线 `phy_b` | **v3 `phy3_s18`** |
-| --- | --- | --- |
-| mslice | 4681 / 4900 | **4690 / 4900（95.7%）** |
-| Setup WNS / FEP | +0.154 ns / 0 | **+0.218 ns / 0** |
-| Hold WNS / FEP | −0.012 ns / 2 | **−0.011 ns / 1** |
-| bitgen | OK | **OK（684332 B）** |
+| 指标 | 基线 `phy_b` | 探索性 `phy3_s18` | **官方收尾 `phy_1/seed_18`** |
+| --- | --- | --- | --- |
+| mslice | 4681 / 4900 | 4690 / 4900 | **4690 / 4900（95.71%）** |
+| Setup WNS / FEP | +0.154 ns / 0 | +0.218 ns / 0 | **+0.218 ns / 0** |
+| Hold WNS / FEP | −0.012 ns / 2 | −0.011 ns / 1 | **+0.030 ns / 0** |
+| bitgen | OK | OK（684332 B） | **OK（684332 B）** |
 
-说明：hold 的小负 slack 位于 HDMI TX 内部既有时钟到时钟路径
-（`u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controll`），基线同样存在（−12 ps / 2 个端点），
-本次反而少一个端点，未引入新的麦克风相关违例。综合后 LUT 比基线少 289、BRAM 少 8，
-新功能没有侵占余量。
+说明：探索性 headless 配方把 `route fix_hold off` 传给了 TD，所以 hold 只到 −11 ps / 1 端点；
+官方收尾流程（`tools/build_closeout.ps1` → `tools/run_closeout_project.tcl` → MultiSeed）会在流内执行
+`fix_hold`，hold 收敛到 +30 ps / 0 端点，日志打印 `CLOSEOUT_BUILD_TIMING_PASSED`，
+`tools/verify_gui_runs.py` 退出码 0。基线 `phy_b` 的小负 hold slack 位于 HDMI TX 内部既有时钟到时钟路径
+（`u_hdmi_1_4b_transmitter_core_wrapper/u_hdmi_tx_controll`），本版由 fix_hold 一并收敛。
+
+综合后 LUT 比基线少 289、BRAM 少 8，新功能没有侵占余量。最终固件为
+`prj/VinylFPGA_Runs/best_result/VinylFPGA.bit`（684,332 B，SHA-256
+`a220d57ba6a4ec0b56e8d9ea1a5798ff329112a922ee90669d6f98d4398f1464`）；
+`prj/VinylFPGA.al` 的 MultiSeed 已从 seed 10 改为 seed 18，与实测最优结果一致。
 
 ## 7. 复现综合 / 布线（TD 6.2.1 命令行）
 
@@ -140,6 +146,8 @@ exit
 布线 `settings.cfg` 关键项：`run_type phy`、`start_step opt_place`、`end_step bitgen`、
 `set parent ../syn_v3`、`congestion 100`、`filter off`、`drHoldFix on`，
 `phyWildParams` 含 `gate` 三条 + `place seed 18` 等十余条策略（见 `prj/VinylFPGA.al` 里的 Gate/Place 策略）。
+上述手工流程用于快速探索面积/时序；**交付固件请用仓库自带的 `tools/build_closeout.ps1`**（TD GUI 引擎、
+原生 MultiSeed、流内 `fix_hold`），再以 `tools/verify_gui_runs.py` 复核。
 
 ## 8. 仿真自检
 

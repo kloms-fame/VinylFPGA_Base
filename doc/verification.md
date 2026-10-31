@@ -1,10 +1,10 @@
-# 比赛提交版本验证记录（2026-10-30）
+# 版本验证记录（2026-10-31 麦克风 / OSD MIC 版本）
 
 ## 版本与验收依据
 
-用户于 2026-10-30 明确确认当前项目已完成人工验收且没有问题。本轮整理针对比赛提交树的工具、仿真、文档和打包，不改变生产 RTL、ROM、引脚、时钟和实现策略，也不自动下载或烧录。
+2026-10-30 用户确认 `fe383ab` 已完成人工验收。2026-10-31 在该基线上新增扩展板麦克风采集、降噪（两级低通 + 软噪声门）、OSD 第 6 页 `MIC` 音量档位（0X/4X/5X/6X/7X，默认 5X）与 Flash 掉电保存，详见 [麦克风与 OSD MIC 页](mic_osd.md)。
 
-142 个源码/约束与此前验收冻结的输入逐文件核对一致。工程为 TD 6.2.168116 / EG4S20BG256 / top，单 seed 10，59 个源文件/约束条目路径存在。当前 Git 将用户已移走的历史资料作为删除处理，再按当前功能补入精选内容；未将同级 `VinylFPGA_file` 变成新的运行依赖。
+本版 144 个源码/约束输入已重新逐文件签署哈希，工程为 TD 6.2.168116 / EG4S20BG256 / top，原生 MultiSeed 选中 seed 18，61 个源文件/约束条目路径存在。2026-10-30 的旧签收哈希保留在 Git 历史（`fde3af1` 之前）中，可用于追溯基线输入。
 
 已验收输入清单位于 [accepted_inputs.json](verification/accepted_inputs.json)。源码文本的 CRLF/LF 统一后再算哈希，防止不同系统的 Git 换行策略造成误报；同时保留原验收字节哈希供追溯。
 
@@ -12,20 +12,26 @@
 
 | 指标 | 当前实际 Runs |
 | --- | --- |
-| SWNS | +0.105 ns |
-| HWNS | +0.024 ns |
+| SWNS | +0.218 ns |
+| HWNS | +0.030 ns |
 | STNS / HTNS | 0 / 0 ns |
 | setup / hold 违例端点 | 0 / 0 |
-| 所选 seed | 10 |
+| 所选 seed | 18 |
+| #slices | 9,380（95.71%，mslice 4,690 / 4,900） |
 | 固件大小 | 684,332 字节 |
+| 固件 SHA-256 | `a220d57ba6a4ec0b56e8d9ea1a5798ff329112a922ee90669d6f98d4398f1464` |
 
-本轮 `verify_gui_runs.py` 检查当前完成的阶段、日志、四项时序、route QoR 端点数及 best_result 一致性通过。当前 bit SHA-256 为 `97b370265af7ec7e7b8b4341a88407631722808f434e473d8ba1b4abf11d3863`。此前人工验收冻结 bit 为 `fa994e2a090a845cca6ee70b46c87a29bfa7bc417f45d9228dd8c981f9850ad3`。逐字节比较表明二者只有 ASCII 日期行内 4 个字节不同，配置数据其余部分完全一致；本轮未据此重新生成 bit。
+本版由仓库自带的官方收尾流程 `tools/build_closeout.ps1` 构建（TD GUI 引擎 + `prj/VinylFPGA.al` + MultiSeed），日志打印 `CLOSEOUT_BUILD_TIMING_PASSED`，流内执行了 `fix_hold`；随后 `tools/verify_gui_runs.py` 复检阶段、日志、四项时序、route QoR 端点数和 best_result 一致性，退出码 0。综合后面积为 LUT 17,570/19,600（89.64%）、Reg 12,218、BRAM 55/64、DSP 10/29、ADC 1/1，比基线 `fe383ab` 少 289 LUT 与 8 个 BRAM。
+
+上一版（seed 10）的 bit SHA-256 为 `97b370265af7ec7e7b8b4341a88407631722808f434e473d8ba1b4abf11d3863`，2026-10-30 人工验收冻结 bit 为 `fa994e2a090a845cca6ee70b46c87a29bfa7bc417f45d9228dd8c981f9850ad3`；本版包含麦克风相关 RTL 与 seed 变更，属于新的实现结果，不能与之逐字节等同。
 
 上述数字是当前约束覆盖范围的结果。源码包不包含 Runs；在另一机器上需用对应 TD/器件库重新构建，并核对新的输出。当前工具使用完整报告判定通过，不把历史 seed 编号或 bitgen Success 单独当成时序验收。
 
 ## 当前功能回归
 
 精选测试覆盖音频缓存、FAT32、MV、SD 所有权/恢复、seek、歌词、交互、参数及 Flash。当前入口 `run_current_regression.py` 全量包括 **27 项工具测试和 70 个 RTL 测试场景**，亮度/对比度一项内部执行 16,385 组检查。部分场景共享通路，数量不等于独立产品功能数。
+
+本版另加两个自校验测试台，不计入上述统计：`sim/mic_osd_v3/tb_mic_signal_condition.v`（档位增益、门限、饱和、20 kHz 抑制、4:1 抽取）与 `sim/mic_osd_v3/tb_ui_mic_params.v`（6 页轮转、MIC 档位循环与回绕）。两者均以 `TB_PASS` 结尾，运行命令见 `sim/mic_osd_v3/README.md`。
 
 分套件结果写入 [current_results.json](verification/current_results.json)。完整编译和执行日志位于本机 `.codex_tmp/contest_submission_20261030/`，不加入 Git。失败、超时或缺少 PASS 会使对应入口返回非零。统一入口亦可在源码 ZIP 解压后的独立目录执行，以检查提交内容是否自足。
 
