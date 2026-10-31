@@ -1,8 +1,8 @@
 # 片内 ADC 麦克风上板验收教程（分阶段）
 
-固件：`prj/VinylFPGA_Runs/best_result/VinylFPGA.bit`（684,332 字节，SHA-256 `B3D16565245CE13D96EEA777DA06444FF975BD9A481725E7DA1F477250C71384`，seed 13，SWNS +0.104 ns / HWNS +0.012 ns，麦克风默认增益 5×；同一份代码在 2026-10-30 17:00 生成的旧文件哈希为 `1E2C48FE8FCA7042A6CC2F3A361C86D95A48F23D8DF24C681DC28AC931512F7A`，两者 RTL/种子/时序完全相同，仅 bit 流内嵌的构建日期不同。工作区根目录留有便于烧录的副本 `稳定固件_5x增益_seed13_b3d16565.bit`）
+固件：`prj/VinylFPGA_Runs/best_result/VinylFPGA.bit`（684,332 字节，SHA-256 `59C59C473FD40E7888776EB0BCFCCFF5F00D9CAC7B6A0E85C46A34BE07121623`，2026-10-31 在 `main`（基线 fe383ab）上重新综合，seed 13，SWNS +0.104 ns / HWNS +0.012 ns，麦克风默认固定增益 5×。工作区根目录留有便于烧录的副本 `稳定固件_麦克风5x_seed13_59C59C47.bit`）
 工程：`prj/VinylFPGA.al`（Seeds select=13）
-回滚固件（主线版）：`../../../prj/VinylFPGA_Runs/best_result/VinylFPGA.bit`（2026-10-30 15:37 在主线工程重新生成，seed 10，SWNS +0.105 ns / HWNS +0.024 ns，SHA-256 `4181C2183CDD07F6F418B96BA2AFC496A65C44E5CBD5F474673D1194A9903D73`；冻结交付版哈希见 `doc/verification.md`）
+回滚固件（主线版）：`output/VinylFPGA_Contest_Firmware/VinylFPGA.bit`（比赛冻结交付版，seed 10，SWNS +0.105 ns / HWNS +0.024 ns，SHA-256 `97B370265AF7EC7E7B8B4341A88407631722808F434E473D8BA1B4ABF11D3863`，见同目录 `manifest.json`；工作区根目录副本 `稳定固件_主线fe383ab_seed10_97B37026.bit`）
 
 本教程按"母板 → 扩展板 → 麦克风"三段推进，每段都有独立的通过判据。**不要跳段**：先证明新固件没破坏原功能，再引入扩展板，最后接麦克风，任何一段失败都能立刻定位到刚引入的那部分。
 
@@ -39,7 +39,7 @@ J2 的 EXT1–EXT6 在两种固件下电压不同，**用万用表就能判断�
 
 判据：**EXT5 ≈3.3 V = 本工程（麦克风）固件；EXT5 = 0 V = 主线固件**。
 
-典型误判：只测到 EXT1≈3.26 V、EXT2–EXT6 全 0 V，正是主线固件的特征——说明板子里跑的还是主线固件，或 Programmer 里选的是主线工程的 bit。TD 同时打开了主线工程时极易选错，烧录前务必确认配置文件是 `.worktrees/microphone/prj/VinylFPGA_Runs/best_result/VinylFPGA.bit`，并在烧录成功后立刻复测 EXT5。
+典型误判：只测到 EXT1≈3.26 V、EXT2–EXT6 全 0 V，正是主线固件的特征——说明板子里跑的还是主线固件，或 Programmer 里选的是主线工程的 bit。TD 同时打开了主线工程时极易选错，烧录前务必确认配置文件是 `prj/VinylFPGA_Runs/best_result/VinylFPGA.bit`（本工程根目录），并在烧录成功后立刻复测 EXT5。
 
 ## 1. 烧录教程
 
@@ -164,10 +164,10 @@ C3-1 到 C3-7 全部满足即功能验收通过。
 
 **阶段 C 听不到说话声**：按 C1/C2 的顺序查电压和偏置，再确认烧的是本 bit；最后降低音乐音量排除掩盖。
 
-**音量仍然偏小**：确认烧的确实是 `1E2C48FE…` 这一版（旧版 `3BF76CE7…` 只有 0.25× 增益）。若已有 5× 仍不够，说明瓶颈在模拟前端（47 Ω 压降、麦克风偏置、ADC 输入幅度），此时应测 C1 的直流偏置是否接近 VREF/2、交流幅度是否达到几百 mV，而不是继续加数字增益。
+**音量仍然偏小**：确认烧的确实是 `59C59C47…` 这一版（更早的实验版只有 0.25× 增益）。若已有 5× 仍不够，说明瓶颈在模拟前端（47 Ω 压降、麦克风偏置、ADC 输入幅度），此时应测 C1 的直流偏置是否接近 VREF/2、交流幅度是否达到几百 mV，而不是继续加数字增益。
 
 **持续啸叫**：麦克风与扬声器距离太近，降低音量或拉开距离。
 
 ## 7. 回滚
 
-烧回主线已验收固件：`D:/Data_Backup/VinylFPGA_Workspace_Base/VinylFPGA/prj/VinylFPGA_Runs/best_result/VinylFPGA.bit`（主线 `main`，SHA-256 `4181C2183CDD07F6F418B96BA2AFC496A65C44E5CBD5F474673D1194A9903D73`，与第 5 行同一份）。回滚时拔掉麦克风和扩展板。
+烧回主线已验收固件：`D:/Data_Backup/VinylFPGA_Workspace_Base/VinylFPGA/output/VinylFPGA_Contest_Firmware/VinylFPGA.bit`（主线 `fe383ab` 冻结交付版，SHA-256 `97B370265AF7EC7E7B8B4341A88407631722808F434E473D8BA1B4ABF11D3863`，与第 5 行同一份；根目录副本 `稳定固件_主线fe383ab_seed10_97B37026.bit`）。回滚时拔掉麦克风和扩展板。
