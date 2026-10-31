@@ -84,10 +84,9 @@ set_pin_assignment	{ vinyl_motor_en }	{ LOCATION = G11; IOSTANDARD = LVCMOS33; D
 set_pin_assignment	{ needle_sense_n }	{ LOCATION = G12; IOSTANDARD = LVCMOS33; PULLTYPE = NONE; }
 set_pin_assignment	{ exp_ext_o[0] }	{ LOCATION = M12; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
 set_pin_assignment	{ exp_ext_o[1] }	{ LOCATION = M11; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
-set_pin_assignment	{ exp_ext_o[2] }	{ LOCATION = N12; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
-set_pin_assignment	{ exp_ext_o[3] }	{ LOCATION = P14; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
-set_pin_assignment	{ exp_ext_o[4] }	{ LOCATION = P12; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
-set_pin_assignment	{ exp_ext_o[5] }	{ LOCATION = R12; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
+set_pin_assignment	{ mic_gnd_exp4 }	{ LOCATION = P14; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
+set_pin_assignment	{ mic_vcc_exp5 }	{ LOCATION = P12; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
+set_pin_assignment	{ mic_do_exp6 }	{ LOCATION = R12; IOSTANDARD = LVCMOS33; PULLTYPE = NONE; }
 set_pin_assignment	{ uart_tx }	{ LOCATION = D12; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }
 
 # 母板蜂鸣器：H11，PNP 驱动，低电平鸣叫；硬件 SW5 必须拨到接通档

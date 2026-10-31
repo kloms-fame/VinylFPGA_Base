@@ -224,3 +224,12 @@ endmodule
 
 module EG_PHY_SDRAM_2M_32(input clk,ras_n,cas_n,we_n,cs_n,dm0,dm1,dm2,dm3,cke,
  input[10:0]addr,input[1:0]ba,inout[31:0]dq); endmodule
+
+// Protocol-only placeholder for top-level integration simulations.
+module EG_PHY_ADC #(parameter CH5="DISABLE", VREF="DISABLE") (
+    input wire clk, pd, input wire [2:0] s, input wire soc,
+    output wire eoc, output wire [11:0] dout
+);
+    assign eoc = 1'b0;
+    assign dout = 12'd2048;
+endmodule

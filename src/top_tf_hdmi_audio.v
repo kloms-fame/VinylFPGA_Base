@@ -35,6 +35,9 @@
 `include "io/ws2812_driver.v"
 `include "io/ws2812_effects.v"
 `include "audio/pcm_tap.v"
+`include "audio/mic_adc_capture.v"
+`include "audio/mic_signal_condition.v"
+`include "audio/mic_pcm_mixer.v"
 `include "display/seg_business_mux.v"
 `include "io/browse_fsm.v"
 
@@ -144,7 +147,10 @@ module top(
     // ===================== S1：J2 拓展板输出 =====================
     output [3:0]                exp_led_n,       // LED1..LED4，低有效点亮
     output                      exp_ws2812_data, // 原 J11 WS2812 灯带数据线
-    output [5:0]                exp_ext_o,       // EXT1=反馈音波形，EXT2..EXT6=0
+    output [1:0]                exp_ext_o,       // EXT1 反馈音波形，EXT2 备用
+    output                      mic_gnd_exp4,    // 麦克风模块地（EXT4/P14）
+    output                      mic_vcc_exp5,    // 麦克风模块电源（EXT5/P12）
+    input                       mic_do_exp6,     // 麦克风 DO（EXT6/R12，未使用）
 
     // ===================== 母板蜂鸣器 =====================
     output                      board_buzzer_n,  // H11，PNP 驱动，低电平鸣叫（SW5 硬件通断）
@@ -690,6 +696,19 @@ wire        mix_sample_valid;
 wire        mix_sample_ready;
 wire signed [15:0] mix_sample_left;
 wire signed [15:0] mix_sample_right;
+wire [5:0] exp_ext_internal;
+assign exp_ext_o = exp_ext_internal[1:0];
+assign mic_gnd_exp4 = 1'b0;
+assign mic_vcc_exp5 = 1'b1;
+// 实验性麦克风链路：供电与 ADC 电气范围需上板确认。
+wire [11:0] mic_adc_code;
+wire mic_adc_valid;
+wire signed [15:0] mic_sample;
+wire mic_valid;
+wire mic_mixed_valid, mic_mixed_ready;
+wire signed [15:0] mic_mixed_left, mic_mixed_right;
+// 麦克风数字增益，1/32 单位：8'd160 = 5.0x（固定增益，不接 OSD 参数）。
+wire [7:0] mic_gain_setting = 8'd160;
 reg  [31:0] wav_tick_acc;
 reg         wav_sample_tick;
 
@@ -2224,13 +2243,26 @@ always @(posedge video_clk or negedge video_rst_n) begin
     end
 end
 
+mic_adc_capture u_mic_adc (.clk(video_clk), .rst_n(video_rst_n),
+    .sample_code(mic_adc_code), .sample_valid(mic_adc_valid));
+mic_signal_condition u_mic_condition (.clk(video_clk), .rst_n(video_rst_n),
+    .sample_code(mic_adc_code), .sample_valid(mic_adc_valid),
+    .mic_sample(mic_sample), .mic_valid(mic_valid));
+mic_pcm_mixer u_mic_mixer (.clk(video_clk), .rst_n(video_rst_n),
+    .in_valid(mix_sample_valid), .in_ready(mix_sample_ready),
+    .in_left(mix_sample_left), .in_right(mix_sample_right),
+    .mic_sample(mic_sample), .mic_valid(mic_valid), .mic_enable(!boot_active),
+    .mic_gain_max(mic_gain_setting),
+    .mute(board_audio_mute_v2), .out_valid(mic_mixed_valid),
+    .out_ready(mic_mixed_ready), .out_left(mic_mixed_left), .out_right(mic_mixed_right));
+
 hdmi_pcm_source_bridge u_hdmi_pcm_source_bridge (
     .clk            (video_clk),
     .rst_n          (video_rst_n),
-    .source_valid   (mix_sample_valid),
-    .source_ready   (mix_sample_ready),
-    .source_left    (mix_sample_left),
-    .source_right   (mix_sample_right),
+    .source_valid   (mic_mixed_valid),
+    .source_ready   (mic_mixed_ready),
+    .source_left    (mic_mixed_left),
+    .source_right   (mic_mixed_right),
     .audio_valid    (audio_valid),
     .audio_left     (audio_left_data),
     .audio_right    (audio_right_data),
@@ -2833,7 +2865,7 @@ expansion_integration #(
     .sw4              (sw4),
     .exp_led_n        (exp_led_n),
     .exp_ws2812_data  (exp_ws2812_data),
-    .exp_ext_o        (exp_ext_o),
+    .exp_ext_o        (exp_ext_internal),
     .board_buzzer_n   (board_buzzer_n),
     .vinyl_motor_en   (vinyl_motor_en),
     .vinyl_ws2812_data(vinyl_ws2812_data),
