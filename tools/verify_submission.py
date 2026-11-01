@@ -26,8 +26,13 @@ def verify(root=ROOT):
         raise ValueError('Accepted project configuration changed')
     text = project.read_text(encoding='utf-8')
     entries = re.findall(r'<File Path="([^"]+)"', text)
-    if len(entries) != 59:
-        raise ValueError('Expected 59 project source/constraint entries')
+    expected_entries = manifest.get('project_entries')
+    if expected_entries is None or len(entries) != expected_entries:
+        raise ValueError(f'Expected {expected_entries} project source/constraint entries, found {len(entries)}')
+    seed_match = re.search(r'<Seeds select="(\d+)">', text)
+    if seed_match is None or int(seed_match.group(1)) != manifest['seed']:
+        found = seed_match.group(1) if seed_match else 'not found'
+        raise ValueError(f'Expected project seed {manifest["seed"]}, found {found}')
     for entry in entries:
         target = (project.parent/entry).resolve()
         if not target.is_relative_to(root) or not target.is_file():
@@ -44,8 +49,8 @@ def verify(root=ROOT):
             if not target.is_relative_to(root) or not target.exists():
                 raise ValueError(f'Broken documentation link: {md.name}: {href}')
     return {'status': 'PASS', 'design_inputs': len(actual), 'project_entries': len(entries),
-            'seed': 10, 'hash_policy': 'SHA256 after CRLF to LF normalization',
-            'hardware_acceptance': 'User confirmed on 2026-10-30',
+            'seed': manifest['seed'], 'hash_policy': manifest['hash_policy'],
+            'acceptance_basis': manifest['acceptance_basis'],
             'scope': 'Source identity and submission completeness; routed timing needs TD reports.'}
 
 

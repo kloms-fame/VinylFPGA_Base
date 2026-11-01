@@ -13,6 +13,7 @@ flowchart LR
     META --> CACHE[SDRAM 帧缓存与音频预取]
     CACHE --> VIDEO[背景 / 封面 / MV / 歌词 / OSD 合成]
     CACHE --> AUDIO[48 kHz PCM 播放与音量处理]
+    MIC[片内 ADC 麦克风] --> AUDIO
     AUDIO --> VIS[PCM 幅度波形与灯效]
     VIS --> VIDEO
     VIDEO --> HDMI[HDMI 音视频发送]
@@ -29,7 +30,7 @@ flowchart LR
 | 部分 | 主要源码 | 作用 |
 | --- | --- | --- |
 | 媒体与 SD | [SD/](../src/SD/) | FAT32 扫描、索引、BMP 读取、CMD17/CMD18 控制、故障状态 |
-| 音频 | [audio/](../src/audio/) | SDRAM 预取、48 kHz 时基、会话重启、seek、音量与淡化 |
+| 音频 | [audio/](../src/audio/) | SDRAM 预取、48 kHz 时基、会话重启、seek、音量、淡化与麦克风混音 |
 | 帧调度 | [video/](../src/video/) | 背景缓存、MV 请求、帧切换与写入管线 |
 | 显示 | [display/](../src/display/) | 播放页面、歌词、参数 OSD、进度、波形、转场 |
 | 交互 | [io/](../src/io/) | 消抖、编码器/红外解析、统一事件、参数、灯效与蜂鸣器 |
@@ -50,9 +51,10 @@ MV 媒体为 320×240、RGB565LE、10 fps 的原始帧序列，不在 FPGA 中�
 | `ext_mem_clk` | 125 MHz | SDRAM 数据通路 |
 | `ext_mem_clk_sft` | 125 MHz、移相 | SDRAM 硬接口采样时钟 |
 | `video_clk` | 25 MHz | 像素合成及音频采样节拍生成 |
+| `mic_adc_clk` | 12.5 MHz | `video_clk` 二分频的片内 ADC 采样时钟，约 144 kS/s |
 | `hdmi_5x_clk` | 125 MHz | HDMI 串行发送 |
 
-频率来自工程 PLL 配置，时钟名和域关系见 [timing.sdc](../constraints/timing.sdc)。音频节拍由像素域生成，不能把保留在源码目录中的旧音频 PLL 包装文件误认为当前独立运行的音频时钟域。
+频率来自工程 PLL 配置，时钟名和域关系见 [timing.sdc](../constraints/timing.sdc)。音频节拍由像素域生成；麦克风 ADC 时钟由 `video_clk` 分频并在约束中声明。不能把保留在源码目录中的旧音频 PLL 包装文件误认为当前独立运行的音频时钟域。
 
 ## IP 与实现边界
 

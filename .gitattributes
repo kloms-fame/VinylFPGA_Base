@@ -1,0 +1,13 @@
+* text=auto eol=lf
+
+*.bit binary
+*.bid binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.pdf binary
+*.pptx binary
+*.mp3 binary
+*.mp4 binary
+*.wav binary
+*.img binary

@@ -14,7 +14,7 @@ def package(output):
     if any(output.is_relative_to(ROOT/d) for d in ('src', 'constraints', 'prj', 'tools', 'sim', 'doc')):
         raise ValueError('Write submission archives outside source directories, e.g. output/')
     verify(ROOT)
-    paths = [ROOT/'README.md', ROOT/'.gitignore', ROOT/'requirements-media.txt',
+    paths = [ROOT/'README.md', ROOT/'.gitattributes', ROOT/'.gitignore', ROOT/'requirements-media.txt',
              ROOT/'prj/VinylFPGA.al']
     allowed = {'tools': {'.py', '.ps1', '.tcl', '.md', '.txt'},
                'sim': {'.v', '.vh', '.sv', '.hex', '.mem', '.do', '.md'},

@@ -1,8 +1,8 @@
-# 片内 ADC 麦克风上板验收教程（分阶段）
+# 片内 ADC 麦克风硬件接入与验收
 
-固件（冻结版 `mic-followvol-v1.0`）：`output/VinylFPGA_MicFollowVol_Firmware/VinylFPGA.bit`（684,332 字节，SHA-256 `12888BE734514BCE75FBF16651CACA2C2E680833A75909AD35F90CC582C4B2F8`，seed 15，SWNS +0.060 ns / HWNS +0.021 ns，0 违例端点；包内 `manifest.json` 记录全部产物哈希）。`prj/VinylFPGA_Runs/best_result/VinylFPGA.bit` 若被 TD 重跑过，只会差 bitgen 时间戳字节（如 `8F22B6F3…`），配置数据相同，任一份均可烧录。工作区根目录副本 `稳定固件_麦克风跟随VOL_seed15_12888BE7.bit`）
-工程：`prj/VinylFPGA.al`（Seeds 13/14/15，本轮选中 15）
-回滚固件（主线版）：`output/VinylFPGA_Contest_Firmware/VinylFPGA.bit`（比赛冻结交付版，seed 10，SWNS +0.105 ns / HWNS +0.024 ns，SHA-256 `97B370265AF7EC7E7B8B4341A88407631722808F434E473D8BA1B4ABF11D3863`，见同目录 `manifest.json`；工作区根目录副本 `稳定固件_主线fe383ab_seed10_97B37026.bit`）
+当前冻结源码为 `mic-followvol-v1.0`，工程 [`VinylFPGA.al`](../prj/VinylFPGA.al) 选中 seed 15。规范固件为 684,332 字节，SHA-256 `12888BE734514BCE75FBF16651CACA2C2E680833A75909AD35F90CC582C4B2F8`，SWNS +0.060 ns / HWNS +0.021 ns，0 违例端点。源码包不包含 bit；实际交付时请使用赛事固件附件并核对其清单与哈希。
+
+该功能的数字通路和物理实现已有记录，但模拟供电、输入偏置、人声音质、抗啸叫和长时间稳定性仍应以本页步骤实测。不要把固件能构建等同于模拟通路已经验收。
 
 本教程按"母板 → 扩展板 → 麦克风"三段推进，每段都有独立的通过判据。**不要跳段**：先证明新固件没破坏原功能，再引入扩展板，最后接麦克风，任何一段失败都能立刻定位到刚引入的那部分。
 
@@ -20,7 +20,7 @@
 2. AO 输出在 ADC 输入范围（约 0.33–2.97 V，通常需 AC 耦合 + 偏置）；
 3. 已用万用表确认 J2 排针 EXT3/EXT4/EXT5 与 FPGA 引脚连通（EXT3=N12、EXT4=P14、EXT5=P12）。
 
-**禁止用主线旧固件接麦克风**：旧固件把 EXT3–EXT6 全部驱动为低，会把模块电源短路到地。
+**禁止用旧主线固件接麦克风**：旧固件把 EXT3–EXT6 全部驱动为低，会把模块电源短路到地。
 
 **更安全的替代**：外部 3.3 V 给模块供电，并**先断开 EXT4/EXT5 与模块的连线**，不能一边 FPGA 输出高一边外部供电。
 
@@ -173,4 +173,4 @@ C3-1 到 C3-7 全部满足即功能验收通过。
 
 ## 7. 回滚
 
-烧回主线已验收固件：`D:/Data_Backup/VinylFPGA_Workspace_Base/VinylFPGA/output/VinylFPGA_Contest_Firmware/VinylFPGA.bit`（主线 `fe383ab` 冻结交付版，SHA-256 `97B370265AF7EC7E7B8B4341A88407631722808F434E473D8BA1B4ABF11D3863`，与第 5 行同一份；根目录副本 `稳定固件_主线fe383ab_seed10_97B37026.bit`）。回滚时拔掉麦克风和扩展板。
+若保留了主线 `fe383ab` 的 seed 10 固件，可烧回该版本，SHA-256 为 `97B370265AF7EC7E7B8B4341A88407631722808F434E473D8BA1B4ABF11D3863`。回滚时拔掉麦克风和扩展板。

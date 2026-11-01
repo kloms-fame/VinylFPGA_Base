@@ -2,17 +2,14 @@
 
 ## 本次交付物
 
-本轮生成的本机输出位于 `output/`，不加入源码 Git：
+本轮生成的本机源码交付物位于 `output/`，不加入源码 Git：
 
 | 文件 | 用途 |
 | --- | --- |
 | `VinylFPGA_Contest_Source.zip` | 源码、约束、主工程、精选工具、仿真和文档；含逐文件校验清单 |
 | `VinylFPGA_Contest_Source.zip.sha256` | 源码 ZIP 的 SHA-256 |
-| `VinylFPGA_Contest_Firmware.zip` | 当前 bit、BID、时序和资源报告及固件清单 |
-| `VinylFPGA_Contest_Firmware.zip.sha256` | 固件附件 ZIP 的 SHA-256 |
-| `VinylFPGA_Contest_CleanGit.bundle` | 只含当前提交树和单次初始提交的独立 Git 备份 |
 
-源码包不含商业音视频、完整媒体卡、TD/ModelSim 安装文件或完整 Runs。赛事平台要求的媒体、说明、视频与固化设备按实际入口分别提交；不把已存在源码 ZIP 当成赛事平台已收到材料。
+源码包不含商业音视频、完整媒体卡、TD/ModelSim 安装文件、完整 Runs 或 bit。规范固件 `mic-followvol-v1.0` 保存在源码仓库之外，SHA-256 为 `12888BE734514BCE75FBF16651CACA2C2E680833A75909AD35F90CC582C4B2F8`；固件附件需要按比赛入口单独核对和提交。媒体、说明、视频与固化设备也按实际入口分别提交，不把已生成源码 ZIP 当成赛事平台已收到材料。
 
 ## 提交前复核
 
@@ -25,10 +22,10 @@
 
 当前工程目录是原 Git 仓库。用户移走的历史资料已按删除纳入整理，当前只保留比赛提交需要的文件；同级 `VinylFPGA_file` 继续作为用户备份。原仓库此前历史仍含大体积媒体，因此“当前工作区干净”不等于全部 Git 历史体积小。此次不重写原 main、删除其他 worktree 或强推。
 
-独立 bundle 在新目录建立单次提交，排除了原提交历史、本地缓存和媒体，适合需要从干净历史开始上传时使用。可在另外的新目录恢复：
+如需从当前树建立不带旧历史的独立 bundle，可在临时目录生成 orphan 提交后打包。本次清理不自动重写历史，也不默认生成 bundle：
 
 ```powershell
-git clone "完整路径/output/VinylFPGA_Contest_CleanGit.bundle" VinylFPGA_Submission
+git clone "实际生成的 bundle 路径" VinylFPGA_Submission
 cd VinylFPGA_Submission
 python -X utf8 tools/verify_submission.py
 git remote remove origin

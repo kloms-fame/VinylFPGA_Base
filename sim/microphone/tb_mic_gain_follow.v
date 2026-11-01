@@ -13,12 +13,12 @@ module tb_mic_gain_follow;
 
     task check_vol;
         input [7:0] v;
-        input [7:0] expect;
+        input [7:0] expected;
         begin
             vol = v;
             #1;
-            if (gain !== expect) begin
-                $display("FAIL vol=%0d gain=%0d expect=%0d", v, gain, expect);
+            if (gain !== expected) begin
+                $display("FAIL vol=%0d gain=%0d expected=%0d", v, gain, expected);
                 errors = errors + 1;
             end
         end

@@ -1,142 +1,116 @@
 {
-  "date": "2026-10-30",
+  "date": "2026-11-01",
   "status": "PASS",
-  "design_inputs_unchanged": 142,
-  "source_entries_resolved": 59,
-  "tool_tests": 27,
-  "rtl_scenarios": 70,
-  "brightness_internal_checks": 16385,
-  "suite_counts": {
-    "audio_media": 32,
-    "closure": 10,
-    "sd_owner_recovery": 11,
-    "seek": 2,
-    "lyrics_ui": 8,
-    "sound_flash": 6,
-    "brightness": 1
+  "scope": "Current source identity, documentation completeness, and digital regression; not board-level microphone acceptance.",
+  "project": {
+    "version": "mic-followvol-v1.0",
+    "device": "EG4S20BG256",
+    "td_version": "6.2.168116",
+    "seed": 15,
+    "design_inputs": 145,
+    "project_entries": 63,
+    "project_sha256_lf": "9e07871dc209d45011c6a7352781c688ba95d420d8eb8cfe4d911b5c4ccad0bc"
   },
-  "modelsim_optional": {
-    "executed": true,
-    "cases": 6,
-    "passed": 6
-  },
-  "source_archive_validation": {
-    "extracted_regression": "PASS",
+  "regression": {
+    "command": "python -X utf8 tools/run_current_regression.py",
+    "started_at": "2026-11-01T20:09:49+08:00",
+    "finished_at": "2026-11-01T20:14:22+08:00",
+    "exit_code": 0,
     "tool_tests": 27,
-    "rtl_scenarios": 70,
-    "tampered_source_rejected": true,
-    "source_directory_package_output_rejected": true
-  },
-  "suites": {
-    "unified": [
-      {
-        "suite": "tool_tests",
-        "passed": true,
-        "exit_code": 0
-      },
-      {
-        "suite": "closure",
-        "passed": true,
-        "exit_code": 0
-      },
-      {
-        "suite": "audio",
-        "passed": true,
-        "exit_code": 0
-      },
-      {
-        "suite": "sd_owner",
-        "passed": true,
-        "exit_code": 0
-      },
-      {
-        "suite": "seek",
-        "passed": true,
-        "exit_code": 0
-      },
-      {
-        "suite": "lyrics",
-        "passed": true,
-        "exit_code": 0
-      },
-      {
-        "suite": "sound_flash",
-        "passed": true,
-        "exit_code": 0
-      },
-      {
-        "suite": "brightness",
-        "passed": true,
-        "exit_code": 0
-      }
-    ],
-    "extracted_regression": [
-      {
-        "suite": "tool_tests",
-        "passed": true,
-        "exit_code": 0
-      },
-      {
-        "suite": "closure",
-        "passed": true,
-        "exit_code": 0
-      },
-      {
-        "suite": "audio",
-        "passed": true,
-        "exit_code": 0
-      },
-      {
-        "suite": "sd_owner",
-        "passed": true,
-        "exit_code": 0
-      },
-      {
-        "suite": "seek",
-        "passed": true,
-        "exit_code": 0
-      },
-      {
-        "suite": "lyrics",
-        "passed": true,
-        "exit_code": 0
-      },
-      {
-        "suite": "sound_flash",
-        "passed": true,
-        "exit_code": 0
-      },
-      {
-        "suite": "brightness",
-        "passed": true,
-        "exit_code": 0
-      }
-    ]
-  },
-  "identity": {
-    "current_bit_sha256": "97b370265af7ec7e7b8b4341a88407631722808f434e473d8ba1b4abf11d3863",
-    "accepted_bit_sha256": "fa994e2a090a845cca6ee70b46c87a29bfa7bc417f45d9228dd8c981f9850ad3",
-    "configuration_payload_identical": true,
-    "date_header_changed_offsets": [
-      135,
-      136,
-      138,
-      139
-    ],
-    "current_timing_ns": {
-      "SWNS": 0.105,
-      "HWNS": 0.024,
-      "STNS": 0,
-      "HTNS": 0
+    "rtl_scenarios": 75,
+    "brightness_internal_checks": 16385,
+    "suite_counts": {
+      "tool_tests": 27,
+      "closure": 10,
+      "microphone": 5,
+      "audio_media": 32,
+      "sd_owner_recovery": 11,
+      "seek": 2,
+      "lyrics_ui": 8,
+      "sound_flash": 6,
+      "brightness": 1
     },
-    "design_inputs_unchanged": 142,
-    "project_entries": 59,
-    "manual_acceptance": "User confirmed project passed manual acceptance on 2026-10-30; no per-case measurements invented."
+    "suites": [
+      {
+        "suite": "tool_tests",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "closure",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "microphone",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "audio",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "sd_owner",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "seek",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "lyrics",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "sound_flash",
+        "passed": true,
+        "exit_code": 0
+      },
+      {
+        "suite": "brightness",
+        "passed": true,
+        "exit_code": 0
+      }
+    ],
+    "evidence_dir": ".codex_tmp/regression_20261101_200949",
+    "evidence_sha256": {
+      "results.json": "ac623aca423aa144c16ef48b33e6f31a9970a75ae14866f2e3501a6e39cdaf1d",
+      "tool_tests.log": "0f3f802d290c3345cfdfe01add6ac099014138e13ce20ee6da02809124a0486c",
+      "closure.log": "0b2108ec4110ff64e5a8f78a3c0e3f7c5abcb28298eaecf30ece8bfa779ac538",
+      "microphone.log": "4295b8cd1191db31a5485ec4fb0a543ec11548a9efc1ba90ee0447e2e9382357",
+      "audio.log": "4f504d48d5139d80932c249993c71563b40448c56295de4149411e83bbc4e274",
+      "sd_owner.log": "ada0f249bff396c3fd736bac25a9de3620dd8d6a68c5b34b3fad5053abb623d5",
+      "seek.log": "0a441e103245ddb10a8a664ce41b19424ac4c4e924f02391fdc41cfe437a5127",
+      "lyrics.log": "719180f1eacc44198d12ed16ecf50d2633060a2b580d1aec7bae9dff4616553e",
+      "sound_flash.log": "65d87babaced4190039abb0257e084c2937422ad68ae77d45c5c7f3e60f18014",
+      "brightness.log": "68c56ba7c6dcdcb1a4ff7417991c8246a817b52cb1c86280459229737e40e1a0"
+    }
   },
-  "evidence_sha256": {
-    "unified/results.json": "0f6b7681db17cf8122252159e5806ef0c294bc22e4a306acd7d41b9bf33b0b94",
-    "extracted_regression/results.json": "0f6b7681db17cf8122252159e5806ef0c294bc22e4a306acd7d41b9bf33b0b94",
-    "modelsim/results.json": "1dbc27907ce71453b834b8b76aa01fdb70c5358490a0a4a18edb85ad5cad93cb"
+  "firmware": {
+    "name": "mic-followvol-v1.0",
+    "sha256": "12888BE734514BCE75FBF16651CACA2C2E680833A75909AD35F90CC582C4B2F8",
+    "size_bytes": 684332,
+    "timing_ns": {
+      "SWNS": 0.06,
+      "STNS": 0.0,
+      "HWNS": 0.021,
+      "HTNS": 0.0
+    },
+    "violating_endpoints": {
+      "setup": 0,
+      "hold": 0
+    },
+    "in_source_archive": false
   },
-  "evidence_location": "Local .codex_tmp/contest_submission_20261030; logs and waveforms excluded from Git."
+  "verification_boundaries": [
+    "The 2026-10-30 manual acceptance applies only to the earlier seed 10 mainline.",
+    "This run did not burn the board or measure microphone analog bias, noise, power, or audio quality.",
+    "This run did not execute a fresh TD full build or ModelSim suite.",
+    "A partial or in-progress Runs directory is not accepted as timing signoff."
+  ]
 }

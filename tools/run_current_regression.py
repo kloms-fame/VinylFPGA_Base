@@ -12,7 +12,7 @@ from verify_submission import ROOT, verify
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--output', type=Path)
-    p.add_argument('--quick', action='store_true', help='Tool tests and 10 closure RTL cases')
+    p.add_argument('--quick', action='store_true', help='Tool, closure RTL, and microphone digital suites')
     args = p.parse_args()
     verify(ROOT)
     if not shutil.which('iverilog') or not shutil.which('vvp'):
@@ -20,7 +20,8 @@ def main():
     out = (args.output or ROOT/'.codex_tmp'/('regression_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))).resolve()
     out.mkdir(parents=True, exist_ok=False)
     suites = [('tool_tests', ['-m', 'unittest', 'discover', '-s', 'tools', '-p', 'test_*.py']),
-              ('closure', ['tools/verify_finish_rtl.py', '--output', str(out/'closure')])]
+              ('closure', ['tools/verify_finish_rtl.py', '--output', str(out/'closure')]),
+              ('microphone', ['tools/verify_microphone.py', '--output', str(out/'microphone')])]
     if not args.quick:
         suites += [('audio', ['tools/run_audio_cache_regression.py', '--out', str(out/'audio')]),
                    ('sd_owner', ['tools/verify_mv_owner.py', '--out', str(out/'sd_owner')]),
