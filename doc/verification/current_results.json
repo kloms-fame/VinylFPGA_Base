@@ -107,10 +107,62 @@
     },
     "in_source_archive": false
   },
+  "fresh_rebuild": {
+    "date": "2026-11-01",
+    "completed_at": "2026-11-01T21:09:52+08:00",
+    "status": "PASS",
+    "flow": "TD GUI MultiSeed seeds 13-15, selected seed 15",
+    "td_version": "6.2.168116",
+    "selected_seed": 15,
+    "timing_ns": {
+      "SWNS": 0.06,
+      "STNS": 0.0,
+      "HWNS": 0.021,
+      "HTNS": 0.0
+    },
+    "violating_endpoints": {
+      "setup": 0,
+      "hold": 0
+    },
+    "stage_markers": {
+      "opt_route": true,
+      "bitgen": true,
+      "multiseed": true
+    },
+    "bitstream": {
+      "path": "prj/VinylFPGA_Runs/phy_1/seed_15/VinylFPGA.bit",
+      "sha256": "45BD5745E6BEDEE79CBC9BFC1C0A87BA3C053DE9F3265D9FF98BD8EA42060797",
+      "size_bytes": 684332,
+      "reference_sha256": "12888BE734514BCE75FBF16651CACA2C2E680833A75909AD35F90CC582C4B2F8",
+      "binary_difference": {
+        "byte_count": 6,
+        "offsets": [
+          130,
+          132,
+          135,
+          136,
+          138,
+          139
+        ],
+        "description": "Only the ASCII Date header differs; the bitstream payload and CRC line are unchanged."
+      }
+    },
+    "independent_audit": {
+      "status": "PASS",
+      "source": "VinylFPGA_pr.db",
+      "timing_ns": {
+        "SWNS": 0.06,
+        "STNS": 0.0,
+        "HWNS": 0.021,
+        "HTNS": 0.0
+      },
+      "note": "The existing PLL feedback and unconstrained-I/O check_timing warnings remain; they do not produce negative final slack, and no RTL or timing constraints were changed."
+    }
+  },
   "verification_boundaries": [
     "The 2026-10-30 manual acceptance applies only to the earlier seed 10 mainline.",
     "This run did not burn the board or measure microphone analog bias, noise, power, or audio quality.",
-    "This run did not execute a fresh TD full build or ModelSim suite.",
+    "The primary regression did not execute ModelSim; the separately recorded fresh rebuild was completed with TD and independently audited from the routed database.",
     "A partial or in-progress Runs directory is not accepted as timing signoff."
   ]
 }
